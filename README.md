@@ -4,15 +4,15 @@ A lightweight Chrome extension for translation, dictionary lookup, pronunciation
 
 ## Product page
 
-The public product page is static HTML, CSS, and JavaScript in `portfolio/`.
+The public product page is static HTML, CSS, and JavaScript in `product-page/`.
 After GitHub Pages is enabled for this repository, it will be at:
 
-[https://thaihai-swe.github.io/browser-extensions/](https://thaihai-swe.github.io/browser-extensions/)
+[https://thaihai-swe.github.io/dictionary-extension/](https://thaihai-swe.github.io/dictionary-extension/)
 
 Preview locally:
 
 ```bash
-cd portfolio
+cd product-page
 python3 -m http.server 4173
 ```
 
@@ -46,4 +46,4 @@ Then open `http://127.0.0.1:4173`.
 - `options/` — settings page
 - `assets/` — extension icons
 - `docs/` — canonical project documentation
-- `portfolio/` — GitHub Pages product page
+- `product-page/` — GitHub Pages product page
