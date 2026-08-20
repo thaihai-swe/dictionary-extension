@@ -1,0 +1,83 @@
+{
+    "manifest_version": 3,
+    "name": "Dictionary",
+    "description": "Look up translations, dictionary entries, and AI explanations from selected text.",
+    "version": "0.1.0",
+    "icons": {
+        "16": "assets/icon-16.png",
+        "32": "assets/icon-32.png",
+        "48": "assets/icon-48.png",
+        "128": "assets/icon-128.png"
+    },
+    "permissions": [
+        "storage",
+        "contextMenus",
+        "scripting"
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "assets/fonts/*"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
+    ],
+    "host_permissions": [
+        "https://translate.googleapis.com/*",
+        "https://api.dictionaryapi.dev/*",
+        "https://www.dictionaryapi.com/*",
+        "https://media.merriam-webster.com/*",
+        "https://en.wiktionary.org/*",
+        "https://api.wordnik.com/*",
+        "https://wordsapiv1.p.rapidapi.com/*",
+        "https://generativelanguage.googleapis.com/*",
+        "https://libretranslate.com/*"
+    ],
+    "optional_host_permissions": [
+        "https://*/*",
+        "http://*/*",
+        "file:///*"
+    ],
+    "background": {
+        "service_worker": "src/background.js",
+        "type": "module"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>",
+                "file:///*"
+            ],
+            "js": [
+                "src/ui/renderer.js",
+                "src/ui/audio.js",
+                "src/ui/popup-shell.js",
+                "src/shared/cache.js",
+                "src/shared/popup-helpers.js",
+                "src/content/popup-position.js",
+                "src/content/state.js",
+                "src/content/context.js",
+                "src/content/icons.js",
+                "src/content/selection.js",
+                "src/content/lookup-bridge.js",
+                "src/content/trigger.js",
+                "src/content/settings-bridge.js",
+                "src/content.js"
+            ],
+            "css": [
+                "src/ui/popup.css"
+            ],
+            "run_at": "document_idle",
+            "all_frames": true,
+            "match_about_blank": true
+        }
+    ],
+    "action": {
+        "default_icon": "assets/icon-128.png",
+        "default_title": "Dictionary",
+        "default_popup": "action/popup.html"
+    },
+    "options_page": "options/options.html"
+}

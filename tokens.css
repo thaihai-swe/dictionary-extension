@@ -1,0 +1,192 @@
+/* Dictionary Design Tokens
+ * Modern learner workbench: neutral slate surfaces, focused blue actions, green learning feedback.
+ */
+@font-face {
+    font-family: "Atkinson Hyperlegible";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("assets/fonts/Atkinson-Hyperlegible-Regular-102.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: "Atkinson Hyperlegible";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url("assets/fonts/Atkinson-Hyperlegible-Bold-102.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: "Atkinson Hyperlegible";
+    font-style: italic;
+    font-weight: 400;
+    font-display: swap;
+    src: url("assets/fonts/Atkinson-Hyperlegible-Italic-102.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: "Atkinson Hyperlegible";
+    font-style: italic;
+    font-weight: 700;
+    font-display: swap;
+    src: url("assets/fonts/Atkinson-Hyperlegible-BoldItalic-102.woff2") format("woff2");
+}
+
+:root {
+    color-scheme: light;
+    --color-paper: #fbfaf7;
+    --color-paper-2: #fffefa;
+    --color-paper-3: #f3f0e9;
+    --color-paper-subtle: #e6e1d7;
+    --color-ink: #172534;
+    --color-ink-2: #405363;
+    --color-ink-muted: #687985;
+    --color-ink-faint: #9aa6aa;
+    --color-rule: #dedbd3;
+    --color-rule-strong: #c8c4ba;
+    --color-accent: #4f46a5;
+    --color-accent-strong: #3f378f;
+    --color-accent-soft: rgb(79 70 165 / 0.10);
+    --color-accent-ink: #ffffff;
+    --color-focus: #6258d6;
+    --color-success: #087f6e;
+    --color-success-soft: rgb(8 127 110 / 0.11);
+    --color-success-ink: #075348;
+    --color-danger: #b42332;
+    --color-danger-soft: rgb(180 35 50 / 0.10);
+    --color-danger-ink: #7b1824;
+    --color-warning: #9a5b00;
+    --color-warning-soft: rgb(154 91 0 / 0.12);
+    --color-warning-ink: #6e4100;
+    --color-info: #176b80;
+    --color-info-soft: rgb(23 107 128 / 0.10);
+    --color-skeleton-a: #e7e3da;
+    --color-skeleton-b: #fbfaf7;
+
+    --font-display: "Georgia", "Times New Roman", serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    --font-learner: "Atkinson Hyperlegible", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+    --space-3xs: 4px;
+    --space-2xs: 8px;
+    --space-xs: 12px;
+    --space-sm: 16px;
+    --space-md: 20px;
+    --space-lg: 28px;
+    --space-xl: 36px;
+    --space-2xl: 48px;
+
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-md: 1rem;
+    --text-lg: 1.25rem;
+    --text-xl: 1.75rem;
+    --text-2xl: 2.4rem;
+
+    --radius-control: 10px;
+    --radius-card: 14px;
+    --radius-panel: 20px;
+    --radius-pill: 999px;
+    --radius-m: 10px;
+    --radius-full: 999px;
+    --shadow-soft: 0 1px 3px rgb(15 23 42 / 0.07), 0 1px 2px rgb(15 23 42 / 0.04);
+    --shadow-card: 0 5px 16px -3px rgb(15 23 42 / 0.1), 0 2px 6px -2px rgb(15 23 42 / 0.06);
+    --shadow-panel: 0 24px 56px -12px rgb(15 23 42 / 0.2), 0 10px 20px -8px rgb(15 23 42 / 0.1);
+
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    --dur-short: 150ms;
+    --dur-base: 200ms;
+    --dur-long: 350ms;
+    --space-compact: 8px;
+    --space-comfortable: 24px;
+}
+
+:where(button, input, select, textarea, a, summary):focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; scroll-behavior: auto !important; }
+}
+
+[data-font="learner"] {
+    --font-display: var(--font-learner);
+    --font-body: var(--font-learner);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --color-paper: #050c1c;
+        --color-paper-2: #0a1a2f;
+        --color-paper-3: #0e2442;
+        --color-paper-subtle: #123152;
+        --color-ink: #f5f8fb;
+        --color-ink-2: #c7d1da;
+        --color-ink-muted: #8899a9;
+        --color-ink-faint: #6f8192;
+        --color-rule: #203a57;
+        --color-rule-strong: #2e5275;
+        --color-accent: #7b84f0;
+        --color-accent-strong: #949bff;
+        --color-accent-soft: rgb(123 132 240 / 0.16);
+        --color-accent-ink: #ffffff;
+        --color-focus: #949bff;
+        --color-success: #2dd3b3;
+        --color-success-soft: rgb(45 211 179 / 0.13);
+        --color-success-ink: #073b32;
+        --color-danger: #f57373;
+        --color-danger-soft: rgb(245 115 115 / 0.13);
+        --color-danger-ink: #7a1e21;
+        --color-warning: #f0c048;
+        --color-warning-soft: rgb(240 192 72 / 0.13);
+        --color-warning-ink: #7a5007;
+        --color-info: #50d1d1;
+        --color-info-soft: rgb(80 209 209 / 0.13);
+        --color-skeleton-a: #11243a;
+        --color-skeleton-b: #173352;
+        --shadow-soft: 0 1px 3px rgb(0 0 0 / 0.3);
+        --shadow-card: 0 8px 24px -4px rgb(0 0 0 / 0.5);
+        --shadow-panel: 0 28px 64px -12px rgb(0 0 0 / 0.72);
+    }
+}
+
+[data-theme="dark"] {
+    color-scheme: dark;
+    --color-paper: #050c1c;
+    --color-paper-2: #0a1a2f;
+    --color-paper-3: #0e2442;
+    --color-paper-subtle: #123152;
+    --color-ink: #f5f8fb;
+    --color-ink-2: #c7d1da;
+    --color-ink-muted: #8899a9;
+    --color-ink-faint: #6f8192;
+    --color-rule: #203a57;
+    --color-rule-strong: #2e5275;
+    --color-accent: #7b84f0;
+    --color-accent-strong: #949bff;
+    --color-accent-soft: rgb(123 132 240 / 0.16);
+    --color-accent-ink: #ffffff;
+    --color-focus: #949bff;
+    --color-success: #2dd3b3;
+    --color-success-soft: rgb(45 211 179 / 0.13);
+    --color-success-ink: #073b32;
+    --color-danger: #f57373;
+    --color-danger-soft: rgb(240 115 115 / 0.13);
+    --color-danger-ink: #7a1e21;
+    --color-warning: #f0c048;
+    --color-warning-soft: rgb(240 192 72 / 0.13);
+    --color-warning-ink: #7a5007;
+    --color-info: #50d1d1;
+    --color-info-soft: rgb(80 209 209 / 0.13);
+    --color-skeleton-a: #11243a;
+    --color-skeleton-b: #173352;
+    --shadow-soft: 0 1px 3px rgb(0 0 0 / 0.3);
+    --shadow-card: 0 8px 24px -4px rgb(0 0 0 / 0.5);
+    --shadow-panel: 0 28px 64px -12px rgb(0 0 0 / 0.72);
+}

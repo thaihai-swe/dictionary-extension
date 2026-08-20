@@ -1,0 +1,837 @@
+/**
+ * Shared rendering utilities for the in-page lookup popup.
+ * Injected globally in src/content.js context.
+ */
+(function (global) {
+    const Renderer = {
+        escapeHtml(value) {
+            if (value == null) return "";
+            return String(value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        },
+
+        labelForTab(tab) {
+            return tab === "ai" ? "AI" : "Dictionary";
+        },
+
+        highlightContextQuery(sourceText, query) {
+            const raw = String(sourceText || "");
+            const term = String(query || "").trim();
+            if (!raw || !term) {
+                return raw;
+            }
+            const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            const pattern = new RegExp(`(^|[^\\p{L}\\p{N}_])(${escapedTerm})(?=$|[^\\p{L}\\p{N}_])`, "giu");
+            return raw.replace(pattern, "$1**$2**");
+        },
+
+        renderSimpleMarkdown(source) {
+            const lines = String(source || "").split("\n");
+            let html = "";
+            let inBlockquote = false;
+            let listType = "";
+
+            const closeList = () => {
+                if (listType) {
+                    html += `</${listType}>`;
+                    listType = "";
+                }
+            };
+
+            const closeOpenBlocks = () => {
+                if (inBlockquote) {
+                    html += "</blockquote>";
+                    inBlockquote = false;
+                }
+                closeList();
+            };
+
+            for (const rawLine of lines) {
+                const line = rawLine.trimEnd();
+                const trimmed = line.trim();
+
+                if (!trimmed) {
+                    if (inBlockquote) {
+                        html += "</blockquote>";
+                        inBlockquote = false;
+                    }
+                    closeList();
+                    continue;
+                }
+
+                if (/^(?:---|\*\*\*|___)\s*$/.test(trimmed)) {
+                    closeOpenBlocks();
+                    html += "<hr>";
+                    continue;
+                }
+
+                const heading = trimmed.match(/^(#{1,6})\s+(.+)$/);
+                if (heading) {
+                    closeOpenBlocks();
+                    const level = Math.min(6, heading[1].length);
+                    html += `<h${level}>${Renderer.formatInlineMarkdown(heading[2])}</h${level}>`;
+                    continue;
+                }
+
+                const unorderedItem = trimmed.match(/^(?:[*+-])\s+(.+)$/);
+                const orderedItem = trimmed.match(/^\d+[.)]\s+(.+)$/);
+                if (unorderedItem || orderedItem) {
+                    if (inBlockquote) {
+                        html += "</blockquote>";
+                        inBlockquote = false;
+                    }
+                    const nextListType = unorderedItem ? "ul" : "ol";
+                    if (listType !== nextListType) {
+                        closeList();
+                        html += `<${nextListType}>`;
+                        listType = nextListType;
+                    }
+                    html += `<li>${Renderer.formatInlineMarkdown((unorderedItem || orderedItem)[1])}</li>`;
+                    continue;
+                }
+
+                if (trimmed.startsWith(">")) {
+                    closeList();
+                    if (!inBlockquote) {
+                        html += "<blockquote>";
+                        inBlockquote = true;
+                    }
+                    html += `<p>${Renderer.formatInlineMarkdown(trimmed.replace(/^>\s?/, ""))}</p>`;
+                    continue;
+                }
+
+                closeOpenBlocks();
+                html += `<p>${Renderer.formatInlineMarkdown(trimmed)}</p>`;
+            }
+
+            if (inBlockquote) {
+                html += "</blockquote>";
+            }
+            closeList();
+
+            return html;
+        },
+
+        formatInlineMarkdown(text) {
+            return Renderer.escapeHtml(text)
+                .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+                .replace(/\*(.+?)\*/g, "<em>$1</em>")
+                .replace(/`(.+?)`/g, "<code>$1</code>");
+        },
+
+        normalizeSourceBadges(result) {
+            const rawBadges = Array.isArray(result?.sourceBadges)
+                ? result.sourceBadges
+                : [];
+
+            const badges = [];
+            const seen = new Set();
+
+            for (const item of rawBadges) {
+                if (!item) {
+                    continue;
+                }
+
+                const label = typeof item === "string"
+                    ? item.trim()
+                    : String(item.label || "").trim();
+                if (!label) {
+                    continue;
+                }
+
+                const key = label.toLowerCase();
+                if (seen.has(key)) {
+                    continue;
+                }
+                seen.add(key);
+
+                let kind = typeof item === "object" && item.kind
+                    ? String(item.kind).trim()
+                    : "";
+                if (!kind) {
+                    const lower = label.toLowerCase();
+                    if (lower.includes("translate")) {
+                        kind = "translation";
+                    } else if (lower.includes("ai")) {
+                        kind = "ai";
+                    } else {
+                        kind = "dictionary";
+                    }
+                }
+
+                badges.push({
+                    label,
+                    kind,
+                    providerId: typeof item === "object" ? String(item.providerId || "").trim() : ""
+                });
+            }
+
+            return badges;
+        },
+
+        normalizeSectionKind(section) {
+            const explicitKind = String(section?.kind || "").trim().toLowerCase();
+            if (explicitKind) return explicitKind.replace(/[^a-z0-9_-]/g, "-");
+            const title = String(section?.title || "").trim().toLowerCase();
+            if (title === "context used") return "context";
+            if (title.includes("contextual analysis")) return "contextual-analysis";
+            if (title.includes("summary for learner") || title.includes("learner takeaway")) return "summary";
+            if (title.includes("sentence breakdown") || title.includes("sentence overview")) return "sentence-structure";
+            if (title.includes("grammar") || title.includes("grammatical role") || title.includes("sentence structure") || title.includes("nuance")) return "grammar";
+            if (title.includes("phrase parsing") || title.includes("detected phrase")) return "phrase-parsing";
+            if (title.includes("translation")) return "translation";
+            if (title.includes("definition") || title.includes("meaning") || title.includes("explanation")) return "definitions";
+            if (title.includes("example") || title.includes("paraphrase")) return "examples";
+            if (title.includes("common structure")) return "structures";
+            if (title.includes("memory aid")) return "memory";
+            if (title.includes("etymology") || title.includes("deep understanding")) return "etymology";
+            if (title.includes("related idiom") || title.includes("related expression")) return "phrase";
+            if (/synonym|antonym|word family|collocation|related/.test(title)) return "lexical";
+            if (/mistake|confusable|usage|register|tone|learner|pragmatic|compound|idiom/.test(title)) return "usage";
+            if (title.includes("phrase")) return "phrase";
+            return "general";
+        },
+
+        renderSection(section, options = {}) {
+            const prefix = options.prefix || "dictionary-helper";
+            const sectionTitleTag = options.sectionTitleTag || "h4";
+
+            const kind = Renderer.normalizeSectionKind(section);
+            const items = (section.items || [])
+                .map((item) => `<li class="${prefix}-section-list-item">${Renderer.formatInlineMarkdown(item)}</li>`)
+                .join("");
+            const hasTitle = Boolean(String(section.title || "").trim());
+            const metaBadge = section.meta
+                ? `<span class="${prefix}-section-meta">${Renderer.escapeHtml(section.meta)}</span>`
+                : "";
+            let sectionBody = "";
+            if (section.data && kind === "sentence-overview") {
+                sectionBody = Renderer.renderSentenceOverview(section.data, prefix);
+            } else if (section.data && kind === "sentence-structure") {
+                sectionBody = Renderer.renderSentenceStructure(section.data, prefix);
+            } else if (section.data && kind === "phrase-parsing") {
+                sectionBody = Renderer.renderPhraseParsing(section.data, prefix);
+            } else if (section.markdown) {
+                let mdText = section.text || "";
+                if (kind === "context" && options.title) {
+                    mdText = Renderer.highlightContextQuery(mdText, options.title);
+                }
+                sectionBody = `<div class="${prefix}-markdown">${Renderer.renderSimpleMarkdown(mdText)}</div>`;
+            } else if (section.text) {
+                const inlineMeta = (!hasTitle && section.meta)
+                    ? ` <small class="${prefix}-inline-meta">${Renderer.escapeHtml(section.meta)}</small>`
+                    : "";
+                sectionBody = `<p class="${prefix}-section-paragraph">${Renderer.escapeHtml(section.text)}${inlineMeta}</p>`;
+            } else if (section.meta && !hasTitle) {
+                sectionBody = `<p class="${prefix}-section-paragraph"><small class="${prefix}-inline-meta">${Renderer.escapeHtml(section.meta)}</small></p>`;
+            }
+
+            const contentHtml = `${sectionBody}${items ? `<ul class="${prefix}-section-list">${items}</ul>` : ""}`;
+
+            const collapsible = section.collapseByDefault === true || (typeof section.collapseByDefault === "undefined" && items.length === 0 && hasTitle);
+            const sectionClasses = `${prefix}-section ${prefix}-section--${kind}${collapsible ? ` ${prefix}-section--collapsible` : ""}`;
+            const sectionIndex = Number(options.index) || 0;
+
+            return `
+              <section class="${sectionClasses}" data-section-kind="${Renderer.escapeHtml(kind)}" data-section-index="${sectionIndex}" style="--section-index: ${sectionIndex};">
+                ${hasTitle
+                    ? `<header class="${prefix}-section-heading"><span class="${prefix}-section-title">${Renderer.escapeHtml(section.title)}</span>${metaBadge}</header>`
+                    : ""}
+                ${contentHtml}
+              </section>`;
+        },
+
+        getAiSectionRank(intent, section, kind) {
+            if (kind === "context") return 0;
+
+            const ranks = {
+                default: {
+                    intro: 1, translation: 2, usage: 3, examples: 4, etymology: 5
+                },
+                explain_in_context: {
+                    intro: 1, definitions: 2, examples: 3
+                },
+                grammar: {
+                    intro: 1, grammar: 2, usage: 3, examples: 4
+                },
+                phrase_explorer: {
+                    intro: 1, definitions: 2, grammar: 3, usage: 4, examples: 5
+                },
+                phrase_fallback: {
+                    intro: 1, definitions: 2, usage: 3, examples: 4, phrase: 5
+                }
+            };
+
+            const ranked = ranks[intent];
+            if (!ranked || ranked[kind] == null) {
+                return 100;
+            }
+            return ranked[kind];
+        },
+
+        pinContextFirst(sections) {
+            const source = Array.isArray(sections) ? sections : [];
+            const context = [];
+            const rest = [];
+            for (const section of source) {
+                if (Renderer.normalizeSectionKind(section) === "context") {
+                    context.push(section);
+                } else {
+                    rest.push(section);
+                }
+            }
+            return context.concat(rest);
+        },
+
+        orderSectionsForPresentation(sections, presentation) {
+            const source = Array.isArray(sections) ? sections : [];
+            if (presentation?.surface !== "ai") {
+                return source;
+            }
+            if (presentation.intent === "sentence_breakdown") {
+                return Renderer.pinContextFirst(source);
+            }
+
+            const intent = String(presentation.intent || "default");
+            const ranked = source.map((section, index) => ({
+                section,
+                index,
+                kind: Renderer.normalizeSectionKind(section),
+                rank: Renderer.getAiSectionRank(intent, section, Renderer.normalizeSectionKind(section))
+            }));
+
+            const hasUnknownRank = ranked.some((item) => item.kind !== "context" && item.rank === 100);
+            if (hasUnknownRank) {
+                const context = ranked.filter((item) => item.kind === "context").map((item) => item.section);
+                const rest = ranked.filter((item) => item.kind !== "context").map((item) => item.section);
+                return context.concat(rest);
+            }
+
+            return ranked
+                .sort((left, right) => left.rank - right.rank || left.index - right.index)
+                .map(({ section }) => section);
+        },
+
+        getAiPrimaryKinds(intent) {
+            const kinds = {
+                default: ["intro", "translation", "usage", "examples"],
+                explain_in_context: ["intro", "definitions", "examples"],
+                grammar: ["grammar", "usage", "examples"],
+                phrase_explorer: ["definitions", "grammar", "usage", "examples"],
+                phrase_fallback: ["definitions", "usage", "examples", "phrase"],
+                sentence_breakdown: ["sentence-overview", "translation", "sentence-structure", "phrase-parsing", "usage"]
+            };
+            return kinds[intent] || kinds.default;
+        },
+
+        getAiDeepDiveKinds(intent) {
+            const kinds = {
+                default: ["etymology"],
+                explain_in_context: [],
+                grammar: [],
+                phrase_explorer: [],
+                phrase_fallback: [],
+                sentence_breakdown: []
+            };
+            return kinds[intent] || [];
+        },
+
+        isAlwaysOpenAiKind(kind) {
+            return ["context", "intro", "sentence-overview", "sentence-structure", "phrase-parsing"].includes(kind);
+        },
+
+        isPrimaryExpandedSection(kind, title, index, intent) {
+            if (Renderer.isAlwaysOpenAiKind(kind)) {
+                return true;
+            }
+            if (index === 0) {
+                return true;
+            }
+            if (!String(title || "").trim()) {
+                return true;
+            }
+            if (intent) {
+                return Renderer.getAiPrimaryKinds(intent).includes(kind);
+            }
+            return ["definitions", "translation", "examples", "grammar", "collocations", "sentence-structure", "phrase-parsing"].includes(kind);
+        },
+
+        isDeepDiveSection(kind, title, intent) {
+            if (Renderer.isAlwaysOpenAiKind(kind)) {
+                return false;
+            }
+            if (intent) {
+                return Renderer.getAiDeepDiveKinds(intent).includes(kind);
+            }
+            const normalizedTitle = String(title || "").trim().toLowerCase();
+            if (!normalizedTitle) {
+                return false;
+            }
+            if (["lexical", "structures", "memory", "etymology"].includes(kind)) {
+                return true;
+            }
+            return /word family|collocation|common structure|learner error|confusable|etymology|deep understanding|pragmatic|memory aid|compound|idiom analysis|synonym|antonym/.test(normalizedTitle);
+        },
+
+        shouldCollapseSection(section, kind, index, totalSections, intent) {
+            const title = String(section?.title || "").trim();
+            if (!title || Renderer.isAlwaysOpenAiKind(kind)) {
+                return false;
+            }
+
+            if (totalSections < 4) {
+                return false;
+            }
+
+            if (Renderer.isPrimaryExpandedSection(kind, title, index, intent)) {
+                return false;
+            }
+
+            if (Renderer.isDeepDiveSection(kind, title, intent)) {
+                return true;
+            }
+
+            return index >= 3 && !Renderer.getAiPrimaryKinds(intent).includes(kind);
+        },
+
+        renderPronunciation(pronunciation, prefix) {
+            if (!pronunciation?.text) {
+                return "";
+            }
+
+            const phoneticText = String(pronunciation.phonetic || "").trim();
+            const accent = pronunciation.language === "en-GB"
+                ? "UK"
+                : pronunciation.language === "en-US"
+                    ? "US"
+                    : "";
+            const phoneticLabel = phoneticText
+                ? (accent ? `${phoneticText} (${accent})` : phoneticText)
+                : "";
+            const phonetic = phoneticLabel
+                ? `<span class="${prefix}-phonetic">${Renderer.escapeHtml(phoneticLabel)}</span>`
+                : "";
+            const audioUrl = pronunciation.audioUrl ? Renderer.escapeHtml(pronunciation.audioUrl) : "";
+            const language = pronunciation.language ? Renderer.escapeHtml(pronunciation.language) : "";
+            const rate = pronunciation.rate || 0.95;
+            const voiceURI = pronunciation.voiceURI ? Renderer.escapeHtml(pronunciation.voiceURI) : "";
+            const baseLabel = pronunciation.label || (pronunciation.audioUrl ? "Listen" : "Speak");
+            const label = accent && !/\((?:US|UK)\)/i.test(baseLabel)
+                ? `${baseLabel} (${accent})`
+                : baseLabel;
+            const ariaLabel = phoneticLabel
+                ? `Play pronunciation ${phoneticLabel}`
+                : accent
+                    ? `Play ${accent} pronunciation`
+                    : "Play pronunciation";
+
+            return `
+              <div class="${prefix}-pronunciation">
+                ${phonetic}
+                <button
+                  class="${prefix}-pronounce"
+                  type="button"
+                  data-pronounce-text="${Renderer.escapeHtml(pronunciation.text)}"
+                  data-pronounce-audio="${audioUrl}"
+                  data-pronounce-language="${language}"
+                  data-pronounce-rate="${Renderer.escapeHtml(rate)}"
+                  data-pronounce-voice="${voiceURI}"
+                  aria-label="${Renderer.escapeHtml(ariaLabel)}"
+                  aria-pressed="false"
+                >
+                  <span class="${prefix}-soundwave" aria-hidden="true">
+                    <span class="${prefix}-soundwave-bar"></span>
+                    <span class="${prefix}-soundwave-bar"></span>
+                    <span class="${prefix}-soundwave-bar"></span>
+                  </span>
+                  <span class="${prefix}-pronounce-label">${Renderer.escapeHtml(label)}</span>
+                </button>
+              </div>
+            `;
+        },
+
+        renderSkeleton(prefix = "dictionary-helper") {
+            return `
+              <div class="${prefix}-skeleton-wrap" aria-hidden="true">
+                <div class="${prefix}-skeleton-header">
+                  <div class="${prefix}-skeleton-line ${prefix}-skeleton-title"></div>
+                  <div class="${prefix}-skeleton-badges">
+                    <div class="${prefix}-skeleton-pill"></div>
+                    <div class="${prefix}-skeleton-pill"></div>
+                  </div>
+                </div>
+                <div class="${prefix}-skeleton-card">
+                  <div class="${prefix}-skeleton-line ${prefix}-skeleton-kicker"></div>
+                  <div class="${prefix}-skeleton-line ${prefix}-skeleton-text"></div>
+                  <div class="${prefix}-skeleton-line ${prefix}-skeleton-text ${prefix}-skeleton-short"></div>
+                </div>
+                <div class="${prefix}-skeleton-card">
+                  <div class="${prefix}-skeleton-line ${prefix}-skeleton-kicker"></div>
+                  <div class="${prefix}-skeleton-line ${prefix}-skeleton-text"></div>
+                  <div class="${prefix}-skeleton-line ${prefix}-skeleton-text ${prefix}-skeleton-medium"></div>
+                </div>
+              </div>
+            `;
+        },
+
+        renderSpeechPractice(result, prefix) {
+            const primary = result?.pronunciation || (Array.isArray(result?.pronunciations) ? result.pronunciations[0] : null);
+            const text = String(primary?.text || result?.title || "").trim();
+            if (!text) {
+                return "";
+            }
+
+            const language = Renderer.escapeHtml(primary?.language || "en-US");
+            const speechText = Renderer.escapeHtml(text);
+            const supportsPractice = typeof window !== "undefined"
+                && Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
+            if (!supportsPractice) {
+                return `<span class="${prefix}-speech-eval-unavailable">Practice needs Chrome speech recognition.</span>`;
+            }
+
+            return `
+              <button
+                class="${prefix}-speech-eval"
+                type="button"
+                data-eval-speech-text="${speechText}"
+                data-eval-speech-lang="${language}"
+                aria-label="Practice saying ${speechText}"
+                aria-pressed="false"
+              >
+                <span class="${prefix}-speech-icon" aria-hidden="true">◉</span>
+                <span data-eval-label>Practice</span>
+              </button>
+              <span class="${prefix}-speech-eval-result" data-speech-eval-result hidden aria-live="polite"></span>
+            `;
+        },
+
+        renderResult(result, options = {}) {
+            const prefix = options.prefix || "dictionary-helper";
+            const titleTag = options.titleTag || "h3";
+            const sectionTitleTag = options.sectionTitleTag || "h4";
+            const isToolbar = false;
+
+            const pronunciation = Renderer.renderPronunciation({
+                ...result.pronunciation,
+                rate: options.pronunciationRate,
+                voiceURI: options.pronunciationVoiceURI
+            }, prefix);
+            const pronunciationVariants = (result.pronunciations || []).slice(1).map((item) => Renderer.renderPronunciation({
+                ...item,
+                rate: options.pronunciationRate,
+                voiceURI: options.pronunciationVoiceURI
+            }, prefix)).join("");
+            const speechPractice = Renderer.renderSpeechPractice(result, prefix);
+            const isAiResult = result.presentation?.surface === "ai";
+            const aiIntent = isAiResult ? String(result.presentation?.intent || "default") : "";
+            const rawSections = Renderer.orderSectionsForPresentation(result.sections, result.presentation);
+            const totalSections = rawSections.length;
+            const sections = rawSections.map((section, index) => {
+                const kind = Renderer.normalizeSectionKind(section);
+                const items = (section.items || [])
+                    .map((item) => `<li>${Renderer.formatInlineMarkdown(item)}</li>`)
+                    .join("");
+                const hasTitle = Boolean(String(section.title || "").trim());
+                const metaBadge = section.meta
+                    ? `<span class="${prefix}-section-meta">${Renderer.escapeHtml(section.meta)}</span>`
+                    : "";
+                let sectionBody = "";
+                if (section.data && kind === "sentence-overview") {
+                    sectionBody = Renderer.renderSentenceOverview(section.data, prefix);
+                } else if (section.data && kind === "sentence-structure") {
+                    sectionBody = Renderer.renderSentenceStructure(section.data, prefix);
+                } else if (section.data && kind === "phrase-parsing") {
+                    sectionBody = Renderer.renderPhraseParsing(section.data, prefix);
+                } else if (section.markdown) {
+                    let mdText = section.text || "";
+                    if (kind === "context" && result?.title) {
+                        mdText = Renderer.highlightContextQuery(mdText, result.title);
+                    }
+                    sectionBody = `<div class="${prefix}-markdown">${Renderer.renderSimpleMarkdown(mdText)}</div>`;
+                } else if (section.text) {
+                    const inlineMeta = (!hasTitle && section.meta)
+                        ? ` <small class="${prefix}-inline-meta">${Renderer.escapeHtml(section.meta)}</small>`
+                        : "";
+                    sectionBody = `<p class="${prefix}-section-paragraph">${Renderer.escapeHtml(section.text)}${inlineMeta}</p>`;
+                } else if (section.meta && !hasTitle) {
+                    sectionBody = `<p class="${prefix}-section-paragraph"><small class="${prefix}-inline-meta">${Renderer.escapeHtml(section.meta)}</small></p>`;
+                }
+
+                const contentHtml = `${sectionBody}${items ? `<ul class="${prefix}-section-list">${items}</ul>` : ""}`;
+                const collapsible = Renderer.shouldCollapseSection(section, kind, index, totalSections, aiIntent);
+                const sectionClasses = `${prefix}-section ${prefix}-section--${kind}${collapsible ? ` ${prefix}-section--collapsible` : ""}`;
+
+                if (collapsible) {
+                    const sectionLabel = `<${sectionTitleTag} class="${prefix}-section-title">${Renderer.escapeHtml(section.title)}</${sectionTitleTag}>${metaBadge}`;
+                    return `
+              <details class="${sectionClasses}" data-section-kind="${Renderer.escapeHtml(kind)}" data-section-index="${index}" style="--section-index: ${index};">
+                <summary class="${prefix}-section-summary">${sectionLabel}</summary>
+                <div class="${prefix}-section-body">
+                  ${contentHtml}
+                </div>
+              </details>`;
+                }
+
+                const sectionLabel = hasTitle
+                    ? `<div class="${prefix}-section-heading"><${sectionTitleTag} class="${prefix}-section-title">${Renderer.escapeHtml(section.title)}</${sectionTitleTag}>${metaBadge}</div>`
+                    : "";
+
+                return `
+              <section class="${sectionClasses}" data-section-kind="${Renderer.escapeHtml(kind)}" data-section-index="${index}" style="--section-index: ${index};">
+                ${sectionLabel}
+                ${contentHtml}
+              </section>`;
+            }).join("");
+
+            const meta = result.subtitle ? `<div class="${prefix}-meta">${Renderer.escapeHtml(result.subtitle)}</div>` : "";
+            const stateEl = isToolbar ? "p" : "div";
+            const rootEl = isToolbar ? "article" : "div";
+            const lexicalProfileHtml = Renderer.renderLexicalProfile(result.lexicalProfile, prefix, sectionTitleTag);
+            const titleRow = result.title
+                ? `<div class="${prefix}-title-row"><div class="${prefix}-title-cell"><${titleTag} class="${prefix}-term">${Renderer.escapeHtml(result.title)}</${titleTag}><div class="${prefix}-pronunciation-group">${pronunciation}${pronunciationVariants}${speechPractice}</div></div>${meta}</div>`
+                : "";
+            const emptyState = `<${stateEl} class="${prefix}-state"><strong>No result</strong><span>Try another word or switch sources.</span></${stateEl}>`;
+            const resultBody = isAiResult
+                ? `${sections || emptyState}${lexicalProfileHtml}`
+                : `${lexicalProfileHtml}${sections || emptyState}`;
+
+            return `
+            <${rootEl} class="${prefix}-result">
+              ${titleRow}
+              ${resultBody}
+            </${rootEl}>
+          `;
+        },
+
+        
+        renderLexicalProfile(profile, prefix, sectionTitleTag = "h4") {
+            if (!profile) return "";
+            const { wordFamily, usageWarnings, confusablePairs, learnerMistakes, wordFormation, collocations } = profile;
+
+            let familyHtml = "";
+            if (wordFamily) {
+                const categories = [
+                    { label: "Noun", items: wordFamily.noun },
+                    { label: "Verb", items: wordFamily.verb },
+                    { label: "Adjective", items: wordFamily.adjective },
+                    { label: "Adverb", items: wordFamily.adverb },
+                    { label: "Inflections", items: wordFamily.inflections },
+                    { label: "Derivatives", items: wordFamily.derivatives }
+                ];
+                const rows = categories
+                    .filter((cat) => Array.isArray(cat.items) && cat.items.length)
+                    .map((cat) => {
+                        const chips = cat.items
+                            .map((item) => `<button type="button" class="${prefix}-family-chip" data-lookup-query="${Renderer.escapeHtml(item)}">${Renderer.escapeHtml(item)}</button>`)
+                            .join(" ");
+                        return `<div class="${prefix}-word-family-row"><span class="${prefix}-word-family-label">${Renderer.escapeHtml(cat.label)}</span> <div class="${prefix}-word-family-chips">${chips}</div></div>`;
+                    })
+                    .join("");
+                if (rows) {
+                    familyHtml = `<div class="${prefix}-word-family-grid"><${sectionTitleTag} class="${prefix}-section-title">Word Family</${sectionTitleTag}>${rows}</div>`;
+                }
+            }
+
+            let warningsHtml = "";
+            const hasWarnings = Array.isArray(usageWarnings) && usageWarnings.length;
+            const hasConfusables = Array.isArray(confusablePairs) && confusablePairs.length;
+
+            if (hasWarnings || hasConfusables) {
+                const warningItems = (usageWarnings || [])
+                    .map((w) => `<li class="${prefix}-warning-item">${Renderer.escapeHtml(w)}</li>`)
+                    .join("");
+                const confusableItems = (confusablePairs || [])
+                    .map((pair) => `<li class="${prefix}-confusable-item"><strong>Confused with <em>${Renderer.escapeHtml(pair.word)}</em>:</strong> ${Renderer.formatInlineMarkdown(pair.distinction)}</li>`)
+                    .join("");
+                warningsHtml = `
+                    <div class="${prefix}-warning-callout">
+                        <${sectionTitleTag} class="${prefix}-section-title">Usage &amp; Register Notes</${sectionTitleTag}>
+                        <ul>${warningItems}${confusableItems}</ul>
+                    </div>
+                `;
+            }
+
+            let formationHtml = "";
+            if (wordFormation) {
+                const prefixes = Array.isArray(wordFormation.prefixes) ? wordFormation.prefixes : [];
+                const suffixes = Array.isArray(wordFormation.suffixes) ? wordFormation.suffixes : [];
+                const explanation = String(wordFormation.explanation || "").trim();
+                const tagItems = (list, cls) => (list || []).map((item) => `<span class="${prefix}-formation-tag ${cls}">${Renderer.escapeHtml(item)}</span>`).join("");
+                const tagsHtml = `<div class="${prefix}-formation-tags">${tagItems(prefixes, `${prefix}-formation-prefix`)}${tagItems(suffixes, `${prefix}-formation-suffix`)}</div>`;
+                const explanationHtml = explanation ? `<p class="${prefix}-formation-explanation">${Renderer.renderSimpleMarkdown(explanation)}</p>` : "";
+                if (prefixes.length || suffixes.length || explanation) {
+                    formationHtml = `<div class="${prefix}-word-formation"><${sectionTitleTag} class="${prefix}-section-title">Word Formation</${sectionTitleTag}>${tagsHtml}${explanationHtml}</div>`;
+                }
+            }
+
+            let mistakesHtml = "";
+            if (Array.isArray(learnerMistakes) && learnerMistakes.length) {
+                const mistakeItems = learnerMistakes.map((item) => {
+                    const example = item.example ? `<blockquote class="${prefix}-mistake-example"><p>${Renderer.formatInlineMarkdown(item.example)}</p></blockquote>` : "";
+                    return `<div class="${prefix}-mistake-item"><div class="${prefix}-mistake-original"><strong>Mistake:</strong> ${Renderer.formatInlineMarkdown(item.mistake)}</div><div class="${prefix}-mistake-correction"><strong>Correction:</strong> ${Renderer.formatInlineMarkdown(item.correction)}</div>${example}</div>`;
+                }).join("");
+                mistakesHtml = `<div class="${prefix}-learner-mistakes"><${sectionTitleTag} class="${prefix}-section-title">Common Learner Mistakes</${sectionTitleTag}>${mistakeItems}</div>`;
+            }
+
+            let collocationsHtml = "";
+            if (collocations) {
+                const groups = [
+                    { label: "Common Verbs", key: "verbs" },
+                    { label: "Common Nouns", key: "nouns" },
+                    { label: "Prepositions", key: "prepositions" },
+                    { label: "Typical Adjectives", key: "adjectives" },
+                    { label: "Natural Patterns", key: "patterns" }
+                ];
+                const groupRows = groups.filter((group) => Array.isArray(collocations[group.key]) && collocations[group.key].length).map((group) => {
+                    const chips = collocations[group.key].map((item) => `<span class="${prefix}-collocation-chip">${Renderer.escapeHtml(item)}</span>`).join("");
+                    return `<div class="${prefix}-collocation-group"><span class="${prefix}-collocation-label">${Renderer.escapeHtml(group.label)}</span><div class="${prefix}-collocation-tags">${chips}</div></div>`;
+                }).join("");
+                if (groupRows) {
+                    collocationsHtml = `<div class="${prefix}-collocations-block"><${sectionTitleTag} class="${prefix}-section-title">Collocations</${sectionTitleTag}>${groupRows}</div>`;
+                }
+            }
+
+            if (!familyHtml && !warningsHtml && !formationHtml && !mistakesHtml && !collocationsHtml) return "";
+
+            return `
+                <div class="${prefix}-lexical-profile">
+                    ${familyHtml}
+                    ${warningsHtml}
+                    ${formationHtml}
+                    ${mistakesHtml}
+                    ${collocationsHtml}
+                </div>
+            `;
+        },
+
+        renderSentenceOverview(data, prefix) {
+            const rawSentence = String(data.sentence || "");
+            const query = String(data.query || "").trim();
+            const phrases = Array.isArray(data.phrases) ? data.phrases : [];
+            const lowerSentence = rawSentence.toLowerCase();
+
+            const ranges = [];
+            const pushRange = (start, end, type, phraseType = "") => {
+                if (start < 0 || end <= start) {
+                    return;
+                }
+                ranges.push({ start, end, type, phraseType });
+            };
+
+            if (query) {
+                const lowerQuery = query.toLowerCase();
+                let from = 0;
+                while (from < lowerSentence.length) {
+                    const index = lowerSentence.indexOf(lowerQuery, from);
+                    if (index === -1) {
+                        break;
+                    }
+                    pushRange(index, index + query.length, "query");
+                    from = index + query.length;
+                }
+            }
+
+            phrases.forEach((phrase) => {
+                const text = String(phrase?.text || "").trim();
+                if (!text || text.toLowerCase() === query.toLowerCase()) {
+                    return;
+                }
+                const lowerPhrase = text.toLowerCase();
+                let from = 0;
+                while (from < lowerSentence.length) {
+                    const index = lowerSentence.indexOf(lowerPhrase, from);
+                    if (index === -1) {
+                        break;
+                    }
+                    pushRange(index, index + text.length, "phrase", phrase.type || "");
+                    from = index + text.length;
+                }
+            });
+
+            ranges.sort((a, b) => a.start - b.start || b.end - a.end);
+            const selected = [];
+            let cursor = 0;
+            for (const range of ranges) {
+                if (range.start < cursor) {
+                    continue;
+                }
+                selected.push(range);
+                cursor = range.end;
+            }
+
+            let html = "";
+            let index = 0;
+            for (const range of selected) {
+                html += Renderer.escapeHtml(rawSentence.slice(index, range.start));
+                const chunk = Renderer.escapeHtml(rawSentence.slice(range.start, range.end));
+                if (range.type === "query") {
+                    html += `<mark class="${prefix}-sentence-query">${chunk}</mark>`;
+                } else {
+                    html += `<span class="${prefix}-sentence-phrase" data-phrase-type="${Renderer.escapeHtml(range.phraseType)}">${chunk}</span>`;
+                }
+                index = range.end;
+            }
+            html += Renderer.escapeHtml(rawSentence.slice(index));
+
+            return `<blockquote class="${prefix}-sentence-box"><p>${html}</p></blockquote>`;
+        },
+
+        renderSentenceStructure(data, prefix) {
+            const parts = Array.isArray(data?.parts) ? data.parts : [];
+            if (!parts.length) {
+                return `<p><small>No structural breakdown available.</small></p>`;
+            }
+
+            const rows = parts.map((part) => {
+                const role = String(part.role || "part").toLowerCase().replace(/\s+/g, "-");
+                return `
+                  <div class="${prefix}-structure-row">
+                    <span class="${prefix}-structure-text">${Renderer.escapeHtml(part.text)}</span>
+                    <span class="${prefix}-structure-role ${prefix}-role--${Renderer.escapeHtml(role)}">${Renderer.escapeHtml(part.role)}</span>
+                    <span class="${prefix}-structure-explanation">${Renderer.escapeHtml(part.explanation)}</span>
+                  </div>
+                `;
+            }).join("");
+
+            return `<div class="${prefix}-structure-grid">${rows}</div>`;
+        },
+
+        renderPhraseParsing(data, prefix) {
+            const phrases = Array.isArray(data?.phrases) ? data.phrases : [];
+            if (!phrases.length) {
+                return `<p><small>No idioms, phrasal verbs, or collocations detected in this sentence.</small></p>`;
+            }
+
+            const cards = phrases.map((phrase) => {
+                const typeLabel = String(phrase.type || "phrase").replace(/_/g, " ");
+
+                return `
+                  <article class="${prefix}-phrase-card" data-phrase-type="${Renderer.escapeHtml(phrase.type)}">
+                    <div class="${prefix}-phrase-header">
+                      <strong class="${prefix}-phrase-title">${Renderer.escapeHtml(phrase.text)}</strong>
+                      <div class="${prefix}-phrase-badges">
+                        <span class="${prefix}-phrase-type-badge">${Renderer.escapeHtml(typeLabel)}</span>
+                      </div>
+                    </div>
+                    <p class="${prefix}-phrase-meaning">${Renderer.escapeHtml(phrase.meaning)}</p>
+                    ${phrase.role ? `<div class="${prefix}-phrase-role"><small>Role:</small> ${Renderer.escapeHtml(phrase.role)}</div>` : ""}
+                    ${phrase.example ? `<blockquote class="${prefix}-phrase-example"><p>${Renderer.escapeHtml(phrase.example)}</p></blockquote>` : ""}
+                    <div class="${prefix}-phrase-actions">
+                      <button type="button" class="${prefix}-phrase-lookup-btn" data-lookup-query="${Renderer.escapeHtml(phrase.text)}" aria-label="Look up phrase ${Renderer.escapeHtml(phrase.text)}">Look up phrase</button>
+                    </div>
+                  </article>
+                `;
+            }).join("");
+
+            return `<div class="${prefix}-phrase-cards">${cards}</div>`;
+        },
+
+
+    };
+
+    global.DictionaryHelperRenderer = Renderer;
+})(typeof window !== "undefined" ? window : globalThis);
