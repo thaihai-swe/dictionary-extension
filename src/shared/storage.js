@@ -38,8 +38,8 @@ export const DEFAULT_SETTINGS = {
     dictionaryApiKey: "",
     wordnikApiKey: "",
     wordsApiKey: "",
-    popupWidth: 500,
-    popupHeight: 600,
+    popupWidth: 620,
+    popupHeight: 720,
     enableTranslate: true,
     enableDictionary: true,
     enableLexicalProfile: true,
@@ -54,7 +54,7 @@ export const DEFAULT_SETTINGS = {
     ...DEFAULT_AI_PROMPTS
 };
 
-export const SETTINGS_SCHEMA_VERSION = 8;
+export const SETTINGS_SCHEMA_VERSION = 9;
 const SETTINGS_SCHEMA_VERSION_KEY = "dictionaryHelperSettingsSchemaVersion";
 
 export const SECRET_SETTING_KEYS = Object.freeze([
@@ -195,7 +195,10 @@ export async function migrateLegacySecretSettings() {
  * built-ins so Translation & Meaning asks for sense-aware target-language
  * glosses. Version 8 enriches built-in Main AI example translations, context
  * meaning translation glosses, and phrase core meaning target-language
- * equivalents; custom templates are left unchanged.
+ * equivalents; custom templates are left unchanged. Version 9 upgrades
+ * matching Main, Context, and Grammar built-ins for structured senses,
+ * substitutions, and syntactic slots, and seeds Compare / Rephrase /
+ * Section Regen templates.
  */
 export async function migrateSettingsSchema() {
     const syncData = await chrome.storage.sync.get([
@@ -204,7 +207,10 @@ export async function migrateSettingsSchema() {
         "aiPromptTemplate",
         "aiContextPromptTemplate",
         "aiGrammarPromptTemplate",
-        "aiPhraseExplorerPromptTemplate"
+        "aiPhraseExplorerPromptTemplate",
+        "aiComparePromptTemplate",
+        "aiRephrasePromptTemplate",
+        "aiSectionRegenPromptTemplate"
     ]);
     const currentVersion = Number(syncData?.[SETTINGS_SCHEMA_VERSION_KEY] || 0);
 
@@ -229,7 +235,7 @@ export async function migrateSettingsSchema() {
         ]);
     }
 
-    if (currentVersion < 8) {
+    if (currentVersion < 9) {
         Object.assign(updates, getLegacyDefaultPromptUpdates(syncData));
     }
 
@@ -342,6 +348,9 @@ export function normalizeSettings(settings) {
         "aiGrammarPromptTemplate",
         "aiSentencePromptTemplate",
         "aiPhraseExplorerPromptTemplate",
+        "aiComparePromptTemplate",
+        "aiRephrasePromptTemplate",
+        "aiSectionRegenPromptTemplate",
         "selectionTriggerMode",
         "postSelectionModifier",
         "pronunciationVoiceURI",
@@ -361,8 +370,8 @@ export function normalizeSettings(settings) {
         normalized.fontFamily = "editorial";
     }
 
-    normalized.popupWidth = clampNumber(normalized.popupWidth, 320, 840, 500);
-    normalized.popupHeight = clampNumber(normalized.popupHeight, 360, 900, 600);
+    normalized.popupWidth = clampNumber(normalized.popupWidth, 320, 1000, 620);
+    normalized.popupHeight = clampNumber(normalized.popupHeight, 360, 1000, 720);
     normalized.pronunciationRate = clampFloat(normalized.pronunciationRate, 0.5, 1.5, 0.95);
     normalized.customLanguages = normalizeCustomLanguages(normalized.customLanguages);
     normalized.translateTargetLanguage = resolveLanguageName(
@@ -418,6 +427,18 @@ export function normalizeSettings(settings) {
 
     if (!normalized.aiPhraseExplorerPromptTemplate) {
         normalized.aiPhraseExplorerPromptTemplate = DEFAULT_SETTINGS.aiPhraseExplorerPromptTemplate;
+    }
+
+    if (!normalized.aiComparePromptTemplate) {
+        normalized.aiComparePromptTemplate = DEFAULT_SETTINGS.aiComparePromptTemplate;
+    }
+
+    if (!normalized.aiRephrasePromptTemplate) {
+        normalized.aiRephrasePromptTemplate = DEFAULT_SETTINGS.aiRephrasePromptTemplate;
+    }
+
+    if (!normalized.aiSectionRegenPromptTemplate) {
+        normalized.aiSectionRegenPromptTemplate = DEFAULT_SETTINGS.aiSectionRegenPromptTemplate;
     }
 
     return normalized;

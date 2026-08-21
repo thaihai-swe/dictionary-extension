@@ -9,12 +9,13 @@ if (window.__dictionaryHelperContentInitialized) {
     const lookupModule = shared.lookup || {};
     const TAB_ORDER = shared.TAB_ORDER;
     const DEFAULT_UI_SETTINGS = shared.DEFAULT_UI_SETTINGS;
-    const getRenderOptions = () => ({
+    const getRenderOptions = (extra = {}) => ({
         prefix: "dictionary-helper",
         titleTag: "h3",
         sectionTitleTag: "h4",
         pronunciationRate: settings?.pronunciationRate ?? 0.95,
-        pronunciationVoiceURI: settings?.pronunciationVoiceURI ?? ""
+        pronunciationVoiceURI: settings?.pronunciationVoiceURI ?? "",
+        followUps: extra.followUps || (activeTab === "ai" ? activeFollowUps : [])
     });
 
     let popupRoot = null;
@@ -30,6 +31,7 @@ if (window.__dictionaryHelperContentInitialized) {
     let unbindViewportReposition = null;
     let requestToken = 0;
     let lastPreloadKey = "";
+    let activeFollowUps = [];
     let activeRequestId = "";
     let isPointerSelecting = false;
     let currentSelectionSnapshot = null;
@@ -487,6 +489,21 @@ if (window.__dictionaryHelperContentInitialized) {
         popupRoot.querySelector(".dictionary-helper-body").addEventListener("click", (event) => {
             audio.handlePronunciationClick(event);
 
+            const regenBtn = event.target.closest("[data-regen-section]");
+            if (regenBtn) {
+                event.preventDefault();
+                event.stopPropagation();
+                void regenerateAiSection(regenBtn);
+                return;
+            }
+
+            const rephraseBtn = event.target.closest("[data-rephrase-mode]");
+            if (rephraseBtn) {
+                event.preventDefault();
+                void runRephraseAction(rephraseBtn.dataset.rephraseMode || "simplify");
+                return;
+            }
+
             const phraseBtn = event.target.closest("[data-lookup-query]");
             if (phraseBtn) {
                 const query = String(phraseBtn.dataset.lookupQuery || "").trim();
@@ -685,6 +702,7 @@ if (window.__dictionaryHelperContentInitialized) {
                 <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-grammar" type="button" title="Analyze syntax role, word order, and tone">Grammar &amp; Nuance</button>
                 <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-phrase-explorer" type="button" title="Explore idioms, phrasal verbs, and collocations">Phrase &amp; Collocations</button>
                 <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-sentence" type="button" title="Break down sentence structure and parse components">Sentence Breakdown</button>
+                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-compare" type="button" title="Compare similar or confusable words">Compare Confusables</button>
             </div>
            </div>`
             : "";
@@ -711,7 +729,8 @@ if (window.__dictionaryHelperContentInitialized) {
             popupRoot.querySelector("#dictionary-helper-explain-context"),
             popupRoot.querySelector("#dictionary-helper-explain-grammar"),
             popupRoot.querySelector("#dictionary-helper-explain-phrase-explorer"),
-            popupRoot.querySelector("#dictionary-helper-explain-sentence")
+            popupRoot.querySelector("#dictionary-helper-explain-sentence"),
+            popupRoot.querySelector("#dictionary-helper-explain-compare")
         ].filter(Boolean);
 
         const setContextButtonsDisabled = (disabled) => {
@@ -756,7 +775,7 @@ if (window.__dictionaryHelperContentInitialized) {
                 .then((response) => {
                     if (token !== requestToken || !popupRoot) return;
                     if (!response?.ok) throw new Error(response?.error || "Request failed.");
-                    body.innerHTML = renderer.renderResult(response.result, getRenderOptions());
+                    body.innerHTML = renderer.renderResult(response.result, getRenderOptions({ followUps: [] }));
                 })
                 .catch((error) => {
                     if (token !== requestToken || !popupRoot || error?.name === "AbortError") return;
@@ -817,6 +836,13 @@ if (window.__dictionaryHelperContentInitialized) {
                 }
             });
         });
+
+        popupRoot.querySelector("#dictionary-helper-explain-compare")?.addEventListener("click", () => {
+            runInPageContextAction({
+                intent: "compare_confusables",
+                errorMessage: "Unable to compare these words."
+            });
+        });
     }
 
     function updateContextHelp() {
@@ -849,7 +875,7 @@ if (window.__dictionaryHelperContentInitialized) {
         }
 
         const dimensions = popupShell?.clampDimensions(settings.popupWidth, settings.popupHeight)
-            || { width: 500, height: 600 };
+            || { width: 620, height: 720 };
         popupCard.style.width = `${dimensions.width}px`;
         popupCard.style.maxHeight = `${dimensions.height}px`;
     }
@@ -878,6 +904,10 @@ if (window.__dictionaryHelperContentInitialized) {
             return;
         }
 
+        if (tab !== "ai") {
+            activeFollowUps = [];
+        }
+
         const cacheKey = lookupModule.buildRequestCacheKey(tab, text, settings, {});
         const cached = lookupCache.get(cacheKey);
 
@@ -885,8 +915,14 @@ if (window.__dictionaryHelperContentInitialized) {
             if (cached.requestId) {
                 activeRequestId = cached.requestId;
             }
+            if (tab === "ai") {
+                syncFollowUpState(text, activeContext);
+            }
             body.innerHTML = renderer.renderResult(cached, getRenderOptions());
             audio.restorePracticeResult(body, activeText, cached.pronunciation?.language);
+            if (tab === "ai") {
+                void preloadFollowUpIntents(text, activeContext, token);
+            }
             return;
         }
         body.setAttribute("aria-busy", "true");
@@ -906,8 +942,14 @@ if (window.__dictionaryHelperContentInitialized) {
             if (response.result?.requestId) {
                 activeRequestId = response.result.requestId;
             }
+            if (tab === "ai") {
+                syncFollowUpState(text, activeContext);
+            }
             body.innerHTML = renderer.renderResult(response.result, getRenderOptions());
             audio.restorePracticeResult(body, activeText, response.result?.pronunciation?.language);
+            if (tab === "ai") {
+                void preloadFollowUpIntents(text, activeContext, token);
+            }
         } catch (error) {
             if (isExtensionContextInvalidated(error)) {
                 handleExtensionContextError(error);
@@ -917,7 +959,7 @@ if (window.__dictionaryHelperContentInitialized) {
                 return;
             }
 
-            if (token !== requestToken || !popupRoot) {
+            if (token !== requestToken || !popupRoot || error?.name === "AbortError" || String(error?.message || "").includes("aborted")) {
                 return;
             }
 
@@ -925,6 +967,176 @@ if (window.__dictionaryHelperContentInitialized) {
         } finally {
             if (token === requestToken && popupRoot) {
                 body.setAttribute("aria-busy", "false");
+            }
+        }
+    }
+
+    function syncFollowUpState(text, context) {
+        if (!settings.enableAiPreload || !settings.enableAI) {
+            activeFollowUps = [];
+            return;
+        }
+
+        const eligible = popupHelpers.getEligibleFollowUpIntents({ text, context });
+        activeFollowUps = eligible.map((item) => {
+            const cacheKey = lookupModule.buildRequestCacheKey("ai", text, settings, {
+                context,
+                intent: item.intent
+            });
+            const cached = lookupCache.get(cacheKey);
+            return {
+                ...item,
+                result: cached || null,
+                loading: !cached,
+                error: ""
+            };
+        });
+    }
+
+    function patchActiveFollowUps() {
+        if (!popupRoot || activeTab !== "ai") {
+            return;
+        }
+        const body = popupRoot.querySelector(".dictionary-helper-body");
+        renderer.patchFollowUpCards(body, activeFollowUps, getRenderOptions());
+    }
+
+    async function preloadFollowUpIntents(text, context, token = requestToken) {
+        if (!settings.enableAiPreload || !settings.enableAI) {
+            return;
+        }
+
+        const query = String(text || "").trim();
+        if (!query) {
+            return;
+        }
+
+        syncFollowUpState(query, context);
+        if (!activeFollowUps.length) {
+            return;
+        }
+
+        if (token === requestToken && activeTab === "ai") {
+            patchActiveFollowUps();
+        }
+
+        for (const item of activeFollowUps) {
+            if (token !== requestToken) {
+                return;
+            }
+            if (item.result) {
+                continue;
+            }
+
+            try {
+                const response = await getLookupResponse("ai", query, {
+                    context,
+                    intent: item.intent
+                });
+                if (token !== requestToken) {
+                    return;
+                }
+                const target = activeFollowUps.find((entry) => entry.intent === item.intent);
+                if (!target) {
+                    continue;
+                }
+                if (response?.ok && response.result) {
+                    target.result = response.result;
+                    target.loading = false;
+                    target.error = "";
+                } else {
+                    target.loading = false;
+                    target.error = response?.error || item.errorMessage;
+                }
+            } catch (error) {
+                if (token !== requestToken) {
+                    return;
+                }
+                const target = activeFollowUps.find((entry) => entry.intent === item.intent);
+                if (target) {
+                    target.loading = false;
+                    target.error = error?.message || item.errorMessage;
+                }
+            }
+
+            if (token === requestToken && activeTab === "ai") {
+                patchActiveFollowUps();
+            }
+        }
+    }
+
+    async function regenerateAiSection(button) {
+        const kind = String(button?.dataset?.regenSection || "").trim();
+        const title = String(button?.dataset?.regenTitle || kind).trim();
+        const query = activeText.trim();
+        if (!kind || !query || !settings?.enableAI) {
+            return;
+        }
+        const sectionEl = button.closest("[data-section-kind]");
+        const bodyEl = sectionEl?.querySelector(".dictionary-helper-section-body")
+            || sectionEl;
+        if (bodyEl) {
+            bodyEl.innerHTML = `<div class="dictionary-helper-state is-loading-shimmer"></div>`;
+        }
+        try {
+            const response = await getLookupResponse("ai", query, {
+                context: activeContext,
+                intent: "section_regen",
+                sectionKind: kind,
+                sectionTitle: title
+            });
+            if (!response?.ok || !response.result) {
+                throw new Error(response?.error || "Unable to regenerate section.");
+            }
+            const html = renderer.renderResult(response.result, getRenderOptions({ followUps: [] }));
+            const temp = document.createElement("div");
+            temp.innerHTML = html;
+            const replacement = temp.querySelector(`[data-section-kind="${kind}"]`) || temp.querySelector(".dictionary-helper-result");
+            if (sectionEl && replacement) {
+                sectionEl.replaceWith(replacement);
+            } else if (bodyEl) {
+                bodyEl.innerHTML = replacement?.innerHTML || renderer.escapeHtml(response.result.sections?.[0]?.text || "Updated.");
+            }
+        } catch (error) {
+            if (bodyEl) {
+                bodyEl.innerHTML = `<p class="dictionary-helper-section-paragraph"><small class="dictionary-helper-inline-meta">${renderer.escapeHtml(error.message || "Unable to regenerate section.")}</small></p>`;
+            }
+        }
+    }
+
+    async function runRephraseAction(mode) {
+        const query = activeText.trim();
+        if (!query || !settings?.enableAI) {
+            return;
+        }
+        const body = popupRoot?.querySelector(".dictionary-helper-body");
+        requestToken += 1;
+        const token = requestToken;
+        if (body) {
+            body.setAttribute("aria-busy", "true");
+            body.innerHTML = renderer.renderSkeleton("dictionary-helper");
+        }
+        try {
+            const response = await getLookupResponse("ai", query, {
+                context: activeContext,
+                intent: "rephrase",
+                rephraseMode: mode
+            });
+            if (token !== requestToken || !popupRoot) {
+                return;
+            }
+            if (!response?.ok) {
+                throw new Error(response?.error || "Unable to rephrase.");
+            }
+            body.innerHTML = renderer.renderResult(response.result, getRenderOptions({ followUps: [] }));
+        } catch (error) {
+            if (token !== requestToken || !popupRoot || error?.name === "AbortError") {
+                return;
+            }
+            body.innerHTML = `<div class="dictionary-helper-state is-error"><strong>Unable to rephrase</strong><span>${renderer.escapeHtml(error.message || "Request failed.")}</span></div>`;
+        } finally {
+            if (token === requestToken && popupRoot) {
+                body?.setAttribute("aria-busy", "false");
             }
         }
     }
@@ -944,9 +1156,11 @@ if (window.__dictionaryHelperContentInitialized) {
         }
 
         lastPreloadKey = preloadKey;
-        void getLookupResponse("ai", normalizedQuery).catch(() => {
-            // Keep preload failures silent until the user opens the AI tab.
-        });
+        void getLookupResponse("ai", normalizedQuery)
+            .then(() => preloadFollowUpIntents(normalizedQuery, activeContext, requestToken))
+            .catch(() => {
+                // Keep preload failures silent until the user opens the AI tab.
+            });
     }
 
     async function getLookupResponse(tab, text, requestOptions = {}) {
@@ -961,8 +1175,8 @@ if (window.__dictionaryHelperContentInitialized) {
 
     function getPopupPosition(rect, event) {
         const popupSize = {
-            width: settings.popupWidth || 720,
-            height: settings.popupHeight || 1080
+            width: settings.popupWidth || 620,
+            height: settings.popupHeight || 720
         };
         return shared.positioning.computePopupPosition({
             selectionRect: rect,
@@ -990,8 +1204,8 @@ if (window.__dictionaryHelperContentInitialized) {
             unbindViewportReposition = shared.positioning.bindViewportReposition(popupCard, () => ({
                 selectionRect: currentSelectionRect,
                 popupSize: {
-                    width: settings.popupWidth || 500,
-                    height: settings.popupHeight || 600
+                    width: settings.popupWidth || 620,
+                    height: settings.popupHeight || 720
                 },
                 useFixed: shouldUseFixedPopup(),
                 margin: 12,

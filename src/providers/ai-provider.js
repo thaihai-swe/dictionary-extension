@@ -1,11 +1,14 @@
 import { generateGeminiText } from "./gemini.js";
 import { fetchWithRetry } from "../shared/fetch-utils.js";
 import {
+    DEFAULT_AI_COMPARE_PROMPT_TEMPLATE,
     DEFAULT_AI_CONTEXT_PROMPT_TEMPLATE,
     DEFAULT_AI_GRAMMAR_PROMPT_TEMPLATE,
     DEFAULT_AI_PHRASE_EXPLORER_PROMPT_TEMPLATE,
     DEFAULT_AI_PHRASE_FALLBACK_PROMPT_TEMPLATE,
     DEFAULT_AI_PROMPT_TEMPLATE,
+    DEFAULT_AI_REPHRASE_PROMPT_TEMPLATE,
+    DEFAULT_AI_SECTION_REGEN_PROMPT_TEMPLATE,
     DEFAULT_AI_SENTENCE_PROMPT_TEMPLATE,
     AI_INTENTS,
     PROFILE_SECTION_TITLES,
@@ -13,11 +16,14 @@ import {
 } from "../shared/ai-prompts.js";
 import {
     classifyQuery,
+    buildComparisonSections,
     buildSentenceBreakdownSections,
     extractJsonObject,
+    normalizeComparisonData,
     normalizeContext,
     normalizeAiMarkdown,
     normalizeSentenceBreakdown,
+    parseSenseMatrix,
     splitMarkdownIntoSections,
     parseLexicalProfile
 } from "../shared/query-utils.js";
@@ -87,7 +93,11 @@ export async function lookupAiProvider(text, settings, options = {}) {
     const intent = AI_INTENTS.includes(options.intent)
         ? options.intent
         : "default";
-    const prompt = buildPrompt(text, settings, context, intent);
+    const prompt = buildPrompt(text, settings, context, intent, {
+        sectionTitle: options.sectionTitle,
+        sectionKind: options.sectionKind,
+        rephraseMode: options.rephraseMode
+    });
 
     const providerResult = isGeminiBaseUrl(settings.aiBaseUrl)
         ? await requestGeminiViaHelper(prompt, settings, options.signal)
@@ -106,6 +116,10 @@ export async function lookupAiProvider(text, settings, options = {}) {
                     ? "AI · Phrase & Collocations"
                 : intent === "sentence_breakdown"
                     ? "AI · Sentence Breakdown"
+                : intent === "compare_confusables"
+                    ? "AI · Compare Confusables"
+                : intent === "rephrase"
+                    ? "AI · Rephrase"
                     : "";
 
     const sections = [];
@@ -131,7 +145,20 @@ export async function lookupAiProvider(text, settings, options = {}) {
         }
     }
 
-    if (["explain_in_context", "grammar", "sentence_breakdown", "phrase_explorer"].includes(intent) && context) {
+    if (intent === "compare_confusables") {
+        const compareData = normalizeComparisonData(rawContent, { text, context });
+        if (compareData.table.length || compareData.coreDistinction) {
+            return {
+                title: "",
+                subtitle: "Confusable words side-by-side comparison",
+                sourceBadges: [{ label: sourceBadgeLabel, kind: "ai" }],
+                presentation: { surface: "ai", intent },
+                sections: buildComparisonSections(compareData, { text, context })
+            };
+        }
+    }
+
+    if (["explain_in_context", "grammar", "sentence_breakdown", "phrase_explorer", "compare_confusables"].includes(intent) && context) {
         sections.push({
             title: "Context used",
             kind: "context",
@@ -140,18 +167,36 @@ export async function lookupAiProvider(text, settings, options = {}) {
         });
     }
 
-        const fallbackKind = intent === "grammar"
-            ? "grammar"
-            : intent === "phrase_explorer" || intent === "phrase_fallback"
-                ? "phrase"
-            : intent === "sentence_breakdown"
-                ? "sentence-structure"
-                : "ai";
+    const fallbackKind = intent === "grammar"
+        ? "grammar"
+        : intent === "phrase_explorer" || intent === "phrase_fallback"
+            ? "phrase"
+        : intent === "sentence_breakdown"
+            ? "sentence-structure"
+        : intent === "compare_confusables"
+            ? "compare-distinction"
+        : intent === "rephrase"
+            ? "rephrase-simple"
+            : "ai";
 
     const contentSections = splitMarkdownIntoSections(content || "No AI response returned.", {
         fallbackKind,
         intent
     });
+
+    // Detect structured sense matrix in default AI responses
+    if (intent === "default") {
+        for (const sec of contentSections) {
+            const titleLower = String(sec.title || "").toLowerCase();
+            if (titleLower.includes("sense") || titleLower.includes("meanings")) {
+                const senses = parseSenseMatrix(sec.text, { preferContext: Boolean(context) });
+                if (senses.length) {
+                    sec.kind = "senses";
+                    sec.data = { senses };
+                }
+            }
+        }
+    }
 
     const focusedSections = compactAiIntentSections(contentSections, intent);
     const dedupedSections = dedupeMarkdownSectionsAgainstProfile(focusedSections, lexicalProfile);
@@ -168,6 +213,10 @@ export async function lookupAiProvider(text, settings, options = {}) {
                     ? "Idioms, phrasal verbs, collocations, and preposition patterns"
                 : intent === "sentence_breakdown"
                     ? "Sentence breakdown returned in Markdown format"
+                : intent === "compare_confusables"
+                    ? "Side-by-side comparison of confusable words"
+                : intent === "rephrase"
+                    ? "Alternative phrasing styles for this sentence"
                     : `${queryType.charAt(0).toUpperCase()}${queryType.slice(1)} explanation`,
         sourceBadges: [{ label: sourceBadgeLabel, kind: "ai" }],
         presentation: { surface: "ai", intent },
@@ -313,7 +362,7 @@ function parseLexicalProfileFromResponse(text) {
     return parseLexicalProfile(inner);
 }
 
-function buildPrompt(text, settings, context, intent) {
+function buildPrompt(text, settings, context, intent, extras = {}) {
     const variables = {
         text,
         str: text,
@@ -321,7 +370,10 @@ function buildPrompt(text, settings, context, intent) {
         context: context || "",
         word_count: countWords(text),
         targetLang: settings.translateTargetLanguage || "en",
-        enableLexicalProfile: shouldRequestLexicalProfile(intent, settings.enableLexicalProfile)
+        enableLexicalProfile: shouldRequestLexicalProfile(intent, settings.enableLexicalProfile),
+        sectionTitle: extras.sectionTitle || "",
+        sectionKind: extras.sectionKind || "",
+        rephraseMode: extras.rephraseMode || ""
     };
 
     const finalize = (template) => appendInputContract(applyTemplate(template, variables), variables);
@@ -362,6 +414,30 @@ function buildPrompt(text, settings, context, intent) {
         const template = settings.aiPhraseExplorerPromptTemplate && settings.aiPhraseExplorerPromptTemplate.trim()
             ? settings.aiPhraseExplorerPromptTemplate
             : DEFAULT_AI_PHRASE_EXPLORER_PROMPT_TEMPLATE;
+
+        return finalize(template);
+    }
+
+    if (intent === "compare_confusables") {
+        const template = settings.aiComparePromptTemplate && settings.aiComparePromptTemplate.trim()
+            ? settings.aiComparePromptTemplate
+            : DEFAULT_AI_COMPARE_PROMPT_TEMPLATE;
+
+        return finalize(template);
+    }
+
+    if (intent === "rephrase") {
+        const template = settings.aiRephrasePromptTemplate && settings.aiRephrasePromptTemplate.trim()
+            ? settings.aiRephrasePromptTemplate
+            : DEFAULT_AI_REPHRASE_PROMPT_TEMPLATE;
+
+        return finalize(template);
+    }
+
+    if (intent === "section_regen") {
+        const template = settings.aiSectionRegenPromptTemplate && settings.aiSectionRegenPromptTemplate.trim()
+            ? settings.aiSectionRegenPromptTemplate
+            : DEFAULT_AI_SECTION_REGEN_PROMPT_TEMPLATE;
 
         return finalize(template);
     }

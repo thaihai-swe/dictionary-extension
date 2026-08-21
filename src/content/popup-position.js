@@ -29,8 +29,8 @@
     /** Returns document or visual-viewport coordinates suitable for the card. */
     function computePopupPosition(options = {}) {
         const margin = Number.isFinite(options.margin) ? options.margin : DEFAULT_MARGIN;
-        const popupWidth = Math.max(320, Number(options.popupSize?.width) || 500);
-        const preferredHeight = Math.max(MIN_HEIGHT, Number(options.popupSize?.height) || 600);
+        const popupWidth = Math.max(320, Number(options.popupSize?.width) || 620);
+        const preferredHeight = Math.max(MIN_HEIGHT, Number(options.popupSize?.height) || 720);
         const useFixed = Boolean(options.useFixed);
         const viewport = getViewport(options.viewport, useFixed);
         const rect = options.selectionRect;
@@ -114,7 +114,7 @@
         const viewHeight = visual?.height || (typeof window !== "undefined" ? window.innerHeight : 600);
         const offsetLeft = visual?.offsetLeft || 0;
         const offsetTop = visual?.offsetTop || 0;
-        const width = Math.min(Number(settings.popupWidth) || 500, Math.max(320, viewWidth - DEFAULT_MARGIN * 2));
+        const width = Math.min(Number(settings.popupWidth) || 620, Math.max(320, viewWidth - DEFAULT_MARGIN * 2));
 
         popupCard.classList.toggle("is-fixed-overlay", useFixed);
         popupCard.style.transformOrigin = `${position.anchor === "above" ? "bottom" : "top"} ${position.horizontalAnchor === "right" ? "right" : "left"}`;

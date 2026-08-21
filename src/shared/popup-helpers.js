@@ -172,12 +172,103 @@
         "aiGrammarPromptTemplate",
         "aiSentencePromptTemplate",
         "aiPhraseExplorerPromptTemplate",
+        "aiComparePromptTemplate",
+        "aiRephrasePromptTemplate",
+        "aiSectionRegenPromptTemplate",
         "enableLexicalProfile",
         "pronunciationRate",
         "pronunciationVoiceURI"
     ]);
 
     const LAST_TAB_SESSION_KEY = "dictionaryHelperLastTab";
+
+    const FOLLOW_UP_INTENTS = Object.freeze([
+        {
+            intent: "explain_in_context",
+            title: "Context Explain",
+            loadingMessage: "Explaining in context...",
+            errorMessage: "Unable to explain in context.",
+            requiresContext: true,
+            requiresSentence: false
+        },
+        {
+            intent: "grammar",
+            title: "Grammar & Nuance",
+            loadingMessage: "Analyzing grammar and nuance...",
+            errorMessage: "Unable to analyze grammar.",
+            requiresContext: true,
+            requiresSentence: false
+        },
+        {
+            intent: "phrase_explorer",
+            title: "Phrase & Collocations",
+            loadingMessage: "Exploring phrase and collocations...",
+            errorMessage: "Unable to explore this phrase.",
+            requiresContext: false,
+            requiresSentence: false
+        },
+        {
+            intent: "sentence_breakdown",
+            title: "Sentence Breakdown",
+            loadingMessage: "Breaking down the sentence...",
+            errorMessage: "Unable to break down the sentence.",
+            requiresContext: false,
+            requiresSentence: true
+        },
+        {
+            intent: "compare_confusables",
+            title: "Compare Confusables",
+            loadingMessage: "Comparing similar words...",
+            errorMessage: "Unable to compare these words.",
+            requiresContext: false,
+            requiresSentence: false,
+            requiresComparison: true
+        }
+    ]);
+
+    const REPHRASE_MODES = Object.freeze([
+        { mode: "simplify", label: "Simplify" },
+        { mode: "formal", label: "Make Formal" },
+        { mode: "idiomatic", label: "Native Idiom" }
+    ]);
+
+    function isSentenceLikeQuery(value) {
+        const text = String(value || "").trim();
+        return /[.!?]/.test(text) || text.split(/\s+/).filter(Boolean).length >= 7;
+    }
+
+    function isComparisonQuery(value) {
+        const text = String(value || "").trim();
+        if (!text) {
+            return false;
+        }
+        return /\b(?:vs\.?|versus|or|and)\b/i.test(text) && text.split(/\s+/).filter(Boolean).length >= 2;
+    }
+
+    function getEligibleFollowUpIntents({ text, context } = {}) {
+        const query = String(text || "").trim();
+        const normalizedContext = normalizeContext(context);
+        const hasContext = Boolean(normalizedContext);
+        const hasSentence = hasContext || isSentenceLikeQuery(query);
+        const hasComparison = isComparisonQuery(query);
+
+        if (!query) {
+            return [];
+        }
+
+        return FOLLOW_UP_INTENTS.filter((item) => {
+            if (item.requiresContext && !hasContext) {
+                return false;
+            }
+            if (item.requiresSentence && !hasSentence) {
+                return false;
+            }
+            if (item.requiresComparison && !hasComparison) {
+                return false;
+            }
+            return true;
+        });
+    }
 
     async function readLastTab() {
         if (!global.chrome?.storage?.session) {
@@ -211,6 +302,8 @@
         MAX_CONTEXT_CHARS,
         LAST_TAB_SESSION_KEY,
         OUTPUT_AFFECTING_SETTING_KEYS,
+        FOLLOW_UP_INTENTS,
+        REPHRASE_MODES,
         classifyQuery,
         normalizeContext,
         escapeRegExp,
@@ -222,6 +315,9 @@
         rankSentenceCandidates,
         validateContext,
         autosizeTextarea,
+        isSentenceLikeQuery,
+        isComparisonQuery,
+        getEligibleFollowUpIntents,
         readLastTab,
         writeLastTab
     };

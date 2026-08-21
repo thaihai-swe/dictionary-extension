@@ -76,6 +76,42 @@ function inferSectionKind(title = "", fallback = "general") {
         return "contextual-analysis";
     }
 
+    if (normalized.includes("distinct") || normalized.includes("rule of thumb")) {
+        return "compare-distinction";
+    }
+
+    if (normalized.includes("comparison") || normalized.includes("matrix")) {
+        return "compare-matrix";
+    }
+
+    if (normalized.includes("substitution")) {
+        return "substitutions";
+    }
+
+    if (normalized.includes("nuance") || normalized.includes("connotation")) {
+        return "nuance";
+    }
+
+    if (normalized.includes("syntactic") || normalized.includes("syntax")) {
+        return "syntax";
+    }
+
+    if (normalized.includes("simplified") || normalized.includes("simple version")) {
+        return "rephrase-simple";
+    }
+
+    if (normalized.includes("academic") || normalized.includes("formal")) {
+        return "rephrase-formal";
+    }
+
+    if (normalized.includes("native") || normalized.includes("idiomatic")) {
+        return "rephrase-idiomatic";
+    }
+
+    if (normalized.includes("sense")) {
+        return "senses";
+    }
+
     if (normalized.includes("summary for learner") || normalized.includes("learner takeaway")) {
         return "summary";
     }
@@ -489,6 +525,195 @@ export function buildSentenceBreakdownSections(breakdown, options = {}) {
     return sections;
 }
 
+const MAX_SENSES = 6;
+const MAX_COMPARE_ROWS = 6;
+const MAX_MINIMAL_PAIRS = 4;
+const SENSE_LINE_RE = /^\s*(?:\d+[.)]|[-*•])\s*(?:\*\(([^)]+)\)\*|[\*(]([^)]+)[\*)])?\s*(.+)$/;
+
+export function parseSenseMatrix(content, options = {}) {
+    const text = String(content || "").trim();
+    if (!text) {
+        return [];
+    }
+
+    const json = extractJsonObject(text);
+    if (Array.isArray(json?.senses) && json.senses.length) {
+        return json.senses
+            .map((item, index) => normalizeSenseEntry(item, index + 1))
+            .filter(Boolean)
+            .slice(0, MAX_SENSES);
+    }
+
+    const senses = [];
+    for (const rawLine of text.split("\n")) {
+        const line = rawLine.trim();
+        if (!line) {
+            continue;
+        }
+        const match = line.match(SENSE_LINE_RE);
+        if (!match) {
+            continue;
+        }
+        const pos = String(match[1] || match[2] || "").trim();
+        const rest = String(match[3] || "").trim();
+        if (!rest) {
+            continue;
+        }
+        const inContext = /\*\*in context\*\*|\bin context\b/i.test(rest);
+        const cleaned = rest.replace(/\s*\*?\*?in context\*?\*?\s*$/i, "").trim();
+        const split = cleaned.split(/\s+[—–-]\s+/);
+        const definition = String(split[0] || "").replace(/^\*\([^*]+\)\*\s*/, "").trim();
+        const gloss = String(split.slice(1).join(" — ") || "").trim();
+        if (!definition) {
+            continue;
+        }
+        senses.push({
+            number: senses.length + 1,
+            pos,
+            definition,
+            gloss,
+            inContext
+        });
+        if (senses.length >= MAX_SENSES) {
+            break;
+        }
+    }
+
+    if (senses.length && options.preferContext && !senses.some((item) => item.inContext)) {
+        senses[0].inContext = true;
+    }
+
+    return senses;
+}
+
+function normalizeSenseEntry(item, fallbackNumber) {
+    const definition = compactSentenceField(item?.definition || item?.meaning || item?.glossEn || "");
+    if (!definition) {
+        return null;
+    }
+    return {
+        number: Number(item?.number) || fallbackNumber,
+        pos: compactSentenceField(item?.pos || item?.partOfSpeech || ""),
+        definition,
+        gloss: compactSentenceField(item?.gloss || item?.translation || ""),
+        inContext: Boolean(item?.inContext)
+    };
+}
+
+export function normalizeComparisonData(content, options = {}) {
+    const text = String(content || "").trim();
+    const json = extractJsonObject(text);
+    if (json && typeof json === "object" && (json.terms || json.coreDistinction || json.table)) {
+        return {
+            terms: Array.isArray(json.terms)
+                ? json.terms.map((term) => compactSentenceField(term)).filter(Boolean).slice(0, 4)
+                : parseComparisonTerms(options.text),
+            coreDistinction: compactSentenceField(json.coreDistinction || json.distinction || ""),
+            table: Array.isArray(json.table)
+                ? json.table
+                    .map((row) => ({
+                        feature: compactSentenceField(row?.feature || row?.dimension || ""),
+                        termA: compactSentenceField(row?.termA || row?.left || ""),
+                        termB: compactSentenceField(row?.termB || row?.right || "")
+                    }))
+                    .filter((row) => row.feature && (row.termA || row.termB))
+                    .slice(0, MAX_COMPARE_ROWS)
+                : [],
+            collocations: Array.isArray(json.collocations)
+                ? json.collocations.map((item) => compactSentenceField(item)).filter(Boolean).slice(0, 8)
+                : [],
+            minimalPairs: Array.isArray(json.minimalPairs)
+                ? json.minimalPairs
+                    .map((pair) => ({
+                        sentenceA: compactSentenceField(pair?.sentenceA || pair?.left || ""),
+                        sentenceB: compactSentenceField(pair?.sentenceB || pair?.right || ""),
+                        explanation: compactSentenceField(pair?.explanation || "")
+                    }))
+                    .filter((pair) => pair.sentenceA || pair.sentenceB)
+                    .slice(0, MAX_MINIMAL_PAIRS)
+                : []
+        };
+    }
+
+    return {
+        terms: parseComparisonTerms(options.text),
+        coreDistinction: "",
+        table: [],
+        collocations: [],
+        minimalPairs: []
+    };
+}
+
+function parseComparisonTerms(value) {
+    const text = String(value || "").trim();
+    if (!text) {
+        return [];
+    }
+    return text
+        .split(/\s+(?:vs\.?|versus|or|and)\s+/i)
+        .map((part) => part.replace(/[?!.]+$/g, "").trim())
+        .filter(Boolean)
+        .slice(0, 4);
+}
+
+export function buildComparisonSections(compareData, options = {}) {
+    const sections = [];
+    const context = String(options.context || "").trim();
+    if (context) {
+        sections.push({
+            title: "Context used",
+            kind: "context",
+            text: `> ${context}`,
+            markdown: true
+        });
+    }
+
+    if (compareData.coreDistinction) {
+        sections.push({
+            title: "Core Distinction",
+            kind: "compare-distinction",
+            text: compareData.coreDistinction
+        });
+    }
+
+    if (compareData.table.length) {
+        sections.push({
+            title: "Comparison Matrix",
+            kind: "compare-matrix",
+            text: "",
+            data: {
+                terms: compareData.terms,
+                rows: compareData.table
+            }
+        });
+    }
+
+    if (compareData.collocations.length) {
+        sections.push({
+            title: "Collocation Divergence",
+            kind: "collocations",
+            items: compareData.collocations
+        });
+    }
+
+    if (compareData.minimalPairs.length) {
+        sections.push({
+            title: "Minimal Pairs & Examples",
+            kind: "examples",
+            text: "",
+            data: {
+                pairs: compareData.minimalPairs
+            }
+        });
+    }
+
+    return sections;
+}
+
+export function extractBlockquoteText(markdown) {
+    const match = String(markdown || "").match(/^>\s?(.+)$/m);
+    return match ? match[1].trim() : "";
+}
 
 const LEMMA_STOPWORDS = new Set([
     "is", "was", "has", "his", "its", "this", "thus", "yes", "news", "series", "species", "corpus", "chaos", "bias", "alias", "lens", "bus"

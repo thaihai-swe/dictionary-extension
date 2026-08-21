@@ -155,16 +155,19 @@ Check L2 Session Storage (chrome.storage.session with "enrich_" prefix)
 
 ## AI Multi-Intent Pipeline & Structured Output
 
-The AI subsystem (`src/providers/ai-provider.js`) provides generative explanations, grammatical analysis, and sentence decomposition through 6 specialized intents:
+The AI subsystem (`src/providers/ai-provider.js`) provides generative explanations, grammatical analysis, and sentence decomposition through specialized intents:
 
 | Intent | Action / Role | Prompt Template Setting | Output Format | Lexical Profile Requested |
 |---|---|---|---|---|
-| `default` | Main AI tab explanation | `aiPromptTemplate` | Semantic Markdown (`###` sections) | Yes |
-| `explain_in_context` | Context Explain | `aiContextPromptTemplate` | Focused contextual Markdown | No |
+| `default` | Main AI tab explanation | `aiPromptTemplate` | Semantic Markdown plus parsed sense cards | Yes |
+| `explain_in_context` | Context Explain | `aiContextPromptTemplate` | Meaning, substitutions, nuance Markdown | No |
 | `grammar` | Grammar & Nuance | `aiGrammarPromptTemplate` | Syntax, register, and tone Markdown | Yes |
 | `phrase_explorer` | Phrase & Collocations | `aiPhraseExplorerPromptTemplate` | Idiom & collocation Markdown | Yes |
 | `sentence_breakdown` | Sentence Breakdown | `aiSentencePromptTemplate` | Structured JSON (`data` object) | No |
 | `phrase_fallback` | Automatic phrase fallback | Built-in fallback template | Concise Markdown explanation | No |
+| `compare_confusables` | Compare Confusables | `aiComparePromptTemplate` | Distinction, matrix, minimal pairs | No |
+| `rephrase` | Rephrase toolbar | `aiRephrasePromptTemplate` | Three stylistic rewrites | No |
+| `section_regen` | Single-section refresh | `aiSectionRegenPromptTemplate` | Body-only Markdown for one section | No |
 
 ### AI Request Pipeline
 
@@ -383,7 +386,7 @@ Both popup surfaces share a unified visual architecture called **"Calm Learning 
   - **Editorial Display Font:** Warm serif styling for term headers, definitions, and AI explanations.
   - **Learner Font Mode (`data-font="learner"`):** Locally bundled Atkinson Hyperlegible font across all controls, definitions, and examples to eliminate character ambiguity for ESL learners.
   - **Monospace Font:** Clean tokenized code presentation.
-- **Shared Popup Shell (`src/ui/popup-shell.js`):** Generates consistent semantic markup across toolbar and in-page popups, enforcing dimension constraints (width: 320–840px, height: 360–900px).
+- **Shared Popup Shell (`src/ui/popup-shell.js`):** Generates consistent semantic markup across toolbar and in-page popups, enforcing dimension constraints (width: 320–1000px, height: 360–1000px).
 - **Interactive States & Skeletons:**
   - `Renderer.renderSkeleton()` emits accessible multi-tier loading placeholders while maintaining `aria-busy="true"`.
   - Exit transitions run a crisp 120ms animation on manual close while replacement by a new selection remains instant.

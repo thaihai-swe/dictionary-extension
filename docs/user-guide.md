@@ -164,15 +164,23 @@ Switch to the **AI** tab for deep generative explanations powered by Google Gemi
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-### The 5 Specialized AI Actions
+### Specialized AI Actions
 
 | Action | Intent | Purpose & Output Structure | Context Requirement |
 |---|---|---|---|
-| **Main AI Explanation** | `default` | Oxford Learner-style definition, sense-aware translation glosses, concise usage notes, bilingual example sentences, and collapsible etymology/deep-dive sections. | Optional |
-| **Context Explain** | `explain_in_context` | Focuses strictly on how the word functions within your specific sentence, providing precise in-context meaning and natural paraphrases. | **Required** |
-| **Grammar & Nuance** | `grammar` | Analyzes syntactic function, clause structure, register, tone, and common grammatical learner pitfalls. | **Required** |
+| **Main AI Explanation** | `default` | Oxford Learner-style definition, numbered **Senses & Meanings** cards, sense-aware translation glosses, usage notes, bilingual examples, and collapsible etymology. | Optional |
+| **Context Explain** | `explain_in_context` | In-sentence meaning, direct substitutions that keep the same syntax, nuance/connotation loss notes, and natural paraphrases. | **Required** |
+| **Grammar & Nuance** | `grammar` | Syntactic slot / role analysis, formality and tone, pattern rules, and short examples. | **Required** |
 | **Phrase & Collocations** | `phrase_explorer` | Deconstructs idioms, phrasal verbs, prepositional dependencies, and collocation patterns with natural example sentences. | Optional |
 | **Sentence Breakdown** | `sentence_breakdown` | Structural JSON analysis decomposing clauses, grammatical roles, and phrase idioms with one-click interactive lookup chips. | Full sentence query or context sentence |
+| **Compare Confusables** | `compare_confusables` | Side-by-side distinction, comparison matrix, collocation divergence, and minimal-pair sentences. Shown as a follow-up when the query looks like `affect vs effect`. | Optional |
+| **Rephrase** | `rephrase` | Three rewrite styles from the AI result toolbar: Simplify, Make Formal, and Native Idiom. | Optional |
+
+### Result Actions
+
+- **Interactive context tokens:** Words in the **Context used** sentence are clickable and open a nested dictionary lookup.
+- **Listen / Regenerate:** Section headers include Listen (example sentences) and ↻ regenerate for a single section.
+- **Preload progress:** When AI preload is enabled, a compact dot strip shows follow-up section status (pending, loading, ready, error).
 
 ---
 
@@ -209,4 +217,4 @@ Contextual AI actions rely on exact sentence extraction rather than sending broa
 - **Quick Dismissal:** Press `Escape` to close the in-page popup and return focus cleanly to the webpage.
 - **ARIA Standards:** Popup shells implement semantic `role="tablist"`, `aria-selected`, `aria-live="polite"`, and `aria-busy="true"` attributes for screen reader compatibility.
 - **Reduced Motion:** If your operating system has reduced motion enabled, all entrance, exit, and wave animations are suppressed.
-- **Resizable Card:** Drag the resize handle at the bottom right to adjust the width (320px–840px) and height (360px–900px); your preferred dimensions are saved automatically.
+- **Resizable Card:** Drag the resize handle at the bottom right to adjust the width (320px–1000px) and height (360px–1000px); your preferred dimensions are saved automatically.

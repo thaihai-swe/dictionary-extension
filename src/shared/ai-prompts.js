@@ -10,7 +10,10 @@ export const AI_INTENTS = Object.freeze([
     "grammar",
     "phrase_fallback",
     "sentence_breakdown",
-    "phrase_explorer"
+    "phrase_explorer",
+    "compare_confusables",
+    "rephrase",
+    "section_regen"
 ]);
 
 /** Intents whose Markdown output is supplemented by lexical-profile cards. */
@@ -45,6 +48,7 @@ function outlineEntry(title, kind, aliases = []) {
 export const AI_SECTION_OUTLINES = Object.freeze({
     default: Object.freeze([
         outlineEntry("", "intro"),
+        outlineEntry("Senses & Meanings", "senses", ["Senses", "Meanings"]),
         outlineEntry("Translation & Meaning", "translation"),
         outlineEntry("Usage Note", "usage"),
         outlineEntry("Example Sentences", "examples"),
@@ -52,11 +56,14 @@ export const AI_SECTION_OUTLINES = Object.freeze({
     ]),
     explain_in_context: Object.freeze([
         outlineEntry("Meaning in Context", "definitions"),
+        outlineEntry("Direct Substitutions", "substitutions", ["Substitutions", "Natural Substitutions"]),
+        outlineEntry("Nuance & Connotation", "nuance", ["Nuance", "Connotation"]),
         outlineEntry("Natural Paraphrases", "examples")
     ]),
     grammar: Object.freeze([
-        outlineEntry("Grammatical Role & Structure", "grammar", ["Grammatical Role", "Sentence Structure"]),
-        outlineEntry("Meaning & Register", "usage", ["Meaning and Register"]),
+        outlineEntry("Syntactic Breakdown", "syntax", ["Syntactic Slots", "Grammatical Role & Structure", "Grammatical Role", "Sentence Structure"]),
+        outlineEntry("Formality & Tone", "usage", ["Meaning & Register", "Meaning and Register"]),
+        outlineEntry("Pattern Rules", "grammar"),
         outlineEntry("Short Examples", "examples")
     ]),
     phrase_explorer: Object.freeze([
@@ -71,7 +78,18 @@ export const AI_SECTION_OUTLINES = Object.freeze({
         outlineEntry("Example", "examples"),
         outlineEntry("Related Expressions", "phrase")
     ]),
-    sentence_breakdown: Object.freeze([])
+    compare_confusables: Object.freeze([
+        outlineEntry("Core Distinction", "compare-distinction", ["Distinction", "Key Distinction", "Rule of Thumb"]),
+        outlineEntry("Comparison Matrix", "compare-matrix", ["Comparison Table", "Feature Comparison"]),
+        outlineEntry("Collocation Divergence", "collocations", ["Collocations"]),
+        outlineEntry("Minimal Pairs & Examples", "examples", ["Minimal Pairs", "Test Sentences"])
+    ]),
+    rephrase: Object.freeze([
+        outlineEntry("Simplified Version", "rephrase-simple", ["Simplify", "Simple"]),
+        outlineEntry("Academic & Formal", "rephrase-formal", ["Formal", "Academic"]),
+        outlineEntry("Native & Idiomatic", "rephrase-idiomatic", ["Idiomatic", "Native"])
+    ]),
+    section_regen: Object.freeze([])
 });
 
 const KIND_BY_INTENT_TITLE = (() => {
@@ -122,6 +140,11 @@ export const DEFAULT_AI_PROMPT_TEMPLATE = [
     "",
     "Start with a short untitled intro: **{{str}}** [IPA pronunciation] *part of speech*, then a concise Oxford-style definition with no introductory phrases.",
     "",
+    "### Senses & Meanings",
+    "List the primary senses as numbered bullets in this exact format:",
+    "1. *(pos)* English definition — {{targetLang}} gloss",
+    "Use one bullet per sense. Mark the sense that matches the surrounding context with **in context** after the gloss when context is present. Limit to 4 senses.",
+    "",
     "### Translation & Meaning",
     "Provide accurate, natural translation(s) of \"{{str}}\" into {{targetLang}}. If the word has distinct primary senses or parts of speech, list each with its corresponding translation and a brief explanation in {{targetLang}}. Put the translation only in this section.",
     "",
@@ -150,12 +173,18 @@ export const DEFAULT_AI_CONTEXT_PROMPT_TEMPLATE = [
     "### Meaning in Context",
     "Explain what \"{{str}}\" means specifically in this surrounding sentence, including its contextual translation into {{targetLang}}.",
     "",
+    "### Direct Substitutions",
+    "Provide 2-3 natural synonyms or phrases that could directly replace \"{{str}}\" in this specific sentence without altering grammatical structure, each with a brief {{targetLang}} gloss.",
+    "",
+    "### Nuance & Connotation",
+    "Explain in 1-2 sentences what tone, emphasis, or subtle nuance is lost if replaced by a plain synonym.",
+    "",
     "### Natural Paraphrases",
-    "Provide 2-3 natural ways to rephrase the context sentence with brief glosses in {{targetLang}}."
+    "Provide 2 natural ways to rephrase the entire context sentence with brief glosses in {{targetLang}}."
 ].join("\n");
 
 export const DEFAULT_AI_GRAMMAR_PROMPT_TEMPLATE = [
-    "Analyze the grammatical structure, register, tone, and syntax of the selected text for a language learner.",
+    "Analyze the grammatical structure, syntactic slots, register, and tone of the selected text for a language learner.",
     "Selected text: \"{{str}}\"",
     "Target language: {{targetLang}}",
     "Optional context:",
@@ -169,14 +198,74 @@ export const DEFAULT_AI_GRAMMAR_PROMPT_TEMPLATE = [
     "- Do not include a separate Translation or Summary section.",
     "",
     "Include these sections:",
-    "### Grammatical Role & Structure",
-    "State the part of speech, syntax role, and word order / clause pattern.",
+    "### Syntactic Breakdown",
+    "Identify the part of speech, grammatical slot / syntactic role in the sentence (e.g. subject complement, transitive verb head, modifier), and dependency relations.",
     "",
-    "### Meaning & Register",
-    "Explain nuance, formality, and tone in 1-3 sentences. Do not list learner mistakes or confusable words here.",
+    "### Formality & Tone",
+    "Explain nuance, formality, and tone in 1-2 sentences.",
+    "",
+    "### Pattern Rules",
+    "List 1-2 governing syntactic rules or clause patterns for this structure.",
     "",
     "### Short Examples",
     "Provide 2 short example sentences illustrating this pattern, with brief translations into {{targetLang}}."
+].join("\n");
+
+export const DEFAULT_AI_COMPARE_PROMPT_TEMPLATE = [
+    "Compare and contrast the confusable terms or query \"{{str}}\" for a language learner.",
+    "Target language: {{targetLang}}",
+    "Optional context:",
+    "\"\"\"",
+    "{{context}}",
+    "\"\"\"",
+    "",
+    "Use level-3 Markdown headings (###), bullets, and short paragraphs. Do not use HTML or code fences.",
+    "",
+    "### Core Distinction",
+    "Give a 2-sentence rule of thumb explaining the fundamental difference in meaning, register, or grammatical class.",
+    "",
+    "### Comparison Matrix",
+    "Compare the terms across 2-3 key dimensions (Function/Meaning, Typical Usage/Register, Common Trap).",
+    "",
+    "### Collocation Divergence",
+    "Show 2 distinct natural collocations or phrases for each term to illustrate correct usage.",
+    "",
+    "### Minimal Pairs & Examples",
+    "Provide 2 minimal-pair sentence comparisons demonstrating when to choose one over the other, with brief {{targetLang}} translations."
+].join("\n");
+
+export const DEFAULT_AI_REPHRASE_PROMPT_TEMPLATE = [
+    "Rephrase the supplied text or sentence for an English language learner across three distinct stylistic targets.",
+    "Original text: \"{{sentence}}\"",
+    "Target language for explanations: {{targetLang}}",
+    "",
+    "Use only Markdown headings at level 3 (###) and blockquotes. Do not use HTML or code fences.",
+    "",
+    "### Simplified Version",
+    "> Rewritten sentence using Oxford 3000 / A2-B1 high-frequency vocabulary.",
+    "Brief note explaining why this is easier to read.",
+    "",
+    "### Academic & Formal",
+    "> Rewritten sentence suitable for formal essays, academic publications, or business correspondence.",
+    "Brief note explaining the elevated register and syntactic choices.",
+    "",
+    "### Native & Idiomatic",
+    "> Rewritten sentence using natural native collocations or conversational idioms.",
+    "Brief note on the idiomatic flavor."
+].join("\n");
+
+export const DEFAULT_AI_SECTION_REGEN_PROMPT_TEMPLATE = [
+    "You are regenerating a single educational section for the term \"{{str}}\".",
+    "Section to generate: \"{{sectionTitle}}\" (kind: {{sectionKind}})",
+    "Target language: {{targetLang}}",
+    "Optional context:",
+    "\"\"\"",
+    "{{context}}",
+    "\"\"\"",
+    "",
+    "Generate fresh, accurate, and concise educational content for this specific section only.",
+    "Do not include Markdown headings (no ###). Output only the body content (paragraphs, bullets, or blockquotes).",
+    "Keep it focused on \"{{str}}\" in Oxford Learner's style."
 ].join("\n");
 
 export const DEFAULT_AI_SENTENCE_PROMPT_TEMPLATE = [
@@ -254,7 +343,10 @@ export const DEFAULT_AI_PROMPTS = Object.freeze({
     aiContextPromptTemplate: DEFAULT_AI_CONTEXT_PROMPT_TEMPLATE,
     aiGrammarPromptTemplate: DEFAULT_AI_GRAMMAR_PROMPT_TEMPLATE,
     aiSentencePromptTemplate: DEFAULT_AI_SENTENCE_PROMPT_TEMPLATE,
-    aiPhraseExplorerPromptTemplate: DEFAULT_AI_PHRASE_EXPLORER_PROMPT_TEMPLATE
+    aiPhraseExplorerPromptTemplate: DEFAULT_AI_PHRASE_EXPLORER_PROMPT_TEMPLATE,
+    aiComparePromptTemplate: DEFAULT_AI_COMPARE_PROMPT_TEMPLATE,
+    aiRephrasePromptTemplate: DEFAULT_AI_REPHRASE_PROMPT_TEMPLATE,
+    aiSectionRegenPromptTemplate: DEFAULT_AI_SECTION_REGEN_PROMPT_TEMPLATE
 });
 
 /**

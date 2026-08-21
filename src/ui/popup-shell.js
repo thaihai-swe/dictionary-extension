@@ -1,11 +1,11 @@
 /* Shared popup shell markup and dimension helpers for toolbar and in-page hosts. */
 (function (global) {
     const MIN_WIDTH = 320;
-    const MAX_WIDTH = 840;
+    const MAX_WIDTH = 1000;
     const MIN_HEIGHT = 360;
-    const MAX_HEIGHT = 900;
+    const MAX_HEIGHT = 1000;
 
-    function clampDimensions(width, height, defaults = { width: 500, height: 600 }) {
+    function clampDimensions(width, height, defaults = { width: 620, height: 720 }) {
         return {
             width: Math.max(MIN_WIDTH, Math.min(Number(width) || defaults.width, MAX_WIDTH)),
             height: Math.max(MIN_HEIGHT, Math.min(Number(height) || defaults.height, MAX_HEIGHT))
@@ -50,6 +50,7 @@
                         <button id="explain-grammar-btn" type="button" class="${prefix}-context-btn" title="Analyze syntax role, word order, and tone">Grammar &amp; Nuance</button>
                         <button id="explain-phrase-explorer-btn" type="button" class="${prefix}-context-btn" title="Explore idioms, phrasal verbs, and collocations">Phrase &amp; Collocations</button>
                         <button id="explain-sentence-btn" type="button" class="${prefix}-context-btn" title="Break down sentence structure and parse components">Sentence Breakdown</button>
+                        <button id="explain-compare-btn" type="button" class="${prefix}-context-btn" title="Compare similar or confusable words">Compare Confusables</button>
                     </div>
                 </div>
             `

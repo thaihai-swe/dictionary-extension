@@ -48,27 +48,37 @@ const enrichedCache = new Map();
 const enrichmentInFlight = new Map();
 const activeControllers = new Map();
 
-function getRequestKey(tabId, requestId) {
-    return `${tabId || "global"}:${requestId}`;
+function getRequestKey(tabId, scope, requestId) {
+    return `${tabId || "global"}:${scope || "default"}:${requestId}`;
 }
 
-function registerController(tabId, requestId) {
+function registerController(tabId, scope, requestId) {
     const controller = new AbortController();
-    const key = getRequestKey(tabId, requestId);
-    // A newer lookup supersedes every request for this tab, including phase-one
-    // dictionary/translation work and lazy enrichment.
-    cancelRequestsForTab(tabId);
+    const key = getRequestKey(tabId, scope, requestId);
+    // Only cancel older in-flight requests in the SAME scope on this tab
+    // so background AI preloads do not cancel the primary dictionary lookup.
+    cancelRequestsForScope(tabId, scope);
     activeControllers.set(key, controller);
     return controller;
 }
 
-function getController(tabId, requestId) {
-    return activeControllers.get(getRequestKey(tabId, requestId)) || null;
+function getController(tabId, scope, requestId) {
+    return activeControllers.get(getRequestKey(tabId, scope, requestId)) || null;
 }
 
-function unregisterController(tabId, requestId) {
-    const key = getRequestKey(tabId, requestId);
+function unregisterController(tabId, scope, requestId) {
+    const key = getRequestKey(tabId, scope, requestId);
     activeControllers.delete(key);
+}
+
+function cancelRequestsForScope(tabId, scope) {
+    const prefix = `${tabId || "global"}:${scope || "default"}:`;
+    for (const [key, ctrl] of activeControllers.entries()) {
+        if (key.startsWith(prefix)) {
+            ctrl.abort();
+            activeControllers.delete(key);
+        }
+    }
 }
 
 function cancelRequestsForTab(tabId) {
@@ -224,14 +234,14 @@ if (chrome.contextMenus?.onClicked) {
 async function handleLookup(payload, sender = {}) {
     const settings = await getSettings();
     const requestId = createRequestId();
-    const { source, text, trigger, context, intent } = payload || {};
+    const { source, text, trigger, context, intent, sectionKind, sectionTitle, rephraseMode } = payload || {};
 
     if (!text || !text.trim()) {
         throw new Error(trigger === "manual" ? MANUAL_LOOKUP_EMPTY_MESSAGE : "No text selected.");
     }
 
     if (source === "dictionary") {
-        const controller = registerController(sender?.tab?.id, requestId);
+        const controller = registerController(sender?.tab?.id, "dictionary", requestId);
         const result = await lookupCombinedDictionary(text, settings, requestId, sender, controller.signal);
         return { ...result, requestId };
     }
@@ -240,26 +250,30 @@ async function handleLookup(payload, sender = {}) {
         if (!settings.enableAI) {
             throw new Error("AI provider is disabled in settings.");
         }
-        registerController(sender?.tab?.id, requestId);
+        const scope = `ai:${intent || "default"}`;
+        registerController(sender?.tab?.id, scope, requestId);
         return runAiLookup(text, settings, {
             context,
-            intent
-        }, sender, requestId);
+            intent,
+            sectionKind,
+            sectionTitle,
+            rephraseMode
+        }, sender, scope, requestId);
     }
 
     throw new Error("Unknown source.");
 }
 
-async function runAiLookup(text, settings, options, sender, requestId) {
+async function runAiLookup(text, settings, options, sender, scope, requestId) {
     const tabId = sender?.tab?.id;
-    const controller = getController(tabId, requestId);
+    const controller = getController(tabId, scope, requestId);
     try {
         return await lookupAiProvider(text, settings, {
             ...options,
             signal: controller?.signal
         });
     } finally {
-        unregisterController(tabId, requestId);
+        unregisterController(tabId, scope, requestId);
     }
 }
 
@@ -394,7 +408,7 @@ async function lookupCombinedDictionary(text, settings, requestId, sender = {}, 
             signal
         });
     } else {
-        unregisterController(sender?.tab?.id, requestId);
+        unregisterController(sender?.tab?.id, "dictionary", requestId);
     }
 
     return result;
@@ -565,7 +579,7 @@ async function scheduleDictionaryEnrichment({ text, settings, requestId, sender,
                 }
             });
         }
-        unregisterController(sender?.tab?.id, requestId);
+        unregisterController(sender?.tab?.id, "dictionary", requestId);
         return;
     }
 
@@ -591,7 +605,7 @@ async function scheduleDictionaryEnrichment({ text, settings, requestId, sender,
             })
             .catch(() => { })
             .finally(() => {
-                unregisterController(sender?.tab?.id, requestId);
+                unregisterController(sender?.tab?.id, "dictionary", requestId);
             });
         return;
     }
@@ -611,7 +625,7 @@ async function scheduleDictionaryEnrichment({ text, settings, requestId, sender,
         })
         .finally(() => {
             enrichmentInFlight.delete(cacheKey);
-            unregisterController(sender?.tab?.id, requestId);
+            unregisterController(sender?.tab?.id, "dictionary", requestId);
         });
 
     enrichmentInFlight.set(cacheKey, work);

@@ -29,6 +29,151 @@
             return raw.replace(pattern, "$1**$2**");
         },
 
+        renderTokenizedContext(sourceText, query, prefix) {
+            const raw = String(sourceText || "").replace(/^>\s?/, "").trim();
+            if (!raw) {
+                return "";
+            }
+            const term = String(query || "").trim().toLowerCase();
+            const tokens = raw.split(/(\s+)/);
+            const html = tokens.map((token) => {
+                if (/^\s+$/.test(token) || !token) {
+                    return Renderer.escapeHtml(token);
+                }
+                const cleaned = token.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
+                if (!cleaned) {
+                    return Renderer.escapeHtml(token);
+                }
+                const isQuery = term && cleaned.toLowerCase() === term;
+                const cls = isQuery ? `${prefix}-token is-query` : `${prefix}-token`;
+                return `<button type="button" class="${cls}" data-lookup-query="${Renderer.escapeHtml(cleaned)}">${Renderer.escapeHtml(token)}</button>`;
+            }).join("");
+            return `<blockquote class="${prefix}-sentence-box ${prefix}-tokenized-context"><p>${html}</p></blockquote>`;
+        },
+
+        renderSectionActions(section, kind, prefix) {
+            const title = String(section?.title || "").trim();
+            const exampleText = kind === "examples" ? Renderer.extractFirstExample(section) : "";
+            const regenKinds = new Set(["examples", "etymology", "usage", "grammar", "definitions", "senses", "nuance", "substitutions"]);
+            const buttons = [];
+            if (exampleText) {
+                buttons.push(`<button type="button" class="${prefix}-section-action ${prefix}-pronounce" data-pronounce-text="${Renderer.escapeHtml(exampleText)}" aria-label="Play example sentence" title="Play example">Listen</button>`);
+            }
+            if (title && regenKinds.has(kind)) {
+                buttons.push(`<button type="button" class="${prefix}-section-action" data-regen-section="${Renderer.escapeHtml(kind)}" data-regen-title="${Renderer.escapeHtml(title)}" aria-label="Regenerate ${Renderer.escapeHtml(title)}" title="Regenerate section">↻</button>`);
+            }
+            if (!buttons.length) {
+                return "";
+            }
+            return `<div class="${prefix}-section-actions">${buttons.join("")}</div>`;
+        },
+
+        extractFirstExample(section) {
+            const text = String(section?.text || "");
+            const quoted = text.match(/^>\s?(.+)$/m);
+            if (quoted) {
+                return quoted[1].trim();
+            }
+            const firstLine = text.split("\n").map((line) => line.trim()).find(Boolean);
+            return firstLine || "";
+        },
+
+        renderSenseMatrix(senses, prefix) {
+            const items = Array.isArray(senses) ? senses : [];
+            if (!items.length) {
+                return "";
+            }
+            const cards = items.map((sense) => {
+                const pos = sense.pos
+                    ? `<span class="${prefix}-sense-pos">${Renderer.escapeHtml(sense.pos)}</span>`
+                    : "";
+                const gloss = sense.gloss
+                    ? `<span class="${prefix}-sense-gloss">${Renderer.escapeHtml(sense.gloss)}</span>`
+                    : "";
+                const badge = sense.inContext
+                    ? `<span class="${prefix}-sense-badge">Used in this context</span>`
+                    : "";
+                return `
+                  <article class="${prefix}-sense-card${sense.inContext ? " is-context" : ""}">
+                    <div class="${prefix}-sense-header">
+                      <span class="${prefix}-sense-number">${Renderer.escapeHtml(String(sense.number || ""))}</span>
+                      ${pos}
+                      ${badge}
+                    </div>
+                    <p class="${prefix}-sense-definition">${Renderer.escapeHtml(sense.definition || "")}</p>
+                    ${gloss}
+                  </article>`;
+            }).join("");
+            return `<div class="${prefix}-sense-matrix">${cards}</div>`;
+        },
+
+        renderComparisonTable(data, prefix) {
+            const rows = Array.isArray(data?.rows) ? data.rows : [];
+            const terms = Array.isArray(data?.terms) ? data.terms : [];
+            if (!rows.length) {
+                return "";
+            }
+            const headerA = Renderer.escapeHtml(terms[0] || "Term A");
+            const headerB = Renderer.escapeHtml(terms[1] || "Term B");
+            const body = rows.map((row) => `
+                <tr>
+                  <th scope="row">${Renderer.escapeHtml(row.feature || "")}</th>
+                  <td>${Renderer.escapeHtml(row.termA || "")}</td>
+                  <td>${Renderer.escapeHtml(row.termB || "")}</td>
+                </tr>`).join("");
+            return `
+              <div class="${prefix}-compare-table-wrap">
+                <table class="${prefix}-compare-table">
+                  <thead><tr><th>Feature</th><th>${headerA}</th><th>${headerB}</th></tr></thead>
+                  <tbody>${body}</tbody>
+                </table>
+              </div>`;
+        },
+
+        renderMinimalPairs(pairs, prefix) {
+            const items = Array.isArray(pairs) ? pairs : [];
+            if (!items.length) {
+                return "";
+            }
+            return `<div class="${prefix}-minimal-pairs">${items.map((pair) => `
+                <article class="${prefix}-minimal-pair">
+                  <p class="${prefix}-minimal-a">${Renderer.escapeHtml(pair.sentenceA || "")}</p>
+                  <p class="${prefix}-minimal-b">${Renderer.escapeHtml(pair.sentenceB || "")}</p>
+                  ${pair.explanation ? `<small class="${prefix}-inline-meta">${Renderer.escapeHtml(pair.explanation)}</small>` : ""}
+                </article>`).join("")}</div>`;
+        },
+
+        renderPreloadProgress(followUps = [], prefix) {
+            if (!Array.isArray(followUps) || followUps.length === 0) {
+                return "";
+            }
+            const dots = followUps.map((item) => {
+                const state = item.loading
+                    ? "loading"
+                    : item.error && !item.result
+                        ? "error"
+                        : item.result
+                            ? "ready"
+                            : "pending";
+                const label = Renderer.escapeHtml(item.title || item.intent || "section");
+                return `<span class="${prefix}-progress-dot is-${state}" title="${label}: ${state}" aria-label="${label} ${state}"></span>`;
+            }).join("");
+            return `<div class="${prefix}-preload-progress" role="status" aria-label="Follow-up section progress">${dots}</div>`;
+        },
+
+        renderRephraseBar(prefix, options = {}) {
+            if (options.showRephrase === false) {
+                return "";
+            }
+            return `
+              <div class="${prefix}-rephrase-bar">
+                <span class="${prefix}-rephrase-label">Rephrase</span>
+                <button type="button" class="${prefix}-rephrase-btn" data-rephrase-mode="simplify">Simplify</button>
+                <button type="button" class="${prefix}-rephrase-btn" data-rephrase-mode="formal">Make Formal</button>
+                <button type="button" class="${prefix}-rephrase-btn" data-rephrase-mode="idiomatic">Native Idiom</button>
+              </div>`;
+        },
+
         renderSimpleMarkdown(source) {
             const lines = String(source || "").split("\n");
             let html = "";
@@ -215,6 +360,14 @@
                 sectionBody = Renderer.renderSentenceStructure(section.data, prefix);
             } else if (section.data && kind === "phrase-parsing") {
                 sectionBody = Renderer.renderPhraseParsing(section.data, prefix);
+            } else if (section.data && kind === "senses") {
+                sectionBody = Renderer.renderSenseMatrix(section.data.senses, prefix);
+            } else if (section.data && kind === "compare-matrix") {
+                sectionBody = Renderer.renderComparisonTable(section.data, prefix);
+            } else if (section.data && Array.isArray(section.data.pairs)) {
+                sectionBody = Renderer.renderMinimalPairs(section.data.pairs, prefix);
+            } else if (kind === "context") {
+                sectionBody = Renderer.renderTokenizedContext(section.text || "", options.title || options.query || "", prefix);
             } else if (section.markdown) {
                 let mdText = section.text || "";
                 if (kind === "context" && options.title) {
@@ -231,6 +384,7 @@
             }
 
             const contentHtml = `${sectionBody}${items ? `<ul class="${prefix}-section-list">${items}</ul>` : ""}`;
+            const actionsHtml = Renderer.renderSectionActions(section, kind, prefix);
 
             const collapsible = section.collapseByDefault === true || (typeof section.collapseByDefault === "undefined" && items.length === 0 && hasTitle);
             const sectionClasses = `${prefix}-section ${prefix}-section--${kind}${collapsible ? ` ${prefix}-section--collapsible` : ""}`;
@@ -239,7 +393,7 @@
             return `
               <section class="${sectionClasses}" data-section-kind="${Renderer.escapeHtml(kind)}" data-section-index="${sectionIndex}" style="--section-index: ${sectionIndex};">
                 ${hasTitle
-                    ? `<header class="${prefix}-section-heading"><span class="${prefix}-section-title">${Renderer.escapeHtml(section.title)}</span>${metaBadge}</header>`
+                    ? `<header class="${prefix}-section-heading"><span class="${prefix}-section-title">${Renderer.escapeHtml(section.title)}</span>${metaBadge}${actionsHtml}</header>`
                     : ""}
                 ${contentHtml}
               </section>`;
@@ -250,16 +404,22 @@
 
             const ranks = {
                 default: {
-                    intro: 1, translation: 2, usage: 3, examples: 4, etymology: 5
+                    intro: 1, senses: 2, translation: 3, usage: 4, examples: 5, etymology: 6
                 },
                 explain_in_context: {
-                    intro: 1, definitions: 2, examples: 3
+                    intro: 1, definitions: 2, substitutions: 3, nuance: 4, examples: 5
                 },
                 grammar: {
-                    intro: 1, grammar: 2, usage: 3, examples: 4
+                    intro: 1, syntax: 2, grammar: 3, usage: 4, examples: 5
                 },
                 phrase_explorer: {
                     intro: 1, definitions: 2, grammar: 3, usage: 4, examples: 5
+                },
+                compare_confusables: {
+                    intro: 1, "compare-distinction": 2, "compare-matrix": 3, collocations: 4, examples: 5
+                },
+                rephrase: {
+                    "rephrase-simple": 1, "rephrase-formal": 2, "rephrase-idiomatic": 3
                 },
                 phrase_fallback: {
                     intro: 1, definitions: 2, usage: 3, examples: 4, phrase: 5
@@ -318,12 +478,14 @@
 
         getAiPrimaryKinds(intent) {
             const kinds = {
-                default: ["intro", "translation", "usage", "examples"],
-                explain_in_context: ["intro", "definitions", "examples"],
-                grammar: ["grammar", "usage", "examples"],
+                default: ["intro", "senses", "translation", "usage", "examples"],
+                explain_in_context: ["intro", "definitions", "substitutions", "nuance", "examples"],
+                grammar: ["syntax", "grammar", "usage", "examples"],
                 phrase_explorer: ["definitions", "grammar", "usage", "examples"],
                 phrase_fallback: ["definitions", "usage", "examples", "phrase"],
-                sentence_breakdown: ["sentence-overview", "translation", "sentence-structure", "phrase-parsing", "usage"]
+                sentence_breakdown: ["sentence-overview", "translation", "sentence-structure", "phrase-parsing", "usage"],
+                compare_confusables: ["compare-distinction", "compare-matrix", "collocations", "examples"],
+                rephrase: ["rephrase-simple", "rephrase-formal", "rephrase-idiomatic"]
             };
             return kinds[intent] || kinds.default;
         },
@@ -335,13 +497,15 @@
                 grammar: [],
                 phrase_explorer: [],
                 phrase_fallback: [],
-                sentence_breakdown: []
+                sentence_breakdown: [],
+                compare_confusables: [],
+                rephrase: []
             };
             return kinds[intent] || [];
         },
 
         isAlwaysOpenAiKind(kind) {
-            return ["context", "intro", "sentence-overview", "sentence-structure", "phrase-parsing"].includes(kind);
+            return ["context", "intro", "senses", "sentence-overview", "sentence-structure", "phrase-parsing", "compare-distinction", "compare-matrix", "rephrase-simple", "rephrase-formal", "rephrase-idiomatic"].includes(kind);
         },
 
         isPrimaryExpandedSection(kind, title, index, intent) {
@@ -509,6 +673,147 @@
             `;
         },
 
+        renderFollowUpCards(followUps = [], options = {}) {
+            if (!Array.isArray(followUps) || followUps.length === 0) {
+                return "";
+            }
+
+            const prefix = options.prefix || "dictionary-helper";
+            const sectionTitleTag = options.sectionTitleTag || "h4";
+
+            const cards = followUps.map((item, index) => {
+                const title = item.title || "Analysis";
+                const intent = item.intent || "";
+                const isLoading = Boolean(item.loading);
+                const hasError = Boolean(item.error && !item.result);
+                const result = item.result;
+                const metaBadge = isLoading
+                    ? `<span class="${prefix}-section-meta ${prefix}-followup-status is-loading">Loading…</span>`
+                    : hasError
+                        ? `<span class="${prefix}-section-meta ${prefix}-followup-status is-error">Unavailable</span>`
+                        : `<span class="${prefix}-section-meta ${prefix}-followup-status is-ready">Ready</span>`;
+
+                let bodyContent = "";
+                if (isLoading) {
+                    bodyContent = `<div class="${prefix}-state is-loading-shimmer"></div>`;
+                } else if (hasError) {
+                    bodyContent = `<p class="${prefix}-section-paragraph"><small class="${prefix}-inline-meta">${Renderer.escapeHtml(item.error || "Unable to load section.")}</small></p>`;
+                } else if (result) {
+                    const rawSections = Renderer.orderSectionsForPresentation(result.sections || [], result.presentation);
+                    const renderedSections = rawSections.map((sec, secIdx) => {
+                        const kind = Renderer.normalizeSectionKind(sec);
+                        const items = (sec.items || [])
+                            .map((it) => `<li>${Renderer.formatInlineMarkdown(it)}</li>`)
+                            .join("");
+                        const hasSecTitle = Boolean(String(sec.title || "").trim());
+                        let secBody = "";
+
+                        if (sec.data && kind === "sentence-overview") {
+                            secBody = Renderer.renderSentenceOverview(sec.data, prefix);
+                        } else if (sec.data && kind === "sentence-structure") {
+                            secBody = Renderer.renderSentenceStructure(sec.data, prefix);
+                        } else if (sec.data && kind === "phrase-parsing") {
+                            secBody = Renderer.renderPhraseParsing(sec.data, prefix);
+                        } else if (sec.data && kind === "senses") {
+                            secBody = Renderer.renderSenseMatrix(sec.data.senses, prefix);
+                        } else if (sec.data && kind === "compare-matrix") {
+                            secBody = Renderer.renderComparisonTable(sec.data, prefix);
+                        } else if (sec.data && Array.isArray(sec.data.pairs)) {
+                            secBody = Renderer.renderMinimalPairs(sec.data.pairs, prefix);
+                        } else if (kind === "context") {
+                            secBody = Renderer.renderTokenizedContext(sec.text || "", options.title || options.query || "", prefix);
+                        } else if (sec.markdown) {
+                            secBody = `<div class="${prefix}-markdown">${Renderer.renderSimpleMarkdown(sec.text || "")}</div>`;
+                        } else if (sec.text) {
+                            secBody = `<p class="${prefix}-section-paragraph">${Renderer.escapeHtml(sec.text)}</p>`;
+                        }
+
+                        const secContent = `${secBody}${items ? `<ul class="${prefix}-section-list">${items}</ul>` : ""}`;
+                        const secLabel = hasSecTitle
+                            ? `<div class="${prefix}-section-heading"><${sectionTitleTag} class="${prefix}-section-title">${Renderer.escapeHtml(sec.title)}</${sectionTitleTag}></div>`
+                            : "";
+
+                        return `<div class="${prefix}-followup-subsection ${prefix}-section--${kind}" data-section-index="${secIdx}">${secLabel}${secContent}</div>`;
+                    }).join("");
+
+                    const lexicalHtml = Renderer.renderLexicalProfile(result.lexicalProfile, prefix, sectionTitleTag);
+                    bodyContent = `${renderedSections}${lexicalHtml}`;
+                }
+
+                const sectionClasses = `${prefix}-section ${prefix}-section--collapsible ${prefix}-followup-card${isLoading ? " is-loading" : ""}${hasError ? " is-error" : ""}`;
+                const sectionLabel = `<span class="${prefix}-section-title">${Renderer.escapeHtml(title)}</span>${metaBadge}`;
+
+                return `
+              <details class="${sectionClasses}" data-followup-intent="${Renderer.escapeHtml(intent)}" data-section-index="${index}" style="--section-index: ${index};">
+                <summary class="${prefix}-section-summary">${sectionLabel}</summary>
+                <div class="${prefix}-section-body">
+                  ${bodyContent}
+                </div>
+              </details>`;
+            }).join("");
+
+            return `
+              <div class="${prefix}-followups-container">
+                <div class="${prefix}-followups-header">
+                  <span class="${prefix}-followups-title">Deep Dive Sections</span>
+                  <span class="${prefix}-followups-subtitle">Loaded after the main AI result</span>
+                </div>
+                ${cards}
+              </div>
+            `;
+        },
+
+        patchFollowUpCards(root, followUps = [], options = {}) {
+            if (!root) {
+                return;
+            }
+
+            const prefix = options.prefix || "dictionary-helper";
+            const html = Renderer.renderFollowUpCards(followUps, options);
+            const existing = root.querySelector(`.${prefix}-followups-container`);
+            const openIntents = new Set();
+
+            if (existing) {
+                existing.querySelectorAll("[data-followup-intent]").forEach((node) => {
+                    if (node.open) {
+                        openIntents.add(node.getAttribute("data-followup-intent") || "");
+                    }
+                });
+            }
+
+            if (!html) {
+                existing?.remove();
+                return;
+            }
+
+            if (existing) {
+                existing.outerHTML = html;
+            } else {
+                const resultEl = root.querySelector(`.${prefix}-result`);
+                if (!resultEl) {
+                    return;
+                }
+                resultEl.insertAdjacentHTML("beforeend", html);
+            }
+
+            root.querySelectorAll(`.${prefix}-followups-container [data-followup-intent]`).forEach((node) => {
+                if (openIntents.has(node.getAttribute("data-followup-intent") || "")) {
+                    node.open = true;
+                }
+            });
+
+            const progressEl = root.querySelector(`.${prefix}-preload-progress`);
+            const nextProgressHtml = Renderer.renderPreloadProgress(followUps, prefix);
+            if (progressEl && nextProgressHtml) {
+                progressEl.outerHTML = nextProgressHtml;
+            } else if (!progressEl && nextProgressHtml) {
+                const rephraseEl = root.querySelector(`.${prefix}-rephrase-bar`);
+                if (rephraseEl) {
+                    rephraseEl.insertAdjacentHTML("beforebegin", nextProgressHtml);
+                }
+            }
+        },
+
         renderResult(result, options = {}) {
             const prefix = options.prefix || "dictionary-helper";
             const titleTag = options.titleTag || "h3";
@@ -546,6 +851,14 @@
                     sectionBody = Renderer.renderSentenceStructure(section.data, prefix);
                 } else if (section.data && kind === "phrase-parsing") {
                     sectionBody = Renderer.renderPhraseParsing(section.data, prefix);
+                } else if (section.data && kind === "senses") {
+                    sectionBody = Renderer.renderSenseMatrix(section.data.senses, prefix);
+                } else if (section.data && kind === "compare-matrix") {
+                    sectionBody = Renderer.renderComparisonTable(section.data, prefix);
+                } else if (section.data && Array.isArray(section.data.pairs)) {
+                    sectionBody = Renderer.renderMinimalPairs(section.data.pairs, prefix);
+                } else if (kind === "context") {
+                    sectionBody = Renderer.renderTokenizedContext(section.text || "", result?.title || options.query || "", prefix);
                 } else if (section.markdown) {
                     let mdText = section.text || "";
                     if (kind === "context" && result?.title) {
@@ -562,11 +875,12 @@
                 }
 
                 const contentHtml = `${sectionBody}${items ? `<ul class="${prefix}-section-list">${items}</ul>` : ""}`;
+                const actionsHtml = Renderer.renderSectionActions(section, kind, prefix);
                 const collapsible = Renderer.shouldCollapseSection(section, kind, index, totalSections, aiIntent);
                 const sectionClasses = `${prefix}-section ${prefix}-section--${kind}${collapsible ? ` ${prefix}-section--collapsible` : ""}`;
 
                 if (collapsible) {
-                    const sectionLabel = `<${sectionTitleTag} class="${prefix}-section-title">${Renderer.escapeHtml(section.title)}</${sectionTitleTag}>${metaBadge}`;
+                    const sectionLabel = `<${sectionTitleTag} class="${prefix}-section-title">${Renderer.escapeHtml(section.title)}</${sectionTitleTag}>${metaBadge}${actionsHtml}`;
                     return `
               <details class="${sectionClasses}" data-section-kind="${Renderer.escapeHtml(kind)}" data-section-index="${index}" style="--section-index: ${index};">
                 <summary class="${prefix}-section-summary">${sectionLabel}</summary>
@@ -577,7 +891,7 @@
                 }
 
                 const sectionLabel = hasTitle
-                    ? `<div class="${prefix}-section-heading"><${sectionTitleTag} class="${prefix}-section-title">${Renderer.escapeHtml(section.title)}</${sectionTitleTag}>${metaBadge}</div>`
+                    ? `<div class="${prefix}-section-heading"><${sectionTitleTag} class="${prefix}-section-title">${Renderer.escapeHtml(section.title)}</${sectionTitleTag}>${metaBadge}${actionsHtml}</div>`
                     : "";
 
                 return `
@@ -595,8 +909,17 @@
                 ? `<div class="${prefix}-title-row"><div class="${prefix}-title-cell"><${titleTag} class="${prefix}-term">${Renderer.escapeHtml(result.title)}</${titleTag}><div class="${prefix}-pronunciation-group">${pronunciation}${pronunciationVariants}${speechPractice}</div></div>${meta}</div>`
                 : "";
             const emptyState = `<${stateEl} class="${prefix}-state"><strong>No result</strong><span>Try another word or switch sources.</span></${stateEl}>`;
+            const followUpsHtml = isAiResult && (aiIntent === "default" || aiIntent === "") && Array.isArray(options.followUps) && options.followUps.length > 0
+                ? Renderer.renderFollowUpCards(options.followUps, options)
+                : "";
+            const preloadProgressHtml = isAiResult && (aiIntent === "default" || aiIntent === "") && Array.isArray(options.followUps) && options.followUps.length > 0
+                ? Renderer.renderPreloadProgress(options.followUps, prefix)
+                : "";
+            const rephraseBarHtml = isAiResult && (aiIntent === "default" || aiIntent === "explain_in_context" || aiIntent === "rephrase")
+                ? Renderer.renderRephraseBar(prefix, options)
+                : "";
             const resultBody = isAiResult
-                ? `${sections || emptyState}${lexicalProfileHtml}`
+                ? `${preloadProgressHtml}${rephraseBarHtml}${sections || emptyState}${lexicalProfileHtml}${followUpsHtml}`
                 : `${lexicalProfileHtml}${sections || emptyState}`;
 
             return `

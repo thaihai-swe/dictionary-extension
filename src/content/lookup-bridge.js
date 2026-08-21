@@ -13,10 +13,19 @@
     "use strict";
 
    const ns = global.DictionaryHelperContent = global.DictionaryHelperContent || {};
-    // Contextual AI intents (explain_in_context, grammar, phrase_explorer, sentence_breakdown) are bound to page context and must
-    // not be served from the short-lived lookup cache. Only automatic,
-    // context-independent lookups are cached.
-    const CACHEABLE_INTENTS = new Set(["default", "phrase_fallback"]);
+    // All lookup intents can be safely cached because buildRequestCacheKey
+    // includes text, tab, intent, and context.
+    const CACHEABLE_INTENTS = new Set([
+        "default",
+        "phrase_fallback",
+        "explain_in_context",
+        "grammar",
+        "phrase_explorer",
+        "sentence_breakdown",
+        "compare_confusables",
+        "rephrase",
+        "section_regen"
+    ]);
 
     function buildRequestCacheKey(tab, text, settings = {}, requestOptions = {}) {
         return JSON.stringify({
@@ -24,6 +33,9 @@
             text: String(text || "").trim().toLowerCase(),
             intent: requestOptions.intent || "default",
             context: String(requestOptions.context || "").trim().toLowerCase(),
+            sectionKind: String(requestOptions.sectionKind || "").trim().toLowerCase(),
+            sectionTitle: String(requestOptions.sectionTitle || "").trim().toLowerCase(),
+            rephraseMode: String(requestOptions.rephraseMode || "").trim().toLowerCase(),
             translateTargetLanguage: settings.translateTargetLanguage || "",
             translateProvider: settings.translateProvider || "",
             libreTranslateBaseUrl: settings.libreTranslateBaseUrl || "",

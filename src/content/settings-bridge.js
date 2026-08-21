@@ -65,8 +65,8 @@
             next.fontFamily = "editorial";
         }
 
-        next.popupWidth = Math.min(840, Math.max(320, Math.round(Number(next.popupWidth) || 500)));
-        next.popupHeight = Math.min(900, Math.max(360, Math.round(Number(next.popupHeight) || 600)));
+        next.popupWidth = Math.min(1000, Math.max(320, Math.round(Number(next.popupWidth) || 620)));
+        next.popupHeight = Math.min(1000, Math.max(360, Math.round(Number(next.popupHeight) || 720)));
         next.pronunciationRate = Math.min(1.5, Math.max(0.5, Math.round((Number(next.pronunciationRate) || 0.95) * 100) / 100));
 
         const hasExplicitMode = typeof source.selectionTriggerMode === "string"

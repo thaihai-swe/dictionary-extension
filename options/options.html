@@ -101,13 +101,13 @@
 
                     <label>
                         <span>Popup width (pixels)</span>
-                        <input name="popupWidth" type="number" min="320" max="840" step="1" placeholder="500">
+                        <input name="popupWidth" type="number" min="320" max="1000" step="1" placeholder="620">
                     </label>
-                    <p class="field-help">Recommended: 460–560 pixels for optimal readability.</p>
+                    <p class="field-help">Recommended: 560–720 pixels for optimal readability. Maximum: 1000px.</p>
 
                     <label>
                         <span>Popup height (pixels)</span>
-                        <input name="popupHeight" type="number" min="360" max="900" step="1" placeholder="600">
+                        <input name="popupHeight" type="number" min="360" max="1000" step="1" placeholder="720">
                     </label>
                     <p class="field-help">In-page card uses this height. The toolbar popup caps at 580px because of Chrome’s action-popup limit.</p>
                 </section>
@@ -349,6 +349,37 @@
                         <code>{{targetLang}}</code>. It does not request a lexical-profile block.
                     </p>
 
+                    <label>
+                        <span>AI compare confusables template</span>
+                        <textarea name="aiComparePromptTemplate" rows="6"
+                            placeholder="Compare {{str}} with similar or confusable words..."></textarea>
+                        <button type="button" class="secondary-btn prompt-reset-btn" data-prompt-key="aiComparePromptTemplate">Restore default</button>
+                    </label>
+                    <p class="field-help">Used by the <strong>Compare Confusables</strong> action. Supports
+                        <code>{{str}}</code>, <code>{{context}}</code>, and <code>{{targetLang}}</code>.
+                    </p>
+
+                    <label>
+                        <span>AI rephrase template</span>
+                        <textarea name="aiRephrasePromptTemplate" rows="6"
+                            placeholder="Rephrase {{sentence}} in simpler, formal, and idiomatic styles..."></textarea>
+                        <button type="button" class="secondary-btn prompt-reset-btn" data-prompt-key="aiRephrasePromptTemplate">Restore default</button>
+                    </label>
+                    <p class="field-help">Used by the <strong>Rephrase</strong> toolbar. Supports
+                        <code>{{sentence}}</code> and <code>{{targetLang}}</code>.
+                    </p>
+
+                    <label>
+                        <span>AI section regenerate template</span>
+                        <textarea name="aiSectionRegenPromptTemplate" rows="5"
+                            placeholder="Regenerate only {{sectionTitle}} for {{str}}..."></textarea>
+                        <button type="button" class="secondary-btn prompt-reset-btn" data-prompt-key="aiSectionRegenPromptTemplate">Restore default</button>
+                    </label>
+                    <p class="field-help">Used when regenerating a single AI section. Supports
+                        <code>{{str}}</code>, <code>{{sectionTitle}}</code>, <code>{{sectionKind}}</code>,
+                        <code>{{context}}</code>, and <code>{{targetLang}}</code>.
+                    </p>
+
                     <label class="checkbox-row">
                         <input name="disablePageContextExtraction" type="checkbox">
                         <span>Exclude page context for AI lookups</span>
@@ -360,8 +391,9 @@
                         <input name="enableAiPreload" type="checkbox">
                         <span>Preload AI results in background</span>
                     </label>
-                    <p class="field-help">Starts AI lookup when popup opens (even before switching to AI tab) for faster
-                        results.</p>
+                    <p class="field-help">Starts the main AI lookup in the background, then automatically loads Context
+                        Explain, Grammar &amp; Nuance, Phrase &amp; Collocations, and Sentence Breakdown after that
+                        result completes.</p>
 
                     <div class="validation-actions">
                         <button type="button" class="secondary-btn test-connection-btn" data-validation-kind="ai"

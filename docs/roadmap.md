@@ -28,11 +28,16 @@ This document tracks shipped capabilities, near-term product work, and longer-te
 - Zero audio blob/metadata caching
 
 ### Contextual AI
-- Five complementary AI actions: Main AI, Context Explain, Grammar & Nuance, Phrase & Collocations, Sentence Breakdown
+- Seven complementary AI actions: Main AI, Context Explain, Grammar & Nuance, Phrase & Collocations, Sentence Breakdown, Compare Confusables, Rephrase
+- Structured sense disambiguation matrix with context relevance indicators
+- Context differential analysis (direct substitutions & nuance loss)
+- Syntactic slot parsing with grammatical dependency roles
+- In-place single-section regeneration
+- Live preload progress dot strip and interactive tokenized context chips
 - Dual-mode context extraction: exact DOM Range offset vs ranked page-candidate search
 - Editable Context field with session-only memory and visible **Context used** confirmation
 - Prompt sandboxing (`<target>`, `<context>`, `<target-language>`) and parse-time section-kind normalization
-- Schema v8 built-in prompt upgrades (custom templates are never overwritten)
+- Schema v9 built-in prompt upgrades (custom templates are never overwritten)
 
 ### Lexical Profile
 - Word Family chips (noun, verb, adjective, adverb, inflections, derivatives)
@@ -56,7 +61,6 @@ Focused, incremental product controls that fit the current MV3 architecture:
 - Per-site blacklist and whitelist for in-page triggers
 - Configurable keyboard shortcut beyond the current post-selection modifier key
 - Option to disable automatic phrasal/idiom fallback in Dictionary mode
-- Regenerate or edit a single AI section in place without re-running the whole lookup
 - Capture selected sentence, page title, URL, and PDF page metadata with saved vocabulary
 
 ---

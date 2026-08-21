@@ -15,12 +15,13 @@ if (popupRoot && popupShell) {
     popupRoot.innerHTML = popupShell.createMarkup({ prefix: "toolbar-popup", host: "toolbar" });
 }
 
-const getRenderOptions = () => ({
+const getRenderOptions = (extra = {}) => ({
     prefix: "toolbar-popup",
     titleTag: "h2",
     sectionTitleTag: "h3",
     pronunciationRate: settings?.pronunciationRate ?? 0.95,
-    pronunciationVoiceURI: settings?.pronunciationVoiceURI ?? ""
+    pronunciationVoiceURI: settings?.pronunciationVoiceURI ?? "",
+    followUps: extra.followUps || (activeTab === "ai" ? activeFollowUps : [])
 });
 
 const form = document.querySelector("#lookup-form");
@@ -34,6 +35,7 @@ const explainContextButton = document.querySelector("#explain-context-btn");
 const explainGrammarButton = document.querySelector("#explain-grammar-btn");
 const explainPhraseExplorerButton = document.querySelector("#explain-phrase-explorer-btn");
 const explainSentenceButton = document.querySelector("#explain-sentence-btn");
+const explainCompareButton = document.querySelector("#explain-compare-btn");
 const openSettingsButton = document.querySelector("#open-settings-btn");
 const providerSelect = document.querySelector("#provider-select");
 const languageSelect = document.querySelector("#lang-select");
@@ -52,6 +54,7 @@ let contextSource = "";
 let contextConfidence = "none";
 let requestToken = 0;
 let lastPreloadKey = "";
+let activeFollowUps = [];
 let activeRequestId = "";
 
 const OUTPUT_AFFECTING_SETTING_KEYS = popupHelpers.OUTPUT_AFFECTING_SETTING_KEYS;
@@ -117,6 +120,21 @@ async function init() {
     resultRoot.addEventListener("click", (event) => {
         audio.handlePronunciationClick(event);
 
+        const regenBtn = event.target.closest("[data-regen-section]");
+        if (regenBtn) {
+            event.preventDefault();
+            event.stopPropagation();
+            void regenerateAiSection(regenBtn);
+            return;
+        }
+
+        const rephraseBtn = event.target.closest("[data-rephrase-mode]");
+        if (rephraseBtn) {
+            event.preventDefault();
+            void handleRephrase(rephraseBtn.dataset.rephraseMode || "simplify");
+            return;
+        }
+
         const phraseBtn = event.target.closest("[data-lookup-query]");
         if (phraseBtn) {
             const query = String(phraseBtn.dataset.lookupQuery || "").trim();
@@ -134,8 +152,9 @@ async function init() {
     });
     explainContextButton?.addEventListener("click", handleExplainInContext);
     explainGrammarButton?.addEventListener("click", handleExplainGrammar);
-explainPhraseExplorerButton?.addEventListener("click", handleExplainPhraseExplorer);
+    explainPhraseExplorerButton?.addEventListener("click", handleExplainPhraseExplorer);
     explainSentenceButton?.addEventListener("click", handleSentenceBreakdown);
+    explainCompareButton?.addEventListener("click", handleCompareConfusables);
     contextInput?.addEventListener("input", () => {
         contextText = popupHelpers.normalizeContext(contextInput.value);
         contextSource = contextText ? "manual" : "";
@@ -187,7 +206,7 @@ function handleRuntimeMessage(message) {
 
 function applyDimensions() {
     const dimensions = popupShell?.clampDimensions(settings.popupWidth, settings.popupHeight)
-        || { width: 500, height: 600 };
+        || { width: 620, height: 720 };
     const { width, height } = dimensions;
     // Chrome action popups have a constrained viewport. Keep the toolbar
     // document within it so the internal scroll container remains reachable;
@@ -283,7 +302,7 @@ async function executeContextAction({
     errorMessage,
     validate = null,
     resolveContext = null
-}) {
+}, extraOptions = {}) {
     if (!activeQuery || !settings?.enableAI || activeTab !== "ai") {
         return;
     }
@@ -316,7 +335,8 @@ async function executeContextAction({
             requestOptions: {
                 trigger: "manual",
                 context: contextText,
-                intent
+                intent,
+                ...extraOptions
             },
             cache: lookupCache
         });
@@ -332,7 +352,7 @@ async function executeContextAction({
         activeTab = "ai";
         renderTabs();
         updateContextActionVisibility();
-        resultRoot.innerHTML = renderer.renderResult(response.result, getRenderOptions());
+        resultRoot.innerHTML = renderer.renderResult(response.result, getRenderOptions({ followUps: [] }));
     } catch (error) {
         if (token !== requestToken || error?.name === "AbortError") {
             return;
@@ -396,6 +416,67 @@ function handleSentenceBreakdown() {
             return null;
         }
     });
+}
+
+function handleCompareConfusables() {
+    return executeContextAction({
+        intent: "compare_confusables",
+        loadingMessage: "Comparing similar words...",
+        errorMessage: "Unable to compare these words."
+    });
+}
+
+async function regenerateAiSection(button) {
+    const kind = String(button?.dataset?.regenSection || "").trim();
+    const title = String(button?.dataset?.regenTitle || kind).trim();
+    if (!kind || !activeQuery || !settings?.enableAI) {
+        return;
+    }
+    const sectionEl = button.closest("[data-section-kind]");
+    const bodyEl = sectionEl?.querySelector(".toolbar-popup-section-body") || sectionEl;
+    if (bodyEl) {
+        bodyEl.innerHTML = `<div class="toolbar-popup-state is-loading-shimmer"></div>`;
+    }
+    try {
+        const response = await lookupClient.getLookupResponse({
+            tab: "ai",
+            text: activeQuery,
+            settings,
+            requestOptions: {
+                trigger: "manual",
+                context: contextText,
+                intent: "section_regen",
+                sectionKind: kind,
+                sectionTitle: title
+            },
+            cache: lookupCache
+        });
+        if (!response?.ok || !response.result) {
+            throw new Error(response?.error || "Unable to regenerate section.");
+        }
+        const html = renderer.renderResult(response.result, getRenderOptions({ followUps: [] }));
+        const temp = document.createElement("div");
+        temp.innerHTML = html;
+        const replacement = temp.querySelector(`[data-section-kind="${kind}"]`) || temp.querySelector(".toolbar-popup-result");
+        if (sectionEl && replacement) {
+            sectionEl.replaceWith(replacement);
+        } else if (bodyEl) {
+            bodyEl.innerHTML = replacement?.innerHTML || renderer.escapeHtml(response.result.sections?.[0]?.text || "Updated.");
+        }
+    } catch (error) {
+        if (bodyEl) {
+            bodyEl.innerHTML = `<p class="toolbar-popup-section-paragraph"><small class="toolbar-popup-inline-meta">${renderer.escapeHtml(error.message || "Unable to regenerate section.")}</small></p>`;
+        }
+    }
+}
+
+function handleRephrase(mode) {
+    return executeContextAction({
+        intent: "rephrase",
+        loadingMessage: "Rephrasing...",
+        errorMessage: "Unable to rephrase this text.",
+        resolveContext: (validation) => (validation.ok ? validation.context : contextText)
+    }, { rephraseMode: mode });
 }
 
 function handleTabClick(event) {
@@ -563,16 +644,27 @@ async function loadTab(tab) {
     const token = requestToken;
     activeRequestId = "";
     audio.stopPronunciation();
+    if (tab !== "ai") {
+        activeFollowUps = [];
+    }
+
     const cacheKey = lookupClient.buildRequestCacheKey(tab, query, settings, {});
     const cached = lookupCache.get(cacheKey);
     if (cached) {
         if (cached.requestId) {
             activeRequestId = cached.requestId;
         }
+        if (tab === "ai") {
+            syncFollowUpState(query, contextText);
+        }
         resultRoot.setAttribute("aria-busy", "false");
         resultRoot.innerHTML = renderer.renderResult(cached, getRenderOptions());
         audio.restorePracticeResult(resultRoot, query, cached.pronunciation?.language);
-        maybePreloadAi(query, tab);
+        if (tab === "ai") {
+            void preloadFollowUpIntents(query, contextText, token);
+        } else {
+            maybePreloadAi(query, tab);
+        }
         return;
     }
     resultRoot.setAttribute("aria-busy", "true");
@@ -598,11 +690,18 @@ async function loadTab(tab) {
         if (response.result?.requestId) {
             activeRequestId = response.result.requestId;
         }
+        if (tab === "ai") {
+            syncFollowUpState(query, contextText);
+        }
         resultRoot.innerHTML = renderer.renderResult(response.result, getRenderOptions());
         audio.restorePracticeResult(resultRoot, query, response.result?.pronunciation?.language);
-        maybePreloadAi(query, tab);
+        if (tab === "ai") {
+            void preloadFollowUpIntents(query, contextText, token);
+        } else {
+            maybePreloadAi(query, tab);
+        }
     } catch (error) {
-        if (token !== requestToken) {
+        if (token !== requestToken || error?.name === "AbortError" || String(error?.message || "").includes("aborted")) {
             return;
         }
 
@@ -610,6 +709,109 @@ async function loadTab(tab) {
     } finally {
         if (token === requestToken) {
             resultRoot.setAttribute("aria-busy", "false");
+        }
+    }
+}
+
+function syncFollowUpState(text = activeQuery, context = contextText) {
+    if (!settings?.enableAiPreload || !settings?.enableAI) {
+        activeFollowUps = [];
+        return;
+    }
+
+    const eligible = popupHelpers.getEligibleFollowUpIntents({ text, context });
+    activeFollowUps = eligible.map((item) => {
+        const cacheKey = lookupClient.buildRequestCacheKey("ai", text, settings, {
+            context,
+            intent: item.intent
+        });
+        const cached = lookupCache.get(cacheKey);
+        return {
+            ...item,
+            result: cached || null,
+            loading: !cached,
+            error: ""
+        };
+    });
+}
+
+function patchActiveFollowUps() {
+    if (activeTab !== "ai" || !resultRoot) {
+        return;
+    }
+    renderer.patchFollowUpCards(resultRoot, activeFollowUps, getRenderOptions());
+}
+
+async function preloadFollowUpIntents(text = activeQuery, context = contextText, token = requestToken) {
+    if (!settings?.enableAiPreload || !settings?.enableAI) {
+        return;
+    }
+
+    const query = String(text || "").trim();
+    if (!query) {
+        return;
+    }
+
+    syncFollowUpState(query, context);
+    if (!activeFollowUps.length) {
+        return;
+    }
+
+    if (token === requestToken && activeTab === "ai") {
+        patchActiveFollowUps();
+    }
+
+    for (const item of activeFollowUps) {
+        if (token !== requestToken) {
+            return;
+        }
+        if (item.result) {
+            continue;
+        }
+
+        try {
+            const response = await lookupClient.getLookupResponse({
+                tab: "ai",
+                text: query,
+                settings,
+                requestOptions: {
+                    trigger: "manual",
+                    context,
+                    intent: item.intent
+                },
+                cache: lookupCache
+            });
+
+            if (token !== requestToken) {
+                return;
+            }
+
+            const target = activeFollowUps.find((entry) => entry.intent === item.intent);
+            if (!target) {
+                continue;
+            }
+
+            if (response?.ok && response.result) {
+                target.result = response.result;
+                target.loading = false;
+                target.error = "";
+            } else {
+                target.loading = false;
+                target.error = response?.error || item.errorMessage;
+            }
+        } catch (error) {
+            if (token !== requestToken) {
+                return;
+            }
+            const target = activeFollowUps.find((entry) => entry.intent === item.intent);
+            if (target) {
+                target.loading = false;
+                target.error = error?.message || item.errorMessage;
+            }
+        }
+
+        if (token === requestToken && activeTab === "ai") {
+            patchActiveFollowUps();
         }
     }
 }
@@ -635,9 +837,11 @@ function maybePreloadAi(query = activeQuery, currentTab = activeTab) {
         settings,
         requestOptions: { trigger: "manual" },
         cache: lookupCache
-    }).catch(() => {
-        // Keep preload failures silent until the user opens the AI tab.
-    });
+    })
+        .then(() => preloadFollowUpIntents(normalizedQuery, contextText, requestToken))
+        .catch(() => {
+            // Keep preload failures silent until the user opens the AI tab.
+        });
 }
 
 function updateContextActionVisibility() {
