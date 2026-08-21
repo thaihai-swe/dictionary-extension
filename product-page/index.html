@@ -43,9 +43,9 @@
                     <li><a href="#overview" class="nav-link">Why Dictionary</a></li>
                     <li><a href="#how-it-works" class="nav-link">How it works</a></li>
                     <li><a href="#interactive-preview" class="nav-link">Try the demo</a></li>
-                    <li><a href="#features" class="nav-link">Features</a></li>
+                    <li><a href="#ai-actions" class="nav-link">AI actions</a></li>
                     <li><a href="#install" class="nav-link">Install</a></li>
-                    <li><a href="#security" class="nav-link">Privacy</a></li>
+                    <li><a href="#faq" class="nav-link">FAQ</a></li>
                 </ul>
             </nav>
 
@@ -141,7 +141,7 @@
                     <article class="card card-feature">
                         <div class="card-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M12 4h9"/><path d="M4 9h16"/><path d="M4 15h16"/></svg></div>
                         <h3 class="card-title">Learn the natural expression</h3>
-                        <p class="card-text">Explore idioms, collocations, confusable pairs, and three rewrite styles—Simplify, Make Formal, and Native Idiom—so you learn what people actually say.</p>
+                        <p class="card-text">Explore idioms, collocations, and confusable pairs. One <strong>Rephrase</strong> action returns three rewrite styles—Simplified, Academic &amp; Formal, and Native Idiom—so you learn what people actually say.</p>
                     </article>
                 </div>
             </div>
@@ -191,6 +191,7 @@
                         <button type="button" class="preset-btn" data-query="spill the beans" data-tab="ai" data-intent="phrase_explorer"><span class="preset-tag">Idiom</span><strong>spill the beans</strong></button>
                         <button type="button" class="preset-btn" data-query="The algorithm adapts dynamically to high traffic." data-tab="ai" data-intent="sentence_breakdown"><span class="preset-tag">Sentence</span><strong>The algorithm adapts…</strong></button>
                         <button type="button" class="preset-btn" data-query="affect vs effect" data-tab="ai" data-intent="compare_confusables"><span class="preset-tag">Compare</span><strong>affect vs effect</strong></button>
+                        <button type="button" class="preset-btn" data-query="resilience" data-tab="ai" data-intent="rephrase"><span class="preset-tag">Rephrase</span><strong>three rewrite styles</strong></button>
                     </div>
 
                     <div class="popup-device">
@@ -243,12 +244,66 @@
                     <article class="benefit-card"><span class="benefit-index">C</span><h3>Pronunciation and speech practice</h3><p>Play dictionary audio with speech-synthesis fallback, then speak the word back and get a color-coded accuracy grade.</p></article>
                     <article class="benefit-card"><span class="benefit-index">D</span><h3>Phrase-aware recovery</h3><p>For multi-word expressions, the lookup chain can try normalized lemma and phrase candidates and use an AI phrase explanation when structured results are incomplete.</p></article>
                     <article class="benefit-card"><span class="benefit-index">E</span><h3>Context you can inspect and click</h3><p>Sentence context is an editable prefill, not hidden scraping. Words in <strong>Context used</strong> are clickable for nested lookups, and follow-up sections load with a visible progress strip.</p></article>
-                    <article class="benefit-card"><span class="benefit-index">F</span><h3>Seven named AI actions</h3><p>Dedicated actions cover senses in context, grammar slots, phrase patterns, sentence structure, confusable comparisons, and three rewrite styles—not a blank chat box.</p></article>
+                    <article class="benefit-card"><span class="benefit-index">F</span><h3>Seven named AI actions</h3><p>Dedicated actions cover senses in context, grammar slots, phrase patterns, sentence structure, confusable comparisons, and one Rephrase action that returns three rewrite styles—not a blank chat box.</p></article>
                 </div>
             </div>
         </section>
 
-        <section class="section section-dark" id="compare">
+        <section class="section section-dark" id="ai-actions">
+            <div class="container">
+                <div class="section-header">
+                    <p class="section-kicker">Seven named intents · not a blank chat box</p>
+                    <h2 class="section-title">Ask the language question you actually have.</h2>
+                    <p class="section-lead">Each AI action is a dedicated workflow with a structured result. Rephrase sits beside Compare Confusables and returns three rewrite styles in one click.</p>
+                </div>
+                <div class="ai-action-grid">
+                    <article class="ai-action-card">
+                        <span class="ai-action-index">01</span>
+                        <h3>Main AI Explanation</h3>
+                        <p>Oxford-style definition, numbered sense cards, bilingual examples, and usage notes for the selected word or phrase.</p>
+                        <span class="ai-action-meta">Optional context</span>
+                    </article>
+                    <article class="ai-action-card">
+                        <span class="ai-action-index">02</span>
+                        <h3>Context Explain</h3>
+                        <p>Pinpoints the sense that fits this sentence, with substitutions that keep the same syntax and notes on nuance you would lose.</p>
+                        <span class="ai-action-meta">Requires sentence context</span>
+                    </article>
+                    <article class="ai-action-card">
+                        <span class="ai-action-index">03</span>
+                        <h3>Grammar &amp; Nuance</h3>
+                        <p>Shows the syntactic role, formality, tone, and the pattern the word or phrase is following in the surrounding sentence.</p>
+                        <span class="ai-action-meta">Requires sentence context</span>
+                    </article>
+                    <article class="ai-action-card">
+                        <span class="ai-action-index">04</span>
+                        <h3>Phrase &amp; Collocations</h3>
+                        <p>Deconstructs idioms, phrasal verbs, and natural word partnerships so you can reuse the expression, not just translate it.</p>
+                        <span class="ai-action-meta">Optional context</span>
+                    </article>
+                    <article class="ai-action-card">
+                        <span class="ai-action-index">05</span>
+                        <h3>Sentence Breakdown</h3>
+                        <p>Splits clauses, roles, and phrase chips so a long or technical sentence becomes inspectable one piece at a time.</p>
+                        <span class="ai-action-meta">Sentence query or context</span>
+                    </article>
+                    <article class="ai-action-card">
+                        <span class="ai-action-index">06</span>
+                        <h3>Compare Confusables</h3>
+                        <p>Side-by-side distinction, comparison matrix, and minimal-pair sentences for pairs such as <em>affect vs effect</em>.</p>
+                        <span class="ai-action-meta">Comparison queries</span>
+                    </article>
+                    <article class="ai-action-card ai-action-card-featured">
+                        <span class="ai-action-index">07</span>
+                        <h3>Rephrase</h3>
+                        <p>One action, three styles in the same result: Simplified, Academic &amp; Formal, and Native Idiom—with notes in your target language.</p>
+                        <span class="ai-action-meta">Optional context</span>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section-darker" id="compare">
             <div class="container">
                 <div class="section-header">
                     <p class="section-kicker">Why this instead of another lookup tool</p>
@@ -295,7 +350,7 @@
                                 <th scope="row">Senses, grammar, rewrites</th>
                                 <td>No</td>
                                 <td>Unstructured chat</td>
-                                <td>Named intents, sense cards, compare matrix, three rephrase styles</td>
+                                <td>Named intents, sense cards, compare matrix, one Rephrase action with three styles</td>
                             </tr>
                             <tr>
                                 <th scope="row">Your providers and keys</th>
@@ -459,6 +514,42 @@
             </div>
         </section>
 
+        <section class="section section-dark" id="faq">
+            <div class="container">
+                <div class="section-header">
+                    <p class="section-kicker">Before you install</p>
+                    <h2 class="section-title">Common questions about Dictionary.</h2>
+                    <p class="section-lead">Short answers for setup, privacy, and what the extension does—and does not—do.</p>
+                </div>
+                <div class="faq-list">
+                    <details class="faq-item" open>
+                        <summary>Do I need an API key to use it?</summary>
+                        <p>No. Dictionary lookup, Google Translate, and pronunciation work without AI. Contextual explanations, Grammar &amp; Nuance, Compare Confusables, and Rephrase need an API key for Gemini or an OpenAI-compatible endpoint.</p>
+                    </details>
+                    <details class="faq-item">
+                        <summary>Does Dictionary send the page I am reading to an AI provider?</summary>
+                        <p>Not during ordinary lookups. Surrounding sentence context is a local prefill you can edit or clear. It is transmitted only when you click a contextual AI action such as Context Explain or Grammar &amp; Nuance.</p>
+                    </details>
+                    <details class="faq-item">
+                        <summary>Where are API keys stored?</summary>
+                        <p>Keys live in <code>chrome.storage.local</code> on this device and stay in the background service worker. They are not synced, not exported with settings, and never injected into webpage content scripts.</p>
+                    </details>
+                    <details class="faq-item">
+                        <summary>How do I look up a word on a page?</summary>
+                        <p>Highlight text or double-click a word to show the floating icon (default), tap your post-selection modifier, open the card directly, use the right-click menu, or type into the toolbar popup. Triggers stay off inside form fields so they do not interrupt typing.</p>
+                    </details>
+                    <details class="faq-item">
+                        <summary>What does Rephrase return?</summary>
+                        <p>A single Rephrase button—next to Compare Confusables—returns three rewrite styles in one result: Simplified, Academic &amp; Formal, and Native Idiom. There are no separate Simplify or Make Formal buttons.</p>
+                    </details>
+                    <details class="faq-item">
+                        <summary>Is there a Chrome Web Store listing?</summary>
+                        <p>Not yet. Install from GitHub with Chrome’s unpacked-extension workflow: clone or download the repository, enable Developer mode, and choose <strong>Load unpacked</strong> on the folder that contains <code>manifest.json</code>.</p>
+                    </details>
+                </div>
+            </div>
+        </section>
+
         <section class="section cta-section" id="contact">
             <div class="container">
                 <div class="cta-card">
@@ -484,6 +575,7 @@
             <div class="footer-links">
                 <a href="#hero">Back to top</a>
                 <a href="#install">Install</a>
+                <a href="#faq">FAQ</a>
                 <a href="https://github.com/thaihai-swe/dictionary-extension/tree/main" target="_blank" rel="noopener noreferrer">Source</a>
             </div>
         </div>

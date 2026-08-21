@@ -101,12 +101,24 @@
                     ]
                 },
                 rephrase: {
-                    title: "Alternative phrasing styles",
-                    intro: "Three stylistic rewrites of the context sentence.",
-                    points: [
-                        "Simplified: The team stayed strong under pressure, so they finished on time.",
-                        "Academic & formal: The team’s capacity to recover under pressure enabled timely delivery.",
-                        "Native & idiomatic: They bounced back under pressure and still shipped on time."
+                    title: "Rephrase · three styles",
+                    intro: "One Rephrase action returns three rewrite styles of the context sentence.",
+                    styles: [
+                        {
+                            label: "Simplified",
+                            text: "The team stayed strong under pressure, so they finished on time.",
+                            note: "Shorter words, same meaning — useful when the original sentence feels dense."
+                        },
+                        {
+                            label: "Academic & Formal",
+                            text: "The team’s capacity to recover under pressure enabled timely delivery.",
+                            note: "More abstract nouns; appropriate for reports, papers, and professional writing."
+                        },
+                        {
+                            label: "Native Idiom",
+                            text: "They bounced back under pressure and still shipped on time.",
+                            note: "Natural spoken English: “bounced back” carries the resilience meaning."
+                        }
                     ]
                 }
             }
@@ -202,12 +214,24 @@
                     ]
                 },
                 rephrase: {
-                    title: "Alternative phrasing styles",
-                    intro: "Three stylistic rewrites of the context sentence.",
-                    points: [
-                        "Simplified: He finally told the secret about the surprise launch.",
-                        "Academic & formal: He ultimately disclosed the confidential details of the surprise launch.",
-                        "Native & idiomatic: He let the cat out of the bag about the launch."
+                    title: "Rephrase · three styles",
+                    intro: "One Rephrase action returns three rewrite styles of the context sentence.",
+                    styles: [
+                        {
+                            label: "Simplified",
+                            text: "He finally told the secret about the surprise launch.",
+                            note: "Direct and clear; avoids the idiom if the reader is still learning it."
+                        },
+                        {
+                            label: "Academic & Formal",
+                            text: "He ultimately disclosed the confidential details of the surprise launch.",
+                            note: "Formal verbs such as “disclosed” fit reports and workplace writing."
+                        },
+                        {
+                            label: "Native Idiom",
+                            text: "He let the cat out of the bag about the launch.",
+                            note: "A close informal equivalent that native speakers use in the same situation."
+                        }
                     ]
                 }
             }
@@ -309,12 +333,24 @@
                     ]
                 },
                 rephrase: {
-                    title: "Alternative phrasing styles",
-                    intro: "Three stylistic rewrites of the context sentence.",
-                    points: [
-                        "Simplified: The algorithm changes when many people use it.",
-                        "Academic & formal: The algorithm modifies its behavior in response to elevated traffic volume.",
-                        "Native & idiomatic: The algorithm scales up when traffic spikes."
+                    title: "Rephrase · three styles",
+                    intro: "One Rephrase action returns three rewrite styles of the context sentence.",
+                    styles: [
+                        {
+                            label: "Simplified",
+                            text: "The algorithm changes when many people use it.",
+                            note: "Removes technical adverbs so the core idea is easy to follow."
+                        },
+                        {
+                            label: "Academic & Formal",
+                            text: "The algorithm modifies its behavior in response to elevated traffic volume.",
+                            note: "Nominal style typical of technical documentation and papers."
+                        },
+                        {
+                            label: "Native Idiom",
+                            text: "The algorithm scales up when traffic spikes.",
+                            note: "“Scales up” and “spikes” are the natural collocations engineers use."
+                        }
                     ]
                 }
             }
@@ -419,12 +455,24 @@
                     ]
                 },
                 rephrase: {
-                    title: "Alternative phrasing styles",
-                    intro: "Three stylistic rewrites of the context sentence.",
-                    points: [
-                        "Simplified: The policy will change housing costs, but we still do not know the later result.",
-                        "Academic & formal: The policy is expected to affect housing costs, although the long-term effect remains uncertain.",
-                        "Native & idiomatic: The policy will hit housing costs, but we still don’t know the knock-on effect yet."
+                    title: "Rephrase · three styles",
+                    intro: "One Rephrase action returns three rewrite styles of the context sentence.",
+                    styles: [
+                        {
+                            label: "Simplified",
+                            text: "The policy will change housing costs, but we still do not know the later result.",
+                            note: "Keeps affect/effect as “change” and “result” so the contrast stays obvious."
+                        },
+                        {
+                            label: "Academic & Formal",
+                            text: "The policy is expected to affect housing costs, although the long-term effect remains uncertain.",
+                            note: "Preserves the verb/noun pair in careful academic wording."
+                        },
+                        {
+                            label: "Native Idiom",
+                            text: "The policy will hit housing costs, but we still don’t know the knock-on effect yet.",
+                            note: "“Hit” and “knock-on effect” are natural spoken alternatives."
+                        }
                     ]
                 }
             }
@@ -670,7 +718,23 @@
         `;
     }
 
+    function renderRephraseCards(styles) {
+        if (!Array.isArray(styles) || !styles.length) return "";
+        return `<div class="demo-rephrase-grid">${
+            styles.map((style) => `
+                <article class="demo-rephrase-card">
+                    <div class="demo-rephrase-header">
+                        <span class="demo-rephrase-style-tag">${escapeHtml(style.label || "Style")}</span>
+                    </div>
+                    <p class="demo-rephrase-text">${escapeHtml(style.text || "")}</p>
+                    ${style.note ? `<p class="demo-rephrase-note">${escapeHtml(style.note)}</p>` : ""}
+                </article>
+            `).join("")
+        }</div>`;
+    }
+
     function renderIntentBody(content) {
+        if (content.styles) return renderRephraseCards(content.styles);
         if (content.phraseCards) return renderPhraseCards(content.phraseCards);
         if (content.rows && content.terms) {
             return `
@@ -811,7 +875,10 @@
         $("#demo-search-input").value = entry.query;
         $("#demo-context-input").value = entry.context;
         $$(".preset-btn").forEach((button) => {
-            button.classList.toggle("active", button.dataset.query === query);
+            const sameQuery = button.dataset.query === query;
+            const sameTab = (button.dataset.tab || "dictionary") === (tab || entry.tab || "dictionary");
+            const sameIntent = (button.dataset.intent || "") === (intent || entry.intent || "");
+            button.classList.toggle("active", sameQuery && sameTab && sameIntent);
         });
         setIntent(intent || entry.intent || "explain_in_context");
         setTab(tab || entry.tab || "dictionary");
@@ -903,7 +970,7 @@
             sections.forEach((section) => navObserver.observe(section));
 
             if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-                $$(".section-header, .card, .interactive-stage, .arch-diagram-card, .table-card, .code-showcase, .doc-link-card, .cta-card, .user-journey-step, .install-step, .benefit-card").forEach((element) => {
+                $$(".section-header, .card, .interactive-stage, .arch-diagram-card, .table-card, .code-showcase, .doc-link-card, .cta-card, .user-journey-step, .install-step, .benefit-card, .ai-action-card, .faq-item").forEach((element) => {
                     element.classList.add("reveal");
                 });
                 const revealObserver = new IntersectionObserver((entries, observer) => {
