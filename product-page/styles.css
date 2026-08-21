@@ -758,6 +758,14 @@ a:hover { color: var(--blue-strong); }
 .demo-card-source { color: #71829a; font-size: 0.68rem; }
 .demo-meaning-list, .demo-example-list, .demo-study-list { margin: 0; padding-left: 18px; color: var(--text-muted); font-size: 0.83rem; line-height: 1.55; font-family: var(--display); }
 .demo-meaning-list li + li, .demo-example-list li + li, .demo-study-list li + li { margin-top: 6px; }
+.demo-example-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+.demo-example-text { flex: 1 1 auto; min-width: 0; }
+.demo-example-listen { flex: 0 0 auto; margin-top: 1px; }
 .demo-translation { margin: 0; color: var(--text); font-size: 0.88rem; font-weight: 600; }
 .demo-ai-kicker { margin: 0 0 8px; color: var(--text-dim); font-family: var(--mono); font-size: 0.74rem; font-weight: 600; }
 .demo-word-family { margin-bottom: 12px; }

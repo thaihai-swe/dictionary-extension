@@ -692,6 +692,54 @@ body::-webkit-scrollbar {
 }
 .dictionary-helper-section-list-item { margin: 3px 0; }
 
+.toolbar-popup-example-row,
+.toolbar-popup-quote-row,
+.toolbar-popup-minimal-row,
+.dictionary-helper-example-row,
+.dictionary-helper-quote-row,
+.dictionary-helper-minimal-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+.toolbar-popup-example-text,
+.toolbar-popup-quote-text,
+.toolbar-popup-minimal-text,
+.dictionary-helper-example-text,
+.dictionary-helper-quote-text,
+.dictionary-helper-minimal-text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.toolbar-popup-example-listen,
+.dictionary-helper-example-listen {
+    flex: 0 0 auto;
+    margin-top: 1px;
+    padding: 2px 7px;
+    color: var(--color-ink-muted);
+    background: var(--color-paper-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    font-size: 0.66rem;
+    font-weight: 600;
+    line-height: 1.3;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.toolbar-popup-example-listen:hover,
+.dictionary-helper-example-listen:hover {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+    background: var(--color-primary-soft);
+}
+.toolbar-popup-example-listen.is-playing,
+.dictionary-helper-example-listen.is-playing {
+    color: #fff;
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
 .toolbar-popup-section li + li {
     margin-top: 6px;
 }
@@ -774,6 +822,7 @@ body::-webkit-scrollbar {
     color: var(--color-ink-2);
     font-style: italic;
 }
+.toolbar-popup-markdown .toolbar-popup-quote-row { margin: 4px 0; }
 
 /* Loading & Shimmer State */
 .toolbar-popup-state {
@@ -1149,8 +1198,9 @@ body::-webkit-scrollbar {
     border-radius: var(--radius-card);
     background: var(--color-paper-3);
 }
+.toolbar-popup-minimal-row { margin-bottom: 4px; }
 .toolbar-popup-minimal-a,
-.toolbar-popup-minimal-b { margin: 0 0 4px; font-size: 0.8rem; }
+.toolbar-popup-minimal-b { margin: 0; font-size: 0.8rem; }
 .toolbar-popup-minimal-a { color: var(--color-text-primary); }
 .toolbar-popup-minimal-b { color: var(--color-ink-2); }
 

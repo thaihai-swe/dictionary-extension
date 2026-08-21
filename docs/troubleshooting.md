@@ -78,7 +78,7 @@ This guide provides actionable solutions for common issues across extension relo
 ## 6. Pronunciation & Speech Practice
 
 ### Symptom: Audio button plays browser speech instead of real human voice.
-- **Explanation:** The extension prioritizes native MP3 dictionary recordings. If no provider returns an audio URL for that specific term, it seamlessly falls back to the browser's built-in `window.speechSynthesis`.
+- **Explanation:** Pronunciation uses this keyless chain: `api.dictionaryapi.dev` MP3 first (when the lookup provided one) → Google Translate TTS (`translate.googleapis.com`, no API key) → browser `window.speechSynthesis`. A 502 from the dictionary CDN does not block the later fallbacks.
 - **Speech Voice Selection:** Open Settings → **Preferred speech voice** to choose your favorite installed operating system voice.
 - **Speed Adjustment:** Set **Pronunciation speed** (clamped between `0.5x` and `1.5x`).
 

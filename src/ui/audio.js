@@ -9,12 +9,14 @@
         activeButton: null,
         activeRecognition: null,
         activeEvalButton: null,
+        speechStartTimer: null,
         practiceResults: new Map(),
 
         handlePronunciationClick(event) {
             const evalButton = event.target.closest("[data-eval-speech-text]");
             if (evalButton) {
                 event.preventDefault();
+                event.stopPropagation();
                 AudioHelper.handleSpeechEvalClick(evalButton);
                 return;
             }
@@ -23,6 +25,9 @@
             if (!button) {
                 return;
             }
+
+            event.preventDefault();
+            event.stopPropagation();
 
             const text = button.dataset.pronounceText || "";
             const audioUrl = button.dataset.pronounceAudio || "";
@@ -174,63 +179,144 @@
             AudioHelper.activeEvalButton = null;
         },
 
+        getFreeTtsUrl(text, language = "en-US") {
+            const clean = String(text || "").trim();
+            if (!clean) {
+                return "";
+            }
+            const langCode = String(language || "en-US").toLowerCase().startsWith("en-gb") ? "en-GB" : "en";
+            return `https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=${encodeURIComponent(langCode)}&q=${encodeURIComponent(clean)}`;
+        },
+
         async playPronunciation({ text, audioUrl, language, rate = 0.95, voiceURI = "", button = null }) {
             AudioHelper.stopPronunciation();
             AudioHelper.setPlayingButton(button || document.activeElement?.closest?.("[data-pronounce-text]"));
 
+            let finished = false;
             const finish = () => {
+                if (finished) {
+                    return;
+                }
+                finished = true;
                 AudioHelper.clearPlayingButtons();
             };
 
-            if (audioUrl) {
-                AudioHelper.activeAudio = new Audio(audioUrl);
-                AudioHelper.activeAudio.playbackRate = Number.isFinite(rate) ? rate : 1;
-                AudioHelper.activeAudio.addEventListener("ended", () => {
-                    AudioHelper.activeAudio = null;
-                    finish();
-                }, { once: true });
-                AudioHelper.activeAudio.addEventListener("error", () => {
-                    AudioHelper.activeAudio = null;
-                    AudioHelper.speakWithSynthesis(text, language, rate, voiceURI, finish);
-                }, { once: true });
+            const playAudioUrl = (url) => new Promise((resolve) => {
+                const clip = new Audio(url);
+                AudioHelper.activeAudio = clip;
+                clip.playbackRate = Number.isFinite(rate) && rate > 0 ? rate : 1;
 
-                try {
-                    await AudioHelper.activeAudio.play();
+                const onEnded = () => {
+                    if (AudioHelper.activeAudio === clip) {
+                        AudioHelper.activeAudio = null;
+                    }
+                    finish();
+                    resolve(true);
+                };
+
+                const onError = () => {
+                    if (AudioHelper.activeAudio === clip) {
+                        AudioHelper.activeAudio = null;
+                    }
+                    resolve(false);
+                };
+
+                clip.addEventListener("ended", onEnded, { once: true });
+                clip.addEventListener("error", onError, { once: true });
+
+                clip.play().then(() => {
+                    // Playback started successfully.
+                }).catch(() => {
+                    if (AudioHelper.activeAudio === clip) {
+                        AudioHelper.activeAudio = null;
+                    }
+                    resolve(false);
+                });
+            });
+
+            // 1. Highest priority: Try provided dictionary audio URL (e.g. api.dictionaryapi.dev)
+            const cleanAudioUrl = String(audioUrl || "").trim();
+            if (cleanAudioUrl) {
+                const played = await playAudioUrl(cleanAudioUrl);
+                if (played) {
                     return;
-                } catch (_error) {
-                    AudioHelper.activeAudio = null;
                 }
             }
 
+            // 2. Free keyless remote audio fallback (Google Translate TTS CDN)
+            const googleTtsUrl = AudioHelper.getFreeTtsUrl(text, language);
+            if (googleTtsUrl && typeof navigator !== "undefined" && navigator.onLine !== false) {
+                const playedGoogle = await playAudioUrl(googleTtsUrl);
+                if (playedGoogle) {
+                    return;
+                }
+            }
+
+            // 3. Free native offline fallback (Web Speech API)
             AudioHelper.speakWithSynthesis(text, language, rate, voiceURI, finish);
         },
 
         speakWithSynthesis(text, language, rate = 0.95, voiceURI = "", onDone = () => {}) {
-            if (!window.speechSynthesis || !text) {
+            const cleanText = String(text || "").trim();
+            if (!window.speechSynthesis || !cleanText) {
                 onDone();
                 return;
             }
 
-            window.speechSynthesis.cancel();
+            if (AudioHelper.speechStartTimer) {
+                window.clearTimeout(AudioHelper.speechStartTimer);
+                AudioHelper.speechStartTimer = null;
+            }
 
-            AudioHelper.activeUtterance = new SpeechSynthesisUtterance(text);
-            if (language) {
-                AudioHelper.activeUtterance.lang = language;
-            }
-            AudioHelper.activeUtterance.rate = Number.isFinite(rate) ? rate : 0.95;
-            const voice = window.speechSynthesis.getVoices().find((item) => item.voiceURI === voiceURI);
-            if (voice) {
-                AudioHelper.activeUtterance.voice = voice;
-            }
-            AudioHelper.activeUtterance.onend = () => {
-                AudioHelper.activeUtterance = null;
-                onDone();
-            };
-            AudioHelper.activeUtterance.onerror = () => {
-                AudioHelper.activeUtterance = null;
-                onDone();
-            };
-            window.speechSynthesis.speak(AudioHelper.activeUtterance);
+            // Always delay speak() slightly after stopPronunciation() / cancel()
+            // so Chromium's audio backend has time to process the cancellation without
+            // swallowing the incoming utterance.
+            AudioHelper.speechStartTimer = window.setTimeout(() => {
+                AudioHelper.speechStartTimer = null;
+                try {
+                    if (window.speechSynthesis.paused) {
+                        window.speechSynthesis.resume();
+                    }
+
+                    const utterance = new SpeechSynthesisUtterance(cleanText);
+                    AudioHelper.activeUtterance = utterance;
+                    if (language) {
+                        utterance.lang = language;
+                    }
+                    utterance.rate = Number.isFinite(rate) && rate > 0 ? rate : 0.95;
+                    const voices = typeof window.speechSynthesis.getVoices === "function"
+                        ? window.speechSynthesis.getVoices()
+                        : [];
+                    if (voiceURI && voices.length) {
+                        const voice = voices.find((item) => item.voiceURI === voiceURI);
+                        if (voice) {
+                            utterance.voice = voice;
+                        }
+                    }
+
+                    let completed = false;
+                    const complete = () => {
+                        if (completed) {
+                            return;
+                        }
+                        completed = true;
+                        if (AudioHelper.activeUtterance === utterance) {
+                            AudioHelper.activeUtterance = null;
+                        }
+                        onDone();
+                    };
+
+                    utterance.onend = complete;
+                    utterance.onerror = complete;
+                    window.speechSynthesis.speak(utterance);
+                    if (window.speechSynthesis.paused) {
+                        window.speechSynthesis.resume();
+                    }
+                } catch (_error) {
+                    AudioHelper.activeUtterance = null;
+                    onDone();
+                }
+            }, 60);
         },
 
         evaluateSpeech({ text, language = "en-US", button = null, onStart = () => {}, onResult = () => {}, onError = () => {} }) {
@@ -431,6 +517,11 @@
         },
 
         stopPronunciation() {
+            if (AudioHelper.speechStartTimer) {
+                window.clearTimeout(AudioHelper.speechStartTimer);
+                AudioHelper.speechStartTimer = null;
+            }
+
             if (AudioHelper.activeAudio) {
                 AudioHelper.activeAudio.pause();
                 AudioHelper.activeAudio.currentTime = 0;

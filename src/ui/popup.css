@@ -424,6 +424,44 @@
 .dictionary-helper-inline-meta { color: var(--color-text-muted); font-size: 0.71rem; font-weight: 600; }
 .dictionary-helper-section-list { margin: 4px 0 6px; padding-left: 18px; }
 .dictionary-helper-section-list-item { margin: 3px 0; }
+.dictionary-helper-example-row,
+.dictionary-helper-quote-row,
+.dictionary-helper-minimal-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+.dictionary-helper-example-text,
+.dictionary-helper-quote-text,
+.dictionary-helper-minimal-text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.dictionary-helper-example-listen {
+    flex: 0 0 auto;
+    margin-top: 1px;
+    padding: 2px 7px;
+    color: var(--color-text-muted);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    font-size: 0.66rem;
+    font-weight: 600;
+    line-height: 1.3;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.dictionary-helper-example-listen:hover {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+    background: var(--color-primary-soft);
+}
+.dictionary-helper-example-listen.is-playing {
+    color: #fff;
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+}
 .dictionary-helper-section {
     padding: 10px 12px;
     color: var(--color-text-primary);
@@ -533,6 +571,7 @@
 .dictionary-helper-markdown p { margin: 6px 0; }
 .dictionary-helper-markdown code { padding: 1px 4px; color: var(--color-primary); background: var(--color-surface-muted); border-radius: 4px; font-family: var(--font-mono); font-size: 0.78rem; }
 .dictionary-helper-markdown blockquote { margin: 6px 0; padding-left: 10px; color: var(--color-text-secondary); border-left: 3px solid var(--color-primary); font-style: italic; }
+.dictionary-helper-markdown .dictionary-helper-quote-row { margin: 4px 0; }
 
 .dictionary-helper-resizer {
     position: absolute;
@@ -772,8 +811,9 @@
     border-radius: var(--radius-m);
     background: var(--color-surface);
 }
+.dictionary-helper-minimal-row { margin-bottom: 4px; }
 .dictionary-helper-minimal-a,
-.dictionary-helper-minimal-b { margin: 0 0 4px; font-size: 0.8rem; }
+.dictionary-helper-minimal-b { margin: 0; font-size: 0.8rem; }
 .dictionary-helper-minimal-a { color: var(--color-text-primary); }
 .dictionary-helper-minimal-b { color: var(--color-text-secondary); }
 

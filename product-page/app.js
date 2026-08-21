@@ -527,17 +527,6 @@
         ).join("");
     }
 
-    function renderSectionActions(kind) {
-        if (kind !== "examples") {
-            return "";
-        }
-        return `
-            <div class="demo-section-actions">
-                <button type="button" class="demo-section-action" data-demo-listen>Listen</button>
-            </div>
-        `;
-    }
-
     function renderSenseMatrix(senses) {
         if (!Array.isArray(senses) || !senses.length) return "";
         const cards = senses.map((sense) => `
@@ -631,7 +620,7 @@
             .map((meaning) => `<li>${escapeHtml(meaning)}</li>`)
             .join("");
         const examples = (result.examples || [result.example])
-            .map((example) => `<li>${escapeHtml(example)}</li>`)
+            .map((example) => `<li class="demo-example-item"><div class="demo-example-row"><span class="demo-example-text">${escapeHtml(example)}</span><button type="button" class="demo-section-action demo-example-listen" data-demo-listen aria-label="Play example sentence">Listen</button></div></li>`)
             .join("");
         const practice = state.practiceLabel
             ? `<span class="demo-practice-badge">${escapeHtml(state.practiceLabel)}</span>`
@@ -662,7 +651,6 @@
             <section class="demo-definition-card">
                 <div class="demo-card-heading">
                     <p class="demo-section-label">Examples</p>
-                    ${renderSectionActions("examples")}
                 </div>
                 <ul class="demo-example-list">${examples}</ul>
             </section>
@@ -742,7 +730,7 @@
     function renderStudyDetails(entry) {
         const result = entry.dictionary;
         const examples = (result.examples || [result.example])
-            .map((example) => `<li>${escapeHtml(example)}</li>`)
+            .map((example) => `<li class="demo-example-item"><div class="demo-example-row"><span class="demo-example-text">${escapeHtml(example)}</span><button type="button" class="demo-section-action demo-example-listen" data-demo-listen aria-label="Play example sentence">Listen</button></div></li>`)
             .join("");
         const related = entry.ai.phrase_explorer?.phraseCards || [];
         const relatedItems = related
@@ -806,7 +794,6 @@
                 <section class="demo-ai-analysis">
                     <div class="demo-card-heading">
                         <h3 class="demo-ai-heading">Senses &amp; meanings</h3>
-                        ${renderSectionActions("senses")}
                     </div>
                     ${renderSenseMatrix(entry.senses)}
                 </section>
@@ -814,7 +801,6 @@
             <section class="demo-ai-analysis">
                 <div class="demo-card-heading">
                     <h3 class="demo-ai-heading">${escapeHtml(content.title)}</h3>
-                    ${renderSectionActions(state.intent)}
                 </div>
                 <p class="demo-context-used demo-tokenized-context"><strong>Context used:</strong> ${tokenizeContext(context, entry.query)}</p>
                 <p class="demo-ai-copy">${escapeHtml(content.intro)}</p>

@@ -52,21 +52,127 @@
         },
 
         renderSectionActions(section, kind, prefix) {
-            const exampleText = kind === "examples" ? Renderer.extractFirstExample(section) : "";
+            if (kind !== "examples") {
+                return "";
+            }
+            if ((Array.isArray(section?.items) && section.items.length > 0) || (Array.isArray(section?.data?.pairs) && section.data.pairs.length > 0)) {
+                return "";
+            }
+            if (section?.markdown && /^>\s?/m.test(String(section.text || ""))) {
+                return "";
+            }
+            const exampleText = Renderer.extractFirstExample(section);
             if (!exampleText) {
                 return "";
             }
-            return `<div class="${prefix}-section-actions"><button type="button" class="${prefix}-section-action ${prefix}-pronounce" data-pronounce-text="${Renderer.escapeHtml(exampleText)}" aria-label="Play example sentence" title="Play example">Listen</button></div>`;
+            return `<div class="${prefix}-section-actions"><button type="button" class="${prefix}-section-action ${prefix}-pronounce" data-pronounce-text="${Renderer.escapeHtml(exampleText)}" data-pronounce-language="en-US" aria-label="Play example sentence" title="Play example">Listen</button></div>`;
+        },
+
+        renderExampleListenButton(speechText, prefix = "dictionary-helper") {
+            const cleaned = Renderer.extractEnglishSpeechText(speechText);
+            if (!cleaned) {
+                return "";
+            }
+            return `<button type="button" class="${prefix}-example-listen ${prefix}-pronounce" data-pronounce-text="${Renderer.escapeHtml(cleaned)}" data-pronounce-language="en-US" aria-label="Play example sentence" title="Play example">Listen</button>`;
+        },
+
+        isInlineBilingualExample(value) {
+            const text = String(value || "").trim();
+            if (!text) {
+                return false;
+            }
+            return /^["'“].+?["'”]\s*(?:—|–|--|:|\()\s*.+$/.test(text)
+                || /\s+(?:—|–|--)\s+/.test(text)
+                || /^.+?\s+\(([^)]+)\)\s*$/.test(text);
+        },
+
+        shouldListenOnPairedLine(text, pairIndex) {
+            if (Renderer.isInlineBilingualExample(text)) {
+                return true;
+            }
+            return pairIndex % 2 === 0;
+        },
+
+        renderExampleItem(item, prefix = "dictionary-helper") {
+            const listenBtn = Renderer.renderExampleListenButton(item, prefix);
+            return `<li class="${prefix}-section-list-item ${prefix}-example-item"><div class="${prefix}-example-row"><span class="${prefix}-example-text">${Renderer.formatInlineMarkdown(item)}</span>${listenBtn}</div></li>`;
+        },
+
+        looksLikeEnglish(value) {
+            const letters = String(value || "").match(/\p{L}/gu) || [];
+            if (letters.length < 3) {
+                return false;
+            }
+            const latin = letters.filter((ch) => /[A-Za-z]/.test(ch)).length;
+            return latin / letters.length >= 0.85;
+        },
+
+        extractEnglishSpeechText(value) {
+            let text = Renderer.cleanSpeechText(value);
+            if (!text) {
+                return "";
+            }
+            text = text.replace(/^\d+[.)]\s+/, "").replace(/^[-*+]\s+/, "");
+
+            const stripOuterQuotes = (value) => String(value || "").replace(/^["'“]+/, "").replace(/["'”]+$/, "").trim();
+
+            const quotedThenGloss = text.match(/^["'“](.+?)["'”]\s*(?:—|–|--|:|\()\s*.+$/);
+            if (quotedThenGloss && Renderer.looksLikeEnglish(quotedThenGloss[1])) {
+                return stripOuterQuotes(quotedThenGloss[1]);
+            }
+
+            const dashParts = text.split(/\s+(?:—|–|--)\s+/);
+            if (dashParts.length >= 2 && Renderer.looksLikeEnglish(dashParts[0]) && !Renderer.looksLikeEnglish(dashParts.slice(1).join(" "))) {
+                return stripOuterQuotes(dashParts[0]);
+            }
+
+            const paren = text.match(/^(.+?)\s+\(([^)]+)\)\s*$/);
+            if (paren && Renderer.looksLikeEnglish(paren[1]) && !Renderer.looksLikeEnglish(paren[2])) {
+                return stripOuterQuotes(paren[1]);
+            }
+
+            const cleaned = stripOuterQuotes(text);
+            return Renderer.looksLikeEnglish(cleaned) ? cleaned : "";
+        },
+
+        cleanSpeechText(value) {
+            let text = String(value || "")
+                .replace(/^>\s*/, "")
+                .replace(/[*_`#]/g, "")
+                .trim();
+            if (/^["'“].+?["'”]\s*(?:—|–|--)\s*.+$/.test(text)) {
+                const m = text.match(/^["'“](.+?)["'”]/);
+                if (m && m[1]) {
+                    text = m[1];
+                }
+            }
+            text = text.replace(/^["'“](.+)["'”]$/, "$1");
+            return text.replace(/\s+/g, " ").trim();
         },
 
         extractFirstExample(section) {
+            if (Array.isArray(section?.items)) {
+                for (const item of section.items) {
+                    const cleaned = Renderer.cleanSpeechText(item);
+                    if (cleaned) {
+                        return cleaned;
+                    }
+                }
+            }
+            const pair = Array.isArray(section?.data?.pairs) ? section.data.pairs[0] : null;
+            if (pair) {
+                const fromPair = Renderer.cleanSpeechText(pair.sentenceA || pair.sentenceB || pair.text || "");
+                if (fromPair) {
+                    return fromPair;
+                }
+            }
             const text = String(section?.text || "");
             const quoted = text.match(/^>\s?(.+)$/m);
             if (quoted) {
-                return quoted[1].trim();
+                return Renderer.cleanSpeechText(quoted[1]);
             }
             const firstLine = text.split("\n").map((line) => line.trim()).find(Boolean);
-            return firstLine || "";
+            return firstLine ? Renderer.cleanSpeechText(firstLine) : "";
         },
 
         renderSenseMatrix(senses, prefix) {
@@ -126,12 +232,22 @@
             if (!items.length) {
                 return "";
             }
-            return `<div class="${prefix}-minimal-pairs">${items.map((pair) => `
+            return `<div class="${prefix}-minimal-pairs">${items.map((pair) => {
+                const listenA = Renderer.renderExampleListenButton(pair.sentenceA || "", prefix);
+                const listenB = Renderer.renderExampleListenButton(pair.sentenceB || "", prefix);
+                return `
                 <article class="${prefix}-minimal-pair">
-                  <p class="${prefix}-minimal-a">${Renderer.escapeHtml(pair.sentenceA || "")}</p>
-                  <p class="${prefix}-minimal-b">${Renderer.escapeHtml(pair.sentenceB || "")}</p>
+                  <div class="${prefix}-minimal-row">
+                    <p class="${prefix}-minimal-a"><span class="${prefix}-minimal-text">${Renderer.escapeHtml(pair.sentenceA || "")}</span></p>
+                    ${listenA}
+                  </div>
+                  <div class="${prefix}-minimal-row">
+                    <p class="${prefix}-minimal-b"><span class="${prefix}-minimal-text">${Renderer.escapeHtml(pair.sentenceB || "")}</span></p>
+                    ${listenB}
+                  </div>
                   ${pair.explanation ? `<small class="${prefix}-inline-meta">${Renderer.escapeHtml(pair.explanation)}</small>` : ""}
-                </article>`).join("")}</div>`;
+                </article>`;
+            }).join("")}</div>`;
         },
 
         renderRephraseBar(prefix, options = {}) {
@@ -147,17 +263,22 @@
               </div>`;
         },
 
-        renderSimpleMarkdown(source) {
+        renderSimpleMarkdown(source, prefix = "dictionary-helper", options = {}) {
             const lines = String(source || "").split("\n");
+            const listenOnQuotes = options.listenOnQuotes === true;
+            const listenOnListItems = options.listenOnListItems === true;
             let html = "";
             let inBlockquote = false;
             let listType = "";
+            let quotePairIndex = 0;
+            let listPairIndex = 0;
 
             const closeList = () => {
                 if (listType) {
                     html += `</${listType}>`;
                     listType = "";
                 }
+                listPairIndex = 0;
             };
 
             const closeOpenBlocks = () => {
@@ -165,6 +286,7 @@
                     html += "</blockquote>";
                     inBlockquote = false;
                 }
+                quotePairIndex = 0;
                 closeList();
             };
 
@@ -177,6 +299,7 @@
                         html += "</blockquote>";
                         inBlockquote = false;
                     }
+                    quotePairIndex = 0;
                     closeList();
                     continue;
                 }
@@ -208,17 +331,34 @@
                         html += `<${nextListType}>`;
                         listType = nextListType;
                     }
-                    html += `<li>${Renderer.formatInlineMarkdown((unorderedItem || orderedItem)[1])}</li>`;
+                    const itemText = (unorderedItem || orderedItem)[1];
+                    const listenOnThisItem = listenOnListItems && Renderer.shouldListenOnPairedLine(itemText, listPairIndex);
+                    const listenBtn = listenOnThisItem ? Renderer.renderExampleListenButton(itemText, prefix) : "";
+                    if (listenOnListItems) {
+                        listPairIndex = Renderer.isInlineBilingualExample(itemText) ? 0 : listPairIndex + 1;
+                    }
+                    html += listenBtn
+                        ? `<li class="${prefix}-example-item"><div class="${prefix}-example-row"><span class="${prefix}-example-text">${Renderer.formatInlineMarkdown(itemText)}</span>${listenBtn}</div></li>`
+                        : `<li>${Renderer.formatInlineMarkdown(itemText)}</li>`;
                     continue;
                 }
 
                 if (trimmed.startsWith(">")) {
                     closeList();
                     if (!inBlockquote) {
-                        html += "<blockquote>";
+                        html += `<blockquote class="${prefix}-markdown-quote">`;
                         inBlockquote = true;
+                        quotePairIndex = 0;
                     }
-                    html += `<p>${Renderer.formatInlineMarkdown(trimmed.replace(/^>\s?/, ""))}</p>`;
+                    const quoteText = trimmed.replace(/^>\s?/, "");
+                    const listenOnThisQuote = listenOnQuotes && Renderer.shouldListenOnPairedLine(quoteText, quotePairIndex);
+                    const listenBtn = listenOnThisQuote ? Renderer.renderExampleListenButton(quoteText, prefix) : "";
+                    if (listenOnQuotes) {
+                        quotePairIndex = Renderer.isInlineBilingualExample(quoteText) ? 0 : quotePairIndex + 1;
+                    }
+                    html += listenBtn
+                        ? `<p class="${prefix}-quote-row"><span class="${prefix}-quote-text">${Renderer.formatInlineMarkdown(quoteText)}</span>${listenBtn}</p>`
+                        : `<p>${Renderer.formatInlineMarkdown(quoteText)}</p>`;
                     continue;
                 }
 
@@ -239,56 +379,6 @@
                 .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
                 .replace(/\*(.+?)\*/g, "<em>$1</em>")
                 .replace(/`(.+?)`/g, "<code>$1</code>");
-        },
-
-        normalizeSourceBadges(result) {
-            const rawBadges = Array.isArray(result?.sourceBadges)
-                ? result.sourceBadges
-                : [];
-
-            const badges = [];
-            const seen = new Set();
-
-            for (const item of rawBadges) {
-                if (!item) {
-                    continue;
-                }
-
-                const label = typeof item === "string"
-                    ? item.trim()
-                    : String(item.label || "").trim();
-                if (!label) {
-                    continue;
-                }
-
-                const key = label.toLowerCase();
-                if (seen.has(key)) {
-                    continue;
-                }
-                seen.add(key);
-
-                let kind = typeof item === "object" && item.kind
-                    ? String(item.kind).trim()
-                    : "";
-                if (!kind) {
-                    const lower = label.toLowerCase();
-                    if (lower.includes("translate")) {
-                        kind = "translation";
-                    } else if (lower.includes("ai")) {
-                        kind = "ai";
-                    } else {
-                        kind = "dictionary";
-                    }
-                }
-
-                badges.push({
-                    label,
-                    kind,
-                    providerId: typeof item === "object" ? String(item.providerId || "").trim() : ""
-                });
-            }
-
-            return badges;
         },
 
         normalizeSectionKind(section) {
@@ -319,8 +409,11 @@
             const sectionTitleTag = options.sectionTitleTag || "h4";
 
             const kind = Renderer.normalizeSectionKind(section);
+            const isExamples = kind === "examples";
             const items = (section.items || [])
-                .map((item) => `<li class="${prefix}-section-list-item">${Renderer.formatInlineMarkdown(item)}</li>`)
+                .map((item) => isExamples
+                    ? Renderer.renderExampleItem(item, prefix)
+                    : `<li class="${prefix}-section-list-item">${Renderer.formatInlineMarkdown(item)}</li>`)
                 .join("");
             const hasTitle = Boolean(String(section.title || "").trim());
             const metaBadge = section.meta
@@ -346,7 +439,7 @@
                 if (kind === "context" && options.title) {
                     mdText = Renderer.highlightContextQuery(mdText, options.title);
                 }
-                sectionBody = `<div class="${prefix}-markdown">${Renderer.renderSimpleMarkdown(mdText)}</div>`;
+                sectionBody = `<div class="${prefix}-markdown">${Renderer.renderSimpleMarkdown(mdText, prefix, { listenOnQuotes: isExamples, listenOnListItems: isExamples })}</div>`;
             } else if (section.text) {
                 const inlineMeta = (!hasTitle && section.meta)
                     ? ` <small class="${prefix}-inline-meta">${Renderer.escapeHtml(section.meta)}</small>`
@@ -669,8 +762,11 @@
             const totalSections = rawSections.length;
             const sections = rawSections.map((section, index) => {
                 const kind = Renderer.normalizeSectionKind(section);
+                const isExamples = kind === "examples";
                 const items = (section.items || [])
-                    .map((item) => `<li>${Renderer.formatInlineMarkdown(item)}</li>`)
+                    .map((item) => isExamples
+                        ? Renderer.renderExampleItem(item, prefix)
+                        : `<li class="${prefix}-section-list-item">${Renderer.formatInlineMarkdown(item)}</li>`)
                     .join("");
                 const hasTitle = Boolean(String(section.title || "").trim());
                 const metaBadge = section.meta
@@ -696,7 +792,7 @@
                     if (kind === "context" && result?.title) {
                         mdText = Renderer.highlightContextQuery(mdText, result.title);
                     }
-                    sectionBody = `<div class="${prefix}-markdown">${Renderer.renderSimpleMarkdown(mdText)}</div>`;
+                    sectionBody = `<div class="${prefix}-markdown">${Renderer.renderSimpleMarkdown(mdText, prefix, { listenOnQuotes: isExamples, listenOnListItems: isExamples })}</div>`;
                 } else if (section.text) {
                     const inlineMeta = (!hasTitle && section.meta)
                         ? ` <small class="${prefix}-inline-meta">${Renderer.escapeHtml(section.meta)}</small>`
@@ -811,7 +907,7 @@
                 const explanation = String(wordFormation.explanation || "").trim();
                 const tagItems = (list, cls) => (list || []).map((item) => `<span class="${prefix}-formation-tag ${cls}">${Renderer.escapeHtml(item)}</span>`).join("");
                 const tagsHtml = `<div class="${prefix}-formation-tags">${tagItems(prefixes, `${prefix}-formation-prefix`)}${tagItems(suffixes, `${prefix}-formation-suffix`)}</div>`;
-                const explanationHtml = explanation ? `<p class="${prefix}-formation-explanation">${Renderer.renderSimpleMarkdown(explanation)}</p>` : "";
+                const explanationHtml = explanation ? `<p class="${prefix}-formation-explanation">${Renderer.renderSimpleMarkdown(explanation, prefix)}</p>` : "";
                 if (prefixes.length || suffixes.length || explanation) {
                     formationHtml = `<div class="${prefix}-word-formation"><${sectionTitleTag} class="${prefix}-section-title">Word Formation</${sectionTitleTag}>${tagsHtml}${explanationHtml}</div>`;
                 }
@@ -820,7 +916,10 @@
             let mistakesHtml = "";
             if (Array.isArray(learnerMistakes) && learnerMistakes.length) {
                 const mistakeItems = learnerMistakes.map((item) => {
-                    const example = item.example ? `<blockquote class="${prefix}-mistake-example"><p>${Renderer.formatInlineMarkdown(item.example)}</p></blockquote>` : "";
+                    const mistakeListen = item.example ? Renderer.renderExampleListenButton(item.example, prefix) : "";
+                    const example = item.example
+                        ? `<blockquote class="${prefix}-mistake-example"><p class="${prefix}-quote-row"><span class="${prefix}-quote-text">${Renderer.formatInlineMarkdown(item.example)}</span>${mistakeListen}</p></blockquote>`
+                        : "";
                     return `<div class="${prefix}-mistake-item"><div class="${prefix}-mistake-original"><strong>Mistake:</strong> ${Renderer.formatInlineMarkdown(item.mistake)}</div><div class="${prefix}-mistake-correction"><strong>Correction:</strong> ${Renderer.formatInlineMarkdown(item.correction)}</div>${example}</div>`;
                 }).join("");
                 mistakesHtml = `<div class="${prefix}-learner-mistakes"><${sectionTitleTag} class="${prefix}-section-title">Common Learner Mistakes</${sectionTitleTag}>${mistakeItems}</div>`;
@@ -958,6 +1057,11 @@
             const cards = phrases.map((phrase) => {
                 const typeLabel = String(phrase.type || "phrase").replace(/_/g, " ");
 
+                const phraseListen = phrase.example ? Renderer.renderExampleListenButton(phrase.example, prefix) : "";
+                const exampleHtml = phrase.example
+                    ? `<blockquote class="${prefix}-phrase-example"><p class="${prefix}-quote-row"><span class="${prefix}-quote-text">${Renderer.escapeHtml(phrase.example)}</span>${phraseListen}</p></blockquote>`
+                    : "";
+
                 return `
                   <article class="${prefix}-phrase-card" data-phrase-type="${Renderer.escapeHtml(phrase.type)}">
                     <div class="${prefix}-phrase-header">
@@ -968,7 +1072,7 @@
                     </div>
                     <p class="${prefix}-phrase-meaning">${Renderer.escapeHtml(phrase.meaning)}</p>
                     ${phrase.role ? `<div class="${prefix}-phrase-role"><small>Role:</small> ${Renderer.escapeHtml(phrase.role)}</div>` : ""}
-                    ${phrase.example ? `<blockquote class="${prefix}-phrase-example"><p>${Renderer.escapeHtml(phrase.example)}</p></blockquote>` : ""}
+                    ${exampleHtml}
                     <div class="${prefix}-phrase-actions">
                       <button type="button" class="${prefix}-phrase-lookup-btn" data-lookup-query="${Renderer.escapeHtml(phrase.text)}" aria-label="Look up phrase ${Renderer.escapeHtml(phrase.text)}">Look up phrase</button>
                     </div>
