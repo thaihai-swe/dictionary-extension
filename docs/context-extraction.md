@@ -1,123 +1,221 @@
-# Context & Sentence Extraction Flow
+# Context & Sentence Extraction Specification
 
 ## Overview
 
-Contextual AI features (**Context Explain**, **Grammar & Nuance**, and **Sentence Breakdown**) require or benefit from knowing the surrounding sentence of a target word or phrase.
+Contextual AI capabilities (**Context Explain**, **Grammar & Nuance**, **Phrase & Collocations**, and **Sentence Breakdown**) require or benefit from knowing the surrounding sentence of a target word or phrase.
 
-The extension uses a dual-mode context retrieval architecture:
+To provide accurate contextual awareness without capturing unnecessary or sensitive page content, **Dictionary** implements a dual-mode sentence extraction engine:
 
-1. **Selection Mode (Exact):** Uses DOM Range position to extract the exact sentence at the user's cursor selection.
-
-In all cases, automatic pre-filling is a non-blocking convenience. The Context field is editable, user edits are authoritative, and no context is sent remote until an AI contextual action is clicked.
+1. **Mode 1 — Selection Mode (Exact — Confidence: `exact`):** Calculates the exact character offset of the user's cursor selection within the containing DOM block, slicing only the containing sentence.
+2. **Mode 2 — Page Search Mode (Ranked Candidate — Confidence: `suggested`):** Searches the readable page DOM for whole-word matches and ranks candidates using visibility, semantic container placement, viewport proximity, and document order.
 
 ---
 
 ## Dual-Mode Retrieval Architecture
 
 ```text
-                           +--------------------------+
-                           | User initiates AI action |
-                           +------------+-------------+
-                                        |
-                   +--------------------+--------------------+
-                   |                                         |
-         [Text selection on page]                   [Typed query in toolbar]
-                   |                                         |
-                   v                                         v
-     Exact DOM Range Extraction                Candidate Ranking & Page Search
-  (DOM Block + Range Character Offset)       (Visible > Main Content > Viewport Dist)
-                   |                                         |
-                   v                                         v
-       Confidence: "exact"                      Confidence: "suggested"
-       Help: "Context detected                   Help: "Suggested sentence
-              from selection"                           from this page"
-                   |                                         |
-                   +--------------------+--------------------+
-                                        |
-                                        v
-                           +--------------------------+
-                           | Editable Context Field   |
-                           | (Session-only, transient)|
-                           +--------------------------+
+                           ┌──────────────────────────┐
+                           │ User initiates AI lookup │
+                           └────────────┬─────────────┘
+                                        │
+                   ┌────────────────────┴────────────────────┐
+                   │                                         │
+        [Text selection on page]                   [Typed query in toolbar]
+        (or context-menu trigger)                  (or in-page tab switch)
+                   │                                         │
+                   ▼                                         ▼
+┌──────────────────────────────────────┐  ┌──────────────────────────────────────┐
+│  Mode 1: Exact Range Extraction      │  │  Mode 2: Ranked Page Search          │
+│  - Reads window.getSelection().range │  │  - Builds Unicode word boundary regex│
+│  - Climbs to nearest block element   │  │  - Scans semantic containers first   │
+│  - Calculates character offset       │  │  - Evaluates up to 120 leaf elements │
+│  - Bidirectional delimiter scan      │  │  - Ranks by: Visible > Main > Dist   │
+│  - Heals soft hyphens & line breaks  │  │  - Slices up to 8 candidates         │
+│  - Verifies query inside slice       │  │  - Fallback to 50k body innerText    │
+└──────────────────┬───────────────────┘  └──────────────────┬───────────────────┘
+                   │                                         │
+                   ▼                                         ▼
+         Confidence: "exact"                       Confidence: "suggested"
+         Source: "selection"                       Source: "page"
+         Help: "Context detected                   Help: "Suggested sentence
+                from selection"                           from this page"
+                   │                                         │
+                   └────────────────────┬────────────────────┘
+                                        │
+                                        ▼
+                           ┌──────────────────────────┐
+                           │  Editable Context Field  │
+                           │  - Capped to 800 chars   │
+                           │  - Autosizing (2-4 rows) │
+                           │  - Manual override state │
+                           └────────────┬─────────────┘
+                                        │
+                      [User clicks Contextual AI Action]
+                                        │
+                                        ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                        AI Request Submission                           │
+│  • Context Explain: Strictly requires non-empty context                │
+│  • Grammar & Nuance: Strictly requires non-empty context               │
+│  • Sentence Breakdown: Uses context sentence, or query if sentence-like│
+│  • Phrase & Collocations: Optional context supplement                  │
+│  • Result displays a visible "Context used" quotation section          │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Mode 1: Exact Selection-Based Extraction
+## Mode 1: Exact Selection-Based Extraction (`extractExactSentenceFromRange`)
 
-Used when the popup is opened from highlighted text on a webpage.
+Mode 1 is triggered when the user highlights text on a webpage or invokes a context-menu lookup on an active selection.
 
-### Sequence
+### Execution Sequence
 
-1. Read `window.getSelection().getRangeAt(0)`.
-2. Find the nearest enclosing block container (`p`, `li`, `td`, `blockquote`, `figcaption`, `dd`, `dt`, `h1`-`h6`, `pre`, `article`, `section`, `main`, `div`).
-3. Clone the range to calculate the exact selection offset within that block element:
-   ```js
+1. **Selection Capture:** Reads `window.getSelection().getRangeAt(0)`.
+2. **Block Container Resolution:** Identifies `range.commonAncestorContainer` (or parent element if a text node) and climbs to the nearest matching block element using:
+   ```css
+   p, li, td, th, blockquote, figcaption, dd, dt,
+   h1, h2, h3, h4, h5, h6, pre, article, section, main,
+   [role='article'], .reader-content, .textLayer, .pdfViewer, div
+   ```
+3. **Text Sanitization (`getSanitizedBlockText`):**
+   - Slices up to `MAX_CANDIDATE_TEXT_LENGTH = 12000` characters.
+   - Strips soft hyphens, zero-width spaces, and zero-width joiners (`/[\u00AD\u200B\u200C\u200D]/g`).
+   - Rejoins hyphenated line breaks (`/([A-Za-zÀ-ɏ]+)-\s*\r?\n\s*([A-Za-zÀ-ɏ]+)/g` → `$1$2`).
+   - Normalizes consecutive whitespace to single spaces.
+4. **Range Character Offset Measurement (`getSelectionOffsetInBlock`):**
+   ```javascript
    const preRange = range.cloneRange();
    preRange.selectNodeContents(block);
    preRange.setEnd(range.startContainer, range.startOffset);
    const offset = preRange.toString().length;
    ```
-4. Scan backward from `offset` for sentence start boundaries (`.`, `!`, `?`, `。`, `！`, `？`).
-5. Scan forward for sentence end boundaries and trailing quotes/brackets.
-6. Slice and normalize that exact sentence block.
-7. Set `source: "selection"` and `confidence: "exact"`.
+5. **Bidirectional Delimiter Scanning (`extractSentenceAtOffset`):**
+   - Scans backward from `offset - 1` for sentence start boundaries: `.`, `!`, `?`, `。`, `！`, `？`.
+   - Scans forward from `offset` for sentence end boundaries and extends across trailing quotes and brackets (`["'”’»)]`).
+6. **Boundary Verification:** Verifies `findSentenceContaining(exactSentence, needle)` using a Unicode-aware boundary pattern.
+7. **Context Normalization:** Caps length at `MAX_CONTEXT_CHARS = 800` via `normalizeContext()` with ellipsis truncation if exceeded.
+8. **Result Packaging:** Returns `{ context, source: "selection", confidence: "exact" }`.
 
-### Why This Solves Multi-Occurrence Conflicts
-
-If a word appears 3 times in one paragraph or across different paragraphs:
-- The old approach searched from the top of a big block and returned the **first** matching sentence.
-- The Range offset pinpoints the **exact occurrence highlighted by the user**, guaranteeing the correct sentence is extracted.
+### Why Range Offset Solves Multi-Occurrence Ambiguity
+Standard DOM search tools typically call `indexOf(needle)` from the start of a container, which always extracts the **first** occurrence of a word in a paragraph. By measuring the character offset of the user's `Range`, Mode 1 pinpoints the exact sentence the user highlighted, even when the same word appears multiple times in the same paragraph.
 
 ---
 
+## Mode 2: Candidate Ranking & Page Search (`findBestPageSentenceCandidate`)
 
+Mode 2 is triggered when the user types a query in the toolbar popup or switches to the AI tab with a manual query.
 
-### Ranking Strategy
+### Execution Sequence
 
-
-1. Builds a word-boundary pattern (`\bquery\b` Unicode aware) to avoid partial matches (e.g. `art` inside `article`).
-2. Collects text nodes from readable semantic elements (`p`, `li`, `blockquote`, `td`, `figcaption`, `article`, `section`, `h1`-`h6`).
-3. Splits each element into sentences and filters those matching the word pattern.
-4. Ranks candidates by priority:
-   - **Visibility:** Element is currently in the active viewport (`visible: true`).
-   - **Semantics:** Element lives inside main content (`<main>`, `<article>`, `[role="main"]`).
-   - **Proximity:** Distance from the top of the viewport (`viewportDistance`).
-   - **Document Order:** Document index as a final deterministic fallback.
-5. Returns top candidate with `source: "page"` and `confidence: "suggested"`.
-6. If no page match exists, returns `{ context: "", source: "", confidence: "none" }`.
+1. **Word-Boundary Pattern Construction (`buildWordBoundaryPattern`):**
+   - Escapes special regex characters and transforms spaces into `\s+`.
+   - Constructs a Unicode-aware word boundary pattern:
+     ```javascript
+     new RegExp(`(^|[^\\p{L}\\p{N}_])${escaped}(?=$|[^\\p{L}\\p{N}_])`, "iu")
+     ```
+   - Prevents partial substring false positives (e.g. `art` matching inside `article` or `smart`).
+2. **DOM Scanning Scope:**
+   - Targets leaf elements inside semantic containers first:
+     ```css
+     /* Containers */
+     main, article, section, [role='main'], [role='article'], .content, #content, .reader-content, .textLayer
+     /* Leaf Elements */
+     p, li, blockquote, td, th, figcaption, dd, dt, h1, h2, h3, h4, h5, h6, pre, .reader-content, .textLayer
+     ```
+   - If empty, scans document-wide leaf elements.
+   - If still empty, falls back to top-level `div` elements.
+   - Scans up to `MAX_SCAN_ELEMENTS = 120` elements to maintain 60fps performance.
+3. **Candidate Collection:**
+   - Evaluates elements matching the boundary pattern.
+   - Splits block text into sentences via `splitIntoSentences()`:
+     ```javascript
+     text.match(/[^.!?。！？]+(?:[.!?。！？]+["'”’»)]*|$)/g)
+     ```
+   - Collects up to 8 matching candidate sentences, measuring bounding rects and visibility for each.
+4. **Multi-Factor Candidate Ranking (`rankSentenceCandidates`):**
+   Candidates are sorted deterministically using 4 weighted criteria:
+   - **1. Viewport Visibility (`visible`):** Elements currently inside the active viewport (`rect.bottom >= 0 && rect.top <= viewportHeight`) rank first.
+   - **2. Semantic Container (`inMainContent`):** Elements inside `<main>`, `<article>`, or reader containers take precedence over sidebars.
+   - **3. Viewport Proximity (`viewportDistance`):** Elements closest to the top of the viewport (`Math.abs(rect.top)`) rank higher.
+   - **4. Document Order (`documentOrder`):** Earlier document index serves as the final tiebreaker.
+5. **Full-Page Text Fallback:**
+   - If structured leaf scanning yields no match, scans the first `MAX_FALLBACK_TEXT_LENGTH = 50000` characters of `document.body.innerText`.
+6. **Result Packaging:** Returns `{ context: candidate, source: "page", confidence: "suggested" }` or `{ context: "", source: "", confidence: "none" }`.
 
 ---
 
 ## Message Contract (`GET_PAGE_CONTEXT`)
 
-The content script responds with structured confidence metadata:
+The toolbar popup or background worker queries the active tab's content script via `GET_PAGE_CONTEXT`. If the in-page card already holds `activeContext` and the query matches `activeText`, the content script returns that in-memory value, preserving manual edits.
 
+### Request Payload
 ```json
 {
-  "context": "Scientists are currently discovering evidence of ancient life on the planet.",
+  "type": "GET_PAGE_CONTEXT",
+  "payload": {
+    "text": "evaluate"
+  }
+}
+```
+
+### Response Payload
+```json
+{
+  "context": "Scientists are currently evaluating evidence of ancient microbial life on Mars.",
   "source": "selection",
   "confidence": "exact"
 }
 ```
 
-Possible `confidence` states:
+### Confidence & Source Lifecycle Matrix
 
-- `"exact"`: Sliced via DOM Range offset around selection. Help text: `Context detected from your selection. You can edit it.`
-- `"suggested"`: Selected via page search candidate ranking. Help text: `Suggested sentence from this page. You can edit or replace it.`
-- `"manual"`: Edited or pasted by user. Help text: `Used only for this explanation. Not saved.`
-- `"none"`: No match found. Context remains blank.
+| `confidence` | `source` | Origin / Trigger | UI Help Text |
+|---|---|---|---|
+| `"exact"` | `"selection"` | Extracted from exact selection Range offset. | `Context detected from your selection. You can edit it.` |
+| `"suggested"` | `"page"` | Extracted from ranked page candidate search. | `Suggested sentence from this page. You can edit or replace it.` |
+| `"manual"` | `"manual"` | User typed or pasted directly into textarea. | `Used only for this explanation. Not saved.` |
+| `"none"` | `""` | No match found or extraction disabled. | `Used only for this explanation. Not saved.` |
 
 ---
 
-## PDFs, Frames, and Reader Pages
+## Action-Specific Context Handling & Validation
 
-The content script is registered for file URLs, runs in supported frames, and can match about:blank child frames. Extraction prefers the selected DOM Range and then the nearest readable block, including PDF text-layer containers and article/reader containers. It does not scrape an entire PDF or article when a sentence can be isolated.
+| Action | Intent | Context Requirement | Query & Context Resolution |
+|---|---|---|---|
+| **Context Explain** | `explain_in_context` | **Strictly Required** | Validates `validateContext()`. If empty, shows inline alert `Please enter or paste the sentence containing this word.` and focuses textarea. |
+| **Grammar & Nuance** | `grammar` | **Strictly Required** | Validates `validateContext()`. If empty, shows inline alert `Please enter or paste the sentence containing this word.` and focuses textarea. |
+| **Sentence Breakdown** | `sentence_breakdown` | **Flexible** | If query is already sentence-like (`classifyQuery(text) === "sentence"`), uses query as context. If query is a single word/phrase, requires valid context; otherwise prompts `Enter or paste the sentence to break down.` |
+| **Phrase & Collocations** | `phrase_explorer` | **Optional** | Uses context if provided; functions seamlessly without context. |
 
+When context is used, AI results render a dedicated quote section:
+```markdown
+### Context used
+> Scientists are currently evaluating evidence of ancient microbial life on Mars.
+```
+The query term inside the quote is highlighted with bold markers (`**term**`) via `Renderer.highlightContextQuery()`.
 
-## Privacy & Bounded Use
+---
 
-- **Transient:** Context is kept only in active popup state memory. It is never saved to extension sync or local storage.
-- **Opt-In:** Page context is prefilled for convenience, but never sent to remote AI APIs until the user clicks an AI contextual action button.
-- **Truncated:** Context text is capped to `MAX_CONTEXT_CHARS` (800 chars) to prevent giant prompt payloads.
-- **Non-Blocking:** If page context extraction fails (restricted browser tab, iframe, no matching text), the user can paste any sentence directly into the Context field.
+## PDFs, Web Readers, and Frame Compatibility
+
+- **Scriptable HTML5 PDF Text Layers:** Online or local PDFs rendered with HTML5 text layers (`.textLayer`, `.pdfViewer`) expose DOM nodes. Range offset and candidate extraction operate seamlessly over text-layer spans.
+- **Hyphenation & Pagination Healing:** Line-break hyphens (`trans-\nportation` → `transportation`) and soft hyphens are healed automatically before boundary scanning.
+- **Multi-Frame Selection Coordination:** Context-menu lookups transmit `frameId` from the background worker. When `frameId > 0`, the background queries `GET_PAGE_CONTEXT` on that selection frame, copies the returned sentence onto `OPEN_LOOKUP_POPUP`, and opens the popup in the top frame or selection frame.
+- **Restricted Chrome Pages:** For pages where content script injection is impossible, the toolbar popup adapts its help text via `classifyPageRestriction`:
+  - `pdf_viewer`: `"PDF viewer pages cannot auto-extract context. Paste the sentence here."`
+  - `file_url`: `"Local files need Allow access to file URLs, or paste the sentence here."`
+  - `restricted_page`: `"This page cannot provide context automatically. Paste the sentence here."`
+  - `content_script_unavailable`: `"Page context unavailable. Paste the sentence here."`
+
+---
+
+## Privacy Safeguards & Execution Limits
+
+1. **User Opt-Out (`disablePageContextExtraction`):** Configurable in Options. When enabled, `extractSurroundingContext()` immediately returns `{ context: "", source: "", confidence: "none" }`. The in-page card displays `🚫 Context: None`.
+2. **Strict Payload Clamping (`MAX_CONTEXT_CHARS = 800`):** Enforces strict upper bounds to protect LLM context windows and control token costs. Truncated sentences append an ellipsis (`…`).
+3. **Execution Bounds:**
+   - `MAX_CANDIDATE_TEXT_LENGTH = 12000` chars per block.
+   - `MAX_SCAN_ELEMENTS = 120` elements per candidate search.
+   - `MAX_FALLBACK_TEXT_LENGTH = 50000` chars for full body fallback.
+4. **Sandboxed XML Input Contract:** AI prompts wrap context in `<context>...</context>` tags to prevent malicious webpage text from executing prompt injections.

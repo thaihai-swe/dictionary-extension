@@ -2,176 +2,211 @@
 
 ## Overview
 
-Dictionary provides fast lookups for words, phrases, or full sentences. It combines translation, rich dictionary definitions from multiple sources, and AI-driven explanations.
+**Dictionary** is a modern Chrome extension built for readers, students, and language learners. It brings instant definitions, neural translations, natural pronunciation, speech practice, and deep contextual AI explanations directly to the text you are reading—without breaking your reading flow or requiring external tabs.
 
-The interface uses an editorial learning design with warm light and dark themes, quieter controls, and definition-first typography.
+The user interface is powered by the **Calm Learning Studio** design system:
+- **Editorial Typography:** Clear, distraction-free serif typography for definitions and explanations, or bundled **Atkinson Hyperlegible** in **Learner Font** mode to improve character disambiguation for ESL learners.
+- **Adaptive Appearance:** Native support for System, Light, and Dark themes with WCAG 2.1 AA compliant contrast ratios.
+- **Transparent Attribution:** Multi-provider source badges clearly indicate which dictionary, translation, or AI services contributed to your result.
+- **Persistent Geometry:** In-page popup dimensions can be resized from the bottom-right corner and are automatically saved.
 
-Source providers are shown as compact badges in the result header, so you always know which services contributed to each lookup.
+---
 
-## Workflows
+## 1. Quick Start & Lookup Workflows
 
-### Manual Lookup
+### Manual Lookup (Toolbar Popup)
 
-Click the extension icon in the Chrome toolbar to open the popup. Type any word or phrase into the search text box and press Enter or click Search.
+1. Click the **Dictionary** icon in the Chrome toolbar (or pin it for one-click access).
+2. Type any word, idiom, phrasal verb, or complete sentence into the search input.
+3. Press `Enter` or click **Search**.
+4. Use the **Dictionary** tab for structured definitions and translations, or switch to the **AI** tab for contextual explanations and grammatical analysis.
+5. Click the **Gear icon** in the top-right header to access extension settings at any time.
 
-Use the gear icon in the toolbar header to open full extension settings without navigating away. The last Dictionary or AI tab used in this browser session is remembered until the browser restarts; a new session still opens on your default tab.
+*Tip: The toolbar popup remembers whether you were on the Dictionary or AI tab for your active browsing session.*
 
+---
 
-### In-page Triggers
+### In-Page Reading Triggers
 
-You can trigger a lookup directly on any webpage without typing:
+Look up words directly on any webpage without copying or typing:
 
-- **Floating Icon (Default):** Highlight text or double-click a word on a page to display a small lookup icon near the selection. Click the icon to open the card.
-- **Post-Selection Hotkey:** Highlight text or double-click a word, then tap your configured key (`Shift` by default, or `Alt` / `Ctrl`) to open the lookup card immediately.
-- **Direct Popup:** Set selection behavior to `Direct popup` to open the lookup card instantly on drag selection or double-click.
-- **Off:** Disable text selection and double-click triggers while keeping context menu lookups available.
-- **Context Menu:** Right-click selected text and choose the extension's lookup action.
+| Trigger Mode | Action / Behavior | Best Used For |
+|---|---|---|
+| **Floating Icon (Default)** | Highlight text or double-click a word to reveal a discreet floating lookup icon near the selection. Click it to open the card. | Non-intrusive everyday reading without accidental popup popovers. |
+| **Post-Selection Hotkey** | Highlight text or double-click a word, then tap your configured modifier key once (`Shift` by default, or `Alt` / `Ctrl`). | High-speed keyboard-driven reading comprehension. |
+| **Direct Popup** | Drag-select text or double-click a word to open the lookup card immediately on mouse release. | Intensive study or rapid vocabulary lookup sessions. |
+| **Right-Click Context Menu** | Right-click any selected text and choose **Look up in Dictionary**. | Reading PDFs, iframes, or pages where mouse selection triggers are suppressed. |
+| **Off** | Disables automatic selection icons and direct popups while keeping hotkey and context menu lookups active. | Clean browsing where lookups are only invoked intentionally. |
 
-Text selection triggers are automatically suppressed inside editable fields (`input`, `textarea`, and `contenteditable`) so typing remains uninterrupted.
+*Note: Selection triggers are automatically suppressed inside editable inputs (`<input>`, `<textarea>`, and `contenteditable` containers) to prevent interfering with typing.*
 
-## Dictionary Tab
+---
 
-The primary lookup surface combines two sources:
+## 2. The Dictionary Tab
 
-- **Translation:** A quick summary of the detected language and the translation into your target language.
-- **Dictionary:** Deep English dictionary definitions grouped by part of speech, along with example sentences, synonyms, and antonyms.
+The **Dictionary** tab delivers a comprehensive, multi-source learning view combining real-time translation, progressive dictionary lookups, pronunciation, and structured lexical relationships.
 
-### Multi-Source Lookup and Enrichment
+```text
+┌────────────────────────────────────────────────────────────────────────┐
+│  D  evaluate                             [Free Dictionary] [Wiktionary]│
+│     /ɪˈvæl.ju.eɪt/  (US) 🔊 Listen (US)  🔊 Listen (UK)  🎙️ Practice    │
+├────────────────────────────────────────────────────────────────────────┤
+│  ▼ Translation · Vietnamese                                            │
+│    đánh giá, định giá                                                  │
+├────────────────────────────────────────────────────────────────────────┤
+│  ▼ Definitions · Verb (Free Dictionary)                                │
+│    1. To determine or fix the value of.                                │
+│    2. To examine and judge carefully; appraise.                        │
+│       "We need to evaluate the experimental results."                  │
+├────────────────────────────────────────────────────────────────────────┤
+│  ▼ Word Family                                                         │
+│    [evaluation]  [evaluative]  [evaluator]  [evaluated]  [evaluating]   │
+├────────────────────────────────────────────────────────────────────────┤
+│  ▼ Collocations                                                        │
+│    • Verbs: carefully evaluate, objectively evaluate                   │
+│    • Patterns: evaluate the effectiveness of, evaluate whether...      │
+└────────────────────────────────────────────────────────────────────────┘
+```
 
-The extension orchestrates multiple dictionary providers intelligently:
+### Multi-Source Fallback & Progressive Lazy Enrichment
 
-1. **Primary provider** — your configured default (e.g., Free Dictionary API) is queried first. If it has no data for the word, the fallback chain tries the next provider automatically.
-2. **Initial result** — the primary provider's result (plus translation) is displayed immediately.
-3. **Background enrichment** — after the initial result renders, secondary dictionary providers (Wiktionary, Merriam-Webster, Wordnik, WordsAPI) are queried lazily without slowing down the initial display.
-4. **Incremental updates** — as each enrichment result arrives, the popup updates with additional definitions, examples, synonyms, and pronunciations from the secondary source.
+Dictionary lookups execute in two synchronized phases:
 
-Provider attribution remains available in the relevant result-section metadata, while the Dictionary title row stays focused on the queried word and pronunciation.
+1. **Phase 1 — Fast Primary Lookup (Sub-second):**
+   - The primary dictionary provider (default: **Free Dictionary API**) and configured translation engine execute in parallel.
+   - Initial definitions, examples, and phonetic audio appear immediately.
+2. **Phase 2 — Asynchronous Lazy Enrichment (Non-blocking):**
+   - Secondary configured providers (**Wiktionary**, **Merriam-Webster**, **Wordnik**, **WordsAPI**) are queried lazily in concurrent batches of 2.
+   - New definitions, additional example sentences, missing synonyms/antonyms, and phonetic transcriptions are merged dynamically.
+   - Contributing provider badges appear in the title row and section metadata.
 
-### Popup Layout
+### Smart Lemmatization & Phrasal Fallback
 
-The lookup card uses a calm editorial surface with warm light and dark themes, definition-first typography, and a quiet header that keeps the current query and source/language controls visible. Drag the bottom-right corner to make the in-page card wider or taller for long definitions; the size is remembered automatically. Loading, empty, and error states provide a clear next action without hiding the rest of the popup.
+If an exact query is not found in dictionary databases (for example, inflected verbs like `went`, irregular plurals like `children`, or comparative adjectives like `better`):
+1. The extension automatically generates English root lemma candidates (e.g. `went` → `go`).
+2. If single-word lemmatization fails on multi-word expressions (e.g. `taking care of` or `looked up`), it canonicalizes phrasal verbs to their base dictionary forms (e.g. `take care of`, `look up`).
+3. When a fallback succeeds, the popup displays a helpful root notice: `Showing definitions for root: <stem>`.
 
-You can switch between System, Light, and Dark themes in Settings. System follows your operating system appearance, and the Learner-friendly font option uses Atkinson Hyperlegible for clearer letter distinction.
+### Translation Services
 
-### Pronunciation
+Translation runs alongside dictionary lookups:
+- **Google Translate (Default):** Built-in neural translation supporting dozens of target languages without API keys.
+- **LibreTranslate:** Connect to the public LibreTranslate service or your self-hosted private instance for privacy-focused translation.
+- **Custom Target Languages:** Add any language display names in Settings (e.g. `Spanish`, `French`, `German`, `Japanese`, `Vietnamese`) to populate the quick-select dropdown.
 
-When looking up a single word, you will see pronunciation buttons (e.g., `Listen (US)` or `Listen (UK)`).
+---
 
-1. The extension prefers playing real dictionary audio.
-2. If audio is missing or fails, it falls back to your browser's built-in speech synthesis.
-3. When enrichment providers return IPA or audio that the primary provider lacks, the pronunciation is updated with the filled data.
-4. You can control the playback speed and preferred fallback voice in the settings.
-5. Use **Practice** to speak the word into your microphone. The extension scores the attempt and shows a match badge such as `95% · Excellent`. The score stays on the current card if enrichment updates arrive. Practice requires Chrome speech recognition; other browsers show an explanation instead of the button.
+## 3. Pronunciation & Speech Practice
 
-### Dictionary providers
+Pronunciation tools are integrated directly into the result header:
 
-In Settings, choose which dictionary backend powers structured definitions:
+### Audio Playback
+1. **Remote Audio:** Prefers high-fidelity MP3/WAV recordings from native dictionary databases (US and UK variants).
+2. **Web Speech Synthesis Fallback:** If dictionary audio is unavailable, falls back to the browser's built-in speech synthesis engine.
+3. **Speed Control:** Customize speech rate in Settings (clamped from `0.5x` to `1.5x`).
+4. **Voice Selection:** Choose your preferred operating system voice in Settings for speech synthesis fallback.
+5. **Equalizer Wave:** An animated 3-bar equalizer visually confirms active playback.
 
-- **Free Dictionary API** (default): `dictionaryapi.dev`; no API key needed. Provides definitions, examples, synonyms/antonyms, and US/UK audio when available.
-- **Wiktionary REST API**: Free English Wiktionary definitions and examples.
-- **Merriam-Webster Collegiate API**: Requires a free API key from dictionaryapi.com.
-- **Wordnik**: Multi-source definitions (American Heritage, Century, WordNet, etc.), examples, audio, and related words. Free API key from developer.wordnik.com.
-- **WordsAPI**: Definitions, examples, frequency, syllables, and related words via RapidAPI.
+### Speech Practice Evaluator
+Click the **Practice** button (`🎙️ Practice`) next to pronunciation controls to test and refine your spoken English:
+1. Speak the target word into your microphone when the glowing recording ring activates (`Listening…`).
+2. The extension captures your speech via Chrome's Speech Recognition API, normalizes the input, and calculates pronunciation similarity using Levenshtein distance metrics.
+3. You receive an instant color-coded grade badge:
+   - `90%–100%`: **Excellent** (Emerald badge)
+   - `70%–89%`: **Good** (Teal badge)
+   - `50%–69%`: **Almost there** (Amber badge)
+   - `<50%`: **Try again** (Rose badge)
+4. Your active practice score is preserved across background lazy enrichment updates.
 
-The active source appears as a small badge next to the looked-up word. Secondary providers that contribute to enrichment also appear as badges.
+---
 
-## AI Tab
+## 4. Structured Lexical Profile
 
-Switch to the AI tab for a complementary explanation of the text. The default Main AI lookup adds extra learner meaning, translation, usage, and examples, without repeating Dictionary synonym lists or word-family cards.
+When **Lexical Profile** is enabled in Settings (default), lookups assemble an organized lexical learning matrix:
 
-### AI Actions (In Context, Grammar, Phrase & Collocations, & Sentence Breakdown)
+- **Word Family Chips:** Displays related parts of speech (nouns, verbs, adjectives, adverbs, inflections, derivatives) as interactive clickable chips. Clicking any chip immediately triggers a sub-lookup for that term.
+- **Word Formation:** Surfaces prefixes, suffixes, and morphological root explanations.
+- **Usage & Register Notes:** Highlights formality warnings (e.g. `[formal]`, `[informal]`, `[slang]`, `[archaic]`) in a dedicated warning callout.
+- **Confusable Pairs:** Clarifies subtle distinctions between commonly confused words (e.g. *affect* vs. *effect*, *complement* vs. *compliment*).
+- **Common Learner Mistakes:** Highlights typical grammatical or preposition errors with corrections and contextual examples.
+- **Categorized Collocations:** Displays natural word partnerships grouped by category (verbs, nouns, prepositions, adjectives, and sentence patterns).
 
-The **AI** tab owns five complementary actions:
+---
 
-- **Main AI:** Extra learner meaning, **Translation & Meaning**, usage, examples, and optional etymology. It does not repeat Dictionary synonym lists.
-- **Context Explain:** Explains the query using a surrounding sentence or paragraph you supply in Context.
-- **Grammar & Nuance:** Analyzes syntax, grammatical function, formality, and tone for the query and optional Context.
-- **Phrase & Collocations:** Analyzes idioms, phrasal verbs, and multi-word expressions, showing core meaning, grammar/preposition patterns, register, and natural examples. Collocations and learner mistakes use the structured lexical profile.
-- **Sentence Breakdown:** Breaks down the sentence structure, analyzes grammatical components, and parses idioms/collocations/phrasal verbs.
+## 5. The AI Tab & Specialized Actions
 
-These actions are available only in the **AI** tab and are hidden in Dictionary mode.
+Switch to the **AI** tab for deep generative explanations powered by Google Gemini (native REST API) or any OpenAI-compatible endpoint (Ollama, Groq, OpenRouter, OpenAI, LocalAI).
 
-#### Query vs Context
+```text
+┌────────────────────────────────────────────────────────────────────────┐
+│  D  AI Explanation                                      [AI · Default] │
+├────────────────────────────────────────────────────────────────────────┤
+│  [Context: Bounded Sentence]                                           │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │ Scientists are currently evaluating evidence of ancient life.    │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+│  [Context Explain] [Grammar & Nuance] [Phrase & Colloc] [Sentence]    │
+├────────────────────────────────────────────────────────────────────────┤
+│  ▼ evaluate [ɪˈvæl.ju.eɪt] verb                                        │
+│    To form an opinion of the amount, value, or quality of something.   │
+│                                                                        │
+│  ▼ Translation & Meaning                                               │
+│    đánh giá (xem xét và đưa ra nhận định về giá trị hoặc chất lượng).  │
+│                                                                        │
+│  ▼ Usage Note                                                          │
+│    Frequently used in academic, scientific, and professional contexts. │
+│                                                                        │
+│  ▼ Example Sentences                                                   │
+│    > "The committee will evaluate all proposals next week."            │
+│      (Hội đồng sẽ đánh giá tất cả các đề xuất vào tuần tới.)           │
+│                                                                        │
+│  ▶ Deep Understanding (Click to expand)                                │
+└────────────────────────────────────────────────────────────────────────┘
+```
 
-- **Query** is the word or phrase being explained.
-- **Context** is the surrounding sentence or paragraph that gives that query meaning.
-- Context is editable in AI mode in the webpage popup.
-- For selected text, Context uses the exact sentence at the selection.
-- Context is retained for the current popup session and is not sent until you activate a contextual action.
+### The 5 Specialized AI Actions
 
-#### Webpage popup flow
+| Action | Intent | Purpose & Output Structure | Context Requirement |
+|---|---|---|---|
+| **Main AI Explanation** | `default` | Oxford Learner-style definition, sense-aware translation glosses, concise usage notes, bilingual example sentences, and collapsible etymology/deep-dive sections. | Optional |
+| **Context Explain** | `explain_in_context` | Focuses strictly on how the word functions within your specific sentence, providing precise in-context meaning and natural paraphrases. | **Required** |
+| **Grammar & Nuance** | `grammar` | Analyzes syntactic function, clause structure, register, tone, and common grammatical learner pitfalls. | **Required** |
+| **Phrase & Collocations** | `phrase_explorer` | Deconstructs idioms, phrasal verbs, prepositional dependencies, and collocation patterns with natural example sentences. | Optional |
+| **Sentence Breakdown** | `sentence_breakdown` | Structural JSON analysis decomposing clauses, grammatical roles, and phrase idioms with one-click interactive lookup chips. | Full sentence query or context sentence |
 
-1. Select text, double-click a word, use the post-selection key, or open the context menu lookup.
-2. Switch to the **AI** tab.
-3. Context is prefilled with the exact sentence around your selection when available.
-4. Edit or replace the Context text if needed.
-5. Click **Context Explain**, **Grammar & Nuance**, or **Sentence Breakdown**.
-6. Review the **Context used** quotation above the AI response to confirm what was submitted.
+---
 
-#### Toolbar popup flow
+## 6. Context Extraction & Privacy Controls
 
-1. Click the extension icon and type a word or phrase.
-2. Switch to the **AI** tab.
-3. If the active page has matching sentences, Context may prefill with the best suggested sentence.
-4. If not, paste the relevant sentence into Context yourself.
-5. Click **Context Explain**, **Grammar & Nuance**, or **Sentence Breakdown**.
-6. Empty Context shows an inline validation message and focuses the field instead of sending a request, unless the query itself is already a full sentence for Sentence Breakdown.
+Contextual AI actions rely on exact sentence extraction rather than sending broad, privacy-invasive page dumps.
 
-Automatic page extraction is only a convenience prefill. It is sentence-level, bounded, and optional. Manual entry always works when the page has no matching text or the content script is unavailable.
+### How Context Works
+1. **Selection Mode (Confidence: `exact`):** When you highlight text on a webpage, the extension climbs the DOM tree, measures the exact character offset of your selection, and extracts only the containing sentence. Soft-hyphens and line-break artifacts are healed automatically.
+2. **Page Search Mode (Confidence: `suggested`):** When you type a query in the toolbar popup, the extension searches the active tab's visible DOM, scoring and ranking matching sentences by visibility, semantic tags (`<main>`, `<article>`), and viewport proximity.
+3. **Manual Context:** You can paste or type any sentence directly into the editable Context textarea.
 
-### PDFs and Web Reader pages
+### Privacy Safeguards
+- **Zero Background Transmission:** Context is never sent to any AI endpoint during standard dictionary lookups.
+- **Explicit Activation:** Context is transmitted only when you click a contextual action button (**Context Explain**, **Grammar & Nuance**, or **Sentence Breakdown**).
+- **Session-Only Memory:** Context is held transiently in browser session memory and is never saved to disk or synchronized across devices.
+- **Opt-Out Setting:** Enable **Exclude page context for AI lookups** in Settings to disable automatic page sentence scanning completely.
+- **Context Used Verification:** Whenever an AI response uses context, a blockquoted **Context used** header confirms the exact text submitted.
 
-- On normal web pages, embedded PDFs, and reader-style article pages that expose a scriptable DOM, selection lookup uses the exact selected occurrence and extracts only its containing sentence.
-- PDF text layers may contain visual line-break artifacts; the extractor joins split words before sentence detection and keeps the existing context length bound.
-- Chrome's built-in PDF viewer and browser-owned pages may not accept extension content scripts. Use the context menu on selected PDF text when available. The extension displays the in-page card over scriptable PDF pages.
-- Local `file://` documents require Chrome's **Allow access to file URLs** permission for the extension. Enable the permission and reload the document.
-- Reader Mode compatibility applies to reader pages with accessible article markup. Browser-owned `chrome://` reading surfaces remain fallback-only because they are not scriptable extension content pages.
+---
 
-### Sentence Breakdown
+## 7. PDFs, Web Readers, and Restricted Pages
 
-Use **Sentence Breakdown** when you want a structural reading of a sentence rather than a single-word definition.
+- **Scriptable HTML5 PDFs:** Online and local PDFs rendered with HTML5 text layers (e.g. PDF.js, Chrome PDF text layer) support exact sentence extraction and floating selection triggers.
+- **Local Files (`file://`):** To enable lookups on local HTML or PDF files, open `chrome://extensions`, open Dictionary details, and enable **Allow access to file URLs**.
+- **Reader Mode & Iframes:** Full multi-frame coordination (`all_frames: true`) ensures lookups inside reader containers or nested iframes extract sentences accurately without duplicate popups.
+- **Browser-Restricted Pages:** Chrome security policy strictly blocks extension injection on `chrome://` URLs, the Chrome Web Store, and internal browser PDF reader chrome. On these pages, use the toolbar popup for manual lookups and paste your context sentence directly.
 
-1. Enter or select a word, phrase, or full sentence.
-2. Switch to the **AI** tab.
-3. If the query is not already a complete sentence, paste or keep the surrounding sentence in Context.
-4. Click **Sentence Breakdown**.
-5. Review:
-   - the analyzed sentence
-   - grammatical parts
-   - detected phrasal verbs, idioms, collocations, or fixed expressions
-   - learner notes
+---
 
-Detected phrases can be looked up with **Look up phrase**, which starts a normal Dictionary lookup for that expression.
+## 8. Keyboard Navigation & Accessibility
 
-### Multi-word Phrases & Idioms
-
-When looking up multi-word expressions or idioms in Dictionary mode (e.g. "kick the bucket" or "break a leg"):
-
-1. The extension first fetches available translation and structured dictionary definitions.
-2. If structured dictionary data is missing or incomplete for the phrase, it automatically falls back to an AI phrase breakdown.
-3. The AI phrase breakdown appears under **AI · Phrase explanation** in the Dictionary tab so you always get a clear meaning.
-
-## Settings shortcuts
-
-- Open Settings from the extension toolbar icon or Options page.
-- Use **Reset AI prompts** to restore the built-in prompt templates, then click Save Settings.
-
-## Context controls
-
-The webpage popup provides the AI-only Context workflow. The field may be prefilled with the sentence containing the query, but it can always be replaced or edited. Context is sent only when Context Explain, Grammar & Nuance, or Sentence Breakdown is activated. A blank field is rejected inline and focused for correction, except when Sentence Breakdown is run on a full-sentence query.
-
-### Reading multi-section AI results
-
-Long AI answers are broken into titled sections such as Meaning, Examples, Grammar, and Sentence Structure. The untitled opening definition is treated as **Intro**. Primary learning sections stay visible, while secondary deep-dive sections such as Deep Understanding are collapsed by default when there are four or more sections. Select a section heading to expand or collapse it. Contextual explanations, Grammar & Nuance, and Sentence Breakdown still show **Context used** above the analysis when you supply a sentence.
-
-## Word Family and Related Terms
-
-When the **Lexical Profile** setting is enabled (default), each lookup enriches results with structured word-relationship data that appears beneath the definitions:
-
-- **Word Family** — noun, verb, adjective, adverb, inflection, and derivative forms of the word, shown as clickable chips. Tap a chip to look up that form directly. A form already looked up in this popup session opens immediately from cache.
-- **Word Formation** — prefixes, suffixes, and a concise explanation of how the word is built.
-- **Usage & Register Notes** — usage warnings (for example formal, slang, or archaic register) and confusable-word pairs (for example *affect* vs. *effect*) displayed in a warning callout.
-- **Common Learner Mistakes** — frequent errors and their corrections, with example sentences.
-- **Collocations** — common verb, noun, preposition, and adjective pairings plus natural example patterns, grouped by type.
-
-Provider data is used first (for example WordsAPI derivation data and Wordnik related words). When provider data is incomplete, the AI fallback supplies the same structured profile so these sections still render.
+- **Keyboard Trapping:** In-page and toolbar popups support smooth `Tab` / `Shift+Tab` cycling through interactive elements.
+- **Quick Dismissal:** Press `Escape` to close the in-page popup and return focus cleanly to the webpage.
+- **ARIA Standards:** Popup shells implement semantic `role="tablist"`, `aria-selected`, `aria-live="polite"`, and `aria-busy="true"` attributes for screen reader compatibility.
+- **Reduced Motion:** If your operating system has reduced motion enabled, all entrance, exit, and wave animations are suppressed.
+- **Resizable Card:** Drag the resize handle at the bottom right to adjust the width (320px–840px) and height (360px–900px); your preferred dimensions are saved automatically.

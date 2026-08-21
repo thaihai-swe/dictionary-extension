@@ -1,99 +1,180 @@
-# Settings
+# Settings Reference
 
-## Triggers
+This document serves as the complete configuration reference for **Dictionary**. It details all customizable preferences, storage partitioning architecture, default values, validation rules, AI prompt variables, and schema migration contracts.
 
-- `selectionTriggerMode` (`icon`, `direct`, or `off`; default `icon`). Applies to both drag selection and double-clicking words.
-- `postSelectionModifier` (`shift`, `alt`, or `ctrl`; default `shift`)
-- `enableContextMenuTrigger` (Right-click selection lookup action; default `true`)
+---
 
-## Appearance and Sources
+## 1. Storage Partitioning & Security Architecture
 
-- `theme` (`system`, `light`, or `dark`; default `system`)
-- `fontFamily` (`editorial` or `learner`; default `editorial`) — `editorial` preserves the classic serif reading aesthetic; `learner` switches definitions, examples, AI explanations, and controls to bundled Atkinson Hyperlegible to improve character disambiguation for ESL and language learners.
-- `popupWidth` (default `500`, clamped `320`–`840`) — width of lookup popups
-- `popupHeight` (default `600`, clamped `360`–`900`) — height of in-page lookup popups. The toolbar popup uses the same preference but caps its viewport at 580px because of Chrome’s action-popup limit.
-- `defaultTab` (`dictionary` or `ai`). The last tab used during the current browser session is remembered separately in session storage and does not overwrite this setting.
-- `enableTranslate`, `enableDictionary`, `enableAI`
-- `disablePageContextExtraction` (default `false`) — prevents automatic extraction of surrounding page sentences for AI requests. Manually pasted context remains available for a single request.
+To guarantee that private credentials can never leak across browser sync channels or into untrusted webpage content scripts, the extension enforces a three-tier storage partition:
 
-The Dictionary tab requires translation and/or dictionary. The AI tab requires AI enabled. The default layout uses `500×600` px for a comfortable, scrolled workspace.
+```text
+┌────────────────────────────────────────────────────────────────────────┐
+│                   chrome.storage.sync (Public Preferences)             │
+├────────────────────────────────────────────────────────────────────────┤
+│ • theme, fontFamily, defaultTab, popupWidth, popupHeight               │
+│ • selectionTriggerMode, postSelectionModifier, enableContextMenuTrigger│
+│ • translateTargetLanguage, customLanguages, translateProvider          │
+│ • dictionaryProvider, libreTranslateBaseUrl                            │
+│ • enableTranslate, enableDictionary, enableLexicalProfile, enableAI    │
+│ • enableAiPreload, disablePageContextExtraction                        │
+│ • pronunciationRate, pronunciationVoiceURI                             │
+│ • aiBaseUrl, aiModel, and all 5 AI Prompt Templates                    │
+│ ➔ Synced across your signed-in Chrome devices.                        │
+│ ➔ Accessible by Background, Options, Toolbar Popup, and Content Script.│
+└──────────────────────────────────┬─────────────────────────────────────┘
+                                   │
+┌──────────────────────────────────┴─────────────────────────────────────┐
+│                   chrome.storage.local (Isolated Secrets)              │
+├────────────────────────────────────────────────────────────────────────┤
+│ • aiApiKey (Gemini / OpenAI API Key)                                   │
+│ • dictionaryApiKey (Merriam-Webster Collegiate Key)                    │
+│ • wordnikApiKey (Wordnik Developer Key)                                │
+│ • wordsApiKey (WordsAPI RapidAPI Key)                                  │
+│ • libreTranslateApiKey (LibreTranslate Private Key)                    │
+│ ➔ NEVER synced to the cloud. Stored strictly on this physical machine. │
+│ ➔ ISOLATED TO BACKGROUND SERVICE WORKER ONLY.                          │
+│ ➔ getUiSettings() physically excludes these keys from UI contexts.     │
+└──────────────────────────────────┬─────────────────────────────────────┘
+                                   │
+┌──────────────────────────────────┴─────────────────────────────────────┐
+│                  chrome.storage.session (Transient Runtime State)      │
+├────────────────────────────────────────────────────────────────────────┤
+│ • dictionaryHelperLastTab (Active tab memory per browsing session)     │
+│ • enrich_* (Phase 2 Lazy Enrichment cache, TTL: 10 minutes)            │
+│ ➔ Automatically cleared when the browser closes.                       │
+└────────────────────────────────────────────────────────────────────────┘
+```
 
-### Lexical Profile
+---
 
-- `enableLexicalProfile` (default `true`) — Enriches lookups with Word Family parts of speech, derivatives, word-formation notes, usage/register warnings, confusable pairs, learner mistakes, and collocations. Provider-first: dictionary sections, parts of speech, derivation/related-word fields, and register tags such as `[formal]`/`[slang]` are normalized automatically. AI-first fallback: AI prompts request a `<lexical-profile>` JSON block that is extracted and parsed safely for words whose dictionary sources lack family data. Disable to hide the Word Family grid, Word Formation, mistakes, collocations, warning callout, and to suppress the extra AI prompt contract.
+## 2. Configuration Options by Section
 
-Theme changes apply immediately to the options page and in-page card. Both lookup surfaces can be resized from their bottom-right handle; the resulting width and height are saved to `popupWidth` and `popupHeight`. Nonessential motion follows the operating system's reduced-motion preference.
+### Section 01 · Lookup Triggers
 
-The refreshed Calm Learning Studio layout keeps Dictionary and AI as the primary mode navigation, shows AI-only context controls only in AI mode, and uses a shared branded header/result hierarchy across the toolbar and in-page card. Source badges remain canonical attribution and the `data-font="learner"` option continues to select bundled Atkinson Hyperlegible.
+| Setting Key | Type | Allowed Values / Range | Default | Description |
+|---|---|---|---|---|
+| `selectionTriggerMode` | `string` | `"icon"`, `"direct"`, `"off"` | `"icon"` | Defines what happens when text is highlighted or double-clicked on a webpage. `"icon"` renders a floating button; `"direct"` opens the card immediately; `"off"` restricts lookups to hotkeys and context menus. |
+| `postSelectionModifier` | `string` | `"shift"`, `"alt"`, `"ctrl"` | `"shift"` | Modifier key tapped once after text selection to immediately trigger the in-page lookup card. |
+| `enableContextMenuTrigger` | `boolean` | `true`, `false` | `true` | When enabled, registers the **"Look up in Dictionary"** action in Chrome's right-click context menu. |
 
-## Translation
+---
 
-- `translateTargetLanguage` (Display name of target language selected from dropdown, e.g. `English`, `Vietnamese`. Standard codes like `en`, `vi`, `ja`, `ko`, `zh-CN` normalize to display names.)
-- `customLanguages` (Comma-separated list of target language display names to show in the dropdown across options and lookup popups; defaults to `English, Vietnamese`. Add other languages here when needed.)
-- `translateProvider` (`google` or `libretranslate`; default `google`)
-- `libreTranslateBaseUrl` (LibreTranslate server URL; default `https://libretranslate.com`)
-- `libreTranslateApiKey` (Optional LibreTranslate key, stored locally for self-hosted or authenticated servers)
+### Section 02 · Appearance & Display Layout
 
-Google Translate uses the public Google Translate endpoint. LibreTranslate can use the public service or a self-hosted server by changing `libreTranslateBaseUrl`. Each configured dictionary, translation, and AI provider has its own non-destructive **Test** action in Options. Tests use the current form values (including unsaved credentials) and report connection state plus measured latency; provider errors retain actionable HTTP/auth/rate-limit information when exposed by the backend.
+| Setting Key | Type | Allowed Values / Range | Default | Description |
+|---|---|---|---|---|
+| `theme` | `string` | `"system"`, `"light"`, `"dark"` | `"system"` | Visual surface theme. `"system"` automatically mirrors your operating system light/dark preference. |
+| `fontFamily` | `string` | `"editorial"`, `"learner"` | `"editorial"` | Reading typography. `"editorial"` applies classic serif styling; `"learner"` switches definitions, examples, and controls to bundled Atkinson Hyperlegible for enhanced letter disambiguation. |
+| `defaultTab` | `string` | `"dictionary"`, `"ai"` | `"dictionary"` | Initial tab selected when opening a new lookup popup session. *(Active tab switches are remembered transiently in session storage).* |
+| `popupWidth` | `number` | `320` to `840` (pixels) | `500` | Preferred width of lookup cards. Automatically updated when resizing in-page cards via the bottom-right drag handle. |
+| `popupHeight` | `number` | `360` to `900` (pixels) | `600` | Preferred height of in-page lookup cards. *(The toolbar popup caps its vertical display at 580px due to Chrome action-popup limits).* |
 
-## Dictionary
+---
 
-- `dictionaryProvider` (`free_dictionary`, `wiktionary`, `merriam_webster`, `wordnik`, or `words_api`; default `free_dictionary`)
+### Section 03 · Sources, Translation & Pronunciation
 
-The selected provider is used first. When it returns no data (`NotFoundError`), the runtime falls back through the remaining providers. After the initial result appears, non-primary providers are queried lazily to enrich definitions, examples, synonyms, and pronunciation data.
+| Setting Key | Type | Storage | Default | Description |
+|---|---|---|---|---|
+| `enableDictionary` | `boolean` | `sync` | `true` | Displays structured dictionary definitions in the Dictionary tab. |
+| `dictionaryProvider` | `string` | `sync` | `"free_dictionary"` | Primary dictionary backend: `"free_dictionary"`, `"wiktionary"`, `"merriam_webster"`, `"wordnik"`, or `"words_api"`. |
+| `dictionaryApiKey` | `string` | `local` | `""` | Merriam-Webster Collegiate API key (from [dictionaryapi.com](https://dictionaryapi.com/register)). |
+| `wordnikApiKey` | `string` | `local` | `""` | Wordnik API key (from [developer.wordnik.com](https://developer.wordnik.com/)). |
+| `wordsApiKey` | `string` | `local` | `""` | WordsAPI RapidAPI key (from [wordsapi.com](https://www.wordsapi.com/)). |
+| `enableTranslate` | `boolean` | `sync` | `true` | Shows translation card alongside dictionary definitions in the Dictionary tab. |
+| `translateProvider` | `string` | `sync` | `"google"` | Translation service: `"google"` (Google Translate) or `"libretranslate"`. |
+| `translateTargetLanguage`| `string`| `sync` | `"English"` | Target language display name (e.g. `English`, `Vietnamese`, `Spanish`, `German`, `Japanese`). |
+| `customLanguages` | `string` | `sync` | `"English, Vietnamese"` | Comma-separated list of target language display names to populate in the quick-select dropdown. |
+| `libreTranslateBaseUrl` | `string` | `sync` | `"https://libretranslate.com"` | Server endpoint for LibreTranslate queries (supports self-hosted instances). |
+| `libreTranslateApiKey` | `string` | `local` | `""` | Optional API key for authenticated or self-hosted LibreTranslate servers. |
+| `enableLexicalProfile` | `boolean` | `sync` | `true` | Enriches lookups with Word Family chips, Word Formation tags, Usage warnings, Confusable pairs, Learner mistakes, and Collocations. |
+| `pronunciationRate` | `number` | `sync` | `0.95` | Playback speed for remote audio MP3s and speech synthesis fallback (clamped `0.5` to `1.5`). |
+| `pronunciationVoiceURI` | `string` | `sync` | `""` | Preferred operating system voice for browser speech synthesis fallback (empty string uses browser default). |
 
-### API keys
+---
 
-Provider API keys are stored in `chrome.storage.local`, not synchronized settings:
+### Section 04 · AI Explanations & Prompt Templates
 
-- `dictionaryApiKey` — Merriam-Webster Collegiate API key.
-- `wordnikApiKey` — Wordnik API key.
-- `wordsApiKey` — WordsAPI RapidAPI key.
-- `aiApiKey` — configured AI provider key.
+| Setting Key | Type | Storage | Default | Description |
+|---|---|---|---|---|
+| `enableAI` | `boolean` | `sync` | `true` | Enables generative AI capabilities in the AI tab and automatic phrase fallback. |
+| `aiBaseUrl` | `string` | `sync` | `https://generativelanguage...` | Endpoint URL. Points to Google Gemini or any OpenAI-compatible endpoint (`/v1/chat/completions`). |
+| `aiApiKey` | `string` | `local` | `""` | Private API key for Google Gemini or your custom AI provider. |
+| `aiModel` | `string` | `sync` | `"gemini-3.5-flash-lite"` | Model identifier (e.g. `gemini-3.5-flash-lite`, `gpt-4o-mini`, `deepseek-chat`, `llama3`). |
+| `enableAiPreload` | `boolean` | `sync` | `false` | Asynchronously preloads Main AI explanations in the background during Dictionary lookups. |
+| `disablePageContextExtraction`| `boolean`| `sync`| `false` | When `true`, suppresses automatic extraction of surrounding webpage sentences. Manual context entry remains available. |
+| `aiPromptTemplate` | `string` | `sync` | *(Built-in)* | Prompt template for **Main AI Explanation**. |
+| `aiContextPromptTemplate` | `string` | `sync` | *(Built-in)* | Prompt template for **Context Explain** (requires `{{context}}`). |
+| `aiGrammarPromptTemplate` | `string` | `sync` | *(Built-in)* | Prompt template for **Grammar & Nuance** (requires `{{context}}`). |
+| `aiPhraseExplorerPromptTemplate`| `string`| `sync`| *(Built-in)* | Prompt template for **Phrase & Collocations**. |
+| `aiSentencePromptTemplate` | `string` | `sync` | *(Built-in)* | Prompt template for **Sentence Breakdown** (structured JSON output; requires `{{sentence}}`). |
 
-The Free Dictionary API and Wiktionary REST API do not require API keys. If a key-backed provider is not configured, it may be skipped during enrichment; it does not prevent the default Free Dictionary lookup from working.
+---
 
-The former `google-dictionary` provider ID is no longer supported; use `free_dictionary`. Oxford is no longer available because it did not provide a suitable free tier for this extension.
+## 3. AI Prompt Variables & Sandboxing
 
-## Pronunciation
+Custom prompt templates support the following interpolation variables:
 
-- `pronunciationRate` (Playback speed, clamped `0.5`–`1.5`, default `0.95`. Applies to remote audio and speech fallback.)
-- `pronunciationVoiceURI` (Preferred browser speech voice, chosen from a labeled Options select. Only applies to speech fallback, not remote dictionary audio.)
-- Pronunciation results also expose a **Practice** control that uses browser speech recognition to score spoken attempts against the looked-up word. The latest score stays on the current card through enrichment rerenders and is cleared when the query or popup changes. Practice is omitted with an explanation when Chrome speech recognition is unavailable.
+| Variable | Replacement Content | Example Value |
+|---|---|---|
+| `{{str}}` | Selected word or search query. | `"evaluate"` |
+| `{{text}}` | Full selection text. | `"evaluating the evidence"` |
+| `{{sentence}}` | Extracted context sentence when present; otherwise the query text. | `"Scientists are evaluating ancient rocks."` |
+| `{{context}}` | The extracted surrounding sentence or user-provided manual context. | `"Scientists are evaluating ancient rocks."` |
+| `{{targetLang}}` | Configured translation target language name. | `"Vietnamese"` |
+| `{{word_count}}` | Number of words in the query. | `1` |
 
-When primary dictionary data has audio but no IPA, enrichment can backfill phonetic text from another successful provider. The renderer prioritizes pronunciation entries that contain IPA.
+### Prompt Sandboxing & Injection Protection
+To prevent webpage text from injecting prompt-override instructions, the background worker appends a sandboxed XML input contract block to every outbound prompt:
+```xml
+<target>{{str}}</target>
+<context>{{context}}</context>
+<target-language>{{targetLang}}</target-language>
+```
+When `enableLexicalProfile` is active, prompts for Main AI, Grammar & Nuance, and Phrase Explorer append instructions requesting an optional `<lexical-profile>` JSON block, which the runtime extracts, validates, and strips before rendering Markdown.
 
-## AI Settings
+---
 
-- `aiBaseUrl`
-- `aiApiKey` (Saved in `chrome.storage.local`)
-- `aiModel`
-- `aiPromptTemplate` (Main AI explanation template. The built-in template uses `###` headings and reserves Word Family, word formation, usage warnings, confusables, learner mistakes, and collocations for the optional structured lexical profile.)
-- `aiContextPromptTemplate` (Used only by **Context Explain**; it remains a compact Markdown-only contextual answer.)
-- `aiGrammarPromptTemplate` (Used by **Grammar & Nuance**; it can include an optional structured lexical profile.)
-- `aiPhraseExplorerPromptTemplate` (Used by **Phrase & Collocations**; collocations and learner mistakes use structured profile cards when reliable data is available.)
-- `aiSentencePromptTemplate` (Used by **Sentence Breakdown**. It requests one structured JSON object and does not request a lexical-profile block.)
+## 4. Settings Export, Import, and Reset
 
-Only Main AI, Grammar & Nuance, and Phrase & Collocations request lexical-profile data. Context Explain, Sentence Breakdown, and internal phrase fallback responses remain focused on their primary output format. Version 6 updates built-in templates to focused, complementary outlines without duplicated dictionary sections; custom templates are never overwritten.
-- `enableAiPreload` (Preload the normal AI lookup before switching tabs; does not submit page context)
+### Exporting Settings
+Click **Export settings** in Options to download a sanitized `dictionary-settings-<timestamp>.json` file.
+```json
+{
+  "version": 8,
+  "exportedAt": "2025-02-23T12:00:00.000Z",
+  "settings": {
+    "theme": "system",
+    "fontFamily": "editorial",
+    "selectionTriggerMode": "icon",
+    "popupWidth": 500,
+    "popupHeight": 600,
+    "translateTargetLanguage": "English",
+    "dictionaryProvider": "free_dictionary",
+    "aiModel": "gemini-3.5-flash-lite"
+  }
+}
+```
+*Note: API keys are strictly omitted from exported files.*
 
-### Prompt Variables
+### Importing Settings
+Click **Import settings** and select a previously exported JSON file. The importer validates schema structure, restores public preferences, and ignores any secret keys if present.
 
-- `{{str}}` — selected word or phrase
-- `{{text}}` — full selection text
-- `{{sentence}}` — supplied context sentence when present; otherwise the selected text
-- `{{word_count}}` — selection word count (available for custom templates; not used by the built-in templates)
-- `{{targetLang}}` — configured target language
-- `{{context}}` — manually supplied context, or the sentence-level page prefill accepted by the user
+### Resetting Prompts
+- **Restore Default (Single Prompt):** Click the **Restore default** button directly below any of the 5 prompt textareas.
+- **Reset AI Prompts (All Prompts):** Click **Reset AI prompts** in the bottom action bar to restore all 5 prompt templates.
+- *Click **Save settings** to persist prompt resets.*
 
-The Context field is available only in AI mode. It is retained in the current popup session, is editable, and is not stored as a setting. An empty Context value prevents Context Explain and Grammar Nuance from sending a request. Sentence Breakdown allows a full-sentence query without additional Context.
+---
 
-The in-page AI controls show a Context pill: **🔒 Context: Bounded Sentence** when automatic sentence context may be used, or **🚫 Context: None** when automatic extraction is disabled.
+## 5. Schema Migration History
 
-The Options page can restore one prompt with **Restore default** or all five with **Reset AI prompts**. Both still require Save Settings to persist. Before saving, the options page warns when a custom template omits variables required by its intent (for example, `{{context}}` for contextual explanation or `{{sentence}}` for Sentence Breakdown).
+The extension manages automatic schema migrations via `SETTINGS_SCHEMA_VERSION = 8`:
 
-**Export settings** downloads a JSON file of non-secret preferences and prompt templates. **Import settings** replaces those public values after confirmation. API keys are never exported and are ignored if present in an import file. Import does not run schema prompt migrations; the imported values are saved as provided after normalization.
-
-## Storage Note
-
-AI, Merriam-Webster, Wordnik, WordsAPI, and LibreTranslate API keys stay in `chrome.storage.local`. Non-secret preferences remain eligible for sync storage.
+- **Schema v1 → v2:** Upgraded Sentence Breakdown template to structural JSON without CEFR noise.
+- **Schema v3:** Purged legacy collocations templates and obsolete local vocabulary keys.
+- **Schema v4 → v5:** Separated structured Lexical Profile tags from Markdown heading duplication.
+- **Schema v6:** Aligned built-in Main, Context, and Grammar prompts to lean, non-duplicating intent outlines.
+- **Schema v7:** Added sense-aware target language glosses to Translation & Meaning.
+- **Schema v8:** Enriched bilingual example translations and phrase core meaning target-language equivalents.
+*(Custom prompt modifications are detected and strictly preserved during all schema upgrades).*

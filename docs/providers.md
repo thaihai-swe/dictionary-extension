@@ -1,232 +1,261 @@
-# Providers
+# Providers Specification
 
-Providers are the remote or browser-backed services used for lookup results. The background service worker routes requests to them and expects a stable result shape for the shared renderer.
+This document provides the complete technical specification for all external and browser-backed service integrations across **Dictionary**. It defines normalized data models, error-handling semantics, fallback pipelines, lazy enrichment coordination, and protocol routing.
 
-## Common Result Shape
+---
 
-```js
-{
-  title: string,
-  subtitle?: string,
+## 1. Common Normalized Result Contract
+
+All dictionary, translation, and AI providers must produce or normalize into the canonical result model consumed by the shared Calm Learning Studio renderer (`src/ui/renderer.js`):
+
+```typescript
+interface NormalizedLookupResult {
+  title: string;
+  subtitle?: string;
+  providerId?: string;
   sourceBadges?: Array<{
-    label: string,
-    kind: "dictionary" | "translation" | "ai" | string,
-    providerId?: string
-  }>,
-  providerId?: string,
+    label: string;
+    kind: "dictionary" | "translation" | "ai" | string;
+    providerId?: string;
+  }>;
+  lemmaFallback?: {
+    originalText: string;
+    lemma: string;
+  };
+  lexicalProfile?: LexicalProfile;
   sections: Array<{
-    title?: string,
-    kind?: string,
-    text?: string,
-    items?: string[],
-    meta?: string,
-    markdown?: boolean
-  }>,
+    title?: string;
+    kind?: SectionKind;
+    text?: string;
+    items?: string[];
+    meta?: string;
+    markdown?: boolean;
+    data?: any;
+  }>;
   presentation?: {
-    surface: "ai",
-    intent: "default" | "explain_in_context" | "grammar" | "phrase_fallback" | "phrase_explorer" | "sentence_breakdown"
-  },
-  pronunciation?: Pronunciation,
-  pronunciations?: Pronunciation[]
+    surface: "ai" | "dictionary";
+    intent: "default" | "explain_in_context" | "grammar" | "phrase_fallback" | "phrase_explorer" | "sentence_breakdown";
+  };
+  pronunciation?: Pronunciation;
+  pronunciations?: Pronunciation[];
 }
+
+interface Pronunciation {
+  text?: string;
+  phonetic?: string;
+  audioUrl?: string;
+  language?: string;
+  label?: string;
+  fallbackOnly?: boolean;
+}
+
+type SectionKind =
+  | "definitions"
+  | "examples"
+  | "synonyms"
+  | "antonyms"
+  | "translation"
+  | "context"
+  | "intro"
+  | "usage"
+  | "grammar"
+  | "phrase"
+  | "sentence-overview"
+  | "sentence-structure"
+  | "phrase-parsing"
+  | "etymology"
+  | "lexical"
+  | "ai";
 ```
 
-`sourceBadges` is the canonical source-attribution field. The renderer deduplicates badge labels case-insensitively. `presentation` is optional renderer-facing metadata emitted by the AI provider; it identifies an AI intent for stable section ordering and profile placement. Other providers do not need it, and results without it retain the standard renderer order.
+---
 
-AI Markdown sections receive a provider-assigned `kind` at parse time from the built-in intent outline (`kindForAiSection`). Exact titles win, then aliases, then a heading heuristic. Known kinds include `context`, `intro`, `definitions`, `translation`, `usage`, `examples`, `grammar`, `contextual-analysis`, `summary`, `lexical`, `structures`, `phrase`, `memory`, and `etymology`. Untitled leading prose is `intro`. Leftover overlapping sections (e.g. Translation on Main AI / Grammar, duplicate Simple Explanation on Context) are dropped or merged into a single focused card. Sentence Breakdown uses structured kinds (`sentence-overview`, `sentence-structure`, `phrase-parsing`) instead of Markdown split. When `kind` is present, the renderer trusts it and does not re-guess from the title. Reorder runs only when every non-context section has a known rank for that intent; otherwise model order is kept, with Context used first.
+## 2. Multi-Source Dictionary Provider Subsystem
 
-Pronunciation objects commonly include `text`, `phonetic`, `audioUrl`, `language`, `label`, and `fallbackOnly`.
+The dictionary facade (`src/providers/dictionary.js`) routes requests across 5 registered adapters:
 
-## Dictionary Provider Abstraction
+| Provider ID | Service Name | Authentication | Features & Supported Data |
+|---|---|---|---|
+| `free_dictionary` | **Free Dictionary API (Default)** | None (`dictionaryapi.dev`) | Definitions, examples, synonyms/antonyms, US/UK audio MP3s, and phonetic transcriptions. |
+| `wiktionary` | **Wiktionary REST API** | None (`en.wiktionary.org`) | Multi-sense English definitions, examples, and etymological glosses. |
+| `merriam_webster` | **Merriam-Webster Collegiate API** | `dictionaryApiKey` (`dictionaryapi.com`) | Official collegiate definitions, short examples, and high-fidelity audio recordings. |
+| `wordnik` | **Wordnik API** | `wordnikApiKey` (`api.wordnik.com`) | Multi-source definitions (American Heritage, Century, WordNet), corpus examples, audio, and related words. |
+| `words_api` | **WordsAPI (RapidAPI)** | `wordsApiKey` (`wordsapiv1.p.rapidapi.com`) | Deep definitions, frequency scores, syllable structures, derivations, and synonyms. |
 
-A dictionary facade selects the configured provider and normalizes its response. The background worker should call the facade rather than a vendor-specific adapter.
+---
 
-Registered providers:
-
-| ID | Label | Notes |
-|---|---|---|
-| `free_dictionary` | Free Dictionary API (Default) | `dictionaryapi.dev`; no API key; definitions, examples, synonyms/antonyms, and US/UK audio when available |
-| `wiktionary` | Wiktionary REST API | Free English Wiktionary definitions and examples |
-| `merriam_webster` | Merriam-Webster Collegiate API | Requires `dictionaryApiKey`; short definitions, examples, and US audio when available |
-| `wordnik` | Wordnik | Requires `wordnikApiKey`; multi-source definitions (American Heritage, Century, WordNet, etc.), examples, audio, and related words |
-| `words_api` | WordsAPI | Requires `wordsApiKey` via RapidAPI; definitions, examples, frequency, syllables, synonyms/antonyms. No audio; speech-synthesis fallback is used. |
-
-The former `google-dictionary` adapter was renamed to `free-dictionary` because it uses the public Free Dictionary API (`dictionaryapi.dev`), not an official Google Dictionary service. The paid-only Oxford provider was removed because no usable free tier was available.
-
-Common dictionary fields:
-
-```js
-{
-  title,
-  subtitle,
-  sourceBadges,
-  providerId,
-  lemmaFallback?: { originalText: string, lemma: string },
-  lexicalProfile?: {
-    wordFamily?: {
-      noun?: string[],
-      verb?: string[],
-      adjective?: string[],
-      adverb?: string[],
-      inflections?: string[],
-      derivatives?: string[]
-    },
-    usageWarnings?: string[],
-    confusablePairs?: Array<{ word: string, distinction: string }>,
-    learnerMistakes?: Array<{ mistake: string, correction: string, example?: string }>,
-    wordFormation?: {
-      prefixes?: string[],
-      suffixes?: string[],
-      explanation?: string
-    },
-    collocations?: {
-      verbs?: string[],
-      nouns?: string[],
-      prepositions?: string[],
-      adjectives?: string[],
-      patterns?: string[]
-    }
-  },
-  sections,
-  pronunciation,
-  pronunciations
-}
-```
-
-Section kinds are `definitions`, `examples`, `synonyms`, and `antonyms`. AI and translation sections may use semantic kinds such as `translation`, `context`, `grammar`, `sentence-structure`, `phrase-parsing`, and `ai`. Result sizes are capped to keep the popup scannable.
-
-### Lexical Profile Sourcing & Fallback
-
-When `enableLexicalProfile` is enabled in settings (default `true`), dictionary results and AI lookups include a normalized `lexicalProfile`:
-
-- **Provider-First Extraction**: Definitions, parts of speech, derivative sections, and usage notes returned by primary and secondary dictionary providers are normalized into structured `wordFamily` categories (`noun`, `verb`, `adjective`, `adverb`, `inflections`, `derivatives`), `usageWarnings` (e.g. register tags such as `[formal]` or `[slang]`), and `confusablePairs` (e.g. *affect* vs. *effect*). WordsAPI derivation data is classified into inflections versus true derivatives by comparing against the word-family part-of-speech terms before populating the profile.
-- **AI Structured Output**: default, grammar, and phrase-explorer prompts include an optional `<lexical-profile>` JSON block specification covering word family (including derivatives), word formation (prefixes, suffixes, explanation), learner mistakes, collocations (verbs, nouns, prepositions, adjectives, patterns), usage warnings, and confusable pairs. Context Explain, Sentence Breakdown, and phrase fallback do not request that block. When present in AI responses, the block is safely extracted via `parseLexicalProfile` and stripped from the rendered Markdown. The structured profile is canonical for each populated category; matching Markdown sections for Word Family, Usage & Register Notes, Confusables, Word Formation, Common Learner Mistakes, and Collocations are defensively omitted.
-- **Deep Merging**: `mergeLexicalProfiles` combines lexical metadata across primary, enrichment, and AI results with case-insensitive deduplication and strict bounds (`MAX_LEXICAL_ITEMS = 12`, `MAX_DERIVATIVES = 12`, `MAX_LEXICAL_WARNINGS = 8`, `MAX_CONFUSABLE_PAIRS = 6`, `MAX_LEARNER_MISTAKES = 6`, `MAX_FORMATION_ITEMS = 6`, `MAX_COLLOCATION_ITEMS_PER_GROUP = 10`). The word-formation explanation prefers the provider value over AI value and is never concatenated.
-- **Interactive UI**: Word Family (including Derivatives) items are rendered as clickable family chips carrying `data-lookup-query` attributes for quick re-lookup; warnings and confusable pairs render in a distinct warning callout; Word Formation, Learner Mistakes, and Collocations render as dedicated readable blocks with escaped content and token-consistent styling on both popup surfaces.
-
-## Initial Fallback Lookup
-
-`lookupDictionary(text, settings)` resolves the configured primary provider and attempts the fallback chain:
+### Phase 1: Fast Primary Lookup & Fallback Sequence
 
 ```text
-free_dictionary → wiktionary → merriam_webster → wordnik → words_api
+User Query: "taking care of"
+       │
+       ▼
+1. Primary Provider: free_dictionary (exact query)
+   └─ NotFoundError ──► Try Wiktionary ──► Try Merriam-Webster ──► Try Wordnik ──► Try WordsAPI
+                             │
+                             ▼ (All exact lookups return NotFoundError)
+2. Smart English Lemmatization (getEnglishLemmaCandidates)
+   - Evaluates stems: irregular verbs, plurals, comparative adjectives, suffixes (-ing, -ed, -es, -ly)
+   └─ NotFoundError across all providers
+                             │
+                             ▼
+3. Smart Phrasal Canonicalization (getEnglishPhraseCandidates)
+   - Canonicalizes "taking care of" ➔ "take care of"
+   - Retries fallback chain: free_dictionary("take care of") ➔ SUCCESS!
+                             │
+                             ▼
+4. Attach metadata:
+   - lemmaFallback: { originalText: "taking care of", lemma: "take care of" }
+   - subtitle: "Showing definitions for phrase: take care of"
+   - Immediate Phase 1 render to UI (revision: 0, enriched: false)
 ```
 
-The selected provider is tried first even when it is not the first item in this list. A `NotFoundError` means that provider has no result, so the next provider is attempted. Operational failures such as missing credentials, network errors, or rate limits are rethrown and stop the initial chain so the user receives an actionable error instead of an unexplained provider switch.
+#### Operational Error Boundary
+If an adapter encounters an operational failure (invalid API credentials, network timeout, rate limit 429, or server 500 error), the fallback chain aborts immediately and surfaces an actionable diagnostic error to the user rather than silently masking the failure.
 
-When exact lookups fail with `NotFoundError` across all providers, the fallback router generates candidate root lemmas using `getEnglishLemmaCandidates()` (e.g. `running` → `run`, `cities` → `city`, `evaluated` → `evaluate`) and retries the chain for root forms. When a stem succeeds, `lemmaFallback` metadata is attached and a subtitle notice (`Showing definitions for root: ${lemma}`) is rendered.
+---
 
-Successful fallback results are normalized with the selected provider badge.
+### Phase 2: Asynchronous Lazy Dictionary Enrichment
 
-## Lazy Dictionary Enrichment
+Immediately after Phase 1 delivers the initial result, the background service worker initiates non-blocking secondary enrichment:
 
-`lookupDictionaryEnrichment(text, settings, options)` queries non-primary providers after the initial result has already been rendered.
+1. **AI Phrase Fallback (Multi-word Lookups):** If the query is classified as a phrase/idiom, lacks dictionary definitions, and `enableAI` is active, `lookupAiProvider(..., { intent: "phrase_fallback" })` is scheduled first.
+2. **Provider Key Filtering:** Unconfigured key-backed providers are skipped without network overhead.
+3. **Concurrency Batching (`ENRICHMENT_CONCURRENCY = 2`):** Remaining providers are queried in batches of 2.
+4. **Cumulative Section Merging:**
+   - Definitions and examples are matched by normalized kind/part-of-speech and deduplicated.
+   - Enforces strict popup readability bounds:
+     - `MAX_DEFINITIONS_SECTIONS = 2`
+     - `MAX_EXAMPLES_SECTIONS = 2`
+     - `MAX_SYNONYM_SECTIONS = 1`
+     - `MAX_ANTONYM_SECTIONS = 1`
+     - `MAX_ITEMS_PER_SECTION = 8`
+5. **Phonetic IPA Backfill:** If the primary result had audio but lacked IPA, secondary providers backfill phonetic transcriptions onto matching language/accent slots (`en-US`, `en-GB`). Phonetic entries are sorted first (`preferPhoneticPronunciations`, clamped to `MAX_PRONUNCIATIONS = 4`).
+6. **Transparent Source Badges:** Contributing providers are added to `sourceBadges` for complete attribution.
+7. **Broadcast:** Dispatches `LOOKUP_UPDATE` (`revision: 1`, `enriched: true`) to the originating tab.
 
-- The primary provider is excluded by default; callers may pass `options.primaryId` or `options.excludeIds`.
-- Key-backed providers (`merriam_webster`, `wordnik`, `words_api`) are skipped before any network call when their required API key is absent.
-- Providers are processed in batches of **2 concurrent requests** (`ENRICHMENT_CONCURRENCY = 2`).
-- Successful results are normalized and returned in provider order.
-- `NotFoundError` results are skipped.
-- Missing API keys, rate limits, network failures, and other operational errors are logged and skipped so enrichment cannot break the primary lookup.
+---
 
-The background merges each fulfilled result into the current payload:
+### Two-Level Caching Engine
 
-- **Sections** are matched by normalized kind/title and item text is deduplicated case-insensitively. Definitions, examples, synonyms, and antonyms are capped to keep the card readable.
-- **Attribution** is preserved in section metadata where available, and every provider that successfully returns data is added to `sourceBadges` even when its content duplicates existing sections.
-- **Pronunciations** are merged by language/accent. If the primary result has an entry with audio but no IPA, an enrichment entry with the same accent can fill `phonetic`; the same applies to a missing audio URL. Entries with phonetic text are sorted before speech-only entries.
+```text
+LOOKUP Request
+      │
+      ▼
+Check L1 In-Memory Map (Max 20 entries, TTL: 10 minutes)
+  ├─ Hit  ──► Hydrate and return cached enrichment immediately
+  └─ Miss ──► Check L2 Storage Cache
+                │
+                ▼
+Check L2 Session Storage (chrome.storage.session with "enrich_" prefix)
+  ├─ Hit  ──► Hydrate L1 Map and return cached result
+  └─ Miss ──► Check in-flight Promise Map (enrichmentInFlight)
+                ├─ In-flight ──► Attach to active Promise
+                └─ Fresh ────► Execute runDictionaryEnrichment()
+                                 │
+                                 ▼
+                     Write to L1 Map & L2 Session Storage
+```
 
-## Translation Provider Abstraction
+- **Cache Invalidation:** Any preference changes in Settings trigger `clearEnrichmentSessionCache()`.
+- **Cache Schema Migration:** `migrateEnrichmentCacheSchema()` tracks `ENRICHMENT_CACHE_SCHEMA_VERSION = 2` to purge obsolete cache shapes on extension updates.
 
-A translation facade selects the configured provider and normalizes its response. The background worker should call the facade rather than a vendor-specific adapter.
+---
 
-Normalized translation fields:
+## 3. Translation Provider Subsystem
 
-```js
-{
-  title,
-  subtitle,
-  sections,
-  translatedText,
-  detectedLanguage,
-  targetLanguage,
-  providerId
+The translation facade (`src/providers/translate.js`) runs in parallel with dictionary lookups:
+
+| Provider ID | Backend Service | Configuration Requirements | Validation Support |
+|---|---|---|---|
+| `google` | **Google Translate** | None (public endpoint `translate.googleapis.com`) | Built-in non-destructive ping |
+| `libretranslate` | **LibreTranslate** | `libreTranslateBaseUrl`, optional `libreTranslateApiKey` | Non-destructive translation test |
+
+### Normalized Translation Contract
+```typescript
+interface NormalizedTranslationResult {
+  title: string;
+  subtitle: string; // e.g. "Detected: Vietnamese → English"
+  translatedText: string;
+  detectedLanguage: string;
+  targetLanguage: string;
+  sourceBadges: Array<{ label: string; kind: "translation" }>;
+  sections: Array<{ title: "Original"; text: string }>;
+  providerId: string;
 }
 ```
 
-Dictionary and translation adapters are normalized before rendering. Dictionary results always receive a provider badge and provider ID; translation results always expose `translatedText`, `detectedLanguage`, and `targetLanguage`, with one `Original` section for the source text. Missing results use `NotFoundError` for fallback, while operational failures stop the primary dictionary chain.
+---
 
-The registered providers are `google` (Google Translate) and `libretranslate` (LibreTranslate). Unsupported IDs fail clearly. Adding another provider requires an adapter, provider registration, and an options-page choice.
+## 4. Generative AI Provider Subsystem
 
-## AI Provider
+The AI subsystem (`src/providers/ai-provider.js`) interfaces with generative endpoints through a dual-protocol architecture:
 
-The AI provider supports normal explanations, contextual explanations, grammar breakdowns, sentence breakdowns, phrase exploration, and phrase fallbacks:
+### Protocol Routing
 
-- `intent: "default"` — main explanation template
-- `intent: "explain_in_context"` — contextual prompt template requiring non-empty context
-- `intent: "grammar"` — grammar/nuance template using optional context
-- `intent: "phrase_explorer"` — idiom, phrasal verb, preposition patterns, and collocation explorer covering meaning, grammar patterns, word partnerships, register, examples, and learner mistakes
-- `intent: "sentence_breakdown"` — structured sentence breakdown and phrase parsing prompt template
-- `intent: "phrase_fallback"` — idiom and phrase fallback prompt template
+1. **Google Gemini Native REST Endpoint:**
+   - Activated when `aiBaseUrl` matches `generativelanguage.googleapis.com`.
+   - Directly invokes `/v1beta/models/<model>:generateContent?key=<aiApiKey>`.
+2. **OpenAI-Compatible Chat Endpoint:**
+   - Activated for all other URLs (OpenAI, Groq, Ollama, OpenRouter, LocalAI).
+   - Invokes `<aiBaseUrl>/chat/completions` with `Authorization: Bearer <aiApiKey>` headers.
 
-Supported template variables are `{{str}}`, `{{text}}`, `{{sentence}}`, `{{word_count}}`, `{{targetLang}}`, and `{{context}}`. Simple variable replacement is applied, and the rendered prompt is automatically combined with an input contract append block (`<target>`, `<context>`, `<target-language>`) so model instructions treat user selections as data rather than executable prompt instructions.
+---
 
-When `enableLexicalProfile` is enabled, an additional input-contract instruction requests an optional `<lexical-profile>` JSON block (word family by part of speech, usage warnings, and confusable pairs). The AI provider extracts this block separately via `parseLexicalProfileFromResponse`, strips it from the Markdown shown to the user, and validates it through `parseLexicalProfile` so malformed or omitted blocks degrade gracefully.
+### The 6 AI Intents
 
-Options saving validates custom prompt templates for missing variables (for example, warning if `{{context}}` is absent from context explanations or `{{sentence}}` is missing from sentence breakdown).
+| Intent | UI Action | Output Model | Lexical Profile Extraction |
+|---|---|---|---|
+| `default` | **Main AI Explanation** | Structured Markdown (`###` sections) | **Yes** |
+| `explain_in_context` | **Context Explain** | Focused In-Context Markdown | No |
+| `grammar` | **Grammar & Nuance** | Syntactic & Tone Analysis Markdown | **Yes** |
+| `phrase_explorer` | **Phrase & Collocations** | Idiom & Preposition Markdown | **Yes** |
+| `sentence_breakdown` | **Sentence Breakdown** | Pure Structural JSON | No |
+| `phrase_fallback` | **Dictionary Phrase Fallback** | Concise Meaning Markdown | No |
 
-Context is optional at the provider boundary, but `explain_in_context` requires a non-empty value. `sentence_breakdown` uses the supplied Context sentence when present, or the query itself when the query is already sentence-like. Automatic page extraction is performed by the UI as an optional prefill; the provider receives context only after the user activates a contextual action. Contextual, grammar, and sentence-breakdown results include a visible `Context used` section when context was supplied.
+---
 
-### Renderer Markdown
+### Parse-Time AI Section Normalization & Sandboxing
 
-Sections with `markdown: true` use the shared lightweight renderer. It supports headings (`#` through `######`), unordered and ordered lists, bold, italics, inline code, blockquotes, and horizontal rules. It is intentionally not a full Markdown or HTML renderer.
+1. **Prompt Sandboxing:** Outbound prompts enclose user text in `<target>`, `<context>`, and `<target-language>` XML tags.
+2. **Markdown Normalization:** Strips stray code fences, converts bold labels to `###` headings, and splits text into titled `sections[]`.
+3. **Intent Outline Alignment (`kindForAiSection`):** Maps headings to canonical semantic `kind` tokens (`intro`, `translation`, `usage`, `examples`, `grammar`, `etymology`, `phrase`).
+4. **Structured Sentence Breakdown Normalization:**
+   - Extracts and validates JSON using `extractJsonObject` and `normalizeSentenceBreakdown`.
+   - Emits structured clauses (`structureComponents`) and phrase chips (`phraseParsing`).
+5. **Lexical Profile Extraction:**
+   - Extracts `<lexical-profile>` JSON blocks via `parseLexicalProfileFromResponse`.
+   - Strips the raw JSON block from visible Markdown.
+   - Enforces strict bounds:
+     - `MAX_LEXICAL_ITEMS = 12`
+     - `MAX_DERIVATIVES = 12`
+     - `MAX_LEXICAL_WARNINGS = 8`
+     - `MAX_CONFUSABLE_PAIRS = 6`
+     - `MAX_LEARNER_MISTAKES = 6`
+     - `MAX_FORMATION_ITEMS = 6`
+     - `MAX_COLLOCATION_ITEMS_PER_GROUP = 10`
 
-If the configured base URL is Google Gemini, the native Gemini path is used. Other HTTPS endpoints use the OpenAI-compatible chat path. AI output is returned as a Markdown-enabled section for lightweight rendering.
+---
 
-## Pronunciation Playback
+## 5. Pronunciation & Speech Practice Subsystem
 
-Playback order is:
+### Audio Playback Hierarchy (`src/ui/audio.js`)
 
-1. Prefer remote dictionary audio.
-2. Apply configured playback rate.
-3. Fall back to browser speech synthesis when audio is unavailable or fails.
-4. Apply configured rate and optional preferred voice to speech synthesis.
+1. **Remote Audio:** Plays provider-returned MP3/WAV URLs.
+2. **Web Speech Synthesis Fallback:** If remote audio is missing or fails, calls `window.speechSynthesis.speak()`.
+3. **Playback Parameters:** Applies user-configured `pronunciationRate` (`0.5`–`1.5`) and `pronunciationVoiceURI`.
+4. **Equalizer Animation:** Visual 3-bar equalizer wave animates strictly while audio is actively playing.
+5. **Zero Memory Caching:** Audio blobs and binary metadata are never cached to prevent memory bloat.
 
-Audio blobs and metadata must not be cached.
+### Speech Practice Evaluator
 
-### Pronunciation merging and IPA backfilling
-
-Some providers return audio without IPA, while others return IPA without audio. During enrichment, matching entries are identified by language/accent (`en-US`, `en-GB`, or a provider language value). Missing `phonetic`, `audioUrl`, and language fields are filled from the successful enrichment entry rather than creating unnecessary duplicate buttons. If a real audio URL is added to a speech-only fallback, its `fallbackOnly` marker is cleared. Pronunciations with IPA are ordered before empty-phonetic entries so the title row exposes IPA when any successful provider supplies it.
-
-### Speech practice evaluator
-
-Dictionary results expose a **Practice** control next to pronunciation buttons. It uses the browser Speech Recognition API (`SpeechRecognition` / `webkitSpeechRecognition`) to capture one spoken attempt, score it against the target word with normalized Levenshtein similarity, and render a grade badge:
-
-- `90–100` Excellent
-- `70–89` Good
-- `50–69` Almost there
-- `<50` Try again
-
-Recognition is opt-in per click, stops any active playback first, and surfaces clear errors for missing microphone permission, unsupported browsers, or no speech detected.
-
-## Result presentation guidance
-
-Providers should return meaningful `kind` values for sections when available, such as `definitions`, `translation`, `examples`, `context`, `sentence-overview`, `sentence-structure`, `phrase-parsing`, or `ai`. The shared renderer uses these values to apply semantic styling; missing kinds are inferred from section titles. Section `meta` values are displayed as compact badges when a section has a title. Structured `sentence_breakdown` responses may include a `data` object for sentence parts and phrase cards.
-
-AI templates should request concise Markdown with stable headings and learner-friendly bullets. The UI remains tolerant of provider responses that omit headings or return plain text.
-
-## AI output normalization
-
-AI Markdown is normalized before rendering: accidental code fences, inconsistent heading levels, duplicate adjacent headings, and excessive blank lines are cleaned up. Unknown content is preserved. The provider still returns the existing normalized result shape, with semantic `kind` values used by the shared renderer.
-
-### AI section normalization
-
-After the model returns Markdown, the AI provider:
-
-1. Strips accidental code fences.
-2. Normalizes headings to `###`.
-3. Converts bold-only section labels into headings when needed.
-4. Splits the cleaned Markdown into titled `sections[]`.
-5. Infers section `kind` values such as `context`, `definitions`, `examples`, `grammar`, `lexical`, `usage`, `translation`, `phrase`, `sentence-structure`, `phrase-parsing`, and `general`.
-6. For `sentence_breakdown`, attempts structured JSON parsing first and falls back to Markdown section splitting when JSON is unavailable.
-
-No lookup payload contract changes are required. Context remains optional and is only included for contextual intents.
+1. Listens via Chrome's `SpeechRecognition` / `webkitSpeechRecognition`.
+2. Normalizes spoken transcript and target query.
+3. Calculates similarity using Levenshtein distance string matching:
+   $$\text{Score} = \left(1 - \frac{\text{LevenshteinDistance}(\text{target}, \text{spoken})}{\max(\text{len}(\text{target}), \text{len}(\text{spoken}))}\right) \times 100$$
+4. Assigns standardized grade badges:
+   - `90%–100%`: **Excellent** (emerald)
+   - `70%–89%`: **Good** (teal)
+   - `50%–69%`: **Almost there** (amber)
+   - `<50%`: **Try again** (rose)
+5. Active practice scores survive Phase 2 lazy enrichment re-renders via `audio.restorePracticeResult()`.

@@ -1,51 +1,109 @@
-# Troubleshooting
+# Troubleshooting Guide
 
-## Extension Context Invalidated
+This guide provides actionable solutions for common issues across extension reloads, network providers, pronunciation practice, context extraction, and browser security boundaries.
 
-This error happens when the background extension reloads while a webpage is actively running the older content script.
+---
 
-- **Fix:** Refresh the webpage you are trying to test.
+## 1. Extension Reload & Context Invalidation
 
-## Infinite Loading or No Popup
+### Symptom: `Extension context invalidated` or clicking triggers does nothing after updating code.
+- **Cause:** When you reload an unpacked extension in `chrome://extensions`, the background service worker is replaced, but existing webpage tabs still hold references to the old, disconnected content script instance.
+- **Solution:**
+  1. Refresh all open webpage tabs where you want to test the extension.
+  2. The content script automatically catches disconnection errors and displays an inline top banner: **"Extension reloaded — Refresh this tab."**
+  3. Reloading the webpage re-injects the current content script.
 
-- Check the extension service worker console in `chrome://extensions`.
-- A missing `manifest.json` permission or a provider failure often stops execution.
+---
 
-## AI Requests Fail
+## 2. In-Page Popups & Selection Triggers
 
-- Verify your `aiBaseUrl`, `aiApiKey`, and `aiModel` in the extension options.
-- The default setup points to the Google Gemini OpenAI-compatible endpoint.
-- For context explanation, page extraction is optional. If the active tab has no content script or matching sentence, switch to AI mode and paste the sentence into Context manually.
-- If the wrong sentence is prefilled after a selection, reload the extension and refresh the tab so the exact Range-based extractor is active. You can always edit Context before submitting.
-- Context, Context Explain, and Grammar Nuance are intentionally hidden in Dictionary mode. They also stay hidden when AI is disabled or the query is empty.
-- If a contextual request is rejected, verify Context is not empty. The inline validation should focus the Context field before any request is sent.
-- Check the extension service worker console for HTTP errors.
+### Symptom: Highlighting text or double-clicking does not open the lookup card or show the floating icon.
+- **Check 1 — Editable Form Fields:** Selection triggers are intentionally disabled inside `<input>`, `<textarea>`, and elements with `contenteditable="true"` to avoid disrupting typing. Use the right-click context menu or toolbar popup instead.
+- **Check 2 — Trigger Mode Setting:** Open Settings (`options/options.html`) and verify **Text selection & double-click lookup behavior** is set to `Floating lookup icon` or `Open popup immediately on selection` (not `Off`).
+- **Check 3 — Post-Selection Modifier Key:** If using the hotkey trigger, confirm you tap the configured key (`Shift`, `Alt`, or `Ctrl`) once immediately *after* highlighting the text.
+- **Check 4 — Viewport Positioning & Screen Edges:** If text is at the extreme edge of the screen, the positioning engine flips the card. Ensure browser zoom or high-DPI scaling is not hiding the card off-screen.
 
-## Grammar Result Formatting
+---
 
-Grammar Nuance responses use lightweight Markdown. Headings, lists, bold text, italics, quotes, code, and horizontal rules are supported. Raw Markdown markers usually indicate an outdated extension reload; reload the extension and refresh the webpage tab.
+## 3. AI Requests & Context Errors
 
-## Pronunciation Doesn't Match Settings
+### Symptom: AI generation fails with error toasts or missing field alerts.
+- **Check 1 — Required Settings:** Verify in Settings that **Enable AI provider** is checked, and all three core fields are populated:
+  - **AI API base URL:** e.g. `https://generativelanguage.googleapis.com/v1beta/openai/` or your custom endpoint.
+  - **AI API key:** `sk-...` or Google Gemini API key.
+  - **AI model name:** e.g. `gemini-3.5-flash-lite`, `gpt-4o-mini`, `deepseek-chat`, or `llama3`.
+- **Check 2 — Test Connection Action:** In Settings, click **Test AI connection** to run a non-destructive latency and authentication check.
+- **Check 3 — Gemini Native vs. OpenAI-Compatible:**
+  - If using Google Gemini via `generativelanguage.googleapis.com`, the extension automatically uses the native Gemini REST protocol with query key authentication.
+  - If using OpenAI, Groq, Ollama, or OpenRouter, the extension calls `/chat/completions` with `Bearer <key>` headers.
+- **Check 4 — Host Permission Prompts:** If using custom self-hosted base URLs (e.g. `http://localhost:11434` or custom domain proxies), ensure you accepted the browser's dynamic origin permission prompt when saving settings.
 
-- `pronunciationRate` applies to both remote audio and browser speech synthesis. Check that it is between `0.5` and `1.5`.
-- `pronunciationVoiceURI` *only* applies to browser speech synthesis fallback. If the dictionary returns a real MP3 file, the browser will play that instead of using the selected speech voice.
-- Some providers return audio without IPA. Wait for lazy enrichment to complete; if another provider supplies phonetic text, the existing pronunciation entry is backfilled and IPA is moved to the first pronunciation slot.
-- If no enabled provider has IPA for a word, a working audio or browser speech fallback is expected even though the phonetic text remains empty.
+### Symptom: Inline alert: `"Please enter or paste the sentence containing this word."`
+- **Cause:** **Context Explain** and **Grammar & Nuance** strictly require sentence context to provide meaningful analysis.
+- **Fix:** If automatic sentence extraction was disabled or found no sentence on the active page, paste the sentence directly into the editable Context textarea before clicking the action.
+- *Note: Sentence Breakdown accepts a full-sentence query without needing extra text in the Context box.*
 
-## Source badges and lazy enrichment
+---
 
-- Results track contributing providers via the normalized `sourceBadges` contract and per-section source metadata (e.g. dictionary provider, Google Translate, AI phrase explanation, and secondary dictionary providers).
-- A provider badge may appear even when that provider's definitions were duplicates; the badge means the provider returned valid data, not necessarily that it added a new visible sentence.
-- The initial primary result appears before secondary enrichment. If no extra badge appears, the other providers may have returned `NotFoundError`, lack required API keys, or failed operationally.
-- If the same source name appears both as a badge and in the subtitle, reload the extension and refresh the page. Current versions filter duplicate source names from the subtitle.
-- If an old result overwrites a newer lookup, refresh the page and reload the extension. Current popup/content-script listeners discard `LOOKUP_UPDATE` messages whose `requestId` or text does not match the active query.
+## 4. Multi-Source Dictionary & Enrichment
 
-## PDFs and Reader Pages
+### Symptom: No definitions found for an inflected word (e.g. `went`, `taking care of`).
+- **Resolution:** The extension runs automatic English lemmatization and phrasal canonicalization fallback. If all exact lookups return `NotFoundError`, it retries root stems (`went` → `go`, `taking care of` → `take care of`) and displays a subtitle notice: `Showing definitions for root: <stem>`.
+- If an obscure idiom has no dictionary definitions across all 5 providers, Dictionary mode automatically invokes **AI Phrase Fallback** (when AI is enabled) to explain the phrase under `AI · Phrase explanation`.
 
-- If selecting text in Chrome's built-in PDF viewer does not open the in-page card, right-click the selection and choose the extension's lookup action. The extension renders the card over scriptable PDF pages; when Chrome blocks script injection, a badge indicator notifies the user.
-- Reload the extension after updating, then retry the PDF context-menu action once. The first right-click after reload may still fail if the service worker has not restarted.
-- If the context menu is unavailable, click the extension icon and type the selected word or phrase manually. In AI mode, paste the sentence into Context.
-- Confirm **Enable context menu trigger** is checked in Options. Without it, right-click lookup is not registered.
-- For local PDFs or HTML files, open `chrome://extensions`, open the extension details, enable **Allow access to file URLs**, then reload the file tab.
-- Reader Mode pages work when their article content is exposed to content scripts. Browser-owned `chrome://` pages cannot be injected by design.
-- If an online PDF has selectable text but no popup, reload the extension, refresh the PDF tab, and retry. An embedded PDF may expose its text layer in a child frame, while the built-in viewer may not.
+### Symptom: Key-backed providers (Merriam-Webster, Wordnik, WordsAPI) don't enrich results.
+- **Check 1 — API Key Configuration:**
+  - **Merriam-Webster:** Requires a free Collegiate API key from [dictionaryapi.com](https://dictionaryapi.com/register).
+  - **Wordnik:** Requires a free developer key from [developer.wordnik.com](https://developer.wordnik.com/).
+  - **WordsAPI:** Requires a RapidAPI key from [wordsapi.com](https://www.wordsapi.com/).
+- **Check 2 — Enrichment Diagnostics:** In Settings, click **Test Merriam-Webster**, **Test Wordnik**, or **Test WordsAPI** to verify credentials and check quota status.
+- **Check 3 — Graceful Degradation:** When API keys are missing or rate limits occur, enrichment silently skips those providers without breaking the displayed Free Dictionary or Wiktionary results.
+
+### Symptom: A source badge appears, but no new definitions were added.
+- **Explanation:** `sourceBadges` tracks every provider that returned valid data. If provider definitions duplicate existing entries, the duplicate text is suppressed to keep the card scannable, while the badge accurately credits the provider for verifying the word.
+
+---
+
+## 5. Neural Translation & LibreTranslate
+
+### Symptom: Translation card shows an error or fails to load.
+- **Google Translate:** Operates out of the box without keys. Check network connectivity if requests fail.
+- **LibreTranslate:**
+  - If using the public server (`https://libretranslate.com`), requests may hit rate limits during peak hours.
+  - If using a self-hosted instance, verify your **LibreTranslate base URL** (e.g. `https://translate.example.com`) and ensure any required API key is entered.
+  - In Settings, click **Test LibreTranslate** to inspect connection latency and HTTP response status.
+
+---
+
+## 6. Pronunciation & Speech Practice
+
+### Symptom: Audio button plays browser speech instead of real human voice.
+- **Explanation:** The extension prioritizes native MP3 dictionary recordings. If no provider returns an audio URL for that specific term, it seamlessly falls back to the browser's built-in `window.speechSynthesis`.
+- **Speech Voice Selection:** Open Settings → **Preferred speech voice** to choose your favorite installed operating system voice.
+- **Speed Adjustment:** Set **Pronunciation speed** (clamped between `0.5x` and `1.5x`).
+
+### Symptom: Practice button (`🎙️ Practice`) is missing or fails with an error.
+- **Check 1 — Browser Support:** The Speech Practice Evaluator requires the Web Speech Recognition API (`webkitSpeechRecognition`), natively available in Chrome. Other Chromium derivatives without speech binaries will display an explanatory note.
+- **Check 2 — Microphone Permissions:** Ensure microphone permissions are granted for the active tab (check the camera/mic icon in Chrome's address bar).
+- **Check 3 — Ambient Noise:** If the recording times out without hearing speech, click **Practice** again and speak clearly when the animated pulse ring displays `Listening…`.
+
+---
+
+## 7. PDFs, Web Readers, and Local Files
+
+### Symptom: Selection triggers do not appear on PDF files or local documents.
+- **Local `file://` Documents:** Open `chrome://extensions`, locate **Dictionary**, click **Details**, and toggle on **Allow access to file URLs**. Reload the file tab.
+- **Online HTML5 PDFs:** Ensure the PDF reader exposes a selectable DOM text layer (e.g. PDF.js viewer). If selectable, exact sentence Range extraction operates automatically.
+- **Chrome Built-in PDF Viewer Frame:** Chrome strictly isolates its proprietary internal PDF viewer frame from extension content scripts. Right-click the highlighted word and select **Look up in Dictionary** from the context menu, or type the word in the toolbar popup.
+- **Browser-Owned Pages:** Pages starting with `chrome://`, `chrome-extension://`, or the Chrome Web Store cannot be injected with content scripts by browser security policy. Use the toolbar popup for vocabulary queries while on these pages.
+
+---
+
+## 8. Settings Import, Export, and Prompt Reset
+
+### Symptom: Custom AI prompts are producing unexpected output.
+- **Reset Individual Prompt:** In Settings, click **Restore default** below any prompt textarea to restore that single template to factory specifications, then click **Save settings**.
+- **Reset All Prompts:** Click **Reset AI prompts** in the bottom action bar to restore all 5 templates (Main AI, Context, Grammar, Phrase Explorer, Sentence Breakdown), then click **Save settings**.
+- **Export / Import:**
+  - **Export settings:** Downloads a clean JSON file containing all public appearance and prompt preferences. API keys are strictly excluded.
+  - **Import settings:** Uploads a settings JSON file. API keys in storage remain untouched.

@@ -1,57 +1,81 @@
-# Roadmap
+# Project Roadmap
 
-## Recently Completed
+This document tracks shipped capabilities, near-term product work, and longer-term research. Items move from **Ideas** to **Planned** only when they have a clear user problem and a feasible extension-architecture path.
 
-- Removed the paid-only Oxford provider because no suitable free tier was available
-- Additional dictionary backends: Wordnik, WordsAPI (free-tier BYO key)
-- Multi-backend dictionary switching and fallback (`free_dictionary`, `wiktionary`, `merriam_webster`, `wordnik`, `words_api`)
-- Lazy dictionary enrichment: initial primary result renders first, then secondary providers enrich it in the background with bounded concurrency
-- Incremental `LOOKUP_UPDATE` messaging with request IDs, revision numbers, and stale-response guards
-- Multi-source title badges (`sourceBadges`) for dictionary, translation, AI, and every successful enrichment provider
-- Source-label deduplication: provider names are not repeated in the subtitle meta line when already visible as badges
-- Section merging and duplicate suppression across provider definitions, examples, synonyms, and antonyms
-- Pronunciation merging across providers with language/accent matching, IPA/audio backfilling, and phonetic-first ordering
-- Pronunciation speech evaluator with Practice score badges
-- Sentence Breakdown & Phrase Parsing AI action
-- Grammar Nuance AI action
-- Smart multi-word phrase and idiom fallback in Dictionary mode
-- Editorial Learning redesign with light/dark/system themes
-- Shared design tokens, quieter controls, and definition-first typography
-- Deep dictionary sections (definitions, examples, synonyms, antonyms, variants)
-- Translation provider abstraction
-- Contextual explanations using bounded page context
-- Editable AI Context fields in toolbar and in-page popups
-- Sentence-level context prefilling with manual-entry fallback
-- Visible Context used confirmation in contextual AI results
-- Lightweight Markdown rendering for AI headings and lists
-- Pronunciation rate and preferred voice controls
-- Audio metadata and blob caching removal
-- Resizable in-page popup with persisted dimensions
-- Unified popup states, interaction feedback, and reduced-motion support
-- Smart irregular and phrasal verb lemmatization with candidate fallback in the dictionary chain
-- Idiom & Collocation Explorer: dedicated Phrase & Collocations AI action and configurable prompt template
-- Expanded lexical profile: word family derivatives, word formation (prefixes/suffixes), confusable pairs, common learner mistakes, and structured collocations
-- Zero-leak secret management: API keys isolated to the background worker, never read into content scripts or the toolbar popup
-- Granular origin permission requests for custom AI endpoints and self-hosted LibreTranslate instances
-- Teardown request cancellation on in-page and toolbar popup dismissal
-- AI result structure: parse-time section kinds, non-duplicate intent outlines, and intent-aware primary/deep-dive collapse (Schema v6)
+---
+
+## Recently Shipped
+
+### Lookup Engine
+- Five dictionary backends with primary-first fallback: `free_dictionary`, `wiktionary`, `merriam_webster`, `wordnik`, `words_api`
+- Removal of the paid-only Oxford provider (no usable free tier)
+- Phase 1 fast primary lookup plus Phase 2 lazy enrichment (`ENRICHMENT_CONCURRENCY = 2`)
+- Incremental `LOOKUP_UPDATE` messaging with `requestId`, `revision`, and stale-response guards
+- Smart English lemmatization (`went` → `go`, `children` → `child`) and phrasal canonicalization (`taking care of` → `take care of`)
+- Automatic AI phrase/idiom fallback in Dictionary mode when structured definitions are missing
+- Two-level enrichment cache: L1 in-memory Map (max 20, TTL 10 minutes) plus L2 `chrome.storage.session`
+
+### Results & Attribution
+- Canonical `sourceBadges` for dictionary, translation, AI, and every successful enrichment provider
+- Source-label deduplication so provider names are not repeated in the subtitle
+- Section merging with duplicate suppression across definitions, examples, synonyms, and antonyms
+- Pronunciation merging with language/accent matching, IPA/audio backfilling, and phonetic-first ordering
+
+### Pronunciation & Practice
+- Remote dictionary audio with Web Speech synthesis fallback
+- Configurable playback rate (`0.5`–`1.5`) and preferred speech voice
+- Speech Practice Evaluator with Levenshtein scoring and grade badges
+- Zero audio blob/metadata caching
+
+### Contextual AI
+- Five complementary AI actions: Main AI, Context Explain, Grammar & Nuance, Phrase & Collocations, Sentence Breakdown
+- Dual-mode context extraction: exact DOM Range offset vs ranked page-candidate search
+- Editable Context field with session-only memory and visible **Context used** confirmation
+- Prompt sandboxing (`<target>`, `<context>`, `<target-language>`) and parse-time section-kind normalization
+- Schema v8 built-in prompt upgrades (custom templates are never overwritten)
+
+### Lexical Profile
+- Word Family chips (noun, verb, adjective, adverb, inflections, derivatives)
+- Word Formation (prefixes, suffixes, explanation)
+- Usage/register warnings, confusable pairs, common learner mistakes, and categorized collocations
+- Provider-first extraction with AI `<lexical-profile>` JSON fallback
+
+### Privacy, Storage & UX
+- Zero-leak secret isolation: API keys live only in `chrome.storage.local` and never enter content scripts or the toolbar popup
+- Granular origin permission requests for custom AI endpoints and self-hosted LibreTranslate
+- Sanitized settings export/import (secrets omitted on export, ignored on import)
+- Tab-scoped request cancellation on popup dismissal
+- Calm Learning Studio surfaces: system/light/dark themes, editorial vs learner fonts, resizable cards, reduced-motion support
+
+---
+
 ## Planned Short Term
 
-- Per-site blacklist and whitelist
-- Configurable keyboard shortcut
+Focused, incremental product controls that fit the current MV3 architecture:
+
+- Per-site blacklist and whitelist for in-page triggers
+- Configurable keyboard shortcut beyond the current post-selection modifier key
 - Option to disable automatic phrasal/idiom fallback in Dictionary mode
-- Regenerate or edit an AI section in place
+- Regenerate or edit a single AI section in place without re-running the whole lookup
 - Capture selected sentence, page title, URL, and PDF page metadata with saved vocabulary
+
+---
 
 ## Planned Mid Term
 
-- Built-in flashcard review and spaced repetition scheduling
-- AnkiConnect integration and configurable card fields
-- Better popup positioning on constrained or rapidly changing viewports
-- Improved provider validation reporting
+Larger learning-workflow features that require new storage and review models:
+
+- Built-in flashcard review and spaced-repetition scheduling
+- AnkiConnect integration with configurable card fields
+- Stronger popup positioning on constrained or rapidly changing viewports
+- Richer provider validation reporting (quota, latency history, last error)
 - Document-level vocabulary lists and reading progress
 
+---
+
 ## Planned Long Term
+
+Research-scale capabilities that depend on media APIs, persistent learner data, or optional sync:
 
 - YouTube subtitle lookup, sentence capture, timestamp replay, and vocabulary mining
 - Optional user-controlled immersion mode
@@ -59,29 +83,24 @@
 - Advanced FSRS review scheduling and pronunciation recall exercises
 - Optional local-first sync or self-hosted vocabulary storage
 
-## Ideas and Considerations
+---
 
-- Multiple configuration profiles
-- Theme customization
-- Import/export settings
-- Learner decks and vocabulary mastery states (`new`, `learning`, `familiar`, `mastered`, `ignored`)
+## Ideas Under Consideration
 
-## Quality follow-up
+Not committed. Evaluate only if a clear learner problem remains after short-term work:
 
-- Keep stale-response UI protection; true provider abort remains deferred because `chrome.runtime.sendMessage` cannot transport `AbortSignal`.
-- Add telemetry-free manual performance checks for cache hits, duplicate requests, lazy enrichment latency, and partial provider failures.
-- Verify provider attribution remains accurate when a source returns duplicate content but successfully responds.
-- Continue checking pronunciation behavior for words with audio but no IPA in the primary provider.
+- Multiple configuration profiles (work vs study vs teaching)
+- Deeper theme customization beyond system/light/dark and editorial/learner fonts
+- Learner decks with mastery states (`new`, `learning`, `familiar`, `mastered`, `ignored`)
 
-## Recently completed quality upgrades
+---
 
-- AI heading split into expanded semantic sections
-- Shared query/context utilities for provider and popup surfaces
-- Collapsible deep-dive sections retained for long AI responses while primary learning sections stay expanded
-- Context textarea autosize and stronger validation/ARIA relationships
-- Pronunciation interrupt safety for rapid repeated clicks
-- Shared query/context helpers across popup surfaces
-- Editable context parity in the webpage popup
-- Context source messaging and accessibility relationships
-- AI response cleanup and semantic section-kind inference
-- Stale UI request cancellation hooks and tab/result coordination
+## Quality Follow-Ups
+
+Keep these checks in the manual verification loop (`docs/development.md`):
+
+- Preserve stale-response UI protection. True provider abort remains limited because `chrome.runtime.sendMessage` cannot transport `AbortSignal`; tab-scoped `AbortController` already cancels in-flight fetches in the service worker.
+- Run telemetry-free performance checks for cache hits, duplicate requests, lazy enrichment latency, and partial provider failures.
+- Confirm `sourceBadges` stay accurate when a provider returns duplicate content but a successful response.
+- Recheck pronunciation behavior for words with audio but no IPA in the primary provider.
+- Confirm Schema v8 prompt migrations never overwrite customized templates.

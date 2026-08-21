@@ -1,273 +1,160 @@
-# A Smarter Way to Understand Words While You Read
+# A Smarter Way to Understand English While You Read
+
+## Dictionary, Translation, Pronunciation, and AI Language Learning in One Chrome Extension
+
+Most dictionary tools answer only one basic question: **"What does this word mean in the abstract?"**
+
+In real-world reading, language is far more complex. A single word changes its meaning based on syntax, tone, idioms, cultural register, and the specific sentence in which it appears. When learners, researchers, or professionals encounter confusing text, traditional tools force them into a disjointed loop: copy the word, open a separate tab, search a dictionary website, switch to an AI chatbot, draft a prompt, and lose their place in the original article.
+
+**Dictionary** solves this problem permanently. It brings fast multi-source definitions, neural translation, pronunciation practice, and sentence-aware AI intelligence directly to the text you are reading—keeping you immersed in your reading flow.
+
+---
+
+## Why Readers and Learners Choose Dictionary
+
+### 1. Zero Context Switching: Read, Click, and Understand
+Look up unfamiliar words, idioms, or sentences wherever you encounter them across the web:
+- **Floating Selection Icon:** Highlight text or double-click a word to reveal an elegant, non-intrusive lookup trigger.
+- **Post-Selection Hotkey:** Tap `Shift` (or `Alt` / `Ctrl`) immediately after selecting text to summon the card at high speed.
+- **Direct Selection:** Open the lookup card instantly upon text highlighting for intensive study sessions.
+- **Right-Click Context Menu:** Instant fallback on scriptable PDFs, reader-mode pages, and nested iframes.
+
+The in-page card positions itself intelligently near your selection, flips boundaries to prevent screen clipping, and never pulls you away from the author's train of thought.
+
+---
+
+### 2. Two Synchronized Modes: Fast Answers First, Deep Learning on Demand
+
+The product is built around two complementary learning surfaces:
+
+- **Dictionary Mode:** Delivers sub-second primary definitions, parallel neural translations, US/UK pronunciation audio, and structured lexical relationships. As you read, non-blocking background workers lazily enrich the card with secondary dictionary data.
+- **AI Mode:** Unlocks 5 specialized contextual actions (Main AI, Context Explain, Grammar & Nuance, Phrase & Collocations, and Sentence Breakdown) powered by Google Gemini or your own self-hosted/OpenAI-compatible LLMs.
+
+Users get immediate clarity in under a second, with the power to explore grammatical nuance and sentence mechanics whenever a word is difficult, technical, or idiomatic.
+
+---
+
+## Complete Feature Showcase
+
+```text
+┌────────────────────────────────────────────────────────────────────────┐
+│  D  evaluate                             [Free Dictionary] [Wiktionary]│
+│     /ɪˈvæl.ju.eɪt/  (US) 🔊 Listen (US)  🔊 Listen (UK)  🎙️ Practice    │
+├────────────────────────────────────────────────────────────────────────┤
+│  ▼ Translation · Vietnamese                                            │
+│    đánh giá, định giá                                                  │
+├────────────────────────────────────────────────────────────────────────┤
+│  ▼ Definitions · Verb (Free Dictionary)                                │
+│    1. To determine or fix the value of.                                │
+│    2. To examine and judge carefully; appraise.                        │
+│       "We need to evaluate the experimental results."                  │
+├────────────────────────────────────────────────────────────────────────┤
+│  ▼ Word Family                                                         │
+│    [evaluation]  [evaluative]  [evaluator]  [evaluated]  [evaluating]   │
+├────────────────────────────────────────────────────────────────────────┤
+│  ▼ Collocations                                                        │
+│    • Verbs: carefully evaluate, objectively evaluate                   │
+│    • Patterns: evaluate the effectiveness of, evaluate whether...      │
+└────────────────────────────────────────────────────────────────────────┘
+```
 
-## Dictionary, Translation, Pronunciation, and AI Learning in One Chrome Extension
+### Pillar 1: Progressive Multi-Source Dictionary & Neural Translation
+Rather than relying on a single fallible API, Dictionary orchestrates up to 5 authoritative dictionary backends:
+1. **Primary Provider First:** Free Dictionary API (default), Wiktionary REST API, Merriam-Webster Collegiate, Wordnik, or WordsAPI (RapidAPI).
+2. **Smart Lemmatization & Phrasal Fallback:** Automatically stems inflected verbs (`went` → `go`), irregular plurals (`children` → `child`), comparative adjectives (`better` → `good`), and multi-word phrasal expressions (`taking care of` → `take care of`).
+3. **Phase 2 Lazy Enrichment:** Secondary providers query in background batches (`concurrency: 2`), backfilling missing phonetic IPA, extra example sentences, and synonyms without slowing down initial display.
+4. **Parallel Neural Translation:** Delivers instant translations via Google Translate or self-hosted LibreTranslate in parallel with dictionary results.
 
-Most dictionary tools answer one question: **“What does this word mean?”**
+---
 
-Dictionary goes further. It helps users understand **what a word means, how it sounds, how it behaves in a sentence, how its tone changes with context, and how phrases and idioms are actually used**—without forcing them to leave the page they are reading.
+### Pillar 2: Pronunciation Engine & Speech Practice Evaluator
+Speaking and listening practice built directly into every lookup:
+- **Studio-Quality Audio:** Plays authentic human dictionary audio (US and UK accents) with visual 3-bar equalizer animation.
+- **Web Speech Synthesis Fallback:** Seamlessly falls back to local operating system voices when remote MP3s are unavailable.
+- **Customizable Speed:** Adjust playback rate from `0.5x` (slow study) to `1.5x` (natural speed).
+- **Interactive Speech Evaluator:** Click **Practice** (`🎙️ Practice`), speak the word into your microphone, and receive real-time Levenshtein distance grading badges:
+  - `90%–100%`: **Excellent** (Emerald badge)
+  - `70%–89%`: **Good** (Teal badge)
+  - `50%–69%`: **Almost there** (Amber badge)
+  - `<50%`: **Try again** (Rose badge)
 
-It combines fast dictionary lookup, translation, pronunciation, and configurable AI explanations in one focused workflow.
+---
 
-## Why Users Choose It
+### Pillar 3: Structured Lexical Profile
+Transform passive lookups into comprehensive vocabulary mastery:
+- **Interactive Word Family Chips:** Nouns, verbs, adjectives, adverbs, and derivatives appear as clickable chips (`[evaluation]`, `[evaluative]`). Clicking any chip triggers an instant re-lookup.
+- **Word Formation:** Surfaces root prefixes, suffixes, and morphological explanations.
+- **Usage & Register Warnings:** Highlights formality notes (`[formal]`, `[slang]`, `[archaic]`, `[offensive]`) in high-contrast warning callouts.
+- **Confusable Word Pairs:** Clarifies easily confused terms (e.g. *affect* vs. *effect*, *principal* vs. *principle*).
+- **Common Learner Mistakes:** Alerts learners to typical prepositional errors and false friends.
+- **Categorized Collocations:** Groups natural pairings into verbs, nouns, prepositions, adjectives, and natural sentence patterns.
 
-### Understand language without breaking your reading flow
+---
 
-Look up a word directly where it appears:
+### Pillar 4: Sentence-Aware Contextual AI Intelligence
+Meaning depends entirely on context. Dictionary's AI tab provides 5 dedicated capabilities:
 
-- Select text on a webpage.
-- Double-click a word.
-- Use the post-selection trigger key after highlighting text.
-- Use the right-click context menu.
+| AI Action | Learner Value | Specialized Output |
+|---|---|---|
+| **Main AI** | Deep vocabulary comprehension | Oxford Learner-style definitions, sense-specific translations, register notes, bilingual examples, and collapsible etymology. |
+| **Context Explain** | Pinpoint in-sentence meaning | Slices the exact surrounding sentence at your cursor and explains how the word behaves in that specific context. |
+| **Grammar & Nuance** | Structural and stylistic clarity | Analyzes clause roles, syntactic dependencies, formality level, and tone. |
+| **Phrase & Collocations** | Natural idiomatic fluency | Deconstructs phrasal verbs, idioms, and preposition patterns with usage guidelines. |
+| **Sentence Breakdown** | Deep structural sentence parsing | Pure JSON decomposition of clauses, grammatical functions, and phrase chips that can be clicked for sub-lookups. |
 
-The in-page popup keeps the explanation close to the original sentence.
-### Start simple, go deeper only when needed
+---
 
-The product is organized around two clear modes:
+## Competitive Breakdown
 
-- **Dictionary mode** provides fast translation and structured dictionary information.
-- **AI mode** provides deeper explanations, contextual meaning, grammar analysis, and nuance.
+| Feature / Capability | Basic Dictionary Plugins | Generic AI Chat Tabs | **Dictionary (This Extension)** |
+|---|:---:|:---:|:---:|
+| **Zero-Tab In-Page Reading** | ✅ | ❌ (requires new tab) | ✅ **Full In-Page & Toolbar** |
+| **Multi-Provider Fallback** | ❌ (single source) | ❌ | ✅ **5 Providers + Lazy Enrichment** |
+| **Smart English Lemmatization** | ❌ | ⚠️ (slow prompt) | ✅ **Instant Root & Phrasal Fallback** |
+| **Parallel Neural Translation** | ⚠️ (extra click) | ⚠️ (manual prompt) | ✅ **Simultaneous Sub-Second Translation** |
+| **Authentic Audio + Speech Fallback** | ⚠️ (audio only) | ❌ | ✅ **Dual Audio + Custom Speed** |
+| **Microphone Speech Practice** | ❌ | ❌ | ✅ **Levenshtein Accuracy Scoring** |
+| **Exact Selection-Range Context** | ❌ | ❌ (manual copy-paste) | ✅ **Exact DOM Range Offset Slicing** |
+| **Interactive Word Family Chips** | ❌ | ❌ | ✅ **Clickable Instant Sub-Lookups** |
+| **Structured Sentence Breakdown** | ❌ | ⚠️ (unstructured text) | ✅ **Interactive JSON Clause Decomposition** |
+| **BYO AI Endpoint & Custom Prompts** | ❌ (locked proprietary) | ⚠️ (paid subscription) | ✅ **Gemini Native + OpenAI-Compatible** |
+| **Zero-Leak Secret Storage** | ⚠️ | ⚠️ | ✅ **Local Storage Isolation (No Sync Leak)** |
+| **No Build Step / Zero Runtime Deps** | ❌ | ❌ | ✅ **100% Plain JS/HTML/CSS (MV3)** |
 
-Users can get a quick answer in seconds, then switch to a deeper learning workflow when a word is confusing, technical, idiomatic, or used in an unfamiliar way.
+---
 
-## Complete Feature Set
+## Privacy, Control, and Security by Design
 
-### Rich multi-source dictionary lookup
+Dictionary is engineered with a strict local-first privacy boundary:
 
-Dictionary results are organized for learning rather than just displaying a raw API response. The extension orchestrates multiple dictionary providers intelligently:
+1. **Isolated Secret Vault:** API keys (Gemini, OpenAI, Merriam-Webster, Wordnik, WordsAPI, LibreTranslate) are stored strictly inside `chrome.storage.local`. They are never synced to Google accounts and never exposed to webpage content scripts.
+2. **Explicit Context Transmission:** Surrounding webpage sentences are extracted only as a transient local suggestion. Context is never transmitted to remote AI servers during standard lookups—only when you explicitly click a contextual action button.
+3. **No Telemetry or Tracking:** Zero analytics tracking, zero telemetry beacons, and zero third-party tracking scripts.
+4. **Transient Cache:** Lookup enrichment caching is strictly bounded (TTL: 10 minutes, max 20 entries) in session memory and cleared upon browser restart.
+5. **No Audio Blobs Cached:** Audio streams play dynamically without leaving persistent cached recordings on your disk.
 
-1. **Primary provider** — your configured default (Free Dictionary API, Wiktionary, Merriam-Webster, Wordnik, or WordsAPI) is queried first. If it has no data, fallback providers are tried automatically.
-2. **Initial result** — the first successful provider's result plus translation is returned immediately.
-3. **Background enrichment** — after the initial result renders, secondary dictionary providers are queried lazily and their results are merged in.
+---
 
-Every provider that successfully returns data contributes to the result's source metadata. Results can include:
+## Value Across Learning & Professional Roles
 
-- Definitions grouped by part of speech.
-- Example sentences.
-- Synonyms and antonyms.
-- Pronunciation information.
-- Multiple pronunciation variants when available.
-- IPA phonetic transcription, backfilled across providers when the primary source lacks it.
-- Original text and translation when only translation succeeds.
+### For English Learners (ESL / EFL)
+Master subtle word choices, overcome preposition confusion, hear authentic pronunciation variants, score your spoken pronunciation, and explore root word families.
 
-The extension handles partial provider failures gracefully. If translation succeeds while dictionary data fails—or the reverse—the successful result can still be shown. Enrichment failures (missing API keys, network errors, empty results) are silently skipped and never break the initial result.
+### For Students and Academic Researchers
+Read dense scholarly papers, complex literature, and foreign research without losing your place. Use Sentence Breakdown to parse intricate nested clauses.
 
-### Translation built into the same lookup
+### For Bilingual Professionals & Developers
+Clarify technical terminology, verify formal business register, review idiomatic expressions, and draft precise international communications.
 
-Users can configure a target language and receive translation alongside dictionary information. Translation is treated as a first-class part of the lookup rather than requiring a second extension or website.
+### For Educators and Tutors
+Demonstrate pronunciation, morphological word formation, grammatical register, and sentence parsing using a single clean, distraction-free reading studio.
 
-The provider layer is separated from the UI, allowing the extension to normalize translation results and report unsupported provider settings clearly.
-
-### Natural pronunciation practice
-
-Pronunciation is built into the result instead of being an afterthought:
-
-1. The extension prefers available dictionary audio.
-2. If audio is missing or cannot play, it falls back to browser speech synthesis.
-3. Users can configure speech speed.
-4. Users can select a preferred browser speech voice for fallback playback.
-5. Playback buttons show an active state and cleanly reset when playback ends.
-
-This makes the extension useful not only for reading comprehension, but also for speaking and listening practice.
-
-### Context Explain
-
-Meaning often depends on the sentence. **Context Explain** is designed for that exact problem.
-
-The workflow separates:
-
-- **Query:** the word or phrase the user wants to understand.
-- **Context:** the surrounding sentence or paragraph that gives the query its meaning.
-
-For a selected word, the extension can automatically prefill the Context field with the sentence containing that word. The extraction is sentence-level and bounded so it avoids sending an unnecessarily large page passage.
-
-For a manually typed query, users can paste their own sentence—even when the word does not appear anywhere on the current webpage.
-
-The Context field is editable. Users remain in control of the final text sent to AI. Context is not submitted during an ordinary lookup; it is sent only after the user activates a contextual AI action.
-
-After the response arrives, the result shows **Context used**, allowing users to verify the exact sentence or phrase that informed the explanation.
-
-### Grammar & Nuance
-
-Grammar Nuance turns a vocabulary lookup into a language lesson. It can analyze:
-
-- Grammatical role and sentence structure.
-- Meaning and function in the sentence.
-- Tone, formality, and register.
-- Common learner mistakes.
-- More natural alternatives when useful.
-- Short examples.
-- Translation into the configured target language.
-- Optional user-provided context.
-
-This is especially valuable for words that look simple but carry different meanings, levels of formality, or grammatical behavior depending on how they are used.
-
-### Provider attribution and transparency
-
-Source attribution is part of the result contract: contributing providers are tracked in the normalized `sourceBadges` metadata and surfaced in section metadata. The title row stays focused on the queried word and pronunciation.
-
-### Phrase and idiom fallback
-
-Multi-word expressions frequently do not receive useful structured dictionary data. The extension detects phrase-like queries and can request an AI phrase explanation when structured definitions are unavailable and AI is enabled.
-
-The fallback can explain:
-
-- Literal meaning.
-- Idiomatic meaning.
-- Translation.
-- Usage and register.
-- A natural example sentence.
-- Related expressions.
-
-Instead of leaving the user with “no definition found,” the extension provides a useful next step.
-
-### Configurable AI, not a locked-in black box
-
-Advanced users can configure:
-
-- AI provider base URL.
-- AI API key.
-- AI model name.
-- Main explanation prompt.
-- Context explanation prompt.
-- Grammar Nuance prompt.
-- Optional AI preloading.
-
-The AI provider supports the configured Google Gemini-compatible path and OpenAI-compatible chat endpoints. Prompt templates support the implemented variables for query text, word count, target language, and context.
-
-AI is optional. The Dictionary and Translation workflows remain independently configurable.
-
-### A polished reading experience
-
-The extension is designed to feel like a learning tool, not a developer panel:
-
-- System, light, and dark themes.
-- Editorial typography focused on readable definitions and explanations.
-- Resizable in-page popup with persisted dimensions.
-- Loading skeletons instead of confusing blank states.
-- Clear empty and provider-error messages.
-- Reduced-motion behavior for users who prefer less animation.
-- Keyboard-friendly controls and accessible labels.
-- Rich result rendering in the webpage popup.
-- Lightweight Markdown rendering for AI headings, lists, bold, italics, code, quotes, and separators.
-
-## Two Ways to Use the Product
-
-### 1. Learn from a webpage
-
-1. Select or double-click a word.
-2. Open the in-page popup.
-3. Review translation, dictionary definitions, and pronunciation.
-4. Switch to AI for a deeper explanation.
-5. Review or edit the automatically detected sentence context.
-6. Use **Context Explain** or **Grammar & Nuance**.
-
-This is ideal for reading articles, documentation, books, research papers, and online courses.
-
-### 2. Search vocabulary manually
-
-1. Click the extension icon.
-2. Type a word, phrase, or idiom.
-3. Use Dictionary mode for a fast structured lookup.
-4. Switch to AI mode for deeper explanation.
-5. Paste a sentence into Context when the query came from another source.
-6. Ask for a contextual explanation without needing the word to exist on the current webpage.
-
-This makes the product useful as a standalone vocabulary tool, not only as a page-selection helper.
-
-## Why It Can Outperform Narrower Tools
-
-The strongest competitive advantage is not one isolated feature. It is the complete workflow.
-
-### Compared with basic dictionary extensions
-
-Basic dictionary tools are excellent for quick definitions, but often stop there. Dictionary adds:
-
-- Translation in the same result.
-- Pronunciation fallback when audio is unavailable.
-- AI explanations for difficult vocabulary.
-- Grammar and nuance analysis.
-- Context-aware meaning.
-- Phrase and idiom recovery when structured dictionary data is incomplete.
-
-### Compared with selection-only lookup tools
-
-Selection-only tools are convenient when the word is visible on the page.
-### Compared with generic AI chat tools
-
-Generic chat tools are powerful but require users to design the workflow themselves. This extension gives language learners a purpose-built interface:
-
-- Query and context are separate fields.
-- Context is optional until a contextual action is selected.
-- Grammar Nuance has its own dedicated intent.
-- Phrase fallback is automatic for unsupported multi-word dictionary queries.
-- The exact Context used is shown in the result.
-- Results are presented inside the reading workflow.
-
-### Compared with tools that hide configuration
-
-Many focused extensions provide one fixed provider or one fixed explanation style. This product allows users to configure their AI endpoint, model, and prompt templates while keeping the default experience simple for non-technical users.
-
-## Value for Different Users
-
-### Language learners
-
-Understand more than a translation. Learn pronunciation, grammatical function, tone, examples, and real contextual meaning in one place.
-
-### Students and researchers
-
-Read technical or academic material faster without repeatedly opening new tabs or losing the original sentence.
-
-### Professionals
-
-Clarify unfamiliar terminology, formal wording, idioms, and nuanced expressions while working inside documentation, reports, or business content.
-
-### Teachers and tutors
-
-Use the same word to demonstrate definition, translation, pronunciation, grammar, register, and contextual usage.
-
-### Teams and education programs
-
-Use configurable AI endpoints and prompts to adapt the explanation style to a team, course, or learning program. Organizations should review their own provider, privacy, and deployment requirements before adoption.
-
-## Privacy and Control
-
-The product is designed around explicit user action:
-
-- Automatic page context is only a convenience prefill.
-- Context is not sent during normal Dictionary or normal AI lookup.
-- Context is submitted only when the user activates a contextual action.
-- AI API keys are stored in local browser storage rather than synchronized settings.
-- Context remains temporary for the active popup session rather than becoming a permanent history database.
-- Lookup caching is short-lived and bounded.
-- Audio blobs and audio metadata are not cached.
-
-Users can disable AI, translation, dictionary lookup, triggers, and other features independently through Settings.
-
-## Transparent Requirements
-
-- Chrome or a compatible Manifest V3 environment.
-- Network access for remote dictionary, translation, or AI providers.
-- An AI API key and configured endpoint/model for AI features.
-- Provider response quality depends on the selected dictionary, translation, and AI services.
-- AI provider usage may incur charges from the user’s chosen provider.
+---
 
 ## The Product Promise
 
-Dictionary is built for people who want more than a quick definition, but less friction than a collection of disconnected tools.
+Dictionary bridges the gap between quick definitions and deep language comprehension:
 
-**Look up the word. Hear it. Translate it. Understand it in context. Learn its grammar and nuance. Keep reading.**
+> **Look up the word. Hear it. Translate it. Practice speaking it. Understand its context. Learn its grammar and nuance. Keep reading.**
 
-If your current dictionary extension only returns a definition—or your AI tool makes you leave the page and rebuild the prompt every time—this product offers a faster, richer, and more controlled language-learning workflow.
-
-## Call to Action
-
-Install Dictionary, configure your language and optional AI settings, then test it on a real article or document:
-
-1. Look up one unfamiliar word.
-2. Try pronunciation.
-3. Switch to AI.
-4. Edit the context sentence.
-5. Run Grammar Nuance or Context Explain.
-6. Try a multi-word phrase or idiom.
-
-The fastest way to see the difference is to use the complete workflow on the next word you do not understand.
+Install Dictionary today, connect your preferred dictionary and AI services, and experience a smarter, frictionless way to master the English language.
