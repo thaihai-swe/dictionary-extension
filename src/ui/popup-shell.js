@@ -51,6 +51,7 @@
                         <button id="explain-phrase-explorer-btn" type="button" class="${prefix}-context-btn" data-ai-intent="phrase_explorer" title="Explore idioms, phrasal verbs, and collocations"><span class="${prefix}-context-btn-label">Phrase &amp; Collocations</span></button>
                         <button id="explain-sentence-btn" type="button" class="${prefix}-context-btn" data-ai-intent="sentence_breakdown" title="Break down sentence structure and parse components"><span class="${prefix}-context-btn-label">Sentence Breakdown</span></button>
                         <button id="explain-compare-btn" type="button" class="${prefix}-context-btn" data-ai-intent="compare_confusables" title="Compare similar or confusable words"><span class="${prefix}-context-btn-label">Compare Confusables</span></button>
+                        <button id="explain-rephrase-btn" type="button" class="${prefix}-context-btn" data-ai-intent="rephrase" title="Rephrase in simpler, formal, and idiomatic styles"><span class="${prefix}-context-btn-label">Rephrase</span></button>
                     </div>
                 </div>
             `

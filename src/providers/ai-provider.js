@@ -92,9 +92,7 @@ export async function lookupAiProvider(text, settings, options = {}) {
     const intent = AI_INTENTS.includes(options.intent)
         ? options.intent
         : "default";
-    const prompt = buildPrompt(text, settings, context, intent, {
-        rephraseMode: options.rephraseMode
-    });
+    const prompt = buildPrompt(text, settings, context, intent);
 
     const providerResult = isGeminiBaseUrl(settings.aiBaseUrl)
         ? await requestGeminiViaHelper(prompt, settings, options.signal)
@@ -367,8 +365,7 @@ function buildPrompt(text, settings, context, intent, extras = {}) {
         context: context || "",
         word_count: countWords(text),
         targetLang: settings.translateTargetLanguage || "en",
-        enableLexicalProfile: shouldRequestLexicalProfile(intent, settings.enableLexicalProfile),
-        rephraseMode: extras.rephraseMode || ""
+        enableLexicalProfile: shouldRequestLexicalProfile(intent, settings.enableLexicalProfile)
     };
 
     const finalize = (template) => appendInputContract(applyTemplate(template, variables), variables);

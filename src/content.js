@@ -492,13 +492,6 @@ if (window.__dictionaryHelperContentInitialized) {
         popupRoot.querySelector(".dictionary-helper-body").addEventListener("click", (event) => {
             audio.handlePronunciationClick(event);
 
-            const rephraseBtn = event.target.closest("[data-rephrase-mode]");
-            if (rephraseBtn) {
-                event.preventDefault();
-                void runRephraseAction(rephraseBtn.dataset.rephraseMode || "simplify");
-                return;
-            }
-
             const phraseBtn = event.target.closest("[data-lookup-query]");
             if (phraseBtn) {
                 const query = String(phraseBtn.dataset.lookupQuery || "").trim();
@@ -699,6 +692,7 @@ if (window.__dictionaryHelperContentInitialized) {
                 <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-phrase-explorer" data-ai-intent="phrase_explorer" type="button" title="Explore idioms, phrasal verbs, and collocations"><span class="dictionary-helper-context-btn-label">Phrase &amp; Collocations</span></button>
                 <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-sentence" data-ai-intent="sentence_breakdown" type="button" title="Break down sentence structure and parse components"><span class="dictionary-helper-context-btn-label">Sentence Breakdown</span></button>
                 <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-compare" data-ai-intent="compare_confusables" type="button" title="Compare similar or confusable words"><span class="dictionary-helper-context-btn-label">Compare Confusables</span></button>
+                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-rephrase" data-ai-intent="rephrase" type="button" title="Rephrase in simpler, formal, and idiomatic styles"><span class="dictionary-helper-context-btn-label">Rephrase</span></button>
             </div>
            </div>`
             : "";
@@ -726,7 +720,8 @@ if (window.__dictionaryHelperContentInitialized) {
             popupRoot.querySelector("#dictionary-helper-explain-grammar"),
             popupRoot.querySelector("#dictionary-helper-explain-phrase-explorer"),
             popupRoot.querySelector("#dictionary-helper-explain-sentence"),
-            popupRoot.querySelector("#dictionary-helper-explain-compare")
+            popupRoot.querySelector("#dictionary-helper-explain-compare"),
+            popupRoot.querySelector("#dictionary-helper-explain-rephrase")
         ].filter(Boolean);
 
         const setContextButtonsDisabled = (disabled) => {
@@ -841,6 +836,13 @@ if (window.__dictionaryHelperContentInitialized) {
             runInPageContextAction({
                 intent: "compare_confusables",
                 errorMessage: "Unable to compare these words."
+            });
+        });
+
+        popupRoot.querySelector("#dictionary-helper-explain-rephrase")?.addEventListener("click", () => {
+            runInPageContextAction({
+                intent: "rephrase",
+                errorMessage: "Unable to rephrase this text."
             });
         });
 
@@ -1080,47 +1082,6 @@ if (window.__dictionaryHelperContentInitialized) {
 
             if (token === requestToken && activeTab === "ai") {
                 patchActiveFollowUps();
-            }
-        }
-    }
-
-    async function runRephraseAction(mode) {
-        const query = activeText.trim();
-        if (!query || !settings?.enableAI) {
-            return;
-        }
-        const body = popupRoot?.querySelector(".dictionary-helper-body");
-        requestToken += 1;
-        const token = requestToken;
-        activeAiIntent = "rephrase";
-        syncAiActionButtonStatus();
-        if (body) {
-            body.setAttribute("aria-busy", "true");
-            body.innerHTML = renderer.renderSkeleton("dictionary-helper");
-        }
-        try {
-            const response = await getLookupResponse("ai", query, {
-                context: activeContext,
-                intent: "rephrase",
-                rephraseMode: mode
-            });
-            if (token !== requestToken || !popupRoot) {
-                return;
-            }
-            if (!response?.ok) {
-                throw new Error(response?.error || "Unable to rephrase.");
-            }
-            body.innerHTML = renderer.renderResult(response.result, getRenderOptions({ followUps: [] }));
-            syncAiActionButtonStatus();
-        } catch (error) {
-            if (token !== requestToken || !popupRoot || error?.name === "AbortError") {
-                return;
-            }
-            body.innerHTML = `<div class="dictionary-helper-state is-error"><strong>Unable to rephrase</strong><span>${renderer.escapeHtml(error.message || "Request failed.")}</span></div>`;
-        } finally {
-            if (token === requestToken && popupRoot) {
-                body?.setAttribute("aria-busy", "false");
-                syncAiActionButtonStatus();
             }
         }
     }

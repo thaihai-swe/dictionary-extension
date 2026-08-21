@@ -166,7 +166,7 @@ The AI subsystem (`src/providers/ai-provider.js`) provides generative explanatio
 | `sentence_breakdown` | Sentence Breakdown | `aiSentencePromptTemplate` | Structured JSON (`data` object) | No |
 | `phrase_fallback` | Automatic phrase fallback | Built-in fallback template | Concise Markdown explanation | No |
 | `compare_confusables` | Compare Confusables | `aiComparePromptTemplate` | Distinction, matrix, minimal pairs | No |
-| `rephrase` | Rephrase toolbar | `aiRephrasePromptTemplate` | Three stylistic rewrites | No |
+| `rephrase` | Rephrase action | `aiRephrasePromptTemplate` | Three stylistic rewrites | No |
 
 ### AI Request Pipeline
 

@@ -36,6 +36,7 @@ const explainGrammarButton = document.querySelector("#explain-grammar-btn");
 const explainPhraseExplorerButton = document.querySelector("#explain-phrase-explorer-btn");
 const explainSentenceButton = document.querySelector("#explain-sentence-btn");
 const explainCompareButton = document.querySelector("#explain-compare-btn");
+const explainRephraseButton = document.querySelector("#explain-rephrase-btn");
 const openSettingsButton = document.querySelector("#open-settings-btn");
 const providerSelect = document.querySelector("#provider-select");
 const languageSelect = document.querySelector("#lang-select");
@@ -121,13 +122,6 @@ async function init() {
     resultRoot.addEventListener("click", (event) => {
         audio.handlePronunciationClick(event);
 
-        const rephraseBtn = event.target.closest("[data-rephrase-mode]");
-        if (rephraseBtn) {
-            event.preventDefault();
-            void handleRephrase(rephraseBtn.dataset.rephraseMode || "simplify");
-            return;
-        }
-
         const phraseBtn = event.target.closest("[data-lookup-query]");
         if (phraseBtn) {
             const query = String(phraseBtn.dataset.lookupQuery || "").trim();
@@ -149,6 +143,7 @@ async function init() {
     explainPhraseExplorerButton?.addEventListener("click", handleExplainPhraseExplorer);
     explainSentenceButton?.addEventListener("click", handleSentenceBreakdown);
     explainCompareButton?.addEventListener("click", handleCompareConfusables);
+    explainRephraseButton?.addEventListener("click", handleRephrase);
     contextInput?.addEventListener("input", () => {
         contextText = popupHelpers.normalizeContext(contextInput.value);
         contextSource = contextText ? "manual" : "";
@@ -427,13 +422,12 @@ function handleCompareConfusables() {
     });
 }
 
-function handleRephrase(mode) {
+function handleRephrase() {
     return executeContextAction({
         intent: "rephrase",
         loadingMessage: "Rephrasing...",
-        errorMessage: "Unable to rephrase this text.",
-        resolveContext: (validation) => (validation.ok ? validation.context : contextText)
-    }, { rephraseMode: mode });
+        errorMessage: "Unable to rephrase this text."
+    });
 }
 
 function handleTabClick(event) {
@@ -839,12 +833,16 @@ function updateContextActionVisibility() {
         explainCompareButton.disabled = !shouldShow || !activeQuery.trim();
     }
 
+    if (explainRephraseButton) {
+        explainRephraseButton.disabled = !shouldShow || !activeQuery.trim();
+    }
+
     syncAiActionButtonStatus();
 }
 
 function syncAiActionButtonStatus() {
     popupHelpers.syncAiActionButtonStatus(
-        [explainContextButton, explainGrammarButton, explainPhraseExplorerButton, explainSentenceButton, explainCompareButton].filter(Boolean),
+        [explainContextButton, explainGrammarButton, explainPhraseExplorerButton, explainSentenceButton, explainCompareButton, explainRephraseButton].filter(Boolean),
         activeFollowUps,
         activeAiIntent,
         "toolbar-popup"
@@ -931,7 +929,7 @@ function clearContextError() {
 }
 
 function setContextActionButtonsDisabled(disabled) {
-    [explainContextButton, explainGrammarButton, explainPhraseExplorerButton, explainSentenceButton].forEach((button) => {
+    [explainContextButton, explainGrammarButton, explainPhraseExplorerButton, explainSentenceButton, explainCompareButton, explainRephraseButton].forEach((button) => {
         if (button) {
             button.disabled = disabled;
         }

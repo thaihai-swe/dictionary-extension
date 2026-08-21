@@ -816,32 +816,3 @@
 .dictionary-helper-minimal-b { margin: 0; font-size: 0.8rem; }
 .dictionary-helper-minimal-a { color: var(--color-text-primary); }
 .dictionary-helper-minimal-b { color: var(--color-text-secondary); }
-
-.dictionary-helper-rephrase-bar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px;
-}
-.dictionary-helper-rephrase-label {
-    color: var(--color-text-muted);
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-}
-.dictionary-helper-rephrase-btn {
-    padding: 4px 8px;
-    color: var(--color-text-secondary);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-full);
-    font-size: 0.71rem;
-    font-weight: 600;
-    cursor: pointer;
-}
-.dictionary-helper-rephrase-btn:hover {
-    color: var(--color-primary);
-    border-color: var(--color-primary);
-    background: var(--color-primary-soft);
-}

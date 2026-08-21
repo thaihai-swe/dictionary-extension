@@ -99,31 +99,14 @@
                             explanation: "The first praises recovery. The second describes opposition."
                         }
                     ]
-                }
-            },
-            rephrase: {
-                simplify: {
-                    title: "Simplified rewrite",
-                    intro: "A clearer version that keeps the same meaning.",
-                    points: [
-                        "The team stayed strong under pressure, so they finished on time.",
-                        "They recovered quickly when things got hard and still shipped on schedule."
-                    ]
                 },
-                formal: {
-                    title: "Academic & formal",
-                    intro: "A more formal rewrite suitable for reports or academic writing.",
+                rephrase: {
+                    title: "Alternative phrasing styles",
+                    intro: "Three stylistic rewrites of the context sentence.",
                     points: [
-                        "The team’s capacity to recover under pressure enabled timely delivery.",
-                        "Their ability to remain effective amid demanding conditions allowed the engineering team to meet the deadline."
-                    ]
-                },
-                idiomatic: {
-                    title: "Native & idiomatic",
-                    intro: "A more natural spoken version.",
-                    points: [
-                        "They bounced back under pressure and still shipped on time.",
-                        "The team held it together when things got tight and got the release out."
+                        "Simplified: The team stayed strong under pressure, so they finished on time.",
+                        "Academic & formal: The team’s capacity to recover under pressure enabled timely delivery.",
+                        "Native & idiomatic: They bounced back under pressure and still shipped on time."
                     ]
                 }
             }
@@ -217,31 +200,14 @@
                             explanation: "Both work. The second often sounds less intentional."
                         }
                     ]
-                }
-            },
-            rephrase: {
-                simplify: {
-                    title: "Simplified rewrite",
-                    intro: "A literal version without the idiom.",
-                    points: [
-                        "He finally told the secret about the surprise launch.",
-                        "He revealed the launch plan before it was announced."
-                    ]
                 },
-                formal: {
-                    title: "Academic & formal",
-                    intro: "A register-appropriate rewrite for professional writing.",
+                rephrase: {
+                    title: "Alternative phrasing styles",
+                    intro: "Three stylistic rewrites of the context sentence.",
                     points: [
-                        "He ultimately disclosed the confidential details of the surprise launch.",
-                        "He revealed information about the launch that was intended to remain private."
-                    ]
-                },
-                idiomatic: {
-                    title: "Native & idiomatic",
-                    intro: "Keep the idiom, or use a close spoken alternative.",
-                    points: [
-                        "He finally spilled the beans about the surprise launch.",
-                        "He let the cat out of the bag about the launch."
+                        "Simplified: He finally told the secret about the surprise launch.",
+                        "Academic & formal: He ultimately disclosed the confidential details of the surprise launch.",
+                        "Native & idiomatic: He let the cat out of the bag about the launch."
                     ]
                 }
             }
@@ -341,31 +307,14 @@
                             explanation: "The first is about changing behavior. The second is about choosing a tool."
                         }
                     ]
-                }
-            },
-            rephrase: {
-                simplify: {
-                    title: "Simplified rewrite",
-                    intro: "A shorter version for a general reader.",
-                    points: [
-                        "The algorithm changes when many people use it.",
-                        "The system adjusts itself when traffic is high."
-                    ]
                 },
-                formal: {
-                    title: "Academic & formal",
-                    intro: "A more precise technical rewrite.",
+                rephrase: {
+                    title: "Alternative phrasing styles",
+                    intro: "Three stylistic rewrites of the context sentence.",
                     points: [
-                        "The algorithm modifies its behavior in response to elevated traffic volume.",
-                        "The system adjusts dynamically as demand increases."
-                    ]
-                },
-                idiomatic: {
-                    title: "Native & idiomatic",
-                    intro: "How an engineer might say it in conversation.",
-                    points: [
-                        "The algorithm scales up when traffic spikes.",
-                        "It flexes with load instead of staying fixed."
+                        "Simplified: The algorithm changes when many people use it.",
+                        "Academic & formal: The algorithm modifies its behavior in response to elevated traffic volume.",
+                        "Native & idiomatic: The algorithm scales up when traffic spikes."
                     ]
                 }
             }
@@ -468,31 +417,14 @@
                             explanation: "The verb names the influence; the noun names what followed."
                         }
                     ]
-                }
-            },
-            rephrase: {
-                simplify: {
-                    title: "Simplified rewrite",
-                    intro: "Keep both words, but make the contrast obvious.",
-                    points: [
-                        "The policy will change housing costs, but we still do not know the later result.",
-                        "The rule will influence prices. The final result is not clear yet."
-                    ]
                 },
-                formal: {
-                    title: "Academic & formal",
-                    intro: "A more precise policy-writing version.",
+                rephrase: {
+                    title: "Alternative phrasing styles",
+                    intro: "Three stylistic rewrites of the context sentence.",
                     points: [
-                        "The policy is expected to affect housing costs, although the long-term effect remains uncertain.",
-                        "The measure will influence prices; the resulting effect over time has not yet been established."
-                    ]
-                },
-                idiomatic: {
-                    title: "Native & idiomatic",
-                    intro: "How a native speaker might say it in conversation.",
-                    points: [
-                        "The policy will hit housing costs, but we still don’t know what that means later.",
-                        "It will change prices — we just don’t know the knock-on effect yet."
+                        "Simplified: The policy will change housing costs, but we still do not know the later result.",
+                        "Academic & formal: The policy is expected to affect housing costs, although the long-term effect remains uncertain.",
+                        "Native & idiomatic: The policy will hit housing costs, but we still don’t know the knock-on effect yet."
                     ]
                 }
             }
@@ -503,7 +435,6 @@
         query: "resilience",
         tab: "dictionary",
         intent: "explain_in_context",
-        rephraseMode: "",
         practiceLabel: ""
     };
 
@@ -573,23 +504,6 @@
                 ${pair.explanation ? `<small>${escapeHtml(pair.explanation)}</small>` : ""}
             </article>
         `).join("")}</div>`;
-    }
-
-    function renderRephraseBar() {
-        const modes = [
-            ["simplify", "Simplify"],
-            ["formal", "Make Formal"],
-            ["idiomatic", "Native Idiom"]
-        ];
-        const buttons = modes.map(([mode, label]) => `
-            <button type="button" class="demo-rephrase-btn${state.rephraseMode === mode ? " is-active" : ""}" data-rephrase-mode="${mode}">${label}</button>
-        `).join("");
-        return `
-            <div class="demo-rephrase-bar">
-                <span class="demo-rephrase-label">Rephrase</span>
-                ${buttons}
-            </div>
-        `;
     }
 
     function tokenizeContext(context, query) {
@@ -770,16 +684,13 @@
     }
 
     function renderAi(entry) {
-        const rephraseContent = state.rephraseMode ? entry.rephrase?.[state.rephraseMode] : null;
-        const content = rephraseContent || entry.ai[state.intent] || entry.ai.explain_in_context;
+        const content = entry.ai[state.intent] || entry.ai.explain_in_context;
         const context = $("#demo-context-input")?.value.trim() || entry.context;
         const result = entry.dictionary;
-        const showSenses = Boolean(entry.senses) && (state.intent === "explain_in_context" || Boolean(rephraseContent));
-        const showRephrase = Boolean(entry.rephrase);
+        const showSenses = Boolean(entry.senses) && state.intent === "explain_in_context";
 
         return `
             <p class="demo-ai-kicker">Word explanation</p>
-            ${showRephrase ? renderRephraseBar() : ""}
             ${renderWordFamily(result.wordFamily)}
             ${renderUsageNotes(result)}
             <section class="demo-reference-entry">
@@ -843,14 +754,6 @@
             });
         });
 
-        $$("#demo-tab-panel [data-rephrase-mode]").forEach((button) => {
-            button.addEventListener("click", () => {
-                const mode = button.dataset.rephraseMode || "";
-                state.rephraseMode = state.rephraseMode === mode ? "" : mode;
-                renderDemo();
-            });
-        });
-
         $$("#demo-tab-panel [data-demo-lookup]").forEach((button) => {
             button.addEventListener("click", () => {
                 const lookup = button.dataset.demoLookup;
@@ -887,7 +790,6 @@
 
     function setIntent(intent) {
         state.intent = intent;
-        state.rephraseMode = "";
         $$(".context-action-btn").forEach((button) => {
             const isActive = button.dataset.intent === intent;
             button.classList.toggle("active", isActive);
@@ -906,7 +808,6 @@
         if (!entry) return;
         state.query = query;
         state.practiceLabel = "";
-        state.rephraseMode = "";
         $("#demo-search-input").value = entry.query;
         $("#demo-context-input").value = entry.context;
         $$(".preset-btn").forEach((button) => {

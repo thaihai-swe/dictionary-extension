@@ -662,29 +662,6 @@ a:hover { color: var(--blue-strong); }
 .demo-progress-dot.is-loading { background: #b45309; }
 .demo-progress-dot.is-ready { background: #087f6e; }
 .demo-progress-dot.is-error { background: #991b1b; }
-.demo-rephrase-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 12px; }
-.demo-rephrase-label {
-    color: #687985;
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-}
-.demo-rephrase-btn {
-    padding: 4px 8px;
-    color: #405363;
-    background: #fff;
-    border: 1px solid #d4ccb8;
-    border-radius: 999px;
-    font-size: 0.71rem;
-    font-weight: 600;
-}
-.demo-rephrase-btn:hover,
-.demo-rephrase-btn.is-active {
-    color: var(--blue-strong);
-    border-color: var(--blue-strong);
-    background: rgba(63, 55, 143, 0.08);
-}
 .demo-sense-matrix { display: grid; gap: 8px; margin-top: 8px; }
 .demo-sense-card {
     padding: 8px 10px;

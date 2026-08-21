@@ -1218,35 +1218,6 @@ body::-webkit-scrollbar {
 .toolbar-popup-progress-dot.is-ready { background: var(--color-success); }
 .toolbar-popup-progress-dot.is-error { background: var(--color-danger); }
 
-.toolbar-popup-rephrase-bar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px;
-}
-.toolbar-popup-rephrase-label {
-    color: var(--color-ink-muted);
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-}
-.toolbar-popup-rephrase-btn {
-    padding: 4px 8px;
-    color: var(--color-ink-2);
-    background: var(--color-paper-3);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-pill);
-    font-size: 0.71rem;
-    font-weight: 600;
-    cursor: pointer;
-}
-.toolbar-popup-rephrase-btn:hover {
-    color: var(--color-primary);
-    border-color: var(--color-primary);
-    background: var(--color-primary-soft);
-}
-
 @media (prefers-reduced-motion: reduce) {
     .toolbar-popup *,
     .toolbar-popup *::before,

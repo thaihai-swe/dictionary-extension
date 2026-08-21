@@ -222,13 +222,15 @@
             requiresContext: false,
             requiresSentence: false,
             requiresComparison: true
+        },
+        {
+            intent: "rephrase",
+            title: "Rephrase",
+            loadingMessage: "Rephrasing...",
+            errorMessage: "Unable to rephrase.",
+            requiresContext: false,
+            requiresSentence: false
         }
-    ]);
-
-    const REPHRASE_MODES = Object.freeze([
-        { mode: "simplify", label: "Simplify" },
-        { mode: "formal", label: "Make Formal" },
-        { mode: "idiomatic", label: "Native Idiom" }
     ]);
 
     function isSentenceLikeQuery(value) {
@@ -353,7 +355,6 @@
         LAST_TAB_SESSION_KEY,
         OUTPUT_AFFECTING_SETTING_KEYS,
         FOLLOW_UP_INTENTS,
-        REPHRASE_MODES,
         classifyQuery,
         normalizeContext,
         escapeRegExp,

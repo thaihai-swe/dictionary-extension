@@ -250,19 +250,6 @@
             }).join("")}</div>`;
         },
 
-        renderRephraseBar(prefix, options = {}) {
-            if (options.showRephrase === false) {
-                return "";
-            }
-            return `
-              <div class="${prefix}-rephrase-bar">
-                <span class="${prefix}-rephrase-label">Rephrase</span>
-                <button type="button" class="${prefix}-rephrase-btn" data-rephrase-mode="simplify">Simplify</button>
-                <button type="button" class="${prefix}-rephrase-btn" data-rephrase-mode="formal">Make Formal</button>
-                <button type="button" class="${prefix}-rephrase-btn" data-rephrase-mode="idiomatic">Native Idiom</button>
-              </div>`;
-        },
-
         renderSimpleMarkdown(source, prefix = "dictionary-helper", options = {}) {
             const lines = String(source || "").split("\n");
             const listenOnQuotes = options.listenOnQuotes === true;
@@ -837,11 +824,8 @@
                 ? `<div class="${prefix}-title-row"><div class="${prefix}-title-cell"><${titleTag} class="${prefix}-term">${Renderer.escapeHtml(result.title)}</${titleTag}><div class="${prefix}-pronunciation-group">${pronunciation}${pronunciationVariants}${speechPractice}</div></div>${meta}</div>`
                 : "";
             const emptyState = `<${stateEl} class="${prefix}-state"><strong>No result</strong><span>Try another word or switch sources.</span></${stateEl}>`;
-            const rephraseBarHtml = isAiResult && (aiIntent === "default" || aiIntent === "explain_in_context" || aiIntent === "rephrase")
-                ? Renderer.renderRephraseBar(prefix, options)
-                : "";
             const resultBody = isAiResult
-                ? `${rephraseBarHtml}${sections || emptyState}${lexicalProfileHtml}`
+                ? `${sections || emptyState}${lexicalProfileHtml}`
                 : `${lexicalProfileHtml}${sections || emptyState}`;
 
             return `

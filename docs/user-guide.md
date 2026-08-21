@@ -174,7 +174,7 @@ Switch to the **AI** tab for deep generative explanations powered by Google Gemi
 | **Phrase & Collocations** | `phrase_explorer` | Deconstructs idioms, phrasal verbs, prepositional dependencies, and collocation patterns with natural example sentences. | Optional |
 | **Sentence Breakdown** | `sentence_breakdown` | Structural JSON analysis decomposing clauses, grammatical roles, and phrase idioms with one-click interactive lookup chips. | Full sentence query or context sentence |
 | **Compare Confusables** | `compare_confusables` | Side-by-side distinction, comparison matrix, collocation divergence, and minimal-pair sentences. Shown as a follow-up when the query looks like `affect vs effect`. | Optional |
-| **Rephrase** | `rephrase` | Three rewrite styles from the AI result toolbar: Simplify, Make Formal, and Native Idiom. | Optional |
+| **Rephrase** | `rephrase` | Three stylistic rewrite styles (Simplified, Academic & Formal, Native Idiom) with explanations in your target language. | Optional |
 
 ### Result Actions
 

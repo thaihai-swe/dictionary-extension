@@ -32,7 +32,6 @@
             text: String(text || "").trim().toLowerCase(),
             intent: requestOptions.intent || "default",
             context: String(requestOptions.context || "").trim().toLowerCase(),
-            rephraseMode: String(requestOptions.rephraseMode || "").trim().toLowerCase(),
             translateTargetLanguage: settings.translateTargetLanguage || "",
             translateProvider: settings.translateProvider || "",
             libreTranslateBaseUrl: settings.libreTranslateBaseUrl || "",
