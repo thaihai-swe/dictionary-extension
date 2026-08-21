@@ -179,7 +179,7 @@ Switch to the **AI** tab for deep generative explanations powered by Google Gemi
 ### Result Actions
 
 - **Interactive context tokens:** Words in the **Context used** sentence are clickable and open a nested dictionary lookup.
-- **Listen / Regenerate:** Section headers include Listen (example sentences) and ↻ regenerate for a single section.
+- **Listen:** Example-sentence section headers include a Listen control to play the first example.
 - **Preload progress:** When AI preload is enabled, a status indicator dot on each AI action button reflects its background preload state (Active, Ready, Loading, Error).
 
 ---

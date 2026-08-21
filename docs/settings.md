@@ -110,7 +110,6 @@ To guarantee that private credentials can never leak across browser sync channel
 | `aiSentencePromptTemplate` | `string` | `sync` | *(Built-in)* | Prompt template for **Sentence Breakdown** (structured JSON output; requires `{{sentence}}`). |
 | `aiComparePromptTemplate` | `string` | `sync` | *(Built-in)* | Prompt template for **Compare Confusables** (distinction, matrix, minimal pairs). |
 | `aiRephrasePromptTemplate` | `string` | `sync` | *(Built-in)* | Prompt template for **Rephrase** (simplified, formal, idiomatic). |
-| `aiSectionRegenPromptTemplate`| `string`| `sync`| *(Built-in)* | Prompt template for single-section regeneration. |
 
 ---
 
@@ -180,5 +179,5 @@ The extension manages automatic schema migrations via `SETTINGS_SCHEMA_VERSION =
 - **Schema v6:** Aligned built-in Main, Context, and Grammar prompts to lean, non-duplicating intent outlines.
 - **Schema v7:** Added sense-aware target language glosses to Translation & Meaning.
 - **Schema v8:** Enriched bilingual example translations and phrase core meaning target-language equivalents.
-- **Schema v9:** Upgraded Main AI for structured sense matrices with contextual relevance flags, Context Explain for direct substitutions/nuance loss, and Grammar for syntactic slots; added Compare Confusables, Rephrase, and Section Regenerate prompt templates.
+- **Schema v9:** Upgraded Main AI for structured sense matrices with contextual relevance flags, Context Explain for direct substitutions/nuance loss, and Grammar for syntactic slots; added Compare Confusables and Rephrase prompt templates.
 *(Custom prompt modifications are detected and strictly preserved during all schema upgrades).*

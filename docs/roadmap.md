@@ -32,7 +32,6 @@ This document tracks shipped capabilities, near-term product work, and longer-te
 - Structured sense disambiguation matrix with context relevance indicators
 - Context differential analysis (direct substitutions & nuance loss)
 - Syntactic slot parsing with grammatical dependency roles
-- In-place single-section regeneration
 - Live preload progress indicator dots on action buttons and interactive tokenized context chips
 - Dual-mode context extraction: exact DOM Range offset vs ranked page-candidate search
 - Editable Context field with session-only memory and visible **Context used** confirmation

@@ -649,7 +649,6 @@ a:hover { color: var(--blue-strong); }
     font-weight: 600;
 }
 .demo-section-action:hover { color: var(--blue-strong); border-color: var(--blue-strong); background: rgba(63, 55, 143, 0.08); }
-.demo-section-action.is-spinning { color: var(--blue-strong); }
 .demo-progress-dot {
     display: inline-block;
     width: 6px;

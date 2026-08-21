@@ -12,8 +12,7 @@ export const AI_INTENTS = Object.freeze([
     "sentence_breakdown",
     "phrase_explorer",
     "compare_confusables",
-    "rephrase",
-    "section_regen"
+    "rephrase"
 ]);
 
 /** Intents whose Markdown output is supplemented by lexical-profile cards. */
@@ -88,8 +87,7 @@ export const AI_SECTION_OUTLINES = Object.freeze({
         outlineEntry("Simplified Version", "rephrase-simple", ["Simplify", "Simple"]),
         outlineEntry("Academic & Formal", "rephrase-formal", ["Formal", "Academic"]),
         outlineEntry("Native & Idiomatic", "rephrase-idiomatic", ["Idiomatic", "Native"])
-    ]),
-    section_regen: Object.freeze([])
+    ])
 });
 
 const KIND_BY_INTENT_TITLE = (() => {
@@ -254,20 +252,6 @@ export const DEFAULT_AI_REPHRASE_PROMPT_TEMPLATE = [
     "Brief note on the idiomatic flavor."
 ].join("\n");
 
-export const DEFAULT_AI_SECTION_REGEN_PROMPT_TEMPLATE = [
-    "You are regenerating a single educational section for the term \"{{str}}\".",
-    "Section to generate: \"{{sectionTitle}}\" (kind: {{sectionKind}})",
-    "Target language: {{targetLang}}",
-    "Optional context:",
-    "\"\"\"",
-    "{{context}}",
-    "\"\"\"",
-    "",
-    "Generate fresh, accurate, and concise educational content for this specific section only.",
-    "Do not include Markdown headings (no ###). Output only the body content (paragraphs, bullets, or blockquotes).",
-    "Keep it focused on \"{{str}}\" in Oxford Learner's style."
-].join("\n");
-
 export const DEFAULT_AI_SENTENCE_PROMPT_TEMPLATE = [
     "Analyze the supplied sentence for an English language learner.",
     "Selected query: {{str}}",
@@ -345,8 +329,7 @@ export const DEFAULT_AI_PROMPTS = Object.freeze({
     aiSentencePromptTemplate: DEFAULT_AI_SENTENCE_PROMPT_TEMPLATE,
     aiPhraseExplorerPromptTemplate: DEFAULT_AI_PHRASE_EXPLORER_PROMPT_TEMPLATE,
     aiComparePromptTemplate: DEFAULT_AI_COMPARE_PROMPT_TEMPLATE,
-    aiRephrasePromptTemplate: DEFAULT_AI_REPHRASE_PROMPT_TEMPLATE,
-    aiSectionRegenPromptTemplate: DEFAULT_AI_SECTION_REGEN_PROMPT_TEMPLATE
+    aiRephrasePromptTemplate: DEFAULT_AI_REPHRASE_PROMPT_TEMPLATE
 });
 
 /**

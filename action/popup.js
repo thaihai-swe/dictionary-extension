@@ -121,14 +121,6 @@ async function init() {
     resultRoot.addEventListener("click", (event) => {
         audio.handlePronunciationClick(event);
 
-        const regenBtn = event.target.closest("[data-regen-section]");
-        if (regenBtn) {
-            event.preventDefault();
-            event.stopPropagation();
-            void regenerateAiSection(regenBtn);
-            return;
-        }
-
         const rephraseBtn = event.target.closest("[data-rephrase-mode]");
         if (rephraseBtn) {
             event.preventDefault();
@@ -435,50 +427,6 @@ function handleCompareConfusables() {
     });
 }
 
-async function regenerateAiSection(button) {
-    const kind = String(button?.dataset?.regenSection || "").trim();
-    const title = String(button?.dataset?.regenTitle || kind).trim();
-    if (!kind || !activeQuery || !settings?.enableAI) {
-        return;
-    }
-    const sectionEl = button.closest("[data-section-kind]");
-    const bodyEl = sectionEl?.querySelector(".toolbar-popup-section-body") || sectionEl;
-    if (bodyEl) {
-        bodyEl.innerHTML = `<div class="toolbar-popup-state is-loading-shimmer"></div>`;
-    }
-    try {
-        const response = await lookupClient.getLookupResponse({
-            tab: "ai",
-            text: activeQuery,
-            settings,
-            requestOptions: {
-                trigger: "manual",
-                context: contextText,
-                intent: "section_regen",
-                sectionKind: kind,
-                sectionTitle: title
-            },
-            cache: lookupCache
-        });
-        if (!response?.ok || !response.result) {
-            throw new Error(response?.error || "Unable to regenerate section.");
-        }
-        const html = renderer.renderResult(response.result, getRenderOptions({ followUps: [] }));
-        const temp = document.createElement("div");
-        temp.innerHTML = html;
-        const replacement = temp.querySelector(`[data-section-kind="${kind}"]`) || temp.querySelector(".toolbar-popup-result");
-        if (sectionEl && replacement) {
-            sectionEl.replaceWith(replacement);
-        } else if (bodyEl) {
-            bodyEl.innerHTML = replacement?.innerHTML || renderer.escapeHtml(response.result.sections?.[0]?.text || "Updated.");
-        }
-    } catch (error) {
-        if (bodyEl) {
-            bodyEl.innerHTML = `<p class="toolbar-popup-section-paragraph"><small class="toolbar-popup-inline-meta">${renderer.escapeHtml(error.message || "Unable to regenerate section.")}</small></p>`;
-        }
-    }
-}
-
 function handleRephrase(mode) {
     return executeContextAction({
         intent: "rephrase",
@@ -754,7 +702,6 @@ function patchActiveFollowUps() {
     if (activeTab !== "ai" || !resultRoot) {
         return;
     }
-    renderer.patchFollowUpCards(resultRoot, activeFollowUps, getRenderOptions());
     syncAiActionButtonStatus();
 }
 
@@ -896,40 +843,12 @@ function updateContextActionVisibility() {
 }
 
 function syncAiActionButtonStatus() {
-    const buttons = [
-        explainContextButton,
-        explainGrammarButton,
-        explainPhraseExplorerButton,
-        explainSentenceButton,
-        explainCompareButton
-    ].filter(Boolean);
-
-    buttons.forEach((button) => {
-        const intent = button.getAttribute("data-ai-intent") || "";
-        const item = activeFollowUps.find((entry) => entry.intent === intent);
-        const state = popupHelpers.followUpButtonState(item, activeAiIntent);
-        const isActive = activeAiIntent === intent;
-        button.classList.toggle("is-active", isActive);
-        button.setAttribute("aria-pressed", String(isActive));
-
-        const dotState = isActive ? "active" : state;
-        const shouldShowDot = isActive || dotState === "ready" || dotState === "loading" || dotState === "error";
-
-        button.querySelectorAll(".toolbar-popup-context-btn-status, .toolbar-popup-followup-status").forEach((el) => el.remove());
-
-        let dotEl = button.querySelector(".toolbar-popup-progress-dot");
-        if (shouldShowDot) {
-            if (!dotEl) {
-                dotEl = document.createElement("span");
-                dotEl.setAttribute("aria-hidden", "true");
-                button.appendChild(dotEl);
-            }
-            dotEl.className = `toolbar-popup-progress-dot is-${dotState}`;
-            dotEl.textContent = "";
-        } else if (dotEl) {
-            dotEl.remove();
-        }
-    });
+    popupHelpers.syncAiActionButtonStatus(
+        [explainContextButton, explainGrammarButton, explainPhraseExplorerButton, explainSentenceButton, explainCompareButton].filter(Boolean),
+        activeFollowUps,
+        activeAiIntent,
+        "toolbar-popup"
+    );
 }
 
 async function prefillPageContext() {

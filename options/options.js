@@ -20,8 +20,7 @@ const PROMPT_KEYS = [
     "aiSentencePromptTemplate",
     "aiPhraseExplorerPromptTemplate",
     "aiComparePromptTemplate",
-    "aiRephrasePromptTemplate",
-    "aiSectionRegenPromptTemplate"
+    "aiRephrasePromptTemplate"
 ];
 
 hydrate().catch((error) => {
@@ -282,7 +281,6 @@ function collectFormSettings() {
         aiPhraseExplorerPromptTemplate: formData.get("aiPhraseExplorerPromptTemplate"),
         aiComparePromptTemplate: formData.get("aiComparePromptTemplate"),
         aiRephrasePromptTemplate: formData.get("aiRephrasePromptTemplate"),
-        aiSectionRegenPromptTemplate: formData.get("aiSectionRegenPromptTemplate"),
         enableTranslate: form.elements.namedItem("enableTranslate").checked,
         enableDictionary: form.elements.namedItem("enableDictionary").checked,
         enableLexicalProfile: form.elements.namedItem("enableLexicalProfile").checked,

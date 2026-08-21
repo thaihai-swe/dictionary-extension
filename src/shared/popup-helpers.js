@@ -174,7 +174,6 @@
         "aiPhraseExplorerPromptTemplate",
         "aiComparePromptTemplate",
         "aiRephrasePromptTemplate",
-        "aiSectionRegenPromptTemplate",
         "enableLexicalProfile",
         "pronunciationRate",
         "pronunciationVoiceURI"
@@ -286,6 +285,41 @@
         return "pending";
     }
 
+    function syncAiActionButtonStatus(buttons, activeFollowUps, activeIntent, prefix) {
+        if (!buttons || !buttons.forEach) {
+            return;
+        }
+        const statusSelector = `.${prefix}-context-btn-status, .${prefix}-followup-status`;
+        const dotSelector = `.${prefix}-progress-dot`;
+
+        buttons.forEach((button) => {
+            const intent = button.getAttribute("data-ai-intent") || "";
+            const item = activeFollowUps.find((entry) => entry.intent === intent);
+            const state = followUpButtonState(item, activeIntent);
+            const isActive = activeIntent === intent;
+            button.classList.toggle("is-active", isActive);
+            button.setAttribute("aria-pressed", String(isActive));
+
+            const dotState = isActive ? "active" : state;
+            const shouldShowDot = isActive || dotState === "ready" || dotState === "loading" || dotState === "error";
+
+            button.querySelectorAll(statusSelector).forEach((el) => el.remove());
+
+            let dotEl = button.querySelector(dotSelector);
+            if (shouldShowDot) {
+                if (!dotEl) {
+                    dotEl = document.createElement("span");
+                    dotEl.setAttribute("aria-hidden", "true");
+                    button.appendChild(dotEl);
+                }
+                dotEl.className = `${prefix}-progress-dot is-${dotState}`;
+                dotEl.textContent = "";
+            } else if (dotEl) {
+                dotEl.remove();
+            }
+        });
+    }
+
     async function readLastTab() {
         if (!global.chrome?.storage?.session) {
             return "";
@@ -335,6 +369,7 @@
         isComparisonQuery,
         getEligibleFollowUpIntents,
         followUpButtonState,
+        syncAiActionButtonStatus,
         readLastTab,
         writeLastTab
     };

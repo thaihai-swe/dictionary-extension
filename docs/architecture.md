@@ -167,7 +167,6 @@ The AI subsystem (`src/providers/ai-provider.js`) provides generative explanatio
 | `phrase_fallback` | Automatic phrase fallback | Built-in fallback template | Concise Markdown explanation | No |
 | `compare_confusables` | Compare Confusables | `aiComparePromptTemplate` | Distinction, matrix, minimal pairs | No |
 | `rephrase` | Rephrase toolbar | `aiRephrasePromptTemplate` | Three stylistic rewrites | No |
-| `section_regen` | Single-section refresh | `aiSectionRegenPromptTemplate` | Body-only Markdown for one section | No |
 
 ### AI Request Pipeline
 

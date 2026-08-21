@@ -52,20 +52,11 @@
         },
 
         renderSectionActions(section, kind, prefix) {
-            const title = String(section?.title || "").trim();
             const exampleText = kind === "examples" ? Renderer.extractFirstExample(section) : "";
-            const regenKinds = new Set(["examples", "etymology", "usage", "grammar", "definitions", "senses", "nuance", "substitutions"]);
-            const buttons = [];
-            if (exampleText) {
-                buttons.push(`<button type="button" class="${prefix}-section-action ${prefix}-pronounce" data-pronounce-text="${Renderer.escapeHtml(exampleText)}" aria-label="Play example sentence" title="Play example">Listen</button>`);
-            }
-            if (title && regenKinds.has(kind)) {
-                buttons.push(`<button type="button" class="${prefix}-section-action" data-regen-section="${Renderer.escapeHtml(kind)}" data-regen-title="${Renderer.escapeHtml(title)}" aria-label="Regenerate ${Renderer.escapeHtml(title)}" title="Regenerate section">↻</button>`);
-            }
-            if (!buttons.length) {
+            if (!exampleText) {
                 return "";
             }
-            return `<div class="${prefix}-section-actions">${buttons.join("")}</div>`;
+            return `<div class="${prefix}-section-actions"><button type="button" class="${prefix}-section-action ${prefix}-pronounce" data-pronounce-text="${Renderer.escapeHtml(exampleText)}" aria-label="Play example sentence" title="Play example">Listen</button></div>`;
         },
 
         extractFirstExample(section) {
@@ -653,16 +644,6 @@
               </button>
               <span class="${prefix}-speech-eval-result" data-speech-eval-result hidden aria-live="polite"></span>
             `;
-        },
-
-        patchFollowUpCards(root, followUps = [], options = {}) {
-            if (!root) {
-                return;
-            }
-
-            const prefix = options.prefix || "dictionary-helper";
-            root.querySelector(`.${prefix}-followups-container`)?.remove();
-            root.querySelector(`.${prefix}-preload-progress`)?.remove();
         },
 
         renderResult(result, options = {}) {

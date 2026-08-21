@@ -528,13 +528,12 @@
     }
 
     function renderSectionActions(kind) {
-        const listen = kind === "examples"
-            ? `<button type="button" class="demo-section-action" data-demo-listen>Listen</button>`
-            : "";
+        if (kind !== "examples") {
+            return "";
+        }
         return `
             <div class="demo-section-actions">
-                ${listen}
-                <button type="button" class="demo-section-action" data-demo-regen title="Regenerate this section">↻</button>
+                <button type="button" class="demo-section-action" data-demo-listen>Listen</button>
             </div>
         `;
     }
@@ -844,17 +843,6 @@
                 window.setTimeout(() => {
                     button.textContent = "Listen";
                 }, 680);
-            });
-        });
-
-        $$("#demo-tab-panel [data-demo-regen]").forEach((button) => {
-            button.addEventListener("click", () => {
-                button.classList.add("is-spinning");
-                button.setAttribute("aria-label", "Regenerating");
-                window.setTimeout(() => {
-                    button.classList.remove("is-spinning");
-                    button.removeAttribute("aria-label");
-                }, 720);
             });
         });
 

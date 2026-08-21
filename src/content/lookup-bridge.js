@@ -23,8 +23,7 @@
         "phrase_explorer",
         "sentence_breakdown",
         "compare_confusables",
-        "rephrase",
-        "section_regen"
+        "rephrase"
     ]);
 
     function buildRequestCacheKey(tab, text, settings = {}, requestOptions = {}) {
@@ -33,8 +32,6 @@
             text: String(text || "").trim().toLowerCase(),
             intent: requestOptions.intent || "default",
             context: String(requestOptions.context || "").trim().toLowerCase(),
-            sectionKind: String(requestOptions.sectionKind || "").trim().toLowerCase(),
-            sectionTitle: String(requestOptions.sectionTitle || "").trim().toLowerCase(),
             rephraseMode: String(requestOptions.rephraseMode || "").trim().toLowerCase(),
             translateTargetLanguage: settings.translateTargetLanguage || "",
             translateProvider: settings.translateProvider || "",

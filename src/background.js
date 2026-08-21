@@ -234,7 +234,7 @@ if (chrome.contextMenus?.onClicked) {
 async function handleLookup(payload, sender = {}) {
     const settings = await getSettings();
     const requestId = createRequestId();
-    const { source, text, trigger, context, intent, sectionKind, sectionTitle, rephraseMode } = payload || {};
+    const { source, text, trigger, context, intent, rephraseMode } = payload || {};
 
     if (!text || !text.trim()) {
         throw new Error(trigger === "manual" ? MANUAL_LOOKUP_EMPTY_MESSAGE : "No text selected.");
@@ -255,8 +255,6 @@ async function handleLookup(payload, sender = {}) {
         return runAiLookup(text, settings, {
             context,
             intent,
-            sectionKind,
-            sectionTitle,
             rephraseMode
         }, sender, scope, requestId);
     }

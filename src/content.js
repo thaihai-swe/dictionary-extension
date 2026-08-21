@@ -492,14 +492,6 @@ if (window.__dictionaryHelperContentInitialized) {
         popupRoot.querySelector(".dictionary-helper-body").addEventListener("click", (event) => {
             audio.handlePronunciationClick(event);
 
-            const regenBtn = event.target.closest("[data-regen-section]");
-            if (regenBtn) {
-                event.preventDefault();
-                event.stopPropagation();
-                void regenerateAiSection(regenBtn);
-                return;
-            }
-
             const rephraseBtn = event.target.closest("[data-rephrase-mode]");
             if (rephraseBtn) {
                 event.preventDefault();
@@ -859,33 +851,12 @@ if (window.__dictionaryHelperContentInitialized) {
         if (!popupRoot) {
             return;
         }
-
-        popupRoot.querySelectorAll(".dictionary-helper-context-btn[data-ai-intent]").forEach((button) => {
-            const intent = button.getAttribute("data-ai-intent") || "";
-            const item = activeFollowUps.find((entry) => entry.intent === intent);
-            const state = popupHelpers.followUpButtonState(item, activeAiIntent);
-            const isActive = activeAiIntent === intent;
-            button.classList.toggle("is-active", isActive);
-            button.setAttribute("aria-pressed", String(isActive));
-
-            const dotState = isActive ? "active" : state;
-            const shouldShowDot = isActive || dotState === "ready" || dotState === "loading" || dotState === "error";
-
-            button.querySelectorAll(".dictionary-helper-context-btn-status, .dictionary-helper-followup-status").forEach((el) => el.remove());
-
-            let dotEl = button.querySelector(".dictionary-helper-progress-dot");
-            if (shouldShowDot) {
-                if (!dotEl) {
-                    dotEl = document.createElement("span");
-                    dotEl.setAttribute("aria-hidden", "true");
-                    button.appendChild(dotEl);
-                }
-                dotEl.className = `dictionary-helper-progress-dot is-${dotState}`;
-                dotEl.textContent = "";
-            } else if (dotEl) {
-                dotEl.remove();
-            }
-        });
+        popupHelpers.syncAiActionButtonStatus(
+            popupRoot.querySelectorAll(".dictionary-helper-context-btn[data-ai-intent]"),
+            activeFollowUps,
+            activeAiIntent,
+            "dictionary-helper"
+        );
     }
 
     function updateContextHelp() {
@@ -1046,8 +1017,6 @@ if (window.__dictionaryHelperContentInitialized) {
         if (!popupRoot || activeTab !== "ai") {
             return;
         }
-        const body = popupRoot.querySelector(".dictionary-helper-body");
-        renderer.patchFollowUpCards(body, activeFollowUps, getRenderOptions());
         syncAiActionButtonStatus();
     }
 
@@ -1111,45 +1080,6 @@ if (window.__dictionaryHelperContentInitialized) {
 
             if (token === requestToken && activeTab === "ai") {
                 patchActiveFollowUps();
-            }
-        }
-    }
-
-    async function regenerateAiSection(button) {
-        const kind = String(button?.dataset?.regenSection || "").trim();
-        const title = String(button?.dataset?.regenTitle || kind).trim();
-        const query = activeText.trim();
-        if (!kind || !query || !settings?.enableAI) {
-            return;
-        }
-        const sectionEl = button.closest("[data-section-kind]");
-        const bodyEl = sectionEl?.querySelector(".dictionary-helper-section-body")
-            || sectionEl;
-        if (bodyEl) {
-            bodyEl.innerHTML = `<div class="dictionary-helper-state is-loading-shimmer"></div>`;
-        }
-        try {
-            const response = await getLookupResponse("ai", query, {
-                context: activeContext,
-                intent: "section_regen",
-                sectionKind: kind,
-                sectionTitle: title
-            });
-            if (!response?.ok || !response.result) {
-                throw new Error(response?.error || "Unable to regenerate section.");
-            }
-            const html = renderer.renderResult(response.result, getRenderOptions({ followUps: [] }));
-            const temp = document.createElement("div");
-            temp.innerHTML = html;
-            const replacement = temp.querySelector(`[data-section-kind="${kind}"]`) || temp.querySelector(".dictionary-helper-result");
-            if (sectionEl && replacement) {
-                sectionEl.replaceWith(replacement);
-            } else if (bodyEl) {
-                bodyEl.innerHTML = replacement?.innerHTML || renderer.escapeHtml(response.result.sections?.[0]?.text || "Updated.");
-            }
-        } catch (error) {
-            if (bodyEl) {
-                bodyEl.innerHTML = `<p class="dictionary-helper-section-paragraph"><small class="dictionary-helper-inline-meta">${renderer.escapeHtml(error.message || "Unable to regenerate section.")}</small></p>`;
             }
         }
     }

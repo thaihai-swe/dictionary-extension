@@ -197,8 +197,8 @@ export async function migrateLegacySecretSettings() {
  * meaning translation glosses, and phrase core meaning target-language
  * equivalents; custom templates are left unchanged. Version 9 upgrades
  * matching Main, Context, and Grammar built-ins for structured senses,
- * substitutions, and syntactic slots, and seeds Compare / Rephrase /
- * Section Regen templates.
+ * substitutions, and syntactic slots, and seeds Compare / Rephrase
+ * templates.
  */
 export async function migrateSettingsSchema() {
     const syncData = await chrome.storage.sync.get([
@@ -209,8 +209,7 @@ export async function migrateSettingsSchema() {
         "aiGrammarPromptTemplate",
         "aiPhraseExplorerPromptTemplate",
         "aiComparePromptTemplate",
-        "aiRephrasePromptTemplate",
-        "aiSectionRegenPromptTemplate"
+        "aiRephrasePromptTemplate"
     ]);
     const currentVersion = Number(syncData?.[SETTINGS_SCHEMA_VERSION_KEY] || 0);
 
@@ -350,7 +349,6 @@ export function normalizeSettings(settings) {
         "aiPhraseExplorerPromptTemplate",
         "aiComparePromptTemplate",
         "aiRephrasePromptTemplate",
-        "aiSectionRegenPromptTemplate",
         "selectionTriggerMode",
         "postSelectionModifier",
         "pronunciationVoiceURI",
@@ -435,10 +433,6 @@ export function normalizeSettings(settings) {
 
     if (!normalized.aiRephrasePromptTemplate) {
         normalized.aiRephrasePromptTemplate = DEFAULT_SETTINGS.aiRephrasePromptTemplate;
-    }
-
-    if (!normalized.aiSectionRegenPromptTemplate) {
-        normalized.aiSectionRegenPromptTemplate = DEFAULT_SETTINGS.aiSectionRegenPromptTemplate;
     }
 
     return normalized;

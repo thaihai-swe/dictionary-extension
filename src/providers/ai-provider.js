@@ -8,7 +8,6 @@ import {
     DEFAULT_AI_PHRASE_FALLBACK_PROMPT_TEMPLATE,
     DEFAULT_AI_PROMPT_TEMPLATE,
     DEFAULT_AI_REPHRASE_PROMPT_TEMPLATE,
-    DEFAULT_AI_SECTION_REGEN_PROMPT_TEMPLATE,
     DEFAULT_AI_SENTENCE_PROMPT_TEMPLATE,
     AI_INTENTS,
     PROFILE_SECTION_TITLES,
@@ -94,8 +93,6 @@ export async function lookupAiProvider(text, settings, options = {}) {
         ? options.intent
         : "default";
     const prompt = buildPrompt(text, settings, context, intent, {
-        sectionTitle: options.sectionTitle,
-        sectionKind: options.sectionKind,
         rephraseMode: options.rephraseMode
     });
 
@@ -371,8 +368,6 @@ function buildPrompt(text, settings, context, intent, extras = {}) {
         word_count: countWords(text),
         targetLang: settings.translateTargetLanguage || "en",
         enableLexicalProfile: shouldRequestLexicalProfile(intent, settings.enableLexicalProfile),
-        sectionTitle: extras.sectionTitle || "",
-        sectionKind: extras.sectionKind || "",
         rephraseMode: extras.rephraseMode || ""
     };
 
@@ -430,14 +425,6 @@ function buildPrompt(text, settings, context, intent, extras = {}) {
         const template = settings.aiRephrasePromptTemplate && settings.aiRephrasePromptTemplate.trim()
             ? settings.aiRephrasePromptTemplate
             : DEFAULT_AI_REPHRASE_PROMPT_TEMPLATE;
-
-        return finalize(template);
-    }
-
-    if (intent === "section_regen") {
-        const template = settings.aiSectionRegenPromptTemplate && settings.aiSectionRegenPromptTemplate.trim()
-            ? settings.aiSectionRegenPromptTemplate
-            : DEFAULT_AI_SECTION_REGEN_PROMPT_TEMPLATE;
 
         return finalize(template);
     }
