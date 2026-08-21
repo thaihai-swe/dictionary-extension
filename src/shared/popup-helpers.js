@@ -270,6 +270,22 @@
         });
     }
 
+    function followUpButtonState(item, activeIntent) {
+        if (item?.intent && item.intent === activeIntent) {
+            return "active";
+        }
+        if (item?.loading) {
+            return "loading";
+        }
+        if (item?.error && !item.result) {
+            return "error";
+        }
+        if (item?.result) {
+            return "ready";
+        }
+        return "pending";
+    }
+
     async function readLastTab() {
         if (!global.chrome?.storage?.session) {
             return "";
@@ -318,6 +334,7 @@
         isSentenceLikeQuery,
         isComparisonQuery,
         getEligibleFollowUpIntents,
+        followUpButtonState,
         readLastTab,
         writeLastTab
     };

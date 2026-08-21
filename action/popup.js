@@ -55,6 +55,7 @@ let contextConfidence = "none";
 let requestToken = 0;
 let lastPreloadKey = "";
 let activeFollowUps = [];
+let activeAiIntent = "";
 let activeRequestId = "";
 
 const OUTPUT_AFFECTING_SETTING_KEYS = popupHelpers.OUTPUT_AFFECTING_SETTING_KEYS;
@@ -143,6 +144,7 @@ async function init() {
                 input.value = query;
                 activeQuery = query;
                 activeTab = "dictionary";
+                activeAiIntent = "";
                 void popupHelpers.writeLastTab(activeTab);
                 renderTabs();
                 updateContextActionVisibility();
@@ -256,6 +258,9 @@ function handleSubmit(event) {
     const queryChanged = query !== activeQuery;
     activeQuery = query;
     lastPreloadKey = "";
+    if (queryChanged) {
+        activeAiIntent = "";
+    }
 
     if (!query) {
         contextText = "";
@@ -321,6 +326,8 @@ async function executeContextAction({
 
     clearContextError();
     setContextActionButtonsDisabled(true);
+    activeAiIntent = intent;
+    syncAiActionButtonStatus();
 
     requestToken += 1;
     const token = requestToken;
@@ -353,6 +360,7 @@ async function executeContextAction({
         renderTabs();
         updateContextActionVisibility();
         resultRoot.innerHTML = renderer.renderResult(response.result, getRenderOptions({ followUps: [] }));
+        syncAiActionButtonStatus();
     } catch (error) {
         if (token !== requestToken || error?.name === "AbortError") {
             return;
@@ -361,6 +369,7 @@ async function executeContextAction({
     } finally {
         if (token === requestToken) {
             updateContextActionVisibility();
+            syncAiActionButtonStatus();
         }
     }
 }
@@ -646,7 +655,11 @@ async function loadTab(tab) {
     audio.stopPronunciation();
     if (tab !== "ai") {
         activeFollowUps = [];
+        activeAiIntent = "";
+    } else {
+        activeAiIntent = "default";
     }
+    syncAiActionButtonStatus();
 
     const cacheKey = lookupClient.buildRequestCacheKey(tab, query, settings, {});
     const cached = lookupCache.get(cacheKey);
@@ -660,6 +673,7 @@ async function loadTab(tab) {
         resultRoot.setAttribute("aria-busy", "false");
         resultRoot.innerHTML = renderer.renderResult(cached, getRenderOptions());
         audio.restorePracticeResult(resultRoot, query, cached.pronunciation?.language);
+        syncAiActionButtonStatus();
         if (tab === "ai") {
             void preloadFollowUpIntents(query, contextText, token);
         } else {
@@ -695,6 +709,7 @@ async function loadTab(tab) {
         }
         resultRoot.innerHTML = renderer.renderResult(response.result, getRenderOptions());
         audio.restorePracticeResult(resultRoot, query, response.result?.pronunciation?.language);
+        syncAiActionButtonStatus();
         if (tab === "ai") {
             void preloadFollowUpIntents(query, contextText, token);
         } else {
@@ -740,6 +755,7 @@ function patchActiveFollowUps() {
         return;
     }
     renderer.patchFollowUpCards(resultRoot, activeFollowUps, getRenderOptions());
+    syncAiActionButtonStatus();
 }
 
 async function preloadFollowUpIntents(text = activeQuery, context = contextText, token = requestToken) {
@@ -871,6 +887,49 @@ function updateContextActionVisibility() {
     if (explainPhraseExplorerButton) {
         explainPhraseExplorerButton.disabled = !shouldShow || !activeQuery.trim();
     }
+
+    if (explainCompareButton) {
+        explainCompareButton.disabled = !shouldShow || !activeQuery.trim();
+    }
+
+    syncAiActionButtonStatus();
+}
+
+function syncAiActionButtonStatus() {
+    const buttons = [
+        explainContextButton,
+        explainGrammarButton,
+        explainPhraseExplorerButton,
+        explainSentenceButton,
+        explainCompareButton
+    ].filter(Boolean);
+
+    buttons.forEach((button) => {
+        const intent = button.getAttribute("data-ai-intent") || "";
+        const item = activeFollowUps.find((entry) => entry.intent === intent);
+        const state = popupHelpers.followUpButtonState(item, activeAiIntent);
+        const isActive = activeAiIntent === intent;
+        button.classList.toggle("is-active", isActive);
+        button.setAttribute("aria-pressed", String(isActive));
+
+        const dotState = isActive ? "active" : state;
+        const shouldShowDot = isActive || dotState === "ready" || dotState === "loading" || dotState === "error";
+
+        button.querySelectorAll(".toolbar-popup-context-btn-status, .toolbar-popup-followup-status").forEach((el) => el.remove());
+
+        let dotEl = button.querySelector(".toolbar-popup-progress-dot");
+        if (shouldShowDot) {
+            if (!dotEl) {
+                dotEl = document.createElement("span");
+                dotEl.setAttribute("aria-hidden", "true");
+                button.appendChild(dotEl);
+            }
+            dotEl.className = `toolbar-popup-progress-dot is-${dotState}`;
+            dotEl.textContent = "";
+        } else if (dotEl) {
+            dotEl.remove();
+        }
+    });
 }
 
 async function prefillPageContext() {

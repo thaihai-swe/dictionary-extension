@@ -499,14 +499,6 @@
         }
     };
 
-    const FOLLOW_UP_INTENTS = [
-        { intent: "explain_in_context", title: "Context Explain" },
-        { intent: "grammar", title: "Grammar & Nuance" },
-        { intent: "phrase_explorer", title: "Phrase & Collocations" },
-        { intent: "sentence_breakdown", title: "Sentence Breakdown" },
-        { intent: "compare_confusables", title: "Compare Confusables" }
-    ];
-
     const state = {
         query: "resilience",
         tab: "dictionary",
@@ -593,17 +585,6 @@
                 ${pair.explanation ? `<small>${escapeHtml(pair.explanation)}</small>` : ""}
             </article>
         `).join("")}</div>`;
-    }
-
-    function renderPreloadProgress() {
-        const dots = FOLLOW_UP_INTENTS.map((item) => {
-            const isActive = item.intent === state.intent;
-            const status = isActive ? "ready" : item.intent === "compare_confusables" && state.intent !== "compare_confusables"
-                ? "pending"
-                : "ready";
-            return `<span class="demo-progress-dot is-${status}" title="${escapeHtml(item.title)}: ${status}" aria-label="${escapeHtml(item.title)} ${status}"></span>`;
-        }).join("");
-        return `<div class="demo-preload-progress" role="status" aria-label="Follow-up section progress">${dots}</div>`;
     }
 
     function renderRephraseBar() {
@@ -811,7 +792,6 @@
 
         return `
             <p class="demo-ai-kicker">Word explanation</p>
-            ${renderPreloadProgress()}
             ${showRephrase ? renderRephraseBar() : ""}
             ${renderWordFamily(result.wordFamily)}
             ${renderUsageNotes(result)}
@@ -935,7 +915,14 @@
         state.intent = intent;
         state.rephraseMode = "";
         $$(".context-action-btn").forEach((button) => {
-            button.classList.toggle("active", button.dataset.intent === intent);
+            const isActive = button.dataset.intent === intent;
+            button.classList.toggle("active", isActive);
+            button.setAttribute("aria-pressed", String(isActive));
+            const dotEl = button.querySelector(".demo-progress-dot");
+            if (dotEl) {
+                dotEl.className = `demo-progress-dot ${isActive ? "is-active" : "is-ready"}`;
+                dotEl.textContent = "";
+            }
         });
         if (state.tab === "ai") renderDemo();
     }

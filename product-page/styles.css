@@ -598,8 +598,8 @@ a:hover { color: var(--blue-strong); }
 .popup-context-bar { padding: 13px 16px; background: #f0f4f8; border-bottom: 1px solid #e0e7ee; }
 .context-pill { width: fit-content; margin-bottom: 8px; padding: 3px 7px; color: #0b6a58; background: #e2efe8; border: 1px solid #b7d6c6; border-radius: 999px; font-size: 0.63rem; }
 .context-textarea { display: block; width: 100%; min-height: 56px; padding: 8px 9px; resize: vertical; color: #334759; border: 1px solid #b9c9c4; border-radius: 6px; background: #fff; font-size: 0.75rem; line-height: 1.45; }
-.context-action-buttons { flex-wrap: wrap; gap: 6px; margin-top: 9px; }
-.context-action-btn { min-height: 29px; padding: 4px 7px; color: #405363; border: 1px solid #b8c3ba; border-radius: 5px; background: #fff; font-size: 0.66rem; font-weight: 600; transition: color 120ms ease, background-color 120ms ease, border-color 120ms ease; }
+.context-action-buttons { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.context-action-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 29px; padding: 4px 7px; color: #405363; border: 1px solid #b8c3ba; border-radius: 5px; background: #fff; font-size: 0.66rem; font-weight: 600; transition: color 120ms ease, background-color 120ms ease, border-color 120ms ease; }
 .context-action-btn:hover, .context-action-btn.active { color: #0b6a58; border-color: #6fbfa4; background: #effcf3; }
 .popup-body-panel { min-height: 301px; padding: 21px 18px 22px; background: #fff; }
 .demo-result-header { margin-bottom: 14px; }
@@ -650,13 +650,15 @@ a:hover { color: var(--blue-strong); }
 }
 .demo-section-action:hover { color: var(--blue-strong); border-color: var(--blue-strong); background: rgba(63, 55, 143, 0.08); }
 .demo-section-action.is-spinning { color: var(--blue-strong); }
-.demo-preload-progress { display: flex; gap: 6px; align-items: center; margin: 0 0 10px; }
 .demo-progress-dot {
-    width: 8px;
-    height: 8px;
+    display: inline-block;
+    width: 6px;
+    height: 6px;
     border-radius: 99px;
     background: #c8c4ba;
+    flex-shrink: 0;
 }
+.demo-progress-dot.is-active { background: #0b6a58; }
 .demo-progress-dot.is-pending { background: #c8c4ba; }
 .demo-progress-dot.is-loading { background: #b45309; }
 .demo-progress-dot.is-ready { background: #087f6e; }

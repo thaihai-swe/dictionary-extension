@@ -143,24 +143,6 @@
                 </article>`).join("")}</div>`;
         },
 
-        renderPreloadProgress(followUps = [], prefix) {
-            if (!Array.isArray(followUps) || followUps.length === 0) {
-                return "";
-            }
-            const dots = followUps.map((item) => {
-                const state = item.loading
-                    ? "loading"
-                    : item.error && !item.result
-                        ? "error"
-                        : item.result
-                            ? "ready"
-                            : "pending";
-                const label = Renderer.escapeHtml(item.title || item.intent || "section");
-                return `<span class="${prefix}-progress-dot is-${state}" title="${label}: ${state}" aria-label="${label} ${state}"></span>`;
-            }).join("");
-            return `<div class="${prefix}-preload-progress" role="status" aria-label="Follow-up section progress">${dots}</div>`;
-        },
-
         renderRephraseBar(prefix, options = {}) {
             if (options.showRephrase === false) {
                 return "";
@@ -673,145 +655,14 @@
             `;
         },
 
-        renderFollowUpCards(followUps = [], options = {}) {
-            if (!Array.isArray(followUps) || followUps.length === 0) {
-                return "";
-            }
-
-            const prefix = options.prefix || "dictionary-helper";
-            const sectionTitleTag = options.sectionTitleTag || "h4";
-
-            const cards = followUps.map((item, index) => {
-                const title = item.title || "Analysis";
-                const intent = item.intent || "";
-                const isLoading = Boolean(item.loading);
-                const hasError = Boolean(item.error && !item.result);
-                const result = item.result;
-                const metaBadge = isLoading
-                    ? `<span class="${prefix}-section-meta ${prefix}-followup-status is-loading">Loading…</span>`
-                    : hasError
-                        ? `<span class="${prefix}-section-meta ${prefix}-followup-status is-error">Unavailable</span>`
-                        : `<span class="${prefix}-section-meta ${prefix}-followup-status is-ready">Ready</span>`;
-
-                let bodyContent = "";
-                if (isLoading) {
-                    bodyContent = `<div class="${prefix}-state is-loading-shimmer"></div>`;
-                } else if (hasError) {
-                    bodyContent = `<p class="${prefix}-section-paragraph"><small class="${prefix}-inline-meta">${Renderer.escapeHtml(item.error || "Unable to load section.")}</small></p>`;
-                } else if (result) {
-                    const rawSections = Renderer.orderSectionsForPresentation(result.sections || [], result.presentation);
-                    const renderedSections = rawSections.map((sec, secIdx) => {
-                        const kind = Renderer.normalizeSectionKind(sec);
-                        const items = (sec.items || [])
-                            .map((it) => `<li>${Renderer.formatInlineMarkdown(it)}</li>`)
-                            .join("");
-                        const hasSecTitle = Boolean(String(sec.title || "").trim());
-                        let secBody = "";
-
-                        if (sec.data && kind === "sentence-overview") {
-                            secBody = Renderer.renderSentenceOverview(sec.data, prefix);
-                        } else if (sec.data && kind === "sentence-structure") {
-                            secBody = Renderer.renderSentenceStructure(sec.data, prefix);
-                        } else if (sec.data && kind === "phrase-parsing") {
-                            secBody = Renderer.renderPhraseParsing(sec.data, prefix);
-                        } else if (sec.data && kind === "senses") {
-                            secBody = Renderer.renderSenseMatrix(sec.data.senses, prefix);
-                        } else if (sec.data && kind === "compare-matrix") {
-                            secBody = Renderer.renderComparisonTable(sec.data, prefix);
-                        } else if (sec.data && Array.isArray(sec.data.pairs)) {
-                            secBody = Renderer.renderMinimalPairs(sec.data.pairs, prefix);
-                        } else if (kind === "context") {
-                            secBody = Renderer.renderTokenizedContext(sec.text || "", options.title || options.query || "", prefix);
-                        } else if (sec.markdown) {
-                            secBody = `<div class="${prefix}-markdown">${Renderer.renderSimpleMarkdown(sec.text || "")}</div>`;
-                        } else if (sec.text) {
-                            secBody = `<p class="${prefix}-section-paragraph">${Renderer.escapeHtml(sec.text)}</p>`;
-                        }
-
-                        const secContent = `${secBody}${items ? `<ul class="${prefix}-section-list">${items}</ul>` : ""}`;
-                        const secLabel = hasSecTitle
-                            ? `<div class="${prefix}-section-heading"><${sectionTitleTag} class="${prefix}-section-title">${Renderer.escapeHtml(sec.title)}</${sectionTitleTag}></div>`
-                            : "";
-
-                        return `<div class="${prefix}-followup-subsection ${prefix}-section--${kind}" data-section-index="${secIdx}">${secLabel}${secContent}</div>`;
-                    }).join("");
-
-                    const lexicalHtml = Renderer.renderLexicalProfile(result.lexicalProfile, prefix, sectionTitleTag);
-                    bodyContent = `${renderedSections}${lexicalHtml}`;
-                }
-
-                const sectionClasses = `${prefix}-section ${prefix}-section--collapsible ${prefix}-followup-card${isLoading ? " is-loading" : ""}${hasError ? " is-error" : ""}`;
-                const sectionLabel = `<span class="${prefix}-section-title">${Renderer.escapeHtml(title)}</span>${metaBadge}`;
-
-                return `
-              <details class="${sectionClasses}" data-followup-intent="${Renderer.escapeHtml(intent)}" data-section-index="${index}" style="--section-index: ${index};">
-                <summary class="${prefix}-section-summary">${sectionLabel}</summary>
-                <div class="${prefix}-section-body">
-                  ${bodyContent}
-                </div>
-              </details>`;
-            }).join("");
-
-            return `
-              <div class="${prefix}-followups-container">
-                <div class="${prefix}-followups-header">
-                  <span class="${prefix}-followups-title">Deep Dive Sections</span>
-                  <span class="${prefix}-followups-subtitle">Loaded after the main AI result</span>
-                </div>
-                ${cards}
-              </div>
-            `;
-        },
-
         patchFollowUpCards(root, followUps = [], options = {}) {
             if (!root) {
                 return;
             }
 
             const prefix = options.prefix || "dictionary-helper";
-            const html = Renderer.renderFollowUpCards(followUps, options);
-            const existing = root.querySelector(`.${prefix}-followups-container`);
-            const openIntents = new Set();
-
-            if (existing) {
-                existing.querySelectorAll("[data-followup-intent]").forEach((node) => {
-                    if (node.open) {
-                        openIntents.add(node.getAttribute("data-followup-intent") || "");
-                    }
-                });
-            }
-
-            if (!html) {
-                existing?.remove();
-                return;
-            }
-
-            if (existing) {
-                existing.outerHTML = html;
-            } else {
-                const resultEl = root.querySelector(`.${prefix}-result`);
-                if (!resultEl) {
-                    return;
-                }
-                resultEl.insertAdjacentHTML("beforeend", html);
-            }
-
-            root.querySelectorAll(`.${prefix}-followups-container [data-followup-intent]`).forEach((node) => {
-                if (openIntents.has(node.getAttribute("data-followup-intent") || "")) {
-                    node.open = true;
-                }
-            });
-
-            const progressEl = root.querySelector(`.${prefix}-preload-progress`);
-            const nextProgressHtml = Renderer.renderPreloadProgress(followUps, prefix);
-            if (progressEl && nextProgressHtml) {
-                progressEl.outerHTML = nextProgressHtml;
-            } else if (!progressEl && nextProgressHtml) {
-                const rephraseEl = root.querySelector(`.${prefix}-rephrase-bar`);
-                if (rephraseEl) {
-                    rephraseEl.insertAdjacentHTML("beforebegin", nextProgressHtml);
-                }
-            }
+            root.querySelector(`.${prefix}-followups-container`)?.remove();
+            root.querySelector(`.${prefix}-preload-progress`)?.remove();
         },
 
         renderResult(result, options = {}) {
@@ -909,17 +760,11 @@
                 ? `<div class="${prefix}-title-row"><div class="${prefix}-title-cell"><${titleTag} class="${prefix}-term">${Renderer.escapeHtml(result.title)}</${titleTag}><div class="${prefix}-pronunciation-group">${pronunciation}${pronunciationVariants}${speechPractice}</div></div>${meta}</div>`
                 : "";
             const emptyState = `<${stateEl} class="${prefix}-state"><strong>No result</strong><span>Try another word or switch sources.</span></${stateEl}>`;
-            const followUpsHtml = isAiResult && (aiIntent === "default" || aiIntent === "") && Array.isArray(options.followUps) && options.followUps.length > 0
-                ? Renderer.renderFollowUpCards(options.followUps, options)
-                : "";
-            const preloadProgressHtml = isAiResult && (aiIntent === "default" || aiIntent === "") && Array.isArray(options.followUps) && options.followUps.length > 0
-                ? Renderer.renderPreloadProgress(options.followUps, prefix)
-                : "";
             const rephraseBarHtml = isAiResult && (aiIntent === "default" || aiIntent === "explain_in_context" || aiIntent === "rephrase")
                 ? Renderer.renderRephraseBar(prefix, options)
                 : "";
             const resultBody = isAiResult
-                ? `${preloadProgressHtml}${rephraseBarHtml}${sections || emptyState}${lexicalProfileHtml}${followUpsHtml}`
+                ? `${rephraseBarHtml}${sections || emptyState}${lexicalProfileHtml}`
                 : `${lexicalProfileHtml}${sections || emptyState}`;
 
             return `

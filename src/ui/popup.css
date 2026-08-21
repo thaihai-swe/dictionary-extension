@@ -285,6 +285,9 @@
 .dictionary-helper-context-error { color: var(--color-danger); font-weight: 600; }
 .dictionary-helper-context-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
 .dictionary-helper-context-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     padding: 5px 8px;
     color: var(--color-text-secondary);
     background: var(--color-surface);
@@ -296,6 +299,7 @@
     transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast);
 }
 .dictionary-helper-context-btn:hover { color: var(--color-primary); border-color: var(--color-primary); background: var(--color-primary-soft); }
+.dictionary-helper-context-btn.is-active { color: var(--color-primary); border-color: var(--color-primary); background: var(--color-primary-soft); }
 .dictionary-helper-context-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .dictionary-helper-body {
@@ -453,64 +457,19 @@
 .dictionary-helper-section--collapsible[open] .dictionary-helper-section-summary::after { transform: rotate(180deg); }
 .dictionary-helper-section--collapsible[open] .dictionary-helper-section-summary { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--color-border); }
 
-.dictionary-helper-followups-container {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 6px;
-    padding-top: 10px;
-    border-top: 1px solid var(--color-border);
+.dictionary-helper-progress-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 99px;
+    background: var(--color-border-strong);
+    flex-shrink: 0;
 }
-.dictionary-helper-followups-header {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 8px;
-}
-.dictionary-helper-followups-title {
-    color: var(--color-text-primary);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-}
-.dictionary-helper-followups-subtitle {
-    color: var(--color-text-muted);
-    font-size: 0.68rem;
-}
-.dictionary-helper-followup-card {
-    background: var(--color-surface);
-}
-.dictionary-helper-followup-status {
-    padding: 1px 7px;
-    border-radius: var(--radius-full);
-    font-size: 0.64rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-}
-.dictionary-helper-followup-status.is-loading {
-    color: var(--color-primary);
-    background: var(--color-primary-soft);
-}
-.dictionary-helper-followup-status.is-ready {
-    color: var(--color-success);
-    background: var(--color-success-soft);
-}
-.dictionary-helper-followup-status.is-error {
-    color: var(--color-danger);
-    background: var(--color-warning-soft);
-}
-.dictionary-helper-followup-subsection {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-.dictionary-helper-followup-subsection + .dictionary-helper-followup-subsection {
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid var(--color-border);
-}
+.dictionary-helper-progress-dot.is-active { background: var(--color-primary); }
+.dictionary-helper-progress-dot.is-pending { background: var(--color-border-strong); }
+.dictionary-helper-progress-dot.is-loading { background: var(--color-warning); }
+.dictionary-helper-progress-dot.is-ready { background: var(--color-success); }
+.dictionary-helper-progress-dot.is-error { background: var(--color-danger); }
 
 .dictionary-helper-state { padding: 28px 12px; color: var(--color-text-secondary); text-align: center; font-size: 0.84rem; }
 .dictionary-helper-state strong { color: var(--color-text-primary); }
@@ -817,18 +776,6 @@
 .dictionary-helper-minimal-b { margin: 0 0 4px; font-size: 0.8rem; }
 .dictionary-helper-minimal-a { color: var(--color-text-primary); }
 .dictionary-helper-minimal-b { color: var(--color-text-secondary); }
-
-.dictionary-helper-preload-progress { display: flex; gap: 6px; align-items: center; }
-.dictionary-helper-progress-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 99px;
-    background: var(--color-border-strong);
-}
-.dictionary-helper-progress-dot.is-pending { background: var(--color-border-strong); }
-.dictionary-helper-progress-dot.is-loading { background: var(--color-warning); }
-.dictionary-helper-progress-dot.is-ready { background: var(--color-success); }
-.dictionary-helper-progress-dot.is-error { background: var(--color-danger); }
 
 .dictionary-helper-rephrase-bar {
     display: flex;

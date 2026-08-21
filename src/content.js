@@ -32,6 +32,7 @@ if (window.__dictionaryHelperContentInitialized) {
     let requestToken = 0;
     let lastPreloadKey = "";
     let activeFollowUps = [];
+    let activeAiIntent = "";
     let activeRequestId = "";
     let isPointerSelecting = false;
     let currentSelectionSnapshot = null;
@@ -202,6 +203,7 @@ if (window.__dictionaryHelperContentInitialized) {
         currentPosition = position;
         currentSelectionRect = snapshot.rect || null;
         lastPreloadKey = "";
+        activeAiIntent = "";
         activeTab = getAvailableTabs().includes(activeTab) ? activeTab : settings.defaultTab;
         activeTab = getAvailableTabs().includes(activeTab) ? activeTab : getAvailableTabs()[0];
 
@@ -272,6 +274,7 @@ if (window.__dictionaryHelperContentInitialized) {
         currentPosition = getPopupPosition(getSelectionRectForText(normalizedText), event || null);
         currentSelectionRect = getSelectionRectForText(normalizedText);
         lastPreloadKey = "";
+        activeAiIntent = "";
         activeTab = getAvailableTabs().includes(activeTab) ? activeTab : settings.defaultTab;
         activeTab = getAvailableTabs().includes(activeTab) ? activeTab : getAvailableTabs()[0];
 
@@ -511,6 +514,7 @@ if (window.__dictionaryHelperContentInitialized) {
                     audio.clearPracticeResults();
                     activeText = query;
                     activeTab = "dictionary";
+                    activeAiIntent = "";
                     void popupHelpers.writeLastTab(activeTab);
                     renderShell();
                     void loadTab("dictionary");
@@ -698,11 +702,11 @@ if (window.__dictionaryHelperContentInitialized) {
             <div class="dictionary-helper-context-help" id="dictionary-helper-context-help">${getContextHelpMessage()}</div>
             <div class="dictionary-helper-context-error" id="dictionary-helper-context-error" role="alert" hidden>Please enter or paste the sentence containing this word.</div>
             <div class="dictionary-helper-context-buttons">
-                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-context" type="button" title="Explain what this word means in the sentence above">Context Explain</button>
-                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-grammar" type="button" title="Analyze syntax role, word order, and tone">Grammar &amp; Nuance</button>
-                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-phrase-explorer" type="button" title="Explore idioms, phrasal verbs, and collocations">Phrase &amp; Collocations</button>
-                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-sentence" type="button" title="Break down sentence structure and parse components">Sentence Breakdown</button>
-                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-compare" type="button" title="Compare similar or confusable words">Compare Confusables</button>
+                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-context" data-ai-intent="explain_in_context" type="button" title="Explain what this word means in the sentence above"><span class="dictionary-helper-context-btn-label">Context Explain</span></button>
+                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-grammar" data-ai-intent="grammar" type="button" title="Analyze syntax role, word order, and tone"><span class="dictionary-helper-context-btn-label">Grammar &amp; Nuance</span></button>
+                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-phrase-explorer" data-ai-intent="phrase_explorer" type="button" title="Explore idioms, phrasal verbs, and collocations"><span class="dictionary-helper-context-btn-label">Phrase &amp; Collocations</span></button>
+                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-sentence" data-ai-intent="sentence_breakdown" type="button" title="Break down sentence structure and parse components"><span class="dictionary-helper-context-btn-label">Sentence Breakdown</span></button>
+                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-compare" data-ai-intent="compare_confusables" type="button" title="Compare similar or confusable words"><span class="dictionary-helper-context-btn-label">Compare Confusables</span></button>
             </div>
            </div>`
             : "";
@@ -763,6 +767,8 @@ if (window.__dictionaryHelperContentInitialized) {
             contextInput?.removeAttribute("aria-invalid");
 
             setContextButtonsDisabled(true);
+            activeAiIntent = intent;
+            syncAiActionButtonStatus();
             requestToken += 1;
             const token = requestToken;
             const body = popupRoot?.querySelector(".dictionary-helper-body");
@@ -776,6 +782,7 @@ if (window.__dictionaryHelperContentInitialized) {
                     if (token !== requestToken || !popupRoot) return;
                     if (!response?.ok) throw new Error(response?.error || "Request failed.");
                     body.innerHTML = renderer.renderResult(response.result, getRenderOptions({ followUps: [] }));
+                    syncAiActionButtonStatus();
                 })
                 .catch((error) => {
                     if (token !== requestToken || !popupRoot || error?.name === "AbortError") return;
@@ -785,6 +792,7 @@ if (window.__dictionaryHelperContentInitialized) {
                     if (token !== requestToken || !popupRoot) return;
                     body?.setAttribute("aria-busy", "false");
                     setContextButtonsDisabled(false);
+                    syncAiActionButtonStatus();
                 });
         };
 
@@ -842,6 +850,41 @@ if (window.__dictionaryHelperContentInitialized) {
                 intent: "compare_confusables",
                 errorMessage: "Unable to compare these words."
             });
+        });
+
+        syncAiActionButtonStatus();
+    }
+
+    function syncAiActionButtonStatus() {
+        if (!popupRoot) {
+            return;
+        }
+
+        popupRoot.querySelectorAll(".dictionary-helper-context-btn[data-ai-intent]").forEach((button) => {
+            const intent = button.getAttribute("data-ai-intent") || "";
+            const item = activeFollowUps.find((entry) => entry.intent === intent);
+            const state = popupHelpers.followUpButtonState(item, activeAiIntent);
+            const isActive = activeAiIntent === intent;
+            button.classList.toggle("is-active", isActive);
+            button.setAttribute("aria-pressed", String(isActive));
+
+            const dotState = isActive ? "active" : state;
+            const shouldShowDot = isActive || dotState === "ready" || dotState === "loading" || dotState === "error";
+
+            button.querySelectorAll(".dictionary-helper-context-btn-status, .dictionary-helper-followup-status").forEach((el) => el.remove());
+
+            let dotEl = button.querySelector(".dictionary-helper-progress-dot");
+            if (shouldShowDot) {
+                if (!dotEl) {
+                    dotEl = document.createElement("span");
+                    dotEl.setAttribute("aria-hidden", "true");
+                    button.appendChild(dotEl);
+                }
+                dotEl.className = `dictionary-helper-progress-dot is-${dotState}`;
+                dotEl.textContent = "";
+            } else if (dotEl) {
+                dotEl.remove();
+            }
         });
     }
 
@@ -906,7 +949,11 @@ if (window.__dictionaryHelperContentInitialized) {
 
         if (tab !== "ai") {
             activeFollowUps = [];
+            activeAiIntent = "";
+        } else {
+            activeAiIntent = "default";
         }
+        syncAiActionButtonStatus();
 
         const cacheKey = lookupModule.buildRequestCacheKey(tab, text, settings, {});
         const cached = lookupCache.get(cacheKey);
@@ -920,6 +967,7 @@ if (window.__dictionaryHelperContentInitialized) {
             }
             body.innerHTML = renderer.renderResult(cached, getRenderOptions());
             audio.restorePracticeResult(body, activeText, cached.pronunciation?.language);
+            syncAiActionButtonStatus();
             if (tab === "ai") {
                 void preloadFollowUpIntents(text, activeContext, token);
             }
@@ -947,6 +995,7 @@ if (window.__dictionaryHelperContentInitialized) {
             }
             body.innerHTML = renderer.renderResult(response.result, getRenderOptions());
             audio.restorePracticeResult(body, activeText, response.result?.pronunciation?.language);
+            syncAiActionButtonStatus();
             if (tab === "ai") {
                 void preloadFollowUpIntents(text, activeContext, token);
             }
@@ -999,6 +1048,7 @@ if (window.__dictionaryHelperContentInitialized) {
         }
         const body = popupRoot.querySelector(".dictionary-helper-body");
         renderer.patchFollowUpCards(body, activeFollowUps, getRenderOptions());
+        syncAiActionButtonStatus();
     }
 
     async function preloadFollowUpIntents(text, context, token = requestToken) {
@@ -1112,6 +1162,8 @@ if (window.__dictionaryHelperContentInitialized) {
         const body = popupRoot?.querySelector(".dictionary-helper-body");
         requestToken += 1;
         const token = requestToken;
+        activeAiIntent = "rephrase";
+        syncAiActionButtonStatus();
         if (body) {
             body.setAttribute("aria-busy", "true");
             body.innerHTML = renderer.renderSkeleton("dictionary-helper");
@@ -1129,6 +1181,7 @@ if (window.__dictionaryHelperContentInitialized) {
                 throw new Error(response?.error || "Unable to rephrase.");
             }
             body.innerHTML = renderer.renderResult(response.result, getRenderOptions({ followUps: [] }));
+            syncAiActionButtonStatus();
         } catch (error) {
             if (token !== requestToken || !popupRoot || error?.name === "AbortError") {
                 return;
@@ -1137,6 +1190,7 @@ if (window.__dictionaryHelperContentInitialized) {
         } finally {
             if (token === requestToken && popupRoot) {
                 body?.setAttribute("aria-busy", "false");
+                syncAiActionButtonStatus();
             }
         }
     }

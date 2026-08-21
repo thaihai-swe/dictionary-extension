@@ -180,7 +180,7 @@ Switch to the **AI** tab for deep generative explanations powered by Google Gemi
 
 - **Interactive context tokens:** Words in the **Context used** sentence are clickable and open a nested dictionary lookup.
 - **Listen / Regenerate:** Section headers include Listen (example sentences) and ↻ regenerate for a single section.
-- **Preload progress:** When AI preload is enabled, a compact dot strip shows follow-up section status (pending, loading, ready, error).
+- **Preload progress:** When AI preload is enabled, a status indicator dot on each AI action button reflects its background preload state (Active, Ready, Loading, Error).
 
 ---
 
