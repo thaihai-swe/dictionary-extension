@@ -15,7 +15,33 @@
         },
 
         labelForTab(tab) {
-            return tab === "ai" ? "AI" : "Dictionary";
+            return tab === "ai" ? "✨ AI Assistant" : "📖 Dictionary";
+        },
+
+        formatSectionTitle(title, kind) {
+            const raw = String(title || "").trim();
+            if (!raw) return "";
+            if (/^\p{Extended_Pictographic}/u.test(raw)) {
+                return raw;
+            }
+            const lower = raw.toLowerCase();
+            if (lower.startsWith("definition") || kind === "definitions" || kind === "senses") return `📖 ${raw}`;
+            if (lower.startsWith("translation") || kind === "translation") return `🌐 ${raw}`;
+            if (lower.startsWith("example") || kind === "examples") return `💬 ${raw}`;
+            if (lower.startsWith("grammar") || lower.startsWith("syntax") || kind === "grammar" || kind === "sentence-structure") return `📐 ${raw}`;
+            if (lower.startsWith("phrase") || lower.startsWith("idiom") || kind === "phrase-parsing") return `💡 ${raw}`;
+            if (lower.startsWith("collocation") || kind === "collocations") return `🔗 ${raw}`;
+            if (lower.startsWith("synonym") || lower.startsWith("antonym")) return `🔄 ${raw}`;
+            if (lower.startsWith("etymology") || lower.startsWith("origin") || kind === "etymology") return `📜 ${raw}`;
+            if (lower.startsWith("context") || kind === "context") return `🎯 ${raw}`;
+            if (lower.startsWith("sentence") || kind === "sentence-overview") return `🧩 ${raw}`;
+            if (lower.startsWith("compare") || kind === "compare-matrix" || kind === "compare-distinction") return `⚖️ ${raw}`;
+            if (lower.startsWith("rephrase") || (kind && kind.startsWith("rephrase"))) return `✨ ${raw}`;
+            if (lower.startsWith("usage") || lower.startsWith("nuance") || kind === "usage" || kind === "nuance") return `💡 ${raw}`;
+            if (lower.startsWith("word family")) return `🌳 ${raw}`;
+            if (lower.startsWith("common learner mistake") || lower.startsWith("warning")) return `⚠️ ${raw}`;
+            if (lower.startsWith("word formation")) return `🧬 ${raw}`;
+            return raw;
         },
 
         highlightContextQuery(sourceText, query) {
@@ -794,8 +820,9 @@
                 const collapsible = Renderer.shouldCollapseSection(section, kind, index, totalSections, aiIntent);
                 const sectionClasses = `${prefix}-section ${prefix}-section--${kind}${collapsible ? ` ${prefix}-section--collapsible` : ""}`;
 
+                const formattedTitle = Renderer.formatSectionTitle(section.title, kind);
                 if (collapsible) {
-                    const sectionLabel = `<${sectionTitleTag} class="${prefix}-section-title">${Renderer.escapeHtml(section.title)}</${sectionTitleTag}>${metaBadge}${actionsHtml}`;
+                    const sectionLabel = `<${sectionTitleTag} class="${prefix}-section-title">${Renderer.escapeHtml(formattedTitle)}</${sectionTitleTag}>${metaBadge}${actionsHtml}`;
                     return `
               <details class="${sectionClasses}" data-section-kind="${Renderer.escapeHtml(kind)}" data-section-index="${index}" style="--section-index: ${index};">
                 <summary class="${prefix}-section-summary">${sectionLabel}</summary>
@@ -806,7 +833,7 @@
                 }
 
                 const sectionLabel = hasTitle
-                    ? `<div class="${prefix}-section-heading"><${sectionTitleTag} class="${prefix}-section-title">${Renderer.escapeHtml(section.title)}</${sectionTitleTag}>${metaBadge}${actionsHtml}</div>`
+                    ? `<div class="${prefix}-section-heading"><${sectionTitleTag} class="${prefix}-section-title">${Renderer.escapeHtml(formattedTitle)}</${sectionTitleTag}>${metaBadge}${actionsHtml}</div>`
                     : "";
 
                 return `
@@ -862,7 +889,7 @@
                     })
                     .join("");
                 if (rows) {
-                    familyHtml = `<div class="${prefix}-word-family-grid"><${sectionTitleTag} class="${prefix}-section-title">Word Family</${sectionTitleTag}>${rows}</div>`;
+                    familyHtml = `<div class="${prefix}-word-family-grid"><${sectionTitleTag} class="${prefix}-section-title">🌳 Word Family</${sectionTitleTag}>${rows}</div>`;
                 }
             }
 
@@ -879,7 +906,7 @@
                     .join("");
                 warningsHtml = `
                     <div class="${prefix}-warning-callout">
-                        <${sectionTitleTag} class="${prefix}-section-title">Usage &amp; Register Notes</${sectionTitleTag}>
+                        <${sectionTitleTag} class="${prefix}-section-title">⚠️ Usage &amp; Register Notes</${sectionTitleTag}>
                         <ul>${warningItems}${confusableItems}</ul>
                     </div>
                 `;
@@ -894,7 +921,7 @@
                 const tagsHtml = `<div class="${prefix}-formation-tags">${tagItems(prefixes, `${prefix}-formation-prefix`)}${tagItems(suffixes, `${prefix}-formation-suffix`)}</div>`;
                 const explanationHtml = explanation ? `<p class="${prefix}-formation-explanation">${Renderer.renderSimpleMarkdown(explanation, prefix)}</p>` : "";
                 if (prefixes.length || suffixes.length || explanation) {
-                    formationHtml = `<div class="${prefix}-word-formation"><${sectionTitleTag} class="${prefix}-section-title">Word Formation</${sectionTitleTag}>${tagsHtml}${explanationHtml}</div>`;
+                    formationHtml = `<div class="${prefix}-word-formation"><${sectionTitleTag} class="${prefix}-section-title">🧬 Word Formation</${sectionTitleTag}>${tagsHtml}${explanationHtml}</div>`;
                 }
             }
 
@@ -907,7 +934,7 @@
                         : "";
                     return `<div class="${prefix}-mistake-item"><div class="${prefix}-mistake-original"><strong>Mistake:</strong> ${Renderer.formatInlineMarkdown(item.mistake)}</div><div class="${prefix}-mistake-correction"><strong>Correction:</strong> ${Renderer.formatInlineMarkdown(item.correction)}</div>${example}</div>`;
                 }).join("");
-                mistakesHtml = `<div class="${prefix}-learner-mistakes"><${sectionTitleTag} class="${prefix}-section-title">Common Learner Mistakes</${sectionTitleTag}>${mistakeItems}</div>`;
+                mistakesHtml = `<div class="${prefix}-learner-mistakes"><${sectionTitleTag} class="${prefix}-section-title">⚠️ Common Learner Mistakes</${sectionTitleTag}>${mistakeItems}</div>`;
             }
 
             let collocationsHtml = "";
@@ -924,7 +951,7 @@
                     return `<div class="${prefix}-collocation-group"><span class="${prefix}-collocation-label">${Renderer.escapeHtml(group.label)}</span><div class="${prefix}-collocation-tags">${chips}</div></div>`;
                 }).join("");
                 if (groupRows) {
-                    collocationsHtml = `<div class="${prefix}-collocations-block"><${sectionTitleTag} class="${prefix}-section-title">Collocations</${sectionTitleTag}>${groupRows}</div>`;
+                    collocationsHtml = `<div class="${prefix}-collocations-block"><${sectionTitleTag} class="${prefix}-section-title">🔗 Collocations</${sectionTitleTag}>${groupRows}</div>`;
                 }
             }
 

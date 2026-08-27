@@ -185,7 +185,7 @@
     const FOLLOW_UP_INTENTS = Object.freeze([
         {
             intent: "explain_in_context",
-            title: "Context Explain",
+            title: "🔍 Context Explain",
             loadingMessage: "Explaining in context...",
             errorMessage: "Unable to explain in context.",
             requiresContext: true,
@@ -193,7 +193,7 @@
         },
         {
             intent: "grammar",
-            title: "Grammar & Nuance",
+            title: "📐 Grammar & Nuance",
             loadingMessage: "Analyzing grammar and nuance...",
             errorMessage: "Unable to analyze grammar.",
             requiresContext: true,
@@ -201,7 +201,7 @@
         },
         {
             intent: "phrase_explorer",
-            title: "Phrase & Collocations",
+            title: "💡 Phrase & Collocations",
             loadingMessage: "Exploring phrase and collocations...",
             errorMessage: "Unable to explore this phrase.",
             requiresContext: false,
@@ -209,7 +209,7 @@
         },
         {
             intent: "sentence_breakdown",
-            title: "Sentence Breakdown",
+            title: "🧩 Sentence Breakdown",
             loadingMessage: "Breaking down the sentence...",
             errorMessage: "Unable to break down the sentence.",
             requiresContext: false,
@@ -217,7 +217,7 @@
         },
         {
             intent: "compare_confusables",
-            title: "Compare Confusables",
+            title: "⚖️ Compare Confusables",
             loadingMessage: "Comparing similar words...",
             errorMessage: "Unable to compare these words.",
             requiresContext: false,
@@ -226,7 +226,7 @@
         },
         {
             intent: "rephrase",
-            title: "Rephrase",
+            title: "✨ Rephrase",
             loadingMessage: "Rephrasing...",
             errorMessage: "Unable to rephrase.",
             requiresContext: false,

@@ -46,12 +46,12 @@
                     <p id="context-help" class="${prefix}-context-help">Used only for this explanation. Not saved.</p>
                     <p id="context-error" class="${prefix}-context-error" role="alert" hidden>Paste or type the sentence that contains this word.</p>
                     <div class="${prefix}-context-buttons">
-                        <button id="explain-context-btn" type="button" class="${prefix}-context-btn" data-ai-intent="explain_in_context" title="Explain what this word means in the sentence above"><span class="${prefix}-context-btn-label">Context Explain</span></button>
-                        <button id="explain-grammar-btn" type="button" class="${prefix}-context-btn" data-ai-intent="grammar" title="Analyze syntax role, word order, and tone"><span class="${prefix}-context-btn-label">Grammar &amp; Nuance</span></button>
-                        <button id="explain-phrase-explorer-btn" type="button" class="${prefix}-context-btn" data-ai-intent="phrase_explorer" title="Explore idioms, phrasal verbs, and collocations"><span class="${prefix}-context-btn-label">Phrase &amp; Collocations</span></button>
-                        <button id="explain-sentence-btn" type="button" class="${prefix}-context-btn" data-ai-intent="sentence_breakdown" title="Break down sentence structure and parse components"><span class="${prefix}-context-btn-label">Sentence Breakdown</span></button>
-                        <button id="explain-compare-btn" type="button" class="${prefix}-context-btn" data-ai-intent="compare_confusables" title="Compare similar or confusable words"><span class="${prefix}-context-btn-label">Compare Confusables</span></button>
-                        <button id="explain-rephrase-btn" type="button" class="${prefix}-context-btn" data-ai-intent="rephrase" title="Rephrase in simpler, formal, and idiomatic styles"><span class="${prefix}-context-btn-label">Rephrase</span></button>
+                        <button id="explain-context-btn" type="button" class="${prefix}-context-btn" data-ai-intent="explain_in_context" title="Explain what this word means in the sentence above"><span class="${prefix}-context-btn-label">🔍 Context Explain</span></button>
+                        <button id="explain-grammar-btn" type="button" class="${prefix}-context-btn" data-ai-intent="grammar" title="Analyze syntax role, word order, and tone"><span class="${prefix}-context-btn-label">📐 Grammar &amp; Nuance</span></button>
+                        <button id="explain-phrase-explorer-btn" type="button" class="${prefix}-context-btn" data-ai-intent="phrase_explorer" title="Explore idioms, phrasal verbs, and collocations"><span class="${prefix}-context-btn-label">💡 Phrase &amp; Collocations</span></button>
+                        <button id="explain-sentence-btn" type="button" class="${prefix}-context-btn" data-ai-intent="sentence_breakdown" title="Break down sentence structure and parse components"><span class="${prefix}-context-btn-label">🧩 Sentence Breakdown</span></button>
+                        <button id="explain-compare-btn" type="button" class="${prefix}-context-btn" data-ai-intent="compare_confusables" title="Compare similar or confusable words"><span class="${prefix}-context-btn-label">⚖️ Compare Confusables</span></button>
+                        <button id="explain-rephrase-btn" type="button" class="${prefix}-context-btn" data-ai-intent="rephrase" title="Rephrase in simpler, formal, and idiomatic styles"><span class="${prefix}-context-btn-label">✨ Rephrase</span></button>
                     </div>
                 </div>
             `
@@ -72,7 +72,7 @@
             <header class="${prefix}-header">
                 <div class="${prefix}-header-content">
                     <div class="${prefix}-header-row">
-                        <div class="${prefix}-identity"><span class="${prefix}-brand-mark" aria-hidden="true">D</span><p class="${prefix}-${toolbar ? "eyebrow" : "title"}">${toolbar ? "Look up" : "Dictionary"}</p></div>
+                        <div class="${prefix}-identity"><span class="${prefix}-brand-mark" aria-hidden="true">📖</span><p class="${prefix}-${toolbar ? "eyebrow" : "title"}">${toolbar ? "Look up" : "Dictionary"}</p></div>
                         <div class="${prefix}-header-controls">
                             <select id="${providerId}" class="${prefix}-header-select" aria-label="Dictionary provider">${providerOptions}</select>
                             <select id="${languageId}" class="${prefix}-header-lang" aria-label="Target language"></select>
