@@ -142,6 +142,7 @@ export async function lookupWordnik(text, settings, options = {}) {
 async function fetchWordnikJson(url, { allowEmpty = false, signal } = {}) {
     const response = await fetchWithRetry(url, { signal }, {
         retries: 1,
+        timeoutMs: 6000,
         retryStatuses: [429, 500, 502, 503, 504]
     });
 

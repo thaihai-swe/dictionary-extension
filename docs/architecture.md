@@ -43,12 +43,13 @@ User selects text on webpage OR types query in toolbar popup
                ▼                               ▼
 ┌──────────────────────────────┐ ┌──────────────────────────────┐
 │  Phase 1: Fast Primary Path  │ │    AI Generation Pipeline    │
-│  - Dictionary & Translation  │ │  - Format prompt & variables │
-│    run in parallel           │ │  - Sandbox input boundaries  │
-│  - Primary provider lookup   │ │  - Route: Gemini / OpenAI-cb │
-│    with fallback chain       │ │  - Parse JSON / Markdown     │
-│  - Return initial result     │ │  - Extract lexical profile   │
-│    immediately (blocking)    │ │  - Return result to popup    │
+│  - Dictionary lookup first   │ │  - Format prompt & variables │
+│  - Translation in parallel;  │ │  - Sandbox input boundaries  │
+│    attach if already ready   │ │  - Route: Gemini / OpenAI-cb │
+│  - Primary lemma/phrase      │ │  - Parse JSON / Markdown     │
+│    before secondary backends │ │  - Extract lexical profile   │
+│  - Return dictionary result  │ │  - Return result to popup    │
+│    immediately (blocking)    │ │                              │
 └──────────────┬───────────────┘ └──────────────────────────────┘
                │
                ▼
@@ -64,18 +65,19 @@ User selects text on webpage OR types query in toolbar popup
 ┌──────────────────────────────────────────────────────────────┐
 │              Phase 2: Lazy Enrichment (Non-Blocking)          │
 │                                                              │
-│  1. If phrase-like & no defs: run AI Phrase Fallback first   │
-│  2. Query non-primary dictionary providers (concurrency: 2)  │
-│  3. Merge definitions, examples, syns/ants, IPA, & profile   │
-│  4. Update L1 (memory) & L2 (chrome.storage.session) cache   │
-│  5. Send LOOKUP_UPDATE with requestId and revision: 1        │
+│  1. Attach late translation via LOOKUP_UPDATE (revision: 1)  │
+│  2. If phrase-like & no defs: run AI Phrase Fallback first   │
+│  3. Query non-primary dictionary providers (concurrency: 2)  │
+│  4. Merge definitions, examples, syns/ants, IPA, & profile   │
+│  5. Update L1 (memory) & L2 (chrome.storage.session) cache   │
+│  6. Send LOOKUP_UPDATE with requestId and revision: 2        │
 └──────────────┬───────────────────────────────────────────────┘
                │
                ▼
 ┌──────────────────────────────┐
 │   Popup Progressive Render   │
-│  - Check requestId match     │
-│  - Re-render enriched cards  │
+│  - Check requestId + revision│
+│  - Re-render without jump    │
 │  - Backfill phonetic IPA     │
 │  - Append all source badges  │
 │  - Preserve practice score   │
@@ -90,26 +92,27 @@ User selects text on webpage OR types query in toolbar popup
 
 1. **Facade Dispatch:** The background worker calls `lookupDictionary(text, settings)` via `src/providers/dictionary.js`.
 2. **Primary Provider Selection:** The configured `dictionaryProvider` (`free_dictionary` by default) is attempted first.
-3. **Provider Fallback Chain:** If the primary provider returns `NotFoundError`, the fallback chain evaluates in order:
+3. **Provider Fallback Chain:** Unconfigured key-backed providers are skipped. `NotFoundError` and transient network/5xx/429/timeout continue to the next provider. The fallback chain evaluates in order:
    ```text
    free_dictionary ➔ wiktionary ➔ merriam_webster ➔ wordnik ➔ words_api
    ```
    *(The primary provider is prioritized at the front of this sequence.)*
-4. **Smart Lemmatization Fallback:** If exact matches fail with `NotFoundError` across all providers, `getEnglishLemmaCandidates(text)` generates candidate root stems (e.g. irregular verbs `went` → `go`, plurals `children` → `child`, comparative adjectives `better` → `good`, inflectional suffixes `-ing`, `-ed`, `-es`, `-s`, `-ly`, `-er`, `-est`) and retries the fallback chain. On success, `lemmaFallback` metadata and a subtitle notice (`Showing definitions for root: <stem>`) are attached.
-5. **Smart Phrasal Canonicalization Fallback:** If single-word lemma candidates fail, `getEnglishPhraseCandidates(text)` canonicalizes inflected or auxiliary-led multi-word expressions to base dictionary forms (e.g. `taking care of` → `take care of`, `ran out of` → `run out of`, `has taken off` → `take off`, `looked up` → `look up`) and retries the chain, attaching a phrase notice subtitle on success.
-6. **Operational Failure Gate:** Operational errors (missing credentials, network drop, rate limit, HTTP 403/429/500) immediately abort the fallback chain and bubble up to the user with actionable diagnostic error messages.
-7. **Parallel Translation:** When `enableTranslate` is active, `lookupTranslation(text, settings)` executes concurrently with dictionary lookups via `Promise.allSettled`.
-8. **Initial Delivery:** The combined dictionary and translation result is returned immediately to the UI with `enriched: false` and `revision: 0` for sub-second rendering.
+4. **Primary-First Lemma/Phrase:** The primary provider retries lemma and phrase candidates before any secondary backend is contacted, so common inflections (`running` → `run`) do not wait on 404 fan-out.
+5. **Secondary Exact Then Lemma/Phrase:** If the primary still has no hit, remaining configured providers try the exact query, then lemma/phrase candidates. Unconfigured key-backed providers are skipped. `NotFoundError` and transient network/5xx/429/timeout continue to the next provider.
+6. **Operational Failure Gate:** Auth failures (missing/invalid key, HTTP 401/403) abort the fallback chain. Transient network, timeout, 429, and 5xx errors continue to the next configured provider. Dictionary HTTP timeouts are 6s (translation 8s).
+7. **Non-Blocking Translation:** When `enableTranslate` is active, translation starts in parallel. If it finishes before the dictionary result, it is included in the first paint. Otherwise the dictionary result is returned immediately and translation is merged later via `LOOKUP_UPDATE` (`revision: 1`).
+8. **Initial Delivery:** The dictionary result is returned immediately to the UI with `enriched: false` and `revision: 0` for first paint. Settings are cached in the service worker until `chrome.storage` changes.
 
 ### Phase 2: Asynchronous Lazy Enrichment
 
 After the initial result is dispatched to the popup, the background service worker executes non-blocking background enrichment:
 
-1. **AI Phrase Fallback (Multi-word Lookups):** If the query is phrase-like (`classifyQuery(text) === "phrase"`), lack usable dictionary definitions, and `enableAI` is enabled, `lookupAiProvider(text, settings, { intent: "phrase_fallback" })` is scheduled first. Upon completion, the phrase explanation is merged and broadcast via `LOOKUP_UPDATE` before proceeding to secondary dictionary enrichment.
-2. **Secondary Provider Filtering:** Key-backed providers (`merriam_webster`, `wordnik`, `words_api`) lacking API keys in `chrome.storage.local` are skipped upfront without network overhead.
-3. **Bounded Concurrency:** Remaining unqueried providers are fetched in concurrent batches of 2 (`ENRICHMENT_CONCURRENCY = 2`).
-4. **Resilient Failure Handling:** Secondary `NotFoundError` results and operational errors are caught and logged silently without disrupting the displayed primary result.
-5. **Cumulative Merge Engine (`mergeDictionaryEnrichment`):**
+1. **Late Translation Merge:** If translation was still in flight at first paint, it is merged via `LOOKUP_UPDATE` (`revision: 1`) before phrase fallback or dictionary enrichment.
+2. **AI Phrase Fallback (Multi-word Lookups):** After a ~300ms delay when translation was already included (so a dismissed card can cancel), if the query is phrase-like, lacks usable definitions, and both `enableAI` and `enablePhraseFallback` are on, `lookupAiProvider(text, settings, { intent: "phrase_fallback" })` runs first. Upon completion, the phrase explanation is merged and broadcast via `LOOKUP_UPDATE` before secondary dictionary enrichment.
+3. **Secondary Provider Filtering:** Key-backed providers (`merriam_webster`, `wordnik`, `words_api`) lacking API keys in `chrome.storage.local` are skipped upfront without network overhead.
+4. **Bounded Concurrency:** Remaining unqueried providers are fetched in concurrent batches of 2 (`ENRICHMENT_CONCURRENCY = 2`).
+5. **Resilient Failure Handling:** Secondary `NotFoundError` results and operational errors are caught and logged silently without disrupting the displayed primary result.
+6. **Cumulative Merge Engine (`mergeDictionaryEnrichment`):**
    - **Sections:** Definitions, examples, synonyms, and antonyms are matched by normalized kind/title, deduplicated by normalized text, and clamped by strict limits:
      - `MAX_DEFINITIONS_SECTIONS = 2`
      - `MAX_EXAMPLES_SECTIONS = 2`
@@ -119,7 +122,7 @@ After the initial result is dispatched to the popup, the background service work
    - **Pronunciations:** Audio URLs and IPA phonetic transcriptions are backfilled onto matching language/accent slots (`en-US`, `en-GB`). Phonetic entries are sorted first (`preferPhoneticPronunciations`) so the header row always surfaces transcription text when any provider supplies it. Clamped to `MAX_PRONUNCIATIONS = 4`.
    - **Lexical Profiles:** Normalized word family forms, word formation, warnings, learner mistakes, and collocations are merged across providers via `mergeLexicalProfiles`.
    - **Source Badges:** Every provider that successfully returned data is added to `sourceBadges`, ensuring full attribution even when content duplicates an existing section.
-6. **Incremental Broadcast:** The enriched payload is sent to the originating tab/frame via `LOOKUP_UPDATE` (`revision: 1`, `enriched: true`).
+7. **Incremental Broadcast:** The enriched payload is sent to the originating tab/frame via `LOOKUP_UPDATE` (`revision: 2`, `enriched: true`). Popups ignore equal-or-older revisions and restore scroll position on re-render.
 
 ---
 
@@ -259,6 +262,10 @@ src/content/
 ├── icons.js           # Inline SVG icon assets (search, close, audio, practice)
 └── content.js         # Event orchestration, focus trapping, lifecycle & cleanup
 ```
+
+Content scripts inject in the top frame (`all_frames: false`). Same-origin iframes are injected on selection via `INJECT_FRAME`. Cross-origin iframes cannot be read. `pausedHostnames` disables in-page selection triggers only; toolbar, context menu, and the `lookup-selection` command still work.
+
+---
 
 ### Context Extraction Subsystem
 

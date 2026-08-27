@@ -36,7 +36,11 @@ export async function lookupLibreTranslate(text, settings, options = {}) {
         body: JSON.stringify(payload)
     };
 
-    const response = await fetchWithRetry(urlString, requestOptions, { retries: 1, retryStatuses: [429, 500, 502, 503, 504] });
+    const response = await fetchWithRetry(urlString, requestOptions, {
+        retries: 1,
+        timeoutMs: 8000,
+        retryStatuses: [429, 500, 502, 503, 504]
+    });
     if (!response.ok) {
         throw new Error(`LibreTranslate request failed: ${response.status}`);
     }

@@ -16,6 +16,7 @@ export async function lookupWiktionary(text, _settings, options = {}) {
     const url = `https://en.wiktionary.org/api/rest_v1/page/definition/${encodeURIComponent(term)}`;
     const response = await fetchWithRetry(url, { signal: options.signal }, {
         retries: 1,
+        timeoutMs: 6000,
         retryStatuses: [429, 500, 502, 503, 504]
     });
 

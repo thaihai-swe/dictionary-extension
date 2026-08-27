@@ -60,6 +60,12 @@
                         <span>Enable context menu trigger</span>
                     </label>
                     <p class="field-help">Right-click context menu adds a lookup action for selected text.</p>
+
+                    <label>
+                        <span>Pause in-page triggers on these sites</span>
+                        <textarea name="pausedHostnames" rows="3" placeholder="example.com&#10;news.example.com"></textarea>
+                    </label>
+                    <p class="field-help">One hostname per line. Selection icons, double-click, and the post-selection key stay off on these sites. Toolbar search, the keyboard command (Alt+L), and the context menu still work. Rebind the command in chrome://extensions/shortcuts.</p>
                 </section>
 
                 <!-- DISPLAY SECTION -->
@@ -271,6 +277,13 @@
                         <input name="enableAI" type="checkbox">
                         <span>Enable AI provider (requires API key)</span>
                     </label>
+                    <p class="field-help">Off by default on new installs until you add a key. Existing installs keep their previous setting.</p>
+
+                    <label class="checkbox-row">
+                        <input name="enablePhraseFallback" type="checkbox">
+                        <span>Use AI when a phrase has no dictionary definition</span>
+                    </label>
+                    <p class="field-help">Only runs when AI is enabled. Dictionary mode can explain idioms that none of the dictionary backends know.</p>
 
                     <label>
                         <span>AI API base URL</span>

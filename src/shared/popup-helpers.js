@@ -161,6 +161,7 @@
         "enableTranslate",
         "enableDictionary",
         "enableAI",
+        "enablePhraseFallback",
         "aiBaseUrl",
         "aiApiKey",
         "aiModel",
@@ -344,6 +345,92 @@
         return "";
     }
 
+    function shouldApplyLookupUpdate({
+        payload,
+        activeTab,
+        activeText,
+        activeRequestId,
+        lastRevision = -1,
+        surfaceReady = true
+    } = {}) {
+        const result = payload?.result;
+        if (!result || !surfaceReady || activeTab !== "dictionary") {
+            return false;
+        }
+
+        const requestId = String(payload?.requestId || "").trim();
+        if (requestId && activeRequestId && requestId !== activeRequestId) {
+            return false;
+        }
+
+        const text = String(payload?.text || "").trim();
+        if (text && text.toLowerCase() !== String(activeText || "").trim().toLowerCase()) {
+            return false;
+        }
+
+        const revision = Number(payload?.revision);
+        if (Number.isFinite(revision) && Number.isFinite(lastRevision) && revision <= lastRevision) {
+            return false;
+        }
+
+        return true;
+    }
+
+    function paintLookupResult(container, html) {
+        if (!container) {
+            return;
+        }
+        const scrollTop = container.scrollTop;
+        container.innerHTML = html;
+        container.scrollTop = scrollTop;
+    }
+
+    async function runAiContextAction({
+        intent,
+        query,
+        getContext,
+        validate,
+        setBusy,
+        renderBusy,
+        renderResult,
+        renderError,
+        getLookup,
+        isCurrent
+    } = {}) {
+        const validationError = typeof validate === "function" ? validate() : null;
+        if (validationError) {
+            return { ok: false, error: validationError, cancelled: false };
+        }
+
+        setBusy?.(true);
+        renderBusy?.();
+
+        try {
+            const response = await getLookup(query, {
+                context: typeof getContext === "function" ? getContext() : "",
+                intent
+            });
+            if (isCurrent && !isCurrent()) {
+                return { ok: false, cancelled: true };
+            }
+            if (!response?.ok) {
+                throw new Error(response?.error || "Request failed.");
+            }
+            renderResult?.(response.result);
+            return { ok: true, result: response.result };
+        } catch (error) {
+            if ((isCurrent && !isCurrent()) || error?.name === "AbortError") {
+                return { ok: false, cancelled: true };
+            }
+            renderError?.(error);
+            return { ok: false, error };
+        } finally {
+            if (!isCurrent || isCurrent()) {
+                setBusy?.(false);
+            }
+        }
+    }
+
     async function writeLastTab(tab) {
         const next = tab === "ai" ? "ai" : tab === "dictionary" ? "dictionary" : "";
         if (!next) {
@@ -385,6 +472,9 @@
         getEligibleFollowUpIntents,
         followUpButtonState,
         syncAiActionButtonStatus,
+        shouldApplyLookupUpdate,
+        paintLookupResult,
+        runAiContextAction,
         readLastTab,
         writeLastTab
     };

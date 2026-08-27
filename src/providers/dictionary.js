@@ -1,4 +1,4 @@
-import { NotFoundError } from "./errors.js";
+import { NotFoundError, isFatalDictionaryError } from "./errors.js";
 import { lookupFreeDictionary } from "./free-dictionary.js";
 import { lookupMerriamWebster } from "./merriam-webster-dictionary.js";
 import { lookupWiktionary } from "./wiktionary-dictionary.js";
@@ -56,93 +56,125 @@ export function normalizeDictionaryProviderId(value) {
 
 const ENRICHMENT_CONCURRENCY = 2;
 
-export async function lookupDictionary(text, settings, options = {}) {
-    const primaryId = normalizeDictionaryProviderId(settings?.dictionaryProvider);
+/**
+ * Primary provider tries exact, lemma, and phrase queries before any
+ * secondary backend, so common inflections do not wait on 404 fan-out.
+ */
+export function getDictionaryLookupAttempts(text, primaryId) {
+    const normalizedPrimary = normalizeDictionaryProviderId(primaryId);
     const fallbackChain = [
-        primaryId,
-        ...FALLBACK_ORDER.filter((id) => id !== primaryId)
+        normalizedPrimary,
+        ...FALLBACK_ORDER.filter((id) => id !== normalizedPrimary)
     ];
+    const lemmaCandidates = getEnglishLemmaCandidates(text);
+    const phraseCandidates = getEnglishPhraseCandidates(text);
+    const attempts = [];
+    const seen = new Set();
 
-    let lastNotFoundError = null;
+    function pushAttempt(providerId, query, kind) {
+        const normalizedQuery = String(query || "").trim();
+        if (!providerId || !normalizedQuery) {
+            return;
+        }
+        const key = `${providerId}\0${normalizedQuery.toLowerCase()}`;
+        if (seen.has(key)) {
+            return;
+        }
+        seen.add(key);
+        attempts.push({ providerId, query: normalizedQuery, kind });
+    }
+
+    pushAttempt(normalizedPrimary, text, "exact");
+    for (const candidate of lemmaCandidates) {
+        pushAttempt(normalizedPrimary, candidate, "root");
+    }
+    for (const candidate of phraseCandidates) {
+        pushAttempt(normalizedPrimary, candidate, "phrase");
+    }
 
     for (const providerId of fallbackChain) {
-        const provider = DICTIONARY_PROVIDERS[providerId];
+        if (providerId === normalizedPrimary) {
+            continue;
+        }
+        pushAttempt(providerId, text, "exact");
+    }
+    for (const candidate of lemmaCandidates) {
+        for (const providerId of fallbackChain) {
+            if (providerId === normalizedPrimary) {
+                continue;
+            }
+            pushAttempt(providerId, candidate, "root");
+        }
+    }
+    for (const candidate of phraseCandidates) {
+        for (const providerId of fallbackChain) {
+            if (providerId === normalizedPrimary) {
+                continue;
+            }
+            pushAttempt(providerId, candidate, "phrase");
+        }
+    }
+
+    return attempts;
+}
+
+export async function lookupDictionary(text, settings, options = {}) {
+    const primaryId = normalizeDictionaryProviderId(settings?.dictionaryProvider);
+    let lastNotFoundError = null;
+    let lastLookupError = null;
+
+    async function tryProviderLookup(provider, query) {
+        if (typeof provider.isConfigured === "function" && !provider.isConfigured(settings)) {
+            return null;
+        }
+
+        try {
+            return normalizeDictionaryResult(await provider.lookup(query, settings, options), provider, settings);
+        } catch (error) {
+            if (error instanceof NotFoundError) {
+                lastNotFoundError = error;
+                return null;
+            }
+            if (isFatalDictionaryError(error)) {
+                lastLookupError = error;
+                throw error;
+            }
+            lastLookupError = error;
+            return null;
+        }
+    }
+
+    function applyLemmaFallback(result, candidate, kind) {
+        result.lemmaFallback = {
+            originalText: text,
+            lemma: candidate
+        };
+        const notice = kind === "phrase"
+            ? `Showing definitions for phrase: ${candidate}`
+            : `Showing definitions for root: ${candidate}`;
+        result.subtitle = result.subtitle
+            ? `${result.subtitle} • ${notice}`
+            : notice;
+        return result;
+    }
+
+    for (const attempt of getDictionaryLookupAttempts(text, primaryId)) {
+        const provider = DICTIONARY_PROVIDERS[attempt.providerId];
         if (!provider) {
             continue;
         }
 
-        try {
-            const result = await provider.lookup(text, settings, options);
-            return normalizeDictionaryResult(result, provider, settings);
-        } catch (error) {
-            if (error instanceof NotFoundError) {
-                lastNotFoundError = error;
-                continue;
-            }
-            // Real operational errors (auth missing/invalid, network failure, rate limit) stop the chain
-            throw error;
+        const result = await tryProviderLookup(provider, attempt.query);
+        if (!result) {
+            continue;
         }
+        if (attempt.kind === "root" || attempt.kind === "phrase") {
+            return applyLemmaFallback(result, attempt.query, attempt.kind);
+        }
+        return result;
     }
 
-    const lemmaCandidates = getEnglishLemmaCandidates(text);
-    for (const candidateStem of lemmaCandidates) {
-        for (const providerId of fallbackChain) {
-            const provider = DICTIONARY_PROVIDERS[providerId];
-            if (!provider) {
-                continue;
-            }
-
-            try {
-                const result = await provider.lookup(candidateStem, settings, options);
-                const normalized = normalizeDictionaryResult(result, provider, settings);
-                normalized.lemmaFallback = {
-                    originalText: text,
-                    lemma: candidateStem
-                };
-                const rootNotice = `Showing definitions for root: ${candidateStem}`;
-                normalized.subtitle = normalized.subtitle
-                    ? `${normalized.subtitle} • ${rootNotice}`
-                    : rootNotice;
-                return normalized;
-            } catch (error) {
-                if (error instanceof NotFoundError) {
-                    continue;
-                }
-                throw error;
-            }
-        }
-    }
-
-    const phraseCandidates = getEnglishPhraseCandidates(text);
-    for (const candidatePhrase of phraseCandidates) {
-        for (const providerId of fallbackChain) {
-            const provider = DICTIONARY_PROVIDERS[providerId];
-            if (!provider) {
-                continue;
-            }
-
-            try {
-                const result = await provider.lookup(candidatePhrase, settings, options);
-                const normalized = normalizeDictionaryResult(result, provider, settings);
-                normalized.lemmaFallback = {
-                    originalText: text,
-                    lemma: candidatePhrase
-                };
-                const phraseNotice = `Showing definitions for phrase: ${candidatePhrase}`;
-                normalized.subtitle = normalized.subtitle
-                    ? `${normalized.subtitle} • ${phraseNotice}`
-                    : phraseNotice;
-                return normalized;
-            } catch (error) {
-                if (error instanceof NotFoundError) {
-                    continue;
-                }
-                throw error;
-            }
-        }
-    }
-
-    throw lastNotFoundError || new Error(`No dictionary definition found for "${text}".`);
+    throw lastNotFoundError || lastLookupError || new Error(`No dictionary definition found for "${text}".`);
 }
 
 /**

@@ -43,9 +43,11 @@ export const DEFAULT_SETTINGS = {
     enableTranslate: true,
     enableDictionary: true,
     enableLexicalProfile: true,
-    enableAI: true,
+    enableAI: false,
     enableAiPreload: false,
+    enablePhraseFallback: true,
     disablePageContextExtraction: false,
+    pausedHostnames: [],
     pronunciationRate: 0.95,
     pronunciationVoiceURI: "",
     aiBaseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/",
@@ -54,7 +56,7 @@ export const DEFAULT_SETTINGS = {
     ...DEFAULT_AI_PROMPTS
 };
 
-export const SETTINGS_SCHEMA_VERSION = 9;
+export const SETTINGS_SCHEMA_VERSION = 10;
 const SETTINGS_SCHEMA_VERSION_KEY = "dictionaryHelperSettingsSchemaVersion";
 
 export const SECRET_SETTING_KEYS = Object.freeze([
@@ -85,7 +87,9 @@ export const UI_SETTING_KEYS = Object.freeze([
     "enableLexicalProfile",
     "enableAI",
     "enableAiPreload",
+    "enablePhraseFallback",
     "disablePageContextExtraction",
+    "pausedHostnames",
     "pronunciationRate",
     "pronunciationVoiceURI",
     "aiBaseUrl",
@@ -198,11 +202,13 @@ export async function migrateLegacySecretSettings() {
  * equivalents; custom templates are left unchanged. Version 9 upgrades
  * matching Main, Context, and Grammar built-ins for structured senses,
  * substitutions, and syntactic slots, and seeds Compare / Rephrase
- * templates.
+ * templates. Version 10 adds phrase-fallback and site-pause keys. Existing
+ * installs keep AI enabled when they never stored enableAI (previous default).
  */
 export async function migrateSettingsSchema() {
     const syncData = await chrome.storage.sync.get([
         SETTINGS_SCHEMA_VERSION_KEY,
+        "enableAI",
         "aiSentencePromptTemplate",
         "aiPromptTemplate",
         "aiContextPromptTemplate",
@@ -236,6 +242,10 @@ export async function migrateSettingsSchema() {
 
     if (currentVersion < 9) {
         Object.assign(updates, getLegacyDefaultPromptUpdates(syncData));
+    }
+
+    if (currentVersion < 10 && currentVersion >= 1 && !Object.prototype.hasOwnProperty.call(syncData || {}, "enableAI")) {
+        updates.enableAI = true;
     }
 
     await chrome.storage.sync.set(updates);
@@ -405,7 +415,9 @@ export function normalizeSettings(settings) {
     normalized.enableLexicalProfile = Boolean(normalized.enableLexicalProfile);
     normalized.enableAI = Boolean(normalized.enableAI);
     normalized.enableAiPreload = Boolean(normalized.enableAiPreload);
+    normalized.enablePhraseFallback = normalized.enablePhraseFallback !== false;
     normalized.disablePageContextExtraction = Boolean(normalized.disablePageContextExtraction);
+    normalized.pausedHostnames = normalizePausedHostnames(normalized.pausedHostnames);
 
     if (!normalized.aiPromptTemplate) {
         normalized.aiPromptTemplate = DEFAULT_SETTINGS.aiPromptTemplate;
@@ -436,6 +448,37 @@ export function normalizeSettings(settings) {
     }
 
     return normalized;
+}
+
+export function normalizePausedHostnames(value) {
+    const raw = Array.isArray(value)
+        ? value
+        : String(value || "").split(/[\n,]/);
+    const seen = new Set();
+    const result = [];
+
+    for (const item of raw) {
+        let host = String(item || "").trim().toLowerCase();
+        host = host.replace(/^[a-z]+:\/\//, "").replace(/\/.*$/, "").replace(/:\d+$/, "");
+        if (!host || seen.has(host)) {
+            continue;
+        }
+        seen.add(host);
+        result.push(host);
+        if (result.length >= 100) {
+            break;
+        }
+    }
+
+    return result;
+}
+
+export function isHostnamePaused(hostname, pausedHostnames) {
+    const host = String(hostname || "").trim().toLowerCase();
+    if (!host) {
+        return false;
+    }
+    return normalizePausedHostnames(pausedHostnames).includes(host);
 }
 
 function clampNumber(value, min, max, fallback) {

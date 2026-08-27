@@ -8,13 +8,15 @@ const LOOKUP_UPDATE = "LOOKUP_UPDATE";
 const OPEN_LOOKUP_POPUP = "OPEN_LOOKUP_POPUP";
 const VALIDATE_PROVIDER = "VALIDATE_PROVIDER";
 const CANCEL_LOOKUP = "CANCEL_LOOKUP";
+const INJECT_FRAME = "INJECT_FRAME";
 
 export {
     LOOKUP_TEXT,
     LOOKUP_UPDATE,
     OPEN_LOOKUP_POPUP,
     VALIDATE_PROVIDER,
-    CANCEL_LOOKUP
+    CANCEL_LOOKUP,
+    INJECT_FRAME
 };
 
 if (typeof globalThis !== "undefined") {
@@ -23,6 +25,7 @@ if (typeof globalThis !== "undefined") {
         LOOKUP_UPDATE,
         OPEN_LOOKUP_POPUP,
         VALIDATE_PROVIDER,
-        CANCEL_LOOKUP
+        CANCEL_LOOKUP,
+        INJECT_FRAME
     };
 }

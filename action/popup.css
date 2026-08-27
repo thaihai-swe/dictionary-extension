@@ -206,6 +206,30 @@ body::-webkit-scrollbar {
     fill: currentColor;
 }
 
+.toolbar-popup-pause-btn {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    height: 30px;
+    padding: 0 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-surface-muted);
+    color: var(--color-ink-2);
+    font-size: 0.68rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.toolbar-popup-pause-btn:hover,
+.toolbar-popup-pause-btn[aria-pressed="true"] {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+    background: var(--color-accent-soft);
+}
+
 /* Search Form */
 .toolbar-popup-search {
     flex-shrink: 0;

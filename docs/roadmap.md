@@ -10,7 +10,9 @@ This document tracks shipped capabilities, near-term product work, and longer-te
 - Five dictionary backends with primary-first fallback: `free_dictionary`, `wiktionary`, `merriam_webster`, `wordnik`, `words_api`
 - Removal of the paid-only Oxford provider (no usable free tier)
 - Phase 1 fast primary lookup plus Phase 2 lazy enrichment (`ENRICHMENT_CONCURRENCY = 2`)
-- Incremental `LOOKUP_UPDATE` messaging with `requestId`, `revision`, and stale-response guards
+- Incremental `LOOKUP_UPDATE` messaging with `requestId`, `revision`, stale-response guards, and scroll-preserving progressive paints
+- Primary-first lemma/phrase retries before secondary backends; dictionary HTTP timeouts of 6s
+- Non-blocking translation: first paint can ship dictionary-only, then merge translation at `revision: 1`
 - Smart English lemmatization (`went` → `go`, `children` → `child`) and phrasal canonicalization (`taking care of` → `take care of`)
 - Automatic AI phrase/idiom fallback in Dictionary mode when structured definitions are missing
 - Two-level enrichment cache: L1 in-memory Map (max 20, TTL 10 minutes) plus L2 `chrome.storage.session`
@@ -50,16 +52,17 @@ This document tracks shipped capabilities, near-term product work, and longer-te
 - Sanitized settings export/import (secrets omitted on export, ignored on import)
 - Tab-scoped request cancellation on popup dismissal
 - Calm Learning Studio surfaces: system/light/dark themes, editorial vs learner fonts, resizable cards, reduced-motion support
-
----
+- Per-site pause for in-page triggers (`pausedHostnames`)
+- Keyboard command `lookup-selection` (suggested Alt+L)
+- AI off on fresh installs; phrase fallback is its own setting
+- Primary dictionary chain skips unconfigured providers and continues on transient errors
+- Content scripts inject in the top frame; same-origin iframes inject on selection
+- Phase 2 enrichment waits ~300ms so a dismissed card can cancel it
 
 ## Planned Short Term
 
 Focused, incremental product controls that fit the current MV3 architecture:
 
-- Per-site blacklist and whitelist for in-page triggers
-- Configurable keyboard shortcut beyond the current post-selection modifier key
-- Option to disable automatic phrasal/idiom fallback in Dictionary mode
 - Capture selected sentence, page title, URL, and PDF page metadata with saved vocabulary
 
 ---

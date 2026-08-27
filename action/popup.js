@@ -1,4 +1,4 @@
-import { getUiSettings, saveSettings } from "../src/shared/storage.js";
+import { getUiSettings, isHostnamePaused, saveSettings } from "../src/shared/storage.js";
 import {
     CANCEL_LOOKUP,
     LOOKUP_UPDATE
@@ -38,6 +38,7 @@ const explainSentenceButton = document.querySelector("#explain-sentence-btn");
 const explainCompareButton = document.querySelector("#explain-compare-btn");
 const explainRephraseButton = document.querySelector("#explain-rephrase-btn");
 const openSettingsButton = document.querySelector("#open-settings-btn");
+const pauseSiteButton = document.querySelector("#pause-site-btn");
 const providerSelect = document.querySelector("#provider-select");
 const languageSelect = document.querySelector("#lang-select");
 
@@ -58,6 +59,7 @@ let lastPreloadKey = "";
 let activeFollowUps = [];
 let activeAiIntent = "";
 let activeRequestId = "";
+let lastLookupRevision = -1;
 
 const OUTPUT_AFFECTING_SETTING_KEYS = popupHelpers.OUTPUT_AFFECTING_SETTING_KEYS;
 
@@ -118,7 +120,6 @@ async function init() {
 
     form.addEventListener("submit", handleSubmit);
     openSettingsButton?.addEventListener("click", handleOpenSettings);
-
     const themeToggleBtn = document.querySelector(".dictionary-helper-theme-toggle");
     themeToggleBtn?.addEventListener("click", async () => {
         const currentTheme = settings.theme || "system";
@@ -136,6 +137,8 @@ async function init() {
         await saveSettings({ theme: nextTheme });
     });
 
+    pauseSiteButton?.addEventListener("click", handlePauseSite);
+    void updatePauseSiteButton();
     tabsRoot.addEventListener("click", handleTabClick);
     resultRoot.addEventListener("click", (event) => {
         audio.handlePronunciationClick(event);
@@ -184,29 +187,28 @@ function handleRuntimeMessage(message) {
     }
 
     const payload = message.payload || {};
-    const text = String(payload.text || "").trim();
-    const requestId = String(payload.requestId || "").trim();
     const result = payload.result;
-
-    if (!result || activeTab !== "dictionary") {
-        return false;
-    }
-
-    if (requestId && activeRequestId && requestId !== activeRequestId) {
-        return false;
-    }
-
-    if (text && text.toLowerCase() !== String(activeQuery || "").trim().toLowerCase()) {
+    if (!popupHelpers.shouldApplyLookupUpdate({
+        payload,
+        activeTab,
+        activeText: activeQuery,
+        activeRequestId,
+        lastRevision: lastLookupRevision
+    })) {
         return false;
     }
 
     if (result.requestId) {
         activeRequestId = result.requestId;
     }
+    if (Number.isFinite(payload.revision)) {
+        lastLookupRevision = payload.revision;
+        result.revision = payload.revision;
+    }
 
     const cacheKey = lookupClient.buildRequestCacheKey("dictionary", activeQuery.trim(), settings, {});
     lookupCache.set(cacheKey, result);
-    resultRoot.innerHTML = renderer.renderResult(result, getRenderOptions());
+    popupHelpers.paintLookupResult(resultRoot, renderer.renderResult(result, getRenderOptions()));
     audio.restorePracticeResult(resultRoot, activeQuery, result.pronunciation?.language);
     return false;
 }
@@ -242,6 +244,58 @@ function applyDimensions() {
     resultRoot.style.maxHeight = "none";
     resultRoot.style.flex = "none";
     resultRoot.style.overflow = "visible";
+}
+
+async function getActiveTabHostname() {
+    try {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const url = String(tab?.url || "");
+        if (!url) {
+            return "";
+        }
+        return new URL(url).hostname.toLowerCase();
+    } catch (_error) {
+        return "";
+    }
+}
+
+function renderPauseSiteButton(hostname, paused) {
+    if (!pauseSiteButton) {
+        return;
+    }
+    if (!hostname) {
+        pauseSiteButton.hidden = true;
+        return;
+    }
+    pauseSiteButton.hidden = false;
+    pauseSiteButton.setAttribute("aria-pressed", String(paused));
+    pauseSiteButton.textContent = paused ? "Resume site" : "Pause site";
+    pauseSiteButton.title = paused
+        ? `Resume in-page triggers on ${hostname}`
+        : `Pause in-page triggers on ${hostname}`;
+}
+
+async function updatePauseSiteButton() {
+    const hostname = await getActiveTabHostname();
+    const paused = isHostnamePaused(hostname, settings?.pausedHostnames);
+    renderPauseSiteButton(hostname, paused);
+}
+
+async function handlePauseSite() {
+    const hostname = await getActiveTabHostname();
+    if (!hostname) {
+        return;
+    }
+    const paused = new Set(Array.isArray(settings.pausedHostnames) ? settings.pausedHostnames : []);
+    if (paused.has(hostname)) {
+        paused.delete(hostname);
+    } else {
+        paused.add(hostname);
+    }
+    const pausedHostnames = [...paused];
+    settings.pausedHostnames = pausedHostnames;
+    await saveSettings({ pausedHostnames });
+    renderPauseSiteButton(hostname, paused.has(hostname));
 }
 
 function handleOpenSettings() {
@@ -317,66 +371,64 @@ async function executeContextAction({
         return;
     }
 
-    if (validate) {
-        const error = validate();
-        if (error) {
-            showContextError(error);
-            contextInput?.focus();
-            return;
-        }
-    } else {
-        const validation = popupHelpers.validateContext(contextInput?.value || contextText);
-        contextText = resolveContext ? resolveContext(validation) : (validation.ok ? validation.context : "");
-    }
-
-    clearContextError();
-    setContextActionButtonsDisabled(true);
-    activeAiIntent = intent;
-    syncAiActionButtonStatus();
-
     requestToken += 1;
     const token = requestToken;
-    audio.stopPronunciation();
-    renderState(loadingMessage, false, true);
 
-    try {
-        const response = await lookupClient.getLookupResponse({
+    return popupHelpers.runAiContextAction({
+        intent,
+        query: activeQuery,
+        validate: () => {
+            if (validate) {
+                const error = validate();
+                if (error) {
+                    showContextError(error);
+                    contextInput?.focus();
+                    return error;
+                }
+                return null;
+            }
+            const validation = popupHelpers.validateContext(contextInput?.value || contextText);
+            contextText = resolveContext ? resolveContext(validation) : (validation.ok ? validation.context : "");
+            return null;
+        },
+        getContext: () => contextText,
+        setBusy: (busy) => {
+            setContextActionButtonsDisabled(busy);
+            if (!busy && token === requestToken) {
+                updateContextActionVisibility();
+                syncAiActionButtonStatus();
+            }
+        },
+        renderBusy: () => {
+            clearContextError();
+            activeAiIntent = intent;
+            syncAiActionButtonStatus();
+            audio.stopPronunciation();
+            renderState(loadingMessage, false, true);
+        },
+        renderResult: (result) => {
+            activeTab = "ai";
+            renderTabs();
+            updateContextActionVisibility();
+            resultRoot.innerHTML = renderer.renderResult(result, getRenderOptions({ followUps: [] }));
+            syncAiActionButtonStatus();
+        },
+        renderError: (error) => {
+            renderState(error.message || errorMessage, true);
+        },
+        getLookup: (text, requestOptions) => lookupClient.getLookupResponse({
             tab: "ai",
-            text: activeQuery,
+            text,
             settings,
             requestOptions: {
                 trigger: "manual",
-                context: contextText,
-                intent,
+                ...requestOptions,
                 ...extraOptions
             },
             cache: lookupCache
-        });
-
-        if (token !== requestToken) {
-            return;
-        }
-
-        if (!response?.ok) {
-            throw new Error(response?.error || "Request failed.");
-        }
-
-        activeTab = "ai";
-        renderTabs();
-        updateContextActionVisibility();
-        resultRoot.innerHTML = renderer.renderResult(response.result, getRenderOptions({ followUps: [] }));
-        syncAiActionButtonStatus();
-    } catch (error) {
-        if (token !== requestToken || error?.name === "AbortError") {
-            return;
-        }
-        renderState(error.message || errorMessage, true);
-    } finally {
-        if (token === requestToken) {
-            updateContextActionVisibility();
-            syncAiActionButtonStatus();
-        }
-    }
+        }),
+        isCurrent: () => token === requestToken
+    });
 }
 
 function handleExplainInContext() {
@@ -506,6 +558,9 @@ if (areaName !== "sync") {
         if (key === "fontFamily") {
             document.documentElement.setAttribute("data-font", settings.fontFamily || "editorial");
         }
+        if (key === "pausedHostnames") {
+            void updatePauseSiteButton();
+        }
     }
 
     if (Object.keys(changes).some((key) => OUTPUT_AFFECTING_SETTING_KEYS.has(key))) {
@@ -612,6 +667,7 @@ async function loadTab(tab) {
     requestToken += 1;
     const token = requestToken;
     activeRequestId = "";
+    lastLookupRevision = -1;
     audio.stopPronunciation();
     if (tab !== "ai") {
         activeFollowUps = [];
@@ -627,11 +683,12 @@ async function loadTab(tab) {
         if (cached.requestId) {
             activeRequestId = cached.requestId;
         }
+        lastLookupRevision = Number.isFinite(cached.revision) ? cached.revision : (cached.enriched ? 2 : 0);
         if (tab === "ai") {
             syncFollowUpState(query, contextText);
         }
         resultRoot.setAttribute("aria-busy", "false");
-        resultRoot.innerHTML = renderer.renderResult(cached, getRenderOptions());
+        popupHelpers.paintLookupResult(resultRoot, renderer.renderResult(cached, getRenderOptions()));
         audio.restorePracticeResult(resultRoot, query, cached.pronunciation?.language);
         syncAiActionButtonStatus();
         if (tab === "ai") {
@@ -664,10 +721,13 @@ async function loadTab(tab) {
         if (response.result?.requestId) {
             activeRequestId = response.result.requestId;
         }
+        lastLookupRevision = Number.isFinite(response.result?.revision)
+            ? response.result.revision
+            : (response.result?.enriched ? 2 : 0);
         if (tab === "ai") {
             syncFollowUpState(query, contextText);
         }
-        resultRoot.innerHTML = renderer.renderResult(response.result, getRenderOptions());
+        popupHelpers.paintLookupResult(resultRoot, renderer.renderResult(response.result, getRenderOptions()));
         audio.restorePracticeResult(resultRoot, query, response.result?.pronunciation?.language);
         syncAiActionButtonStatus();
         if (tab === "ai") {

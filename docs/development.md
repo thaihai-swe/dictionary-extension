@@ -23,6 +23,8 @@
 4. Click the **Reload icon** (↻) on the extension card after making code changes.
 5. **Important:** Refresh all open webpage tabs where you are testing so content scripts re-inject.
 6. For local HTML/PDF testing, open the extension **Details** and enable **Allow access to file URLs**.
+7. Run unit tests before the manual matrix: `node --test tests/*.test.js`.
+8. Keep `manifest.json` `content_scripts[0].js` / `.css` identical to `src/shared/content-scripts.js`. The test in `tests/content-scripts.test.js` asserts that.
 
 ---
 
@@ -80,8 +82,8 @@ Run this comprehensive verification protocol before submitting code changes:
 
 ### A. Core Lookups & Progressive Lazy Enrichment
 1. Look up a polysemous word like `run` with translation enabled:
-   - Confirm initial definitions and translation render in under a second (`revision: 0`).
-   - Confirm Phase 2 secondary providers lazily enrich additional definitions, examples, and synonyms (`revision: 1`).
+   - Confirm initial definitions render in under a second (`revision: 0`). Translation may be present immediately or arrive as `revision: 1`.
+   - Confirm Phase 2 secondary providers lazily enrich additional definitions, examples, and synonyms (`revision: 2`).
    - Confirm contributing provider badges appear in the title row without duplicate subtitle labels.
 2. Look up a term whose primary provider lacks IPA:
    - Confirm Phase 2 enrichment backfills phonetic IPA into the pronunciation row when a secondary provider returns it.
@@ -89,19 +91,21 @@ Run this comprehensive verification protocol before submitting code changes:
    - Query `apple`, then immediately type `orange` before `apple` finishes enrichment.
    - Confirm `apple` enrichment updates never overwrite `orange` (stale-response guard via `requestId`).
 4. Skip unconfigured providers:
-   - Clear API keys for Merriam-Webster, Wordnik, and WordsAPI.
+   - Set the primary dictionary to Merriam-Webster, Wordnik, or WordsAPI with an empty key.
    - Confirm lookups succeed via Free Dictionary and Wiktionary without network errors in the DevTools console.
+   - A transient 5xx/timeout from a free provider should fall through to the next free provider. An invalid API key (401/403) still stops the chain.
 
 ---
 
 ### B. Smart Lemmatization & Phrasal Fallback
 5. Test irregular verbs and inflections: `went`, `children`, `better`, `running`, `evaluated`.
-   - Confirm exact lookup fails gracefully, candidate lemma is generated, and definition displays `Showing definitions for root: <stem>`.
+   - Confirm the primary provider retries the lemma before secondary backends, and definition displays `Showing definitions for root: <stem>`.
 6. Test multi-word phrasal expressions: `taking care of`, `looked up`, `ran out of`, `has taken off`.
    - Confirm phrasal canonicalization stems to base forms (`take care of`, `look up`, `run out of`) with root notices.
 7. Test obscure idiom fallback:
-   - Look up an idiom missing from all dictionary backends (e.g. `spill the beans`).
+   - With AI and phrase fallback enabled, look up an idiom missing from all dictionary backends (e.g. `spill the beans`).
    - Confirm automatic AI Phrase Fallback renders concise meaning under `AI · Phrase explanation`.
+   - Disable **Use AI when a phrase has no dictionary definition** and confirm the phrase lookup no longer starts that AI request.
 
 ---
 
