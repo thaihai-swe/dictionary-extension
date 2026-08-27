@@ -56,6 +56,22 @@
                 </div>
             `
             : `<div class="${prefix}-context-host"></div>`;
+        const shortcutsBtn = `
+            <button class="${prefix}-shortcuts-btn" type="button" aria-label="Keyboard shortcuts" title="Keyboard shortcuts (Phím tắt)">
+                <svg class="${prefix}-shortcuts-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2" ry="2"/>
+                    <line x1="6" y1="8" x2="6" y2="8"/>
+                    <line x1="10" y1="8" x2="10" y2="8"/>
+                    <line x1="14" y1="8" x2="14" y2="8"/>
+                    <line x1="18" y1="8" x2="18" y2="8"/>
+                    <line x1="6" y1="12" x2="6" y2="12"/>
+                    <line x1="10" y1="12" x2="10" y2="12"/>
+                    <line x1="14" y1="12" x2="14" y2="12"/>
+                    <line x1="18" y1="12" x2="18" y2="12"/>
+                    <line x1="7" y1="16" x2="17" y2="16"/>
+                </svg>
+            </button>
+        `;
         const themeToggle = `
             <button class="${prefix}-theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme">
                 <svg class="${prefix}-theme-icon ${prefix}-theme-icon--sun" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -68,6 +84,40 @@
                 <svg class="${prefix}-expand-icon ${prefix}-expand-icon--restore" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="10" y1="14" x2="3" y2="21"/></svg>
             </button>
         `;
+        const shortcutsModal = `
+            <div class="${prefix}-shortcuts-modal" hidden aria-label="Keyboard Shortcuts">
+                <div class="${prefix}-shortcuts-header">
+                    <span class="${prefix}-shortcuts-title">⌨️ Phím tắt &amp; Tiện ích</span>
+                    <button class="${prefix}-shortcuts-close" type="button" aria-label="Close shortcuts">&times;</button>
+                </div>
+                <div class="${prefix}-shortcuts-list">
+                    <div class="${prefix}-shortcut-item">
+                        <span class="${prefix}-shortcut-desc">Tra cứu nhanh từ đang bôi đen</span>
+                        <div class="${prefix}-shortcut-keys"><kbd>Shift</kbd> + <kbd>Q</kbd></div>
+                    </div>
+                    <div class="${prefix}-shortcut-item">
+                        <span class="${prefix}-shortcut-desc">Đóng cửa sổ popup</span>
+                        <div class="${prefix}-shortcut-keys"><kbd>Esc</kbd></div>
+                    </div>
+                    <div class="${prefix}-shortcut-item">
+                        <span class="${prefix}-shortcut-desc">Phóng to toàn màn hình / Thu nhỏ</span>
+                        <div class="${prefix}-shortcut-keys"><kbd>Nút ⤢</kbd></div>
+                    </div>
+                    <div class="${prefix}-shortcut-item">
+                        <span class="${prefix}-shortcut-desc">Di chuyển popup tự do</span>
+                        <div class="${prefix}-shortcut-keys"><kbd>Kéo Header</kbd></div>
+                    </div>
+                    <div class="${prefix}-shortcut-item">
+                        <span class="${prefix}-shortcut-desc">Thay đổi kích cỡ cửa sổ</span>
+                        <div class="${prefix}-shortcut-keys"><kbd>Góc phải ◺</kbd></div>
+                    </div>
+                    <div class="${prefix}-shortcut-item">
+                        <span class="${prefix}-shortcut-desc">Đổi theme Sáng / Tối</span>
+                        <div class="${prefix}-shortcut-keys"><kbd>Nút ☀️/🌙</kbd></div>
+                    </div>
+                </div>
+            </div>
+        `;
         const content = `
             <header class="${prefix}-header">
                 <div class="${prefix}-header-content">
@@ -76,6 +126,7 @@
                         <div class="${prefix}-header-controls">
                             <select id="${providerId}" class="${prefix}-header-select" aria-label="Dictionary provider">${providerOptions}</select>
                             <select id="${languageId}" class="${prefix}-header-lang" aria-label="Target language"></select>
+                            ${shortcutsBtn}
                             ${themeToggle}
                             ${expandBtn}
                             ${headerAction}
@@ -83,6 +134,7 @@
                     </div>
                 </div>
             </header>
+            ${shortcutsModal}
             ${search}
             <nav class="${prefix}-tabs" id="${tabsId}" role="tablist" aria-label="Lookup mode"></nav>
             ${context}

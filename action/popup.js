@@ -137,6 +137,24 @@ async function init() {
         await saveSettings({ theme: nextTheme });
     });
 
+    const shortcutsBtn = document.querySelector(".dictionary-helper-shortcuts-btn");
+    const shortcutsModal = document.querySelector(".dictionary-helper-shortcuts-modal");
+    const shortcutsClose = document.querySelector(".dictionary-helper-shortcuts-close");
+
+    shortcutsBtn?.addEventListener("click", (event) => {
+        event.stopPropagation();
+        if (shortcutsModal) {
+            shortcutsModal.hidden = !shortcutsModal.hidden;
+        }
+    });
+
+    shortcutsClose?.addEventListener("click", (event) => {
+        event.stopPropagation();
+        if (shortcutsModal) {
+            shortcutsModal.hidden = true;
+        }
+    });
+
     pauseSiteButton?.addEventListener("click", handlePauseSite);
     void updatePauseSiteButton();
     tabsRoot.addEventListener("click", handleTabClick);

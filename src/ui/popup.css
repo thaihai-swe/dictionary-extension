@@ -275,6 +275,112 @@
 [data-theme="dark"] .dictionary-helper-theme-icon--sun { display: block; }
 [data-theme="dark"] .dictionary-helper-theme-icon--moon { display: none; }
 
+/* Shortcuts Button */
+.dictionary-helper-shortcuts-btn {
+    display: inline-grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    color: var(--color-text-secondary);
+    background: var(--color-surface-muted);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: color var(--transition-fast), border-color var(--transition-fast), background-color var(--transition-fast), transform var(--transition-fast);
+}
+.dictionary-helper-shortcuts-btn:hover {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+    background: var(--color-primary-soft);
+    transform: scale(1.05);
+}
+
+/* Shortcuts Modal / Popover Overlay */
+.dictionary-helper-shortcuts-modal {
+    position: absolute;
+    top: 50px;
+    left: 14px;
+    right: 14px;
+    z-index: 50;
+    padding: 14px 16px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-l);
+    box-shadow: var(--shadow-panel);
+    animation: dictionary-popup-enter 160ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    backdrop-filter: blur(12px);
+}
+.dictionary-helper-shortcuts-modal[hidden] {
+    display: none !important;
+}
+.dictionary-helper-shortcuts-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--color-border);
+}
+.dictionary-helper-shortcuts-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+.dictionary-helper-shortcuts-close {
+    display: inline-grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: var(--color-text-muted);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+.dictionary-helper-shortcuts-close:hover {
+    color: var(--color-danger);
+    background: var(--color-danger-soft);
+}
+.dictionary-helper-shortcuts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.dictionary-helper-shortcut-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 0.78rem;
+    color: var(--color-text-secondary);
+}
+.dictionary-helper-shortcut-keys {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    color: var(--color-text-primary);
+}
+.dictionary-helper-shortcut-keys kbd {
+    display: inline-block;
+    padding: 2px 6px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    background: var(--color-surface-muted);
+    border: 1px solid var(--color-border-strong);
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
+}
+
 /* Expand / Maximize Button */
 .dictionary-helper-expand-btn {
     display: inline-grid;

@@ -478,7 +478,21 @@ if (window.__dictionaryHelperContentInitialized) {
             return;
         }
 
-        if (!currentSelectionSnapshot || !currentSelectionSnapshot.text) {
+        let snapshot = currentSelectionSnapshot;
+        if (!snapshot || !snapshot.text) {
+            const rawSelection = typeof window !== "undefined" && window.getSelection ? window.getSelection().toString().trim() : "";
+            if (rawSelection) {
+                snapshot = {
+                    text: rawSelection,
+                    rect: getSelectionRectForText(rawSelection),
+                    context: "",
+                    contextSource: "",
+                    contextConfidence: "none"
+                };
+            }
+        }
+
+        if (!snapshot || !snapshot.text) {
             return;
         }
 
@@ -487,7 +501,7 @@ if (window.__dictionaryHelperContentInitialized) {
             return;
         }
 
-        // Ignore chorded shortcuts; only a single configured modifier should open lookup.
+        // Ignore chorded shortcuts with other modifier keys
         if (modifier === "shift" && (event.altKey || event.ctrlKey || event.metaKey)) {
             return;
         }
@@ -498,27 +512,27 @@ if (window.__dictionaryHelperContentInitialized) {
             return;
         }
 
-        if (popupRoot && activeText === currentSelectionSnapshot.text) {
+        if (popupRoot && activeText === snapshot.text) {
             return;
         }
 
         event.preventDefault();
-        openPopupFromSnapshot(currentSelectionSnapshot, event, { keyboard: true });
+        openPopupFromSnapshot(snapshot, event, { keyboard: true });
     }
 
     function isConfiguredPostSelectionKey(event, modifier) {
         const key = String(event.key || "").toLowerCase();
 
-        if (modifier === "shift") {
-            return event.key === "Shift" || key === "shift";
+        if (modifier === "shift" || modifier === "shift_q") {
+            return event.shiftKey && (key === "q" || event.code === "KeyQ");
         }
 
         if (modifier === "alt") {
-            return event.key === "Alt" || key === "alt";
+            return (event.altKey || event.key === "Alt" || key === "alt") && (key === "q" || event.code === "KeyQ" || event.key === "Alt");
         }
 
         if (modifier === "ctrl") {
-            return event.key === "Control" || event.key === "Meta" || key === "control" || key === "meta";
+            return (event.ctrlKey || event.metaKey) && (key === "q" || event.code === "KeyQ" || event.key === "Control" || event.key === "Meta");
         }
 
         return false;
@@ -578,6 +592,24 @@ if (window.__dictionaryHelperContentInitialized) {
 
         popupRoot.querySelector(".dictionary-helper-close")?.addEventListener("click", () => destroyPopup({ animate: true }));
         popupRoot.addEventListener("keydown", trapPopupFocus);
+
+        const shortcutsBtn = popupRoot.querySelector(".dictionary-helper-shortcuts-btn");
+        const shortcutsModal = popupRoot.querySelector(".dictionary-helper-shortcuts-modal");
+        const shortcutsClose = popupRoot.querySelector(".dictionary-helper-shortcuts-close");
+
+        shortcutsBtn?.addEventListener("click", (event) => {
+            event.stopPropagation();
+            if (shortcutsModal) {
+                shortcutsModal.hidden = !shortcutsModal.hidden;
+            }
+        });
+
+        shortcutsClose?.addEventListener("click", (event) => {
+            event.stopPropagation();
+            if (shortcutsModal) {
+                shortcutsModal.hidden = true;
+            }
+        });
 
         const themeToggle = popupRoot.querySelector(".dictionary-helper-theme-toggle");
         themeToggle?.addEventListener("click", async (event) => {
