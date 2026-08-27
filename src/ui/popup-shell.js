@@ -57,7 +57,7 @@
             `
             : `<div class="${prefix}-context-host"></div>`;
         const shortcutsBtn = `
-            <button class="${prefix}-shortcuts-btn" type="button" aria-label="Keyboard shortcuts" title="Keyboard shortcuts (Phím tắt)">
+            <button class="${prefix}-shortcuts-btn" type="button" aria-label="Keyboard shortcuts" title="Shortcuts &amp; Tips · Phím tắt &amp; Tiện ích">
                 <svg class="${prefix}-shortcuts-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="2" y="4" width="20" height="16" rx="2" ry="2"/>
                     <line x1="6" y1="8" x2="6" y2="8"/>
@@ -73,13 +73,13 @@
             </button>
         `;
         const themeToggle = `
-            <button class="${prefix}-theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme">
+            <button class="${prefix}-theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme · Đổi giao diện Sáng / Tối">
                 <svg class="${prefix}-theme-icon ${prefix}-theme-icon--sun" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
                 <svg class="${prefix}-theme-icon ${prefix}-theme-icon--moon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             </button>
         `;
         const expandBtn = toolbar ? "" : `
-            <button class="${prefix}-expand-btn" type="button" aria-label="Expand / Restore" title="Expand / Restore">
+            <button class="${prefix}-expand-btn" type="button" aria-label="Expand / Restore" title="Maximize / Restore · Phóng to / Thu nhỏ">
                 <svg class="${prefix}-expand-icon ${prefix}-expand-icon--expand" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
                 <svg class="${prefix}-expand-icon ${prefix}-expand-icon--restore" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="10" y1="14" x2="3" y2="21"/></svg>
             </button>
@@ -87,33 +87,61 @@
         const shortcutsModal = `
             <div class="${prefix}-shortcuts-modal" hidden aria-label="Keyboard Shortcuts">
                 <div class="${prefix}-shortcuts-header">
-                    <span class="${prefix}-shortcuts-title">⌨️ Phím tắt &amp; Tiện ích</span>
+                    <div class="${prefix}-shortcuts-title-wrap">
+                        <span class="${prefix}-shortcuts-title">⌨️ Shortcuts &amp; Tips</span>
+                        <small class="${prefix}-shortcuts-subtitle">Phím tắt &amp; Tiện ích tra cứu</small>
+                    </div>
                     <button class="${prefix}-shortcuts-close" type="button" aria-label="Close shortcuts">&times;</button>
                 </div>
                 <div class="${prefix}-shortcuts-list">
                     <div class="${prefix}-shortcut-item">
-                        <span class="${prefix}-shortcut-desc">Tra cứu nhanh từ đang bôi đen</span>
+                        <div class="${prefix}-shortcut-desc-wrap">
+                            <span class="${prefix}-shortcut-desc">Quick lookup selected text</span>
+                            <small class="${prefix}-shortcut-sub">Tra cứu nhanh từ/câu đang bôi đen</small>
+                        </div>
                         <div class="${prefix}-shortcut-keys"><kbd>Shift</kbd> + <kbd>Q</kbd></div>
                     </div>
                     <div class="${prefix}-shortcut-item">
-                        <span class="${prefix}-shortcut-desc">Đóng cửa sổ popup</span>
+                        <div class="${prefix}-shortcut-desc-wrap">
+                            <span class="${prefix}-shortcut-desc">Close lookup popup</span>
+                            <small class="${prefix}-shortcut-sub">Đóng cửa sổ tra cứu</small>
+                        </div>
                         <div class="${prefix}-shortcut-keys"><kbd>Esc</kbd></div>
                     </div>
                     <div class="${prefix}-shortcut-item">
-                        <span class="${prefix}-shortcut-desc">Phóng to toàn màn hình / Thu nhỏ</span>
+                        <div class="${prefix}-shortcut-desc-wrap">
+                            <span class="${prefix}-shortcut-desc">Maximize / Restore viewport</span>
+                            <small class="${prefix}-shortcut-sub">Phóng to toàn màn hình / Thu nhỏ</small>
+                        </div>
                         <div class="${prefix}-shortcut-keys"><kbd>Nút ⤢</kbd></div>
                     </div>
                     <div class="${prefix}-shortcut-item">
-                        <span class="${prefix}-shortcut-desc">Di chuyển popup tự do</span>
+                        <div class="${prefix}-shortcut-desc-wrap">
+                            <span class="${prefix}-shortcut-desc">Drag popup freely</span>
+                            <small class="${prefix}-shortcut-sub">Kéo di chuyển trên màn hình</small>
+                        </div>
                         <div class="${prefix}-shortcut-keys"><kbd>Kéo Header</kbd></div>
                     </div>
                     <div class="${prefix}-shortcut-item">
-                        <span class="${prefix}-shortcut-desc">Thay đổi kích cỡ cửa sổ</span>
+                        <div class="${prefix}-shortcut-desc-wrap">
+                            <span class="${prefix}-shortcut-desc">Resize width &amp; height</span>
+                            <small class="${prefix}-shortcut-sub">Thay đổi kích cỡ cửa sổ</small>
+                        </div>
                         <div class="${prefix}-shortcut-keys"><kbd>Góc phải ◺</kbd></div>
                     </div>
                     <div class="${prefix}-shortcut-item">
-                        <span class="${prefix}-shortcut-desc">Đổi theme Sáng / Tối</span>
+                        <div class="${prefix}-shortcut-desc-wrap">
+                            <span class="${prefix}-shortcut-desc">Toggle Dark / Light theme</span>
+                            <small class="${prefix}-shortcut-sub">Đổi giao diện Sáng / Tối</small>
+                        </div>
                         <div class="${prefix}-shortcut-keys"><kbd>Nút ☀️/🌙</kbd></div>
+                    </div>
+                    <div class="${prefix}-shortcut-item">
+                        <div class="${prefix}-shortcut-desc-wrap">
+                            <span class="${prefix}-shortcut-desc">Navigate buttons &amp; tabs</span>
+                            <small class="${prefix}-shortcut-sub">Chuyển tab và điều hướng phím</small>
+                        </div>
+                        <div class="${prefix}-shortcut-keys"><kbd>Tab</kbd> / <kbd>Enter</kbd></div>
                     </div>
                 </div>
             </div>
