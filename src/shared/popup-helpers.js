@@ -292,12 +292,13 @@
         if (!buttons || !buttons.forEach) {
             return;
         }
+        const followUpsList = Array.isArray(activeFollowUps) ? activeFollowUps : [];
         const statusSelector = `.${prefix}-context-btn-status, .${prefix}-followup-status`;
         const dotSelector = `.${prefix}-progress-dot`;
 
         buttons.forEach((button) => {
             const intent = button.getAttribute("data-ai-intent") || "";
-            const item = activeFollowUps.find((entry) => entry.intent === intent);
+            const item = followUpsList.find((entry) => entry && entry.intent === intent);
             const state = followUpButtonState(item, activeIntent);
             const isActive = activeIntent === intent;
             button.classList.toggle("is-active", isActive);
@@ -451,6 +452,56 @@
         }
     }
 
+    async function writeLastIntent(intent) {
+        if (!intent) return;
+        try {
+            if (global.chrome?.storage?.local) {
+                await chrome.storage.local.set({ lastActiveAiIntent: intent });
+            }
+            if (typeof localStorage !== "undefined") {
+                localStorage.setItem("lastActiveAiIntent", intent);
+            }
+        } catch (_error) {
+            // Best effort
+        }
+    }
+
+    async function readLastIntent() {
+        try {
+            if (global.chrome?.storage?.local) {
+                const data = await chrome.storage.local.get("lastActiveAiIntent");
+                if (data?.lastActiveAiIntent) return data.lastActiveAiIntent;
+            }
+            if (typeof localStorage !== "undefined") {
+                const val = localStorage.getItem("lastActiveAiIntent");
+                if (val) return val;
+            }
+        } catch (_error) {
+            // Best effort
+        }
+        return "";
+    }
+
+    function readLastTabSync() {
+        try {
+            if (typeof localStorage !== "undefined") {
+                const val = localStorage.getItem(LAST_TAB_SESSION_KEY);
+                if (val === "ai" || val === "dictionary") return val;
+            }
+        } catch (_e) {}
+        return "dictionary";
+    }
+
+    function readLastIntentSync() {
+        try {
+            if (typeof localStorage !== "undefined") {
+                const val = localStorage.getItem("lastActiveAiIntent");
+                if (val) return val;
+            }
+        } catch (_e) {}
+        return "";
+    }
+
     const PopupHelpers = {
         MAX_CONTEXT_CHARS,
         LAST_TAB_SESSION_KEY,
@@ -476,7 +527,11 @@
         paintLookupResult,
         runAiContextAction,
         readLastTab,
-        writeLastTab
+        writeLastTab,
+        readLastIntent,
+        writeLastIntent,
+        readLastTabSync,
+        readLastIntentSync
     };
 
     global.DictionaryHelperPopupHelpers = PopupHelpers;

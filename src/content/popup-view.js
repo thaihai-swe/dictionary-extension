@@ -63,10 +63,12 @@
 
         let tokensCssUrl = "";
         let popupCssUrl = "";
+        let toolbarCssUrl = "";
         try {
             if (typeof chrome !== "undefined" && chrome.runtime?.getURL) {
                 tokensCssUrl = chrome.runtime.getURL("tokens.css");
                 popupCssUrl = chrome.runtime.getURL("src/ui/popup.css");
+                toolbarCssUrl = chrome.runtime.getURL("src/pages/popup/popup.css");
             }
         } catch (_error) {
             state.extensionContextValid = false;
@@ -85,8 +87,13 @@
         popupCssLink.rel = "stylesheet";
         popupCssLink.href = popupCssUrl;
 
+        const toolbarCssLink = document.createElement("link");
+        toolbarCssLink.rel = "stylesheet";
+        toolbarCssLink.href = toolbarCssUrl;
+
         state.shadowRoot.appendChild(tokensLink);
         state.shadowRoot.appendChild(popupCssLink);
+        state.shadowRoot.appendChild(toolbarCssLink);
 
         state.popupRoot = document.createElement("div");
         state.popupRoot.className = "dictionary-helper-root";
@@ -97,6 +104,13 @@
         state.shadowRoot.appendChild(state.popupRoot);
 
         state.popupCard = state.popupRoot.querySelector(".dictionary-helper-card");
+
+        if (popupHelpers?.readLastTabSync) {
+            state.activeTab = popupHelpers.readLastTabSync();
+        }
+        if (popupHelpers?.readLastIntentSync) {
+            state.activeAiIntent = popupHelpers.readLastIntentSync();
+        }
 
         state.popupRoot.querySelector(".dictionary-helper-close")?.addEventListener("click", () => destroyPopup({ animate: true }));
         state.popupRoot.addEventListener("keydown", (e) => ns.eventUtils?.trapPopupFocus(e, state.popupRoot));
@@ -253,22 +267,24 @@
             popupHelpers.autosizeTextarea(event.target, { minRows: 2, maxRows: 4 });
         });
 
+        if (typeof globalThis.PopupController !== "undefined") {
+            globalThis.PopupController.attachCommonListeners({
+                container: state.popupRoot,
+                state,
+                loadTab: (targetTab) => {
+                    renderShell();
+                    return ns.tabLoader?.loadTab(targetTab);
+                },
+                runAiAction: (intent) => {
+                    ns.popupView?.triggerAiIntent?.(intent);
+                },
+                audio,
+                popupHelpers
+            });
+        }
+
         state.popupRoot.querySelector(".dictionary-helper-body")?.addEventListener("click", (event) => {
             audio?.handlePronunciationClick(event);
-
-            const phraseBtn = event.target.closest("[data-lookup-query]");
-            if (phraseBtn) {
-                const query = String(phraseBtn.dataset.lookupQuery || "").trim();
-                if (query && query.toLowerCase() !== String(state.activeText || "").trim().toLowerCase()) {
-                    audio?.clearPracticeResults();
-                    state.activeText = query;
-                    state.activeTab = "dictionary";
-                    state.activeAiIntent = "";
-                    void popupHelpers.writeLastTab(state.activeTab);
-                    renderShell();
-                    void ns.tabLoader?.loadTab("dictionary");
-                }
-            }
         });
 
         // Resize logic
@@ -499,8 +515,8 @@
             return;
         }
 
-        const tabs = state.popupRoot.querySelector(".dictionary-helper-tabs");
-        const contextHost = state.popupRoot.querySelector(".dictionary-helper-context-host");
+        const tabs = state.popupRoot.querySelector(".dict-popup-tabs, .dictionary-helper-tabs");
+        const contextHost = state.popupRoot.querySelector(".dict-popup-context-host, .dictionary-helper-context-host");
         const availableTabs = ns.tabLoader?.getAvailableTabs() || [];
 
         if (availableTabs.length === 0) {
@@ -515,7 +531,7 @@
 
         const tabButtons = availableTabs.map((tab) => {
             const activeClass = tab === state.activeTab ? " is-active" : "";
-            return `<button class="dictionary-helper-tab${activeClass}" data-tab="${tab}" id="dictionary-helper-tab-${tab}" type="button" role="tab" aria-selected="${tab === state.activeTab}" aria-controls="dictionary-helper-result">${renderer?.labelForTab(tab)}</button>`;
+            return `<button class="dictionary-helper-tab${activeClass}" data-tab="${tab}" data-tab-target="${tab}" id="dictionary-helper-tab-${tab}" type="button" role="tab" aria-selected="${tab === state.activeTab}" aria-controls="dictionary-helper-result">${renderer?.labelForTab(tab)}</button>`;
         }).join("");
 
         const contextPill = state.settings.disablePageContextExtraction
@@ -529,12 +545,12 @@
             <div class="dictionary-helper-context-help" id="dictionary-helper-context-help">${getContextHelpMessage()}</div>
             <div class="dictionary-helper-context-error" id="dictionary-helper-context-error" role="alert" hidden>Please enter or paste the sentence containing this word.</div>
             <div class="dictionary-helper-context-buttons">
-                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-context" data-ai-intent="explain_in_context" type="button" title="Explain what this word means in the sentence above"><span class="dictionary-helper-context-btn-label">Context Explain</span></button>
-                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-grammar" data-ai-intent="grammar" type="button" title="Analyze syntax role, word order, and tone"><span class="dictionary-helper-context-btn-label">Grammar &amp; Nuance</span></button>
-                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-phrase-explorer" data-ai-intent="phrase_explorer" type="button" title="Explore idioms, phrasal verbs, and collocations"><span class="dictionary-helper-context-btn-label">Phrase &amp; Collocations</span></button>
-                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-sentence" data-ai-intent="sentence_breakdown" type="button" title="Break down sentence structure and parse components"><span class="dictionary-helper-context-btn-label">Sentence Breakdown</span></button>
-                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-compare" data-ai-intent="compare_confusables" type="button" title="Compare similar or confusable words"><span class="dictionary-helper-context-btn-label">Compare Confusables</span></button>
-                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-rephrase" data-ai-intent="rephrase" type="button" title="Rephrase in simpler, formal, and idiomatic styles"><span class="dictionary-helper-context-btn-label">Rephrase</span></button>
+                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-context" data-ai-intent="explain_in_context" type="button" title="Explain what this word means in the sentence above"><span class="dictionary-helper-context-btn-label">🔍 Context Explain</span></button>
+                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-grammar" data-ai-intent="grammar" type="button" title="Analyze syntax role, word order, and tone"><span class="dictionary-helper-context-btn-label">📐 Grammar &amp; Nuance</span></button>
+                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-phrase-explorer" data-ai-intent="phrase_explorer" type="button" title="Explore idioms, phrasal verbs, and collocations"><span class="dictionary-helper-context-btn-label">💡 Phrase &amp; Collocations</span></button>
+                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-sentence" data-ai-intent="sentence_breakdown" type="button" title="Break down sentence structure and parse components"><span class="dictionary-helper-context-btn-label">🧩 Sentence Breakdown</span></button>
+                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-compare" data-ai-intent="compare_confusables" type="button" title="Compare similar or confusable words"><span class="dictionary-helper-context-btn-label">⚖️ Compare Confusables</span></button>
+                <button class="dictionary-helper-context-btn" id="dictionary-helper-explain-rephrase" data-ai-intent="rephrase" type="button" title="Rephrase in simpler, formal, and idiomatic styles"><span class="dictionary-helper-context-btn-label">✨ Rephrase</span></button>
             </div>
            </div>`
             : "";
@@ -543,8 +559,8 @@
             tabs.innerHTML = `<div class="dictionary-helper-tablist" role="tablist">${tabButtons}</div>`;
             tabs.setAttribute("role", "presentation");
         }
-        const bodyPanel = state.popupRoot.querySelector(".dictionary-helper-body");
-        const announcement = state.popupRoot.querySelector(".dictionary-helper-announcements");
+        const bodyPanel = state.popupRoot.querySelector(".dict-popup-body, .dictionary-helper-body");
+        const announcement = state.popupRoot.querySelector(".dict-popup-announcements, .dictionary-helper-announcements");
         if (announcement) announcement.textContent = `${renderer?.labelForTab(state.activeTab)} tab ready.`;
         if (bodyPanel) {
             bodyPanel.setAttribute("role", "tabpanel");
@@ -634,20 +650,16 @@
             });
         };
 
-        // Use event delegation on contextHost so listeners survive renderShell() re-renders.
-        contextHost?.addEventListener("click", (event) => {
-            const btn = event.target.closest("[data-ai-intent]");
-            if (!btn || btn.disabled) return;
-            const intent = btn.dataset.aiIntent;
+        function triggerAiIntent(intent) {
+            if (!intent) return;
             switch (intent) {
                 case "explain_in_context":
                     runInPageContextAction({
                         intent,
                         errorMessage: "Unable to explain in context.",
                         validate: (contextInput) => {
-                            const validation = popupHelpers.validateContext(contextInput?.value || state.activeContext);
-                            if (!validation.ok) return "Please enter or paste the sentence containing this word.";
-                            state.activeContext = validation.context;
+                            const validation = popupHelpers.validateContext(contextInput?.value || state.activeContext || state.activeText);
+                            state.activeContext = validation.ok ? validation.context : state.activeText.trim();
                             return null;
                         }
                     });
@@ -657,9 +669,8 @@
                         intent,
                         errorMessage: "Unable to analyze grammar.",
                         validate: (contextInput) => {
-                            const validation = popupHelpers.validateContext(contextInput?.value || state.activeContext);
-                            if (!validation.ok) return "Please enter or paste the sentence containing this word.";
-                            state.activeContext = validation.context;
+                            const validation = popupHelpers.validateContext(contextInput?.value || state.activeContext || state.activeText);
+                            state.activeContext = validation.ok ? validation.context : state.activeText.trim();
                             return null;
                         }
                     });
@@ -672,11 +683,7 @@
                         intent,
                         errorMessage: "Unable to break down the sentence.",
                         validate: (contextInput, query) => {
-                            const queryIsSentence = /[.!?]/.test(query) || query.split(/\s+/).filter(Boolean).length >= 7;
-                            const validation = popupHelpers.validateContext(contextInput?.value || state.activeContext);
-                            if (!queryIsSentence && !validation.ok) {
-                                return "Enter or paste the sentence to break down.";
-                            }
+                            const validation = popupHelpers.validateContext(contextInput?.value || state.activeContext || query);
                             state.activeContext = validation.ok ? validation.context : query;
                             return null;
                         }
@@ -691,8 +698,16 @@
                 default:
                     break;
             }
+        }
+
+        // Use event delegation on contextHost so listeners survive renderShell() re-renders.
+        contextHost?.addEventListener("click", (event) => {
+            const btn = event.target.closest("[data-ai-intent]");
+            if (!btn || btn.disabled) return;
+            triggerAiIntent(btn.dataset.aiIntent);
         });
 
+        ns.popupView.triggerAiIntent = triggerAiIntent;
         syncAiActionButtonStatus();
     }
 

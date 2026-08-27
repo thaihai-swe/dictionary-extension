@@ -20,7 +20,8 @@
             "resources": [
                 "assets/fonts/*",
                 "tokens.css",
-                "src/ui/popup.css"
+                "src/ui/popup.css",
+                "src/pages/popup/popup.css"
             ],
             "matches": [
                 "<all_urls>",
@@ -61,6 +62,7 @@
                 "src/ui/renderer.js",
                 "src/ui/audio.js",
                 "src/ui/popup-shell.js",
+                "src/ui/popup-controller.js",
                 "src/shared/cache.js",
                 "src/shared/popup-helpers.js",
                 "src/content/popup-position.js",

@@ -1,16 +1,51 @@
 /**
- * Bounded lookup cache with TTL support.
- * Used by the in-page lookup popup.
+ * Bounded lookup cache with TTL support and persistent Session/LocalStorage fallback.
+ * Used by the in-page lookup popup and toolbar action popup.
  */
 (function (global) {
-    const DEFAULT_MAX_ENTRIES = 40;
-    const DEFAULT_TTL_MS = 10 * 60 * 1000;
+    const DEFAULT_MAX_ENTRIES = 60;
+    const DEFAULT_TTL_MS = 30 * 60 * 1000;
+    const STORAGE_KEY = "dictionary_lookup_cache_v2";
 
     function createLookupCache(options = {}) {
         const maxEntries = options.maxEntries || DEFAULT_MAX_ENTRIES;
         const ttlMs = options.ttlMs || DEFAULT_TTL_MS;
         const cache = new Map();
         const pending = new Map();
+
+        // Hydrate persistent cache on creation
+        try {
+            const raw = (typeof sessionStorage !== "undefined" && sessionStorage.getItem(STORAGE_KEY))
+                || (typeof localStorage !== "undefined" && localStorage.getItem(STORAGE_KEY));
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                const now = Date.now();
+                if (Array.isArray(parsed)) {
+                    for (const [k, entry] of parsed) {
+                        if (entry && (now - entry.createdAt <= ttlMs)) {
+                            cache.set(k, entry);
+                        }
+                    }
+                }
+            }
+        } catch (_e) {
+            // Best effort
+        }
+
+        function persist() {
+            try {
+                const entries = Array.from(cache.entries());
+                const json = JSON.stringify(entries);
+                if (typeof sessionStorage !== "undefined") {
+                    sessionStorage.setItem(STORAGE_KEY, json);
+                }
+                if (typeof localStorage !== "undefined") {
+                    localStorage.setItem(STORAGE_KEY, json);
+                }
+            } catch (_e) {
+                // Best effort
+            }
+        }
 
         function isExpired(entry) {
             return !entry || Date.now() - entry.createdAt > ttlMs;
@@ -28,6 +63,7 @@
                 const oldestKey = cache.keys().next().value;
                 cache.delete(oldestKey);
             }
+            persist();
         }
 
         return {
@@ -38,11 +74,13 @@
                 }
                 if (isExpired(entry)) {
                     cache.delete(key);
+                    persist();
                     return undefined;
                 }
                 // Refresh insertion order for LRU-ish eviction.
                 cache.delete(key);
                 cache.set(key, entry);
+                persist();
                 return entry.value;
             },
 
@@ -53,6 +91,7 @@
                 }
                 if (isExpired(entry)) {
                     cache.delete(key);
+                    persist();
                     return false;
                 }
                 return true;
@@ -67,6 +106,12 @@
             clear() {
                 cache.clear();
                 pending.clear();
+                try {
+                    if (typeof sessionStorage !== "undefined") sessionStorage.removeItem(STORAGE_KEY);
+                    if (typeof localStorage !== "undefined") localStorage.removeItem(STORAGE_KEY);
+                } catch (_e) {
+                    // Best effort
+                }
             },
 
             getPending(key) {

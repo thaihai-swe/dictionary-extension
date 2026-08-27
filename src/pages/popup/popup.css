@@ -2,7 +2,11 @@
  * Compact, fast, definition-first layout with smooth micro-interactions.
  */
 
-@import "../../../tokens.css";
+@import "../../tokens.css";
+
+html {
+    font-size: 16px;
+}
 
 :root {
     --color-primary: var(--color-accent);
@@ -836,8 +840,11 @@ body::-webkit-scrollbar {
     from { opacity: 0; transform: translateY(4px); }
     to { opacity: 1; transform: translateY(0); }
 }
+.toolbar-popup-section--context,
 .dictionary-helper-section--context { background: var(--color-accent-soft); border-color: rgb(79 70 165 / 0.24); }
+.toolbar-popup-section--translation,
 .dictionary-helper-section--translation { background: var(--color-success-soft); border-color: rgb(8 127 110 / 0.24); }
+.toolbar-popup-section--usage,
 .dictionary-helper-section--usage { background: var(--color-warning-soft); border-color: rgb(154 91 0 / 0.24); }
 .toolbar-popup-section--intro,
 .dictionary-helper-section--intro { background: var(--color-surface); }
@@ -1158,19 +1165,32 @@ body::-webkit-scrollbar {
 }
 
 .toolbar-popup-structure-row {
-    display: grid;
-    grid-template-columns: 100px 1fr;
-    gap: 8px;
-    padding: 6px 8px;
-    border-radius: var(--radius-control);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px 12px;
+    padding: 8px 10px;
+    border-radius: var(--radius-m);
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    font-size: 0.82rem;
+    font-size: 0.84rem;
 }
-
+.toolbar-popup-structure-text {
+    flex: 1 1 200px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    line-height: 1.45;
+}
 .toolbar-popup-structure-role {
-    font-weight: 600;
+    flex-shrink: 0;
+    margin-left: auto;
+    font-weight: 700;
     color: var(--color-accent);
+    background: var(--color-accent-soft);
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    font-size: 0.72rem;
 }
 
 /* Phrase Cards */
@@ -1382,6 +1402,7 @@ body::-webkit-scrollbar {
     border-radius: var(--radius-card);
     background: var(--color-paper-3);
 }
+.toolbar-popup-sense-card:last-child { border-bottom: none; }
 .toolbar-popup-sense-card.is-context {
     border-color: var(--color-primary);
     background: var(--color-primary-soft);

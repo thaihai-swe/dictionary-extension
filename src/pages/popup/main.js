@@ -73,6 +73,9 @@ async function init() {
     document.documentElement.setAttribute("data-theme", state.settings.theme || "system");
     document.documentElement.setAttribute("data-font", state.settings.fontFamily || "editorial");
     state.activeTab = await getInitialTab();
+    if (popupHelpers?.readLastIntentSync) {
+        state.activeAiIntent = popupHelpers.readLastIntentSync();
+    }
     applyDimensions();
     updateContextActionVisibility();
     renderTabs();
@@ -159,38 +162,34 @@ async function init() {
 
     resultRoot?.addEventListener("click", (event) => {
         audio.handlePronunciationClick(event);
-
-        const phraseBtn = event.target.closest("[data-lookup-query]");
-        if (phraseBtn) {
-            const query = String(phraseBtn.dataset.lookupQuery || "").trim();
-            if (query && input && query.toLowerCase() !== String(state.activeQuery || "").trim().toLowerCase()) {
-                audio.clearPracticeResults();
-                input.value = query;
-                state.activeQuery = query;
-                state.activeTab = "dictionary";
-                state.activeAiIntent = "";
-                void popupHelpers.writeLastTab(state.activeTab);
-                renderTabs();
-                updateContextActionVisibility();
-                void loadTab("dictionary");
-            }
-        }
     });
 
-    explainContextButton?.addEventListener("click", handleExplainInContext);
-    explainGrammarButton?.addEventListener("click", handleExplainGrammar);
-    explainPhraseExplorerButton?.addEventListener("click", handleExplainPhraseExplorer);
-    explainSentenceButton?.addEventListener("click", handleSentenceBreakdown);
-    explainCompareButton?.addEventListener("click", handleCompareConfusables);
-    explainRephraseButton?.addEventListener("click", handleRephrase);
-
-    contextInput?.addEventListener("input", () => {
-        state.contextText = popupHelpers.normalizeContext(contextInput.value);
-        state.contextSource = state.contextText ? "manual" : "";
-        state.contextConfidence = state.contextText ? "manual" : "none";
-        clearContextError();
-        updateContextHelp();
-        popupHelpers.autosizeTextarea(contextInput, { minRows: 2, maxRows: 4 });
+    PopupController.attachCommonListeners({
+        container: document.querySelector(".toolbar-popup") || document.documentElement,
+        state,
+        loadTab: (targetTab) => {
+            if (input && state.activeQuery) {
+                input.value = state.activeQuery;
+            }
+            renderTabs();
+            updateContextActionVisibility();
+            return loadTab(targetTab);
+        },
+        runAiAction: (intent) => {
+            switch (intent) {
+                case "explain_in_context": return handleExplainInContext();
+                case "grammar": return handleExplainGrammar();
+                case "phrase_explorer": return handleExplainPhraseExplorer();
+                case "sentence_breakdown": return handleSentenceBreakdown();
+                case "compare_confusables": return handleCompareConfusables();
+                case "rephrase": return handleRephrase();
+                default: break;
+            }
+        },
+        updateContextHelp,
+        clearContextError,
+        audio,
+        popupHelpers
     });
 
     document.addEventListener("keydown", handleKeydown);
