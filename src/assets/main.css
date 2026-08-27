@@ -1,0 +1,196 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-paper: #081217;
+  --bg-surface: #0f1d24;
+  --bg-muted: #172832;
+  --border-color: #203642;
+  --text-main: #f0fdfa;
+  --text-muted: #749a9f;
+  color-scheme: dark;
+}
+
+/* Light Theme Tokens - Clean Slate Palette */
+.light-theme {
+  --bg-paper: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-muted: #f1f5f9;
+  --border-color: #e2e8f0;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  color-scheme: light;
+}
+
+.light-theme {
+  background-color: var(--bg-paper) !important;
+  color: var(--text-main) !important;
+}
+
+/* Card Backgrounds in Light Theme */
+.light-theme .bg-dark-paper,
+.light-theme [class*="bg-dark-paper"] {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+.light-theme .bg-dark-surface,
+.light-theme [class*="bg-dark-surface"] {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+.light-theme .bg-dark-muted,
+.light-theme [class*="bg-dark-muted"] {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.light-theme .border-dark-border,
+.light-theme [class*="border-dark-border"] {
+  border-color: #e2e8f0 !important;
+}
+
+/* Hardcoded Dark Hex Overrides in Light Theme */
+.light-theme .bg-\[\#0a161d\],
+.light-theme .bg-\[\#08131a\],
+.light-theme .bg-\[\#0c1922\],
+.light-theme .bg-\[\#0d1b22\],
+.light-theme .bg-\[\#091319\],
+.light-theme .bg-\[\#081217\] {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+/* Text Color Adjustments in Light Theme */
+.light-theme .text-slate-100,
+.light-theme .text-slate-200,
+.light-theme .text-slate-300 {
+  color: #0f172a !important;
+}
+
+.light-theme .text-slate-400,
+.light-theme .text-slate-500 {
+  color: #64748b !important;
+}
+
+/* Solid Buttons Keep Crisp White Text in Light Theme */
+.light-theme button.bg-teal-600,
+.light-theme button.bg-brand-600,
+.light-theme button.bg-emerald-600,
+.light-theme .bg-teal-600,
+.light-theme .bg-brand-600 {
+  background-color: #0d9488 !important;
+  color: #ffffff !important;
+}
+
+.light-theme button.bg-teal-600:hover,
+.light-theme button.bg-brand-600:hover {
+  background-color: #0f766e !important;
+  color: #ffffff !important;
+}
+
+/* Colored Accent Badges & Text in Light Theme */
+.light-theme .text-teal-300,
+.light-theme .text-teal-400 {
+  color: #0d9488 !important;
+}
+
+.light-theme .text-emerald-300,
+.light-theme .text-emerald-400 {
+  color: #059669 !important;
+}
+
+.light-theme .text-amber-300,
+.light-theme .text-amber-400 {
+  color: #d97706 !important;
+}
+
+.light-theme .text-cyan-300,
+.light-theme .text-cyan-400 {
+  color: #0891b2 !important;
+}
+
+.light-theme .text-rose-300,
+.light-theme .text-rose-400 {
+  color: #e11d48 !important;
+}
+
+.light-theme .text-brand-300,
+.light-theme .text-brand-400 {
+  color: #0d9488 !important;
+}
+
+/* Token Hover Highlights in Light Theme */
+.light-theme .hover\:text-brand-300:hover,
+.light-theme .hover\:text-brand-400:hover {
+  color: #0d9488 !important;
+}
+
+/* Input Fields & Textareas in Light Theme */
+.light-theme input,
+.light-theme textarea,
+.light-theme select {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+.light-theme input::placeholder,
+.light-theme textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+.light-theme select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+/* Navigation & Tabs in Light Theme */
+.light-theme nav {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+.light-theme nav button {
+  color: #64748b;
+}
+
+.light-theme nav button:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.light-theme nav button.border-brand-500 {
+  color: #0d9488 !important;
+  border-color: #0d9488 !important;
+  background-color: rgba(13, 148, 136, 0.08) !important;
+}
+
+@layer base {
+  * {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    @apply bg-dark-paper text-slate-100 antialiased;
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
