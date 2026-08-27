@@ -56,14 +56,30 @@
                 </div>
             `
             : `<div class="${prefix}-context-host"></div>`;
+        const themeToggle = `
+            <button class="${prefix}-theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme">
+                <svg class="${prefix}-theme-icon ${prefix}-theme-icon--sun" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                <svg class="${prefix}-theme-icon ${prefix}-theme-icon--moon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+        `;
+        const expandBtn = toolbar ? "" : `
+            <button class="${prefix}-expand-btn" type="button" aria-label="Expand / Restore" title="Expand / Restore">
+                <svg class="${prefix}-expand-icon ${prefix}-expand-icon--expand" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                <svg class="${prefix}-expand-icon ${prefix}-expand-icon--restore" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="10" y1="14" x2="3" y2="21"/></svg>
+            </button>
+        `;
         const content = `
             <header class="${prefix}-header">
                 <div class="${prefix}-header-content">
                     <div class="${prefix}-header-row">
                         <div class="${prefix}-identity"><span class="${prefix}-brand-mark" aria-hidden="true">D</span><p class="${prefix}-${toolbar ? "eyebrow" : "title"}">${toolbar ? "Look up" : "Dictionary"}</p></div>
-                        <select id="${providerId}" class="${prefix}-header-select" aria-label="Dictionary provider">${providerOptions}</select>
-                        <select id="${languageId}" class="${prefix}-header-lang" aria-label="Target language"></select>
-                        ${headerAction}
+                        <div class="${prefix}-header-controls">
+                            <select id="${providerId}" class="${prefix}-header-select" aria-label="Dictionary provider">${providerOptions}</select>
+                            <select id="${languageId}" class="${prefix}-header-lang" aria-label="Target language"></select>
+                            ${themeToggle}
+                            ${expandBtn}
+                            ${headerAction}
+                        </div>
                     </div>
                 </div>
             </header>

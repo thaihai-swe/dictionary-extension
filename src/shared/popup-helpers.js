@@ -323,30 +323,44 @@
     }
 
     async function readLastTab() {
-        if (!global.chrome?.storage?.session) {
-            return "";
-        }
         try {
-            const data = await chrome.storage.session.get(LAST_TAB_SESSION_KEY);
-            const tab = String(data?.[LAST_TAB_SESSION_KEY] || "").trim();
-            return tab === "ai" || tab === "dictionary" ? tab : "";
+            if (global.chrome?.storage?.local) {
+                const data = await chrome.storage.local.get(LAST_TAB_SESSION_KEY);
+                const tab = String(data?.[LAST_TAB_SESSION_KEY] || "").trim();
+                if (tab === "ai" || tab === "dictionary") return tab;
+            }
+            if (global.chrome?.storage?.sync) {
+                const data = await chrome.storage.sync.get("lastActiveTab");
+                const tab = String(data?.lastActiveTab || "").trim();
+                if (tab === "ai" || tab === "dictionary") return tab;
+            }
+            if (typeof localStorage !== "undefined") {
+                const tab = String(localStorage.getItem(LAST_TAB_SESSION_KEY) || "").trim();
+                if (tab === "ai" || tab === "dictionary") return tab;
+            }
         } catch (_error) {
-            return "";
+            // Ignore storage read errors
         }
+        return "";
     }
 
     async function writeLastTab(tab) {
-        if (!global.chrome?.storage?.session) {
-            return;
-        }
         const next = tab === "ai" ? "ai" : tab === "dictionary" ? "dictionary" : "";
         if (!next) {
             return;
         }
         try {
-            await chrome.storage.session.set({ [LAST_TAB_SESSION_KEY]: next });
+            if (global.chrome?.storage?.local) {
+                await chrome.storage.local.set({ [LAST_TAB_SESSION_KEY]: next });
+            }
+            if (global.chrome?.storage?.sync) {
+                await chrome.storage.sync.set({ lastActiveTab: next });
+            }
+            if (typeof localStorage !== "undefined") {
+                localStorage.setItem(LAST_TAB_SESSION_KEY, next);
+            }
         } catch (_error) {
-            // Session memory is optional.
+            // Best effort
         }
     }
 

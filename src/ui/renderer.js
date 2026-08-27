@@ -58,7 +58,7 @@
             if ((Array.isArray(section?.items) && section.items.length > 0) || (Array.isArray(section?.data?.pairs) && section.data.pairs.length > 0)) {
                 return "";
             }
-            if (section?.markdown && /^>\s?/m.test(String(section.text || ""))) {
+            if (section?.markdown) {
                 return "";
             }
             const exampleText = Renderer.extractFirstExample(section);
@@ -816,13 +816,14 @@
               </section>`;
             }).join("");
 
-            const meta = result.subtitle ? `<div class="${prefix}-meta">${Renderer.escapeHtml(result.subtitle)}</div>` : "";
+            const meta = result.subtitle ? `<div class="${prefix}-meta"><span class="${prefix}-meta-pill">${Renderer.escapeHtml(result.subtitle)}</span></div>` : "";
             const stateEl = isToolbar ? "p" : "div";
             const rootEl = isToolbar ? "article" : "div";
             const lexicalProfileHtml = Renderer.renderLexicalProfile(result.lexicalProfile, prefix, sectionTitleTag);
-            const titleRow = result.title
-                ? `<div class="${prefix}-title-row"><div class="${prefix}-title-cell"><${titleTag} class="${prefix}-term">${Renderer.escapeHtml(result.title)}</${titleTag}><div class="${prefix}-pronunciation-group">${pronunciation}${pronunciationVariants}${speechPractice}</div></div>${meta}</div>`
-                : "";
+            const displayTitle = result.title || options.query || "";
+            const titleRow = displayTitle
+                ? `<div class="${prefix}-title-row"><div class="${prefix}-title-cell"><${titleTag} class="${prefix}-term">${Renderer.escapeHtml(displayTitle)}</${titleTag}><div class="${prefix}-pronunciation-group">${pronunciation}${pronunciationVariants}${speechPractice}</div></div>${meta}</div>`
+                : (meta ? `<div class="${prefix}-title-row">${meta}</div>` : "");
             const emptyState = `<${stateEl} class="${prefix}-state"><strong>No result</strong><span>Try another word or switch sources.</span></${stateEl}>`;
             const resultBody = isAiResult
                 ? `${sections || emptyState}${lexicalProfileHtml}`

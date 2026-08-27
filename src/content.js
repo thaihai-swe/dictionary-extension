@@ -530,8 +530,63 @@ if (window.__dictionaryHelperContentInitialized) {
 
         popupCard = popupRoot.querySelector(".dictionary-helper-card");
 
-        popupRoot.querySelector(".dictionary-helper-close").addEventListener("click", () => destroyPopup({ animate: true }));
+        popupRoot.querySelector(".dictionary-helper-close")?.addEventListener("click", () => destroyPopup({ animate: true }));
         popupRoot.addEventListener("keydown", trapPopupFocus);
+
+        const themeToggle = popupRoot.querySelector(".dictionary-helper-theme-toggle");
+        themeToggle?.addEventListener("click", async (event) => {
+            event.stopPropagation();
+            const currentTheme = settings.theme || "system";
+            let isCurrentlyDark = false;
+            if (currentTheme === "dark") {
+                isCurrentlyDark = true;
+            } else if (currentTheme === "light") {
+                isCurrentlyDark = false;
+            } else {
+                isCurrentlyDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+            }
+            const nextTheme = isCurrentlyDark ? "light" : "dark";
+            settings.theme = nextTheme;
+            applyTheme();
+            try {
+                await chrome.storage.sync.set({ theme: nextTheme });
+            } catch (_error) {
+                // Best-effort
+            }
+        });
+
+        const expandBtn = popupRoot.querySelector(".dictionary-helper-expand-btn");
+        let savedRectBeforeMaximize = null;
+        expandBtn?.addEventListener("click", (event) => {
+            event.stopPropagation();
+            if (!popupCard) return;
+
+            const isMaximized = popupCard.classList.contains("is-maximized");
+            if (isMaximized) {
+                popupCard.classList.remove("is-maximized");
+                if (savedRectBeforeMaximize) {
+                    popupCard.style.top = savedRectBeforeMaximize.top;
+                    popupCard.style.left = savedRectBeforeMaximize.left;
+                    popupCard.style.width = savedRectBeforeMaximize.width;
+                    popupCard.style.height = savedRectBeforeMaximize.height;
+                    popupCard.style.maxHeight = savedRectBeforeMaximize.maxHeight;
+                    popupCard.style.position = savedRectBeforeMaximize.position;
+                } else {
+                    applyPopupDimensions();
+                    setPopupPosition(currentPosition);
+                }
+            } else {
+                savedRectBeforeMaximize = {
+                    top: popupCard.style.top,
+                    left: popupCard.style.left,
+                    width: popupCard.style.width,
+                    height: popupCard.style.height,
+                    maxHeight: popupCard.style.maxHeight,
+                    position: popupCard.style.position
+                };
+                popupCard.classList.add("is-maximized");
+            }
+        });
 
         const providerSelect = popupRoot.querySelector(".dictionary-helper-header-select");
         const languageInput = popupRoot.querySelector(".dictionary-helper-header-lang");
@@ -626,16 +681,22 @@ if (window.__dictionaryHelperContentInitialized) {
         // Resize logic
         const resizer = popupRoot.querySelector(".dictionary-helper-resizer");
         let isResizing = false;
-        let startX, startY, startWidth, startHeight;
+        let startX = 0;
+        let startY = 0;
+        let startWidth = 0;
+        let startHeight = 0;
 
-        resizer.addEventListener("mousedown", (e) => {
+        resizer?.addEventListener("mousedown", (e) => {
+            if (e.button !== 0) return;
             isResizing = true;
             startX = e.clientX;
             startY = e.clientY;
-            startWidth = parseInt(document.defaultView.getComputedStyle(popupCard).width, 10);
-            startHeight = popupCard.getBoundingClientRect().height;
+            startWidth = popupCard.offsetWidth;
+            startHeight = popupCard.offsetHeight;
+            popupCard.classList.add("is-resizing");
             document.body.style.userSelect = "none";
             e.preventDefault();
+            e.stopPropagation();
         });
 
         document.addEventListener("mousemove", (e) => {
@@ -648,8 +709,8 @@ if (window.__dictionaryHelperContentInitialized) {
                 startHeight + e.clientY - startY
             );
             popupCard.style.width = `${dimensions.width}px`;
+            popupCard.style.height = `${dimensions.height}px`;
             popupCard.style.maxHeight = `${dimensions.height}px`;
-            popupCard.classList.add("is-resizing");
             e.preventDefault();
         }, true);
 
@@ -662,12 +723,76 @@ if (window.__dictionaryHelperContentInitialized) {
             popupCard.classList.remove("is-resizing");
             document.body.style.userSelect = "";
             const newWidth = parseInt(popupCard.style.width, 10);
-            const newHeight = parseInt(popupCard.style.maxHeight, 10);
+            const newHeight = parseInt(popupCard.style.height || popupCard.style.maxHeight, 10);
             if (newWidth && newHeight) {
                 settings.popupWidth = newWidth;
                 settings.popupHeight = newHeight;
                 void chrome.storage.sync.set({ popupWidth: newWidth, popupHeight: newHeight });
             }
+        }, true);
+
+        // Drag-to-move logic
+        const dragHandle = popupRoot.querySelector(".dictionary-helper-header");
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let dragOriginLeft = 0;
+        let dragOriginTop = 0;
+
+        dragHandle?.addEventListener("mousedown", (e) => {
+            if (e.button !== 0) return;
+            if (e.target.closest("select, button, input, textarea, a")) return;
+
+            isDragging = true;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+
+            const rect = popupCard.getBoundingClientRect();
+            dragOriginLeft = rect.left;
+            dragOriginTop = rect.top;
+
+            popupCard.classList.add("is-dragging");
+            document.body.style.userSelect = "none";
+            e.preventDefault();
+        });
+
+        document.addEventListener("mousemove", (e) => {
+            if (!isDragging || !popupCard) return;
+
+            const dx = e.clientX - dragStartX;
+            const dy = e.clientY - dragStartY;
+
+            const visual = window.visualViewport;
+            const vw = visual?.width || window.innerWidth;
+            const vh = visual?.height || window.innerHeight;
+            const offsetLeft = visual?.offsetLeft || 0;
+            const offsetTop = visual?.offsetTop || 0;
+            const margin = 8;
+            const cardW = popupCard.offsetWidth;
+            const cardH = popupCard.offsetHeight;
+
+            const newLeft = Math.max(offsetLeft + margin, Math.min(dragOriginLeft + dx, offsetLeft + vw - cardW - margin));
+            const newTop = Math.max(offsetTop + margin, Math.min(dragOriginTop + dy, offsetTop + vh - cardH - margin));
+
+            popupCard.style.position = "fixed";
+            popupCard.style.left = `${Math.round(newLeft)}px`;
+            popupCard.style.top = `${Math.round(newTop)}px`;
+            e.preventDefault();
+        }, true);
+
+        document.addEventListener("mouseup", () => {
+            if (!isDragging || !popupCard) return;
+
+            isDragging = false;
+            popupCard.classList.remove("is-dragging");
+            document.body.style.userSelect = "";
+
+            currentPosition = {
+                ...currentPosition,
+                x: parseFloat(popupCard.style.left) || currentPosition.x,
+                y: parseFloat(popupCard.style.top) || currentPosition.y,
+                useFixed: true
+            };
         }, true);
 
         const mountNode = document.body || document.documentElement;
@@ -679,7 +804,7 @@ if (window.__dictionaryHelperContentInitialized) {
         // Reposition when content grows (AI result loads, enrichment, etc.)
         if (typeof ResizeObserver === "function" && popupCard) {
             const observer = new ResizeObserver(() => {
-                if (!popupCard) return;
+                if (!popupCard || isResizing || popupCard.classList.contains("is-resizing")) return;
                 const pos = shared.positioning;
                 if (pos?.refinePopupMaxHeight) {
                     pos.refinePopupMaxHeight(popupCard, currentPosition);
@@ -1008,6 +1133,7 @@ if (window.__dictionaryHelperContentInitialized) {
         const dimensions = popupShell?.clampDimensions(settings.popupWidth, settings.popupHeight)
             || { width: 620, height: 720 };
         popupCard.style.width = `${dimensions.width}px`;
+        popupCard.style.height = `${dimensions.height}px`;
         popupCard.style.maxHeight = `${dimensions.height}px`;
     }
 
@@ -1350,7 +1476,12 @@ if (window.__dictionaryHelperContentInitialized) {
         }
 
         const availableTabs = getAvailableTabs();
-        if (!availableTabs.includes(activeTab)) {
+        if (changes.lastActiveTab?.newValue) {
+            const nextTab = changes.lastActiveTab.newValue;
+            if (availableTabs.includes(nextTab)) {
+                activeTab = nextTab;
+            }
+        } else if (!availableTabs.includes(activeTab)) {
             activeTab = availableTabs[0] || "dictionary";
         }
 

@@ -118,6 +118,24 @@ async function init() {
 
     form.addEventListener("submit", handleSubmit);
     openSettingsButton?.addEventListener("click", handleOpenSettings);
+
+    const themeToggleBtn = document.querySelector(".dictionary-helper-theme-toggle");
+    themeToggleBtn?.addEventListener("click", async () => {
+        const currentTheme = settings.theme || "system";
+        let isCurrentlyDark = false;
+        if (currentTheme === "dark") {
+            isCurrentlyDark = true;
+        } else if (currentTheme === "light") {
+            isCurrentlyDark = false;
+        } else {
+            isCurrentlyDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        }
+        const nextTheme = isCurrentlyDark ? "light" : "dark";
+        settings.theme = nextTheme;
+        document.documentElement.setAttribute("data-theme", nextTheme);
+        await saveSettings({ theme: nextTheme });
+    });
+
     tabsRoot.addEventListener("click", handleTabClick);
     resultRoot.addEventListener("click", (event) => {
         audio.handlePronunciationClick(event);
