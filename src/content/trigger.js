@@ -15,6 +15,8 @@
         button.className = "dictionary-helper-trigger-icon";
         button.setAttribute("aria-label", "Look up selected text");
         button.title = "Look up selected text";
+        button.style.position = "fixed";
+        button.style.zIndex = "2147483646";
         button.innerHTML = ns.icons?.search || "";
 
         button.addEventListener("mousedown", (event) => {
@@ -68,8 +70,22 @@
 
         x = Math.min(Math.max(offsetLeft + margin, x), Math.max(offsetLeft + margin, offsetLeft + viewportWidth - iconSize - margin));
         y = Math.min(Math.max(offsetTop + margin, y), Math.max(offsetTop + margin, offsetTop + viewportHeight - iconSize - margin));
+        node.style.position = "fixed";
         node.style.top = `${Math.round(y)}px`;
         node.style.left = `${Math.round(x)}px`;
+
+        // Pages that put transform/filter on html/body make position:fixed
+        // relative to that ancestor. Correct so client coordinates still land
+        // in the visible viewport.
+        const placed = node.getBoundingClientRect();
+        if (placed && Number.isFinite(placed.left) && Number.isFinite(placed.top)) {
+            const dx = placed.left - x;
+            const dy = placed.top - y;
+            if (dx || dy) {
+                node.style.left = `${Math.round(x - dx)}px`;
+                node.style.top = `${Math.round(y - dy)}px`;
+            }
+        }
     }
 
     function renderTriggerIcon({ root, snapshot, event, settings, onOpen, onPointerDown } = {}) {

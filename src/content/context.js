@@ -17,24 +17,28 @@
     const SEMANTIC_CONTAINER_SELECTOR = "main, article, section, [role='main'], [role='article'], .content, #content, .reader-content, .textLayer";
 
     function extractSurroundingContext(selectedText) {
-        const needle = String(selectedText || "").trim();
-        if (!needle) {
-            return { context: "", source: "", confidence: "none" };
-        }
+        try {
+            const needle = String(selectedText || "").trim();
+            if (!needle) {
+                return { context: "", source: "", confidence: "none" };
+            }
 
-        const selection = window.getSelection();
-        if (selection && selection.rangeCount > 0) {
-            const selected = selection.toString().trim();
-            if (selected && selected === needle) {
-                const range = selection.getRangeAt(0);
-                const exactSentence = extractExactSentenceFromRange(range, needle);
-                if (exactSentence) {
-                    return { context: exactSentence, source: "selection", confidence: "exact" };
+            const selection = window.getSelection();
+            if (selection && selection.rangeCount > 0) {
+                const selected = selection.toString().trim();
+                if (selected && selected === needle) {
+                    const range = selection.getRangeAt(0);
+                    const exactSentence = extractExactSentenceFromRange(range, needle);
+                    if (exactSentence) {
+                        return { context: exactSentence, source: "selection", confidence: "exact" };
+                    }
                 }
             }
-        }
 
-        return findBestPageSentenceCandidate(needle);
+            return findBestPageSentenceCandidate(needle);
+        } catch (_error) {
+            return { context: "", source: "", confidence: "none" };
+        }
     }
 
     function extractExactSentenceFromRange(range, needle) {

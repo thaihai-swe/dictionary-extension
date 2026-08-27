@@ -35,6 +35,8 @@ if (window.__dictionaryHelperContentInitialized) {
     let activeAiIntent = "";
     let activeRequestId = "";
     let isPointerSelecting = false;
+    let selectionClearTimer = 0;
+    let selectionCaptureToken = 0;
     let currentSelectionSnapshot = null;
     let restoreFocusElement = null;
     let focusPopupOnOpen = false;
@@ -57,10 +59,10 @@ if (window.__dictionaryHelperContentInitialized) {
         }
 
         loadSettings().catch(handleExtensionContextError);
-        document.addEventListener("mousedown", handleMouseDown, true);
-        document.addEventListener("mouseup", handleMouseUpTrigger, true);
-        document.addEventListener("dblclick", handleDoubleClickTrigger);
-        document.addEventListener("keydown", handleKeydown, true);
+        window.addEventListener("mousedown", handleMouseDown, true);
+        window.addEventListener("mouseup", handleMouseUpTrigger, true);
+        window.addEventListener("dblclick", handleDoubleClickTrigger, true);
+        window.addEventListener("keydown", handleKeydown, true);
         document.addEventListener("selectionchange", handleSelectionChange);
 
         try {
@@ -71,59 +73,161 @@ if (window.__dictionaryHelperContentInitialized) {
         }
     }
 
-    function handleMouseDown(event) {
-        handleOutsidePointer(event);
-
-        if (popupRoot && popupRoot.contains(event.target)) {
-            return;
+    function nodeContains(root, target) {
+        if (!root || !target) {
+            return false;
         }
 
-        if (triggerIconRoot && triggerIconRoot.contains(event.target)) {
+        try {
+            if (root.contains(target)) {
+                return true;
+            }
+            if (typeof target.composedPath === "function") {
+                return false;
+            }
+            if (typeof target.getRootNode === "function") {
+                const rootNode = target.getRootNode();
+                const host = rootNode && rootNode.host;
+                if (host && root.contains(host)) {
+                    return true;
+                }
+            }
+        } catch (_error) {
+            return false;
+        }
+
+        return false;
+    }
+
+    function eventContainsNode(root, event) {
+        if (!root || !event) {
+            return false;
+        }
+        if (nodeContains(root, event.target)) {
+            return true;
+        }
+        if (typeof event.composedPath !== "function") {
+            return false;
+        }
+        try {
+            return event.composedPath().some((node) => node === root || (node && root.contains(node)));
+        } catch (_error) {
+            return false;
+        }
+    }
+
+    function cancelSelectionClear() {
+        if (!selectionClearTimer) {
+            return;
+        }
+        window.clearTimeout(selectionClearTimer);
+        selectionClearTimer = 0;
+    }
+
+    function handleMouseDown(event) {
+        if (eventContainsNode(popupRoot, event) || eventContainsNode(triggerIconRoot, event)) {
+            handleOutsidePointer(event);
             return;
         }
 
         isPointerSelecting = true;
-    }
-
-    function handleSelectionChange() {
-        const selection = window.getSelection();
-        if (!selection || !selection.toString().trim()) {
+        cancelSelectionClear();
+        if (event.detail <= 1) {
             currentSelectionSnapshot = null;
             destroyTriggerIcon();
         }
+        handleOutsidePointer(event);
+    }
+
+    function handleSelectionChange() {
+        if (isPointerSelecting || currentSelectionSnapshot) {
+            return;
+        }
+
+        const selection = window.getSelection();
+        if (selection && String(selection.toString() || "").trim()) {
+            cancelSelectionClear();
+            return;
+        }
+
+        cancelSelectionClear();
+        selectionClearTimer = window.setTimeout(() => {
+            selectionClearTimer = 0;
+            if (isPointerSelecting || currentSelectionSnapshot) {
+                return;
+            }
+            const nextSelection = window.getSelection();
+            if (nextSelection && String(nextSelection.toString() || "").trim()) {
+                return;
+            }
+            destroyTriggerIcon();
+        }, 80);
+    }
+
+    function applyCapturedSelection(event) {
+        const snapshot = captureSelectionSnapshot(event);
+        if (!snapshot) {
+            return false;
+        }
+
+        cancelSelectionClear();
+        currentSelectionSnapshot = snapshot;
+        applySelectionTriggerMode(snapshot, event);
+        return true;
     }
 
     function handleMouseUpTrigger(event) {
         isPointerSelecting = false;
 
-        if (event.detail > 1) {
+        if (typeof event.button === "number" && event.button !== 0) {
             return;
         }
 
-        if (popupRoot && popupRoot.contains(event.target)) {
+        if (eventContainsNode(popupRoot, event) || eventContainsNode(triggerIconRoot, event)) {
             return;
         }
 
-        if (triggerIconRoot && triggerIconRoot.contains(event.target)) {
-            return;
-        }
-
-        if (isEditableTarget(event.target)) {
+        if (isEditableTarget(event.target, event)) {
+            cancelSelectionClear();
             destroyTriggerIcon();
             currentSelectionSnapshot = null;
             return;
         }
 
-        const snapshot = captureSelectionSnapshot(event);
-        if (!snapshot) {
-            destroyTriggerIcon();
-            currentSelectionSnapshot = null;
-            return;
+        const token = (selectionCaptureToken += 1);
+        const delay = event.detail > 1 ? 30 : 0;
+
+        const finishCapture = () => {
+            if (token !== selectionCaptureToken) {
+                return;
+            }
+            if (applyCapturedSelection(event)) {
+                return;
+            }
+            requestAnimationFrame(() => {
+                if (token !== selectionCaptureToken) {
+                    return;
+                }
+                if (applyCapturedSelection(event)) {
+                    return;
+                }
+                window.setTimeout(() => {
+                    if (token !== selectionCaptureToken || currentSelectionSnapshot) {
+                        return;
+                    }
+                    if (!applyCapturedSelection(event) && !currentSelectionSnapshot) {
+                        cancelSelectionClear();
+                        destroyTriggerIcon();
+                    }
+                }, 40);
+            });
+        };
+
+        if (delay) {
+            window.setTimeout(finishCapture, delay);
+        } else {
+            finishCapture();
         }
-
-        currentSelectionSnapshot = snapshot;
-
-        applySelectionTriggerMode(snapshot, event);
     }
 
     function handleDoubleClickTrigger(event) {
@@ -132,21 +236,25 @@ if (window.__dictionaryHelperContentInitialized) {
             return;
         }
 
-        if (popupRoot && popupRoot.contains(event.target)) {
+        if (eventContainsNode(popupRoot, event) || eventContainsNode(triggerIconRoot, event)) {
             return;
         }
 
-        if (isEditableTarget(event.target)) {
+        if (isEditableTarget(event.target, event)) {
             return;
         }
 
-        const snapshot = captureSelectionSnapshot(event);
-        if (!snapshot) {
+        const token = (selectionCaptureToken += 1);
+        if (applyCapturedSelection(event)) {
             return;
         }
 
-        currentSelectionSnapshot = snapshot;
-        applySelectionTriggerMode(snapshot, event);
+        requestAnimationFrame(() => {
+            if (token !== selectionCaptureToken) {
+                return;
+            }
+            applyCapturedSelection(event);
+        });
     }
 
     function applySelectionTriggerMode(snapshot, event) {
@@ -168,7 +276,14 @@ if (window.__dictionaryHelperContentInitialized) {
     }
 
     function captureSelectionSnapshot(event) {
-        return selectionModule.captureSelectionSnapshot(event);
+        if (!selectionModule.captureSelectionSnapshot) {
+            return null;
+        }
+        try {
+            return selectionModule.captureSelectionSnapshot(event);
+        } catch (_error) {
+            return null;
+        }
     }
 
     function openPopupFromSnapshot(snapshot, event, options = {}) {
@@ -309,11 +424,11 @@ if (window.__dictionaryHelperContentInitialized) {
             return;
         }
 
-        if (isEditableTarget(event.target)) {
+        if (isEditableTarget(event.target, event)) {
             return;
         }
 
-        if (popupRoot && popupRoot.contains(event.target)) {
+        if (eventContainsNode(popupRoot, event) || eventContainsNode(triggerIconRoot, event)) {
             return;
         }
 
@@ -364,11 +479,11 @@ if (window.__dictionaryHelperContentInitialized) {
     }
 
     function handleOutsidePointer(event) {
-        if (triggerIconRoot && triggerIconRoot.contains(event.target)) {
+        if (eventContainsNode(triggerIconRoot, event)) {
             return;
         }
 
-        if (popupRoot && !popupRoot.contains(event.target)) {
+        if (popupRoot && !eventContainsNode(popupRoot, event)) {
             const selection = window.getSelection();
             if (!selection || !selection.toString().trim()) {
                 destroyPopup();
@@ -378,7 +493,7 @@ if (window.__dictionaryHelperContentInitialized) {
         if (
             triggerIconRoot
             && (!currentSelectionSnapshot || !currentSelectionSnapshot.text)
-            && !(popupRoot && popupRoot.contains(event.target))
+            && !eventContainsNode(popupRoot, event)
         ) {
             destroyTriggerIcon();
         }
@@ -1332,8 +1447,8 @@ if (window.__dictionaryHelperContentInitialized) {
         return lookupModule.isExtensionContextInvalidated(error);
     }
 
-    function isEditableTarget(target) {
-        return selectionModule.isEditableTarget(target);
+    function isEditableTarget(target, event) {
+        return selectionModule.isEditableTarget(target, event);
     }
 
     function trapPopupFocus(event) {
