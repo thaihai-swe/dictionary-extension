@@ -29,10 +29,14 @@ const ENRICHED_CACHE_TTL_MS = 10 * 60 * 1000;
 const ENRICHED_CACHE_MAX = 20;
 const ENRICHMENT_CACHE_SCHEMA_VERSION = 2;
 const ENRICHMENT_CACHE_SCHEMA_KEY = "dictionaryHelperEnrichmentCacheSchemaVersion";
+const TRANSLATION_UPDATE_REVISION = 1;
+const ENRICHMENT_UPDATE_REVISION = 2;
 
 const enrichedCache = new Map();
 const enrichmentInFlight = new Map();
 const activeControllers = new Map();
+let cachedSettings = null;
+let cachedSettingsPromise = null;
 
 function getRequestKey(tabId, scope, requestId) {
     return `${tabId || "global"}:${scope || "default"}:${requestId}`;
@@ -140,7 +144,7 @@ async function handleValidateProvider(payload = {}) {
     const { kind, providerId, settings: providedSettings } = payload;
 
     // Prefer the just-saved form values when provided, otherwise load from storage.
-    const settings = providedSettings || (await getSettings());
+    const settings = providedSettings || (await getCachedSettings());
 
     if (kind === "dictionary") {
         return validateDictionaryProvider(providerId, settings);
@@ -189,6 +193,11 @@ const ENRICHMENT_CACHE_INVALIDATION_KEYS = new Set([
 ]);
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === "sync" || areaName === "local") {
+        cachedSettings = null;
+        cachedSettingsPromise = null;
+    }
+
     if (areaName === "sync" && changes.enableContextMenuTrigger) {
         initializeContextMenu().catch(() => { });
     }
@@ -212,7 +221,7 @@ if (chrome.contextMenus?.onClicked) {
         }
 
         try {
-            const settings = await getSettings();
+            const settings = await getCachedSettings();
             if (!settings.enableContextMenuTrigger) {
                 return;
             }
@@ -234,8 +243,25 @@ if (chrome.contextMenus?.onClicked) {
     });
 }
 
+async function getCachedSettings() {
+    if (cachedSettings) {
+        return cachedSettings;
+    }
+    if (!cachedSettingsPromise) {
+        cachedSettingsPromise = getSettings()
+            .then((settings) => {
+                cachedSettings = settings;
+                return settings;
+            })
+            .finally(() => {
+                cachedSettingsPromise = null;
+            });
+    }
+    return cachedSettingsPromise;
+}
+
 async function handleLookup(payload, sender = {}) {
-    const settings = await getSettings();
+    const settings = await getCachedSettings();
     const requestId = createRequestId();
     const { source, text, trigger, context, intent } = payload || {};
 
@@ -282,29 +308,84 @@ async function lookupCombinedDictionary(text, settings, requestId, sender = {}, 
         throw new Error("Enable translation or dictionary lookup in settings.");
     }
 
-    const [translateResult, dictionaryResult] = await Promise.allSettled([
-        settings.enableTranslate ? lookupTranslation(text, settings, { signal }) : Promise.resolve(null),
-        settings.enableDictionary ? lookupDictionary(text, settings, { signal }) : Promise.resolve(null)
-    ]);
+    const dictionaryPromise = settings.enableDictionary
+        ? lookupDictionary(text, settings, { signal })
+        : Promise.resolve(null);
+    const translationPromise = settings.enableTranslate
+        ? lookupTranslation(text, settings, { signal })
+        : null;
 
-    const translation = translateResult.status === "fulfilled" ? translateResult.value : null;
-    const dictionary = dictionaryResult.status === "fulfilled" ? dictionaryResult.value : null;
+    let dictionary = null;
+    let translation = null;
+    let dictionaryError = null;
+    let translationError = null;
+    let translationOutcome = translationPromise ? null : { ok: true, value: null };
 
-    if (!translation && !dictionary) {
-        const messages = [translateResult, dictionaryResult]
-            .filter((result) => result.status === "rejected")
-            .map((result) => result.reason?.message)
-            .filter(Boolean);
-
-        throw new Error(messages[0] || "Lookup failed.");
+    if (translationPromise) {
+        translationPromise.then(
+            (value) => {
+                translationOutcome = { ok: true, value };
+            },
+            (error) => {
+                translationOutcome = { ok: false, error };
+            }
+        );
     }
 
-    const sections = [];
+    try {
+        dictionary = await dictionaryPromise;
+    } catch (error) {
+        dictionaryError = error;
+    }
+
+    let settledTranslation = translationOutcome;
+    if (!settledTranslation && !dictionary && translationPromise) {
+        try {
+            translation = await translationPromise;
+            settledTranslation = { ok: true, value: translation };
+        } catch (error) {
+            translationError = error;
+            settledTranslation = { ok: false, error };
+        }
+    } else if (settledTranslation) {
+        if (settledTranslation.ok) {
+            translation = settledTranslation.value;
+        } else {
+            translationError = settledTranslation.error;
+        }
+    }
+
+    if (!dictionary && !translation) {
+        throw dictionaryError || translationError || new Error("Lookup failed.");
+    }
+
+    const result = buildCombinedDictionaryResult(text, dictionary, translation);
     const phraseLike = classifyQuery(text) === "phrase" && isPhraseLike(text);
     const hasDefinitions = hasUsableDictionaryDefinitions(dictionary);
     // AI phrase fallback is scheduled non-blocking after the initial result so
     // multi-word lookups are not delayed by the AI round-trip.
     const needsPhraseFallback = phraseLike && !hasDefinitions && settings.enableAI && settings.enablePhraseFallback !== false;
+    const primaryProviderId = dictionary?.providerId || settings.dictionaryProvider;
+    const pendingTranslation = Boolean(translationPromise && !settledTranslation);
+
+    scheduleDeferredDictionaryWork({
+        needsPhraseFallback,
+        text,
+        settings,
+        requestId,
+        sender,
+        initialResult: result,
+        primaryProviderId,
+        signal,
+        pendingTranslation,
+        translationPromise: pendingTranslation ? translationPromise : null
+    });
+
+    return result;
+}
+
+function buildCombinedDictionaryResult(text, dictionary, translation) {
+    const sections = [];
 
     if (dictionary?.sections?.length) {
         sections.push(...dictionary.sections.map((section) => annotateSectionSource(section, dictionary.sourceBadges)));
@@ -369,7 +450,7 @@ async function lookupCombinedDictionary(text, settings, requestId, sender = {}, 
         .filter((part) => !sourceNames.has(part.toLowerCase()))
         .join(" • ");
 
-    const result = {
+    return {
         title: text,
         subtitle,
         sourceBadges,
@@ -381,21 +462,6 @@ async function lookupCombinedDictionary(text, settings, requestId, sender = {}, 
         lexicalProfile: dictionary?.lexicalProfile || undefined,
         enriched: false
     };
-
-    const primaryProviderId = dictionary?.providerId || settings.dictionaryProvider;
-
-    scheduleDeferredDictionaryWork({
-        needsPhraseFallback,
-        text,
-        settings,
-        requestId,
-        sender,
-        initialResult: result,
-        primaryProviderId,
-        signal
-    });
-
-    return result;
 }
 
 function delayWithSignal(ms, signal) {
@@ -427,9 +493,11 @@ function scheduleDeferredDictionaryWork({
     sender,
     initialResult,
     primaryProviderId,
-    signal
+    signal,
+    pendingTranslation = false,
+    translationPromise = null
 }) {
-    const start = () => {
+    const continueAfterTranslation = (currentResult) => {
         if (signal?.aborted) {
             unregisterController(sender?.tab?.id, "dictionary", requestId);
             return;
@@ -440,7 +508,7 @@ function scheduleDeferredDictionaryWork({
                 settings,
                 requestId,
                 sender,
-                initialResult,
+                initialResult: currentResult,
                 thenEnrich: settings.enableDictionary,
                 primaryProviderId,
                 signal
@@ -453,7 +521,7 @@ function scheduleDeferredDictionaryWork({
                 settings,
                 requestId,
                 sender,
-                initialResult,
+                initialResult: currentResult,
                 primaryProviderId,
                 signal
             });
@@ -462,12 +530,97 @@ function scheduleDeferredDictionaryWork({
         unregisterController(sender?.tab?.id, "dictionary", requestId);
     };
 
-    delayWithSignal(300, signal).then(start).catch((error) => {
+    const start = async () => {
+        if (signal?.aborted) {
+            unregisterController(sender?.tab?.id, "dictionary", requestId);
+            return;
+        }
+
+        let currentResult = initialResult;
+        if (pendingTranslation && translationPromise) {
+            try {
+                const translation = await translationPromise;
+                if (signal?.aborted) {
+                    unregisterController(sender?.tab?.id, "dictionary", requestId);
+                    return;
+                }
+                if (translation) {
+                    currentResult = mergeTranslationIntoResult(currentResult, translation, text);
+                    await publishLookupUpdate({
+                        requestId,
+                        text,
+                        sender,
+                        result: {
+                            ...currentResult,
+                            requestId,
+                            enriched: false
+                        },
+                        revision: TRANSLATION_UPDATE_REVISION
+                    });
+                }
+            } catch (error) {
+                if (error?.name !== "AbortError") {
+                    console.warn("[dictionary-translation]", error?.message || error);
+                }
+            }
+        }
+
+        continueAfterTranslation(currentResult);
+    };
+
+    delayWithSignal(pendingTranslation ? 0 : 300, signal).then(start).catch((error) => {
         if (error?.name !== "AbortError") {
             console.warn("[dictionary-defer]", error?.message || error);
         }
         unregisterController(sender?.tab?.id, "dictionary", requestId);
     });
+}
+
+function mergeTranslationIntoResult(result, translation, originalText) {
+    if (!translation) {
+        return result;
+    }
+
+    const next = cloneLookupResult(result);
+    const hasTranslation = (next.sections || []).some((section) => normalizeSectionKind(section) === "translation");
+    if (!hasTranslation) {
+        if (!(next.sections || []).some((section) => String(section?.title || "").trim().toLowerCase() === "original")
+            && !(next.sections || []).some((section) => normalizeSectionKind(section) === "definitions")) {
+            next.sections.push({
+                title: "Original",
+                text: originalText
+            });
+        }
+        next.sections.push({
+            title: "Translation",
+            kind: "translation",
+            text: translation.translatedText || translation.title,
+            meta: sourceBadgeLabel(translation.sourceBadges)
+        });
+    }
+
+    const badges = Array.isArray(next.sourceBadges) ? [...next.sourceBadges] : [];
+    badges.push({
+        label: sourceBadgeLabel(translation.sourceBadges) || "Google Translate",
+        kind: "translation",
+        providerId: translation.providerId || "google"
+    });
+    next.sourceBadges = buildSourceBadges(badges);
+
+    const sourceNames = new Set(
+        next.sourceBadges
+            .map((badge) => String(badge.label || "").trim().toLowerCase())
+            .filter(Boolean)
+    );
+    const subtitleParts = [
+        next.subtitle,
+        translation.subtitle
+    ]
+        .map((part) => String(part || "").trim())
+        .filter(Boolean)
+        .filter((part) => !sourceNames.has(part.toLowerCase()));
+    next.subtitle = [...new Set(subtitleParts)].join(" • ");
+    return next;
 }
 
 function scheduleAiPhraseFallback({
@@ -494,7 +647,8 @@ function scheduleAiPhraseFallback({
                         ...current,
                         requestId,
                         enriched: true
-                    }
+                    },
+                    revision: ENRICHMENT_UPDATE_REVISION
                 });
             }
 
@@ -632,7 +786,8 @@ async function scheduleDictionaryEnrichment({ text, settings, requestId, sender,
                     ...mergedFromCached,
                     requestId,
                     enriched: true
-                }
+                },
+                revision: ENRICHMENT_UPDATE_REVISION
             });
         }
         unregisterController(sender?.tab?.id, "dictionary", requestId);
@@ -656,7 +811,8 @@ async function scheduleDictionaryEnrichment({ text, settings, requestId, sender,
                         ...merged,
                         requestId,
                         enriched: true
-                    }
+                    },
+                    revision: ENRICHMENT_UPDATE_REVISION
                 });
             })
             .catch(() => { })
@@ -701,7 +857,8 @@ async function scheduleDictionaryEnrichment({ text, settings, requestId, sender,
                     ...merged,
                     requestId,
                     enriched: true
-                }
+                },
+                revision: ENRICHMENT_UPDATE_REVISION
             });
         })
         .catch((error) => {
@@ -877,14 +1034,16 @@ function cloneEnrichmentResults(results) {
     return results.map((result) => (result ? cloneLookupResult(result) : result));
 }
 
-async function publishLookupUpdate({ requestId, text, sender, result }) {
+async function publishLookupUpdate({ requestId, text, sender, result, revision }) {
     const message = {
         type: LOOKUP_UPDATE,
         payload: {
             requestId,
             text: String(text || "").trim(),
             source: "dictionary",
-            revision: result?.enriched ? 1 : 0,
+            revision: Number.isFinite(revision)
+                ? revision
+                : (result?.enriched ? ENRICHMENT_UPDATE_REVISION : TRANSLATION_UPDATE_REVISION),
             result
         }
     };
@@ -944,7 +1103,7 @@ async function initializeContextMenu() {
         return;
     }
 
-    const settings = await getSettings();
+    const settings = await getCachedSettings();
 
     await chrome.contextMenus.removeAll();
     if (!settings.enableContextMenuTrigger) {

@@ -73,7 +73,8 @@ The **Dictionary** tab delivers a comprehensive, multi-source learning view comb
 Dictionary lookups execute in two synchronized phases:
 
 1. **Phase 1 — Fast Primary Lookup (Sub-second):**
-   - The primary dictionary provider (default: **Free Dictionary API**) and configured translation engine execute in parallel.
+   - The primary dictionary provider (default: **Free Dictionary API**) returns first. Inflected forms retry that same provider (`running` → `run`) before slower backends.
+   - Translation starts in parallel and appears on first paint when it is already ready; otherwise it fills in a moment later.
    - Initial definitions, examples, and phonetic audio appear immediately.
 2. **Phase 2 — Asynchronous Lazy Enrichment (Non-blocking):**
    - Secondary configured providers (**Wiktionary**, **Merriam-Webster**, **Wordnik**, **WordsAPI**) are queried lazily in concurrent batches of 2.

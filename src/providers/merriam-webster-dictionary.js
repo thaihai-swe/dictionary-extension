@@ -20,6 +20,7 @@ export async function lookupMerriamWebster(text, settings, options = {}) {
 
     const response = await fetchWithRetry(url, { signal: options.signal }, {
         retries: 1,
+        timeoutMs: 6000,
         retryStatuses: [429, 500, 502, 503, 504]
     });
 

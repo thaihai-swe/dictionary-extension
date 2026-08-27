@@ -10,7 +10,9 @@ This document tracks shipped capabilities, near-term product work, and longer-te
 - Five dictionary backends with primary-first fallback: `free_dictionary`, `wiktionary`, `merriam_webster`, `wordnik`, `words_api`
 - Removal of the paid-only Oxford provider (no usable free tier)
 - Phase 1 fast primary lookup plus Phase 2 lazy enrichment (`ENRICHMENT_CONCURRENCY = 2`)
-- Incremental `LOOKUP_UPDATE` messaging with `requestId`, `revision`, and stale-response guards
+- Incremental `LOOKUP_UPDATE` messaging with `requestId`, `revision`, stale-response guards, and scroll-preserving progressive paints
+- Primary-first lemma/phrase retries before secondary backends; dictionary HTTP timeouts of 6s
+- Non-blocking translation: first paint can ship dictionary-only, then merge translation at `revision: 1`
 - Smart English lemmatization (`went` → `go`, `children` → `child`) and phrasal canonicalization (`taking care of` → `take care of`)
 - Automatic AI phrase/idiom fallback in Dictionary mode when structured definitions are missing
 - Two-level enrichment cache: L1 in-memory Map (max 20, TTL 10 minutes) plus L2 `chrome.storage.session`

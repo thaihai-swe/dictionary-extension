@@ -59,6 +59,7 @@ let lastPreloadKey = "";
 let activeFollowUps = [];
 let activeAiIntent = "";
 let activeRequestId = "";
+let lastLookupRevision = -1;
 
 const OUTPUT_AFFECTING_SETTING_KEYS = popupHelpers.OUTPUT_AFFECTING_SETTING_KEYS;
 
@@ -174,7 +175,8 @@ function handleRuntimeMessage(message) {
         payload,
         activeTab,
         activeText: activeQuery,
-        activeRequestId
+        activeRequestId,
+        lastRevision: lastLookupRevision
     })) {
         return false;
     }
@@ -182,10 +184,14 @@ function handleRuntimeMessage(message) {
     if (result.requestId) {
         activeRequestId = result.requestId;
     }
+    if (Number.isFinite(payload.revision)) {
+        lastLookupRevision = payload.revision;
+        result.revision = payload.revision;
+    }
 
     const cacheKey = lookupClient.buildRequestCacheKey("dictionary", activeQuery.trim(), settings, {});
     lookupCache.set(cacheKey, result);
-    resultRoot.innerHTML = renderer.renderResult(result, getRenderOptions());
+    popupHelpers.paintLookupResult(resultRoot, renderer.renderResult(result, getRenderOptions()));
     audio.restorePracticeResult(resultRoot, activeQuery, result.pronunciation?.language);
     return false;
 }
@@ -644,6 +650,7 @@ async function loadTab(tab) {
     requestToken += 1;
     const token = requestToken;
     activeRequestId = "";
+    lastLookupRevision = -1;
     audio.stopPronunciation();
     if (tab !== "ai") {
         activeFollowUps = [];
@@ -659,11 +666,12 @@ async function loadTab(tab) {
         if (cached.requestId) {
             activeRequestId = cached.requestId;
         }
+        lastLookupRevision = Number.isFinite(cached.revision) ? cached.revision : (cached.enriched ? 2 : 0);
         if (tab === "ai") {
             syncFollowUpState(query, contextText);
         }
         resultRoot.setAttribute("aria-busy", "false");
-        resultRoot.innerHTML = renderer.renderResult(cached, getRenderOptions());
+        popupHelpers.paintLookupResult(resultRoot, renderer.renderResult(cached, getRenderOptions()));
         audio.restorePracticeResult(resultRoot, query, cached.pronunciation?.language);
         syncAiActionButtonStatus();
         if (tab === "ai") {
@@ -696,10 +704,13 @@ async function loadTab(tab) {
         if (response.result?.requestId) {
             activeRequestId = response.result.requestId;
         }
+        lastLookupRevision = Number.isFinite(response.result?.revision)
+            ? response.result.revision
+            : (response.result?.enriched ? 2 : 0);
         if (tab === "ai") {
             syncFollowUpState(query, contextText);
         }
-        resultRoot.innerHTML = renderer.renderResult(response.result, getRenderOptions());
+        popupHelpers.paintLookupResult(resultRoot, renderer.renderResult(response.result, getRenderOptions()));
         audio.restorePracticeResult(resultRoot, query, response.result?.pronunciation?.language);
         syncAiActionButtonStatus();
         if (tab === "ai") {

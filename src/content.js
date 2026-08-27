@@ -34,6 +34,7 @@ if (window.__dictionaryHelperContentInitialized) {
     let activeFollowUps = [];
     let activeAiIntent = "";
     let activeRequestId = "";
+    let lastLookupRevision = -1;
     let isPointerSelecting = false;
     let selectionClearTimer = 0;
     let selectionCaptureToken = 0;
@@ -781,6 +782,7 @@ if (window.__dictionaryHelperContentInitialized) {
 
         requestToken += 1;
         activeRequestId = "";
+        lastLookupRevision = -1;
         const cancelType = window.DictionaryHelperMessages?.CANCEL_LOOKUP || "CANCEL_LOOKUP";
         void chrome.runtime.sendMessage({ type: cancelType }).catch(() => {
             // The popup is closing; cancellation is best-effort.
@@ -1090,6 +1092,7 @@ if (window.__dictionaryHelperContentInitialized) {
         requestToken += 1;
         const token = requestToken;
         activeRequestId = "";
+        lastLookupRevision = -1;
         const availableTabs = getAvailableTabs();
 
         audio.stopPronunciation();
@@ -1119,10 +1122,11 @@ if (window.__dictionaryHelperContentInitialized) {
             if (cached.requestId) {
                 activeRequestId = cached.requestId;
             }
+            lastLookupRevision = Number.isFinite(cached.revision) ? cached.revision : (cached.enriched ? 2 : 0);
             if (tab === "ai") {
                 syncFollowUpState(text, activeContext);
             }
-            body.innerHTML = renderer.renderResult(cached, getRenderOptions());
+            popupHelpers.paintLookupResult(body, renderer.renderResult(cached, getRenderOptions()));
             audio.restorePracticeResult(body, activeText, cached.pronunciation?.language);
             syncAiActionButtonStatus();
             if (tab === "ai") {
@@ -1147,10 +1151,13 @@ if (window.__dictionaryHelperContentInitialized) {
             if (response.result?.requestId) {
                 activeRequestId = response.result.requestId;
             }
+            lastLookupRevision = Number.isFinite(response.result?.revision)
+                ? response.result.revision
+                : (response.result?.enriched ? 2 : 0);
             if (tab === "ai") {
                 syncFollowUpState(text, activeContext);
             }
-            body.innerHTML = renderer.renderResult(response.result, getRenderOptions());
+            popupHelpers.paintLookupResult(body, renderer.renderResult(response.result, getRenderOptions()));
             audio.restorePracticeResult(body, activeText, response.result?.pronunciation?.language);
             syncAiActionButtonStatus();
             if (tab === "ai") {
@@ -1459,6 +1466,7 @@ if (window.__dictionaryHelperContentInitialized) {
                 activeTab,
                 activeText,
                 activeRequestId,
+                lastRevision: lastLookupRevision,
                 surfaceReady: Boolean(popupRoot)
             })) {
                 return false;
@@ -1467,13 +1475,17 @@ if (window.__dictionaryHelperContentInitialized) {
             if (result.requestId) {
                 activeRequestId = result.requestId;
             }
+            if (Number.isFinite(payload.revision)) {
+                lastLookupRevision = payload.revision;
+                result.revision = payload.revision;
+            }
 
             const cacheKey = lookupModule.buildRequestCacheKey("dictionary", activeText.trim(), settings, {});
             lookupCache.set(cacheKey, result);
 
             const body = popupRoot.querySelector(".dictionary-helper-body");
             if (body) {
-                body.innerHTML = renderer.renderResult(result, getRenderOptions());
+                popupHelpers.paintLookupResult(body, renderer.renderResult(result, getRenderOptions()));
                 audio.restorePracticeResult(body, activeText, result.pronunciation?.language);
             }
             return false;

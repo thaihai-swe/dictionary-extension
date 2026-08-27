@@ -11,7 +11,11 @@ export async function lookupGoogleTranslate(text, settings, options = {}) {
     url.searchParams.set("dt", "t");
     url.searchParams.set("q", text);
 
-    const response = await fetchWithRetry(url.toString(), { signal: options.signal }, { retries: 1, retryStatuses: [429, 500, 502, 503, 504] });
+    const response = await fetchWithRetry(url.toString(), { signal: options.signal }, {
+        retries: 1,
+        timeoutMs: 8000,
+        retryStatuses: [429, 500, 502, 503, 504]
+    });
     if (!response.ok) {
         throw new Error("Google Translate request failed.");
     }

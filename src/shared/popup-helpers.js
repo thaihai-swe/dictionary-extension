@@ -341,6 +341,7 @@
         activeTab,
         activeText,
         activeRequestId,
+        lastRevision = -1,
         surfaceReady = true
     } = {}) {
         const result = payload?.result;
@@ -358,7 +359,21 @@
             return false;
         }
 
+        const revision = Number(payload?.revision);
+        if (Number.isFinite(revision) && Number.isFinite(lastRevision) && revision <= lastRevision) {
+            return false;
+        }
+
         return true;
+    }
+
+    function paintLookupResult(container, html) {
+        if (!container) {
+            return;
+        }
+        const scrollTop = container.scrollTop;
+        container.innerHTML = html;
+        container.scrollTop = scrollTop;
     }
 
     async function runAiContextAction({
@@ -444,6 +459,7 @@
         followUpButtonState,
         syncAiActionButtonStatus,
         shouldApplyLookupUpdate,
+        paintLookupResult,
         runAiContextAction,
         readLastTab,
         writeLastTab

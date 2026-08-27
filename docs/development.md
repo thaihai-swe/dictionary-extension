@@ -82,8 +82,8 @@ Run this comprehensive verification protocol before submitting code changes:
 
 ### A. Core Lookups & Progressive Lazy Enrichment
 1. Look up a polysemous word like `run` with translation enabled:
-   - Confirm initial definitions and translation render in under a second (`revision: 0`).
-   - Confirm Phase 2 secondary providers lazily enrich additional definitions, examples, and synonyms (`revision: 1`).
+   - Confirm initial definitions render in under a second (`revision: 0`). Translation may be present immediately or arrive as `revision: 1`.
+   - Confirm Phase 2 secondary providers lazily enrich additional definitions, examples, and synonyms (`revision: 2`).
    - Confirm contributing provider badges appear in the title row without duplicate subtitle labels.
 2. Look up a term whose primary provider lacks IPA:
    - Confirm Phase 2 enrichment backfills phonetic IPA into the pronunciation row when a secondary provider returns it.
@@ -99,7 +99,7 @@ Run this comprehensive verification protocol before submitting code changes:
 
 ### B. Smart Lemmatization & Phrasal Fallback
 5. Test irregular verbs and inflections: `went`, `children`, `better`, `running`, `evaluated`.
-   - Confirm exact lookup fails gracefully, candidate lemma is generated, and definition displays `Showing definitions for root: <stem>`.
+   - Confirm the primary provider retries the lemma before secondary backends, and definition displays `Showing definitions for root: <stem>`.
 6. Test multi-word phrasal expressions: `taking care of`, `looked up`, `ran out of`, `has taken off`.
    - Confirm phrasal canonicalization stems to base forms (`take care of`, `look up`, `run out of`) with root notices.
 7. Test obscure idiom fallback:
