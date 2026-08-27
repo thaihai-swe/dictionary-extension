@@ -31,13 +31,42 @@
         "enableLexicalProfile",
         "enableAI",
         "enableAiPreload",
+        "enablePhraseFallback",
         "disablePageContextExtraction",
+        "pausedHostnames",
         "pronunciationRate",
         "pronunciationVoiceURI",
         "aiBaseUrl",
         "aiModel"
     ]);
     const SYNC_KEY_SET = new Set(ALLOWED_SYNC_KEYS);
+
+    function normalizePausedHostnames(value) {
+        const raw = Array.isArray(value) ? value : String(value || "").split(/[\n,]/);
+        const seen = new Set();
+        const result = [];
+        for (const item of raw) {
+            let host = String(item || "").trim().toLowerCase();
+            host = host.replace(/^[a-z]+:\/\//, "").replace(/\/.*$/, "").replace(/:\d+$/, "");
+            if (!host || seen.has(host)) {
+                continue;
+            }
+            seen.add(host);
+            result.push(host);
+            if (result.length >= 100) {
+                break;
+            }
+        }
+        return result;
+    }
+
+    function isHostnamePaused(hostname, pausedHostnames) {
+        const host = String(hostname || "").trim().toLowerCase();
+        if (!host) {
+            return false;
+        }
+        return normalizePausedHostnames(pausedHostnames).includes(host);
+    }
 
     function applyThemeToNode(node, theme, fontFamily) {
         if (!node) return;
@@ -87,7 +116,9 @@
         next.enableLexicalProfile = Boolean(next.enableLexicalProfile);
         next.enableAI = Boolean(next.enableAI);
         next.enableAiPreload = Boolean(next.enableAiPreload);
+        next.enablePhraseFallback = next.enablePhraseFallback !== false;
         next.disablePageContextExtraction = Boolean(next.disablePageContextExtraction);
+        next.pausedHostnames = normalizePausedHostnames(next.pausedHostnames);
 
         return next;
     }
@@ -146,6 +177,8 @@
         applyStorageChanges,
         normalizeSettings,
         applyThemeToNode,
-        affectsOutput
+        affectsOutput,
+        normalizePausedHostnames,
+        isHostnamePaused
     };
 })(typeof window !== "undefined" ? window : globalThis);

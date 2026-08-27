@@ -27,7 +27,7 @@
             <option value="words_api">WordsAPI</option>
         `;
         const headerAction = toolbar
-            ? `<button id="open-settings-btn" class="${prefix}-settings-btn" type="button" aria-label="Open settings" title="Open settings"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm0-6 1 .2.5 2.1c.5.2 1 .4 1.5.7l1.8-1.1.8.6 1.4 1.4.6.8-1.1 1.8c.3.5.5 1 .7 1.5l2.1.5.2 1v2l-2.1.5c-.2.5-.4 1-.7 1.5l1.1 1.8-.6.8-1.4 1.4-.8.6-1.8-1.1c-.5.3-1 .5-1.5.7l-.5 2.1-1 .2h-2l-1-.2-.5-2.1c-.5-.2-1-.4-1.5-.7l-1.8 1.1-.8-.6-1.4-1.4-.6-.8 1.1-1.8c-.3-.5-.5-1-.7-1.5L2.2 14l-.2-1v-2l.2-1 2.1-.5c.2-.5.4-1 .7-1.5L3.9 6.2l.6-.8 1.4-1.4.8-.6 1.8 1.1c.5-.3 1-.5 1.5-.7l.5-2.1 1-.2h2Z"/></svg></button>`
+            ? `<button id="pause-site-btn" class="${prefix}-pause-btn" type="button" aria-pressed="false" title="Pause in-page triggers on this site">Pause site</button><button id="open-settings-btn" class="${prefix}-settings-btn" type="button" aria-label="Open settings" title="Open settings"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm0-6 1 .2.5 2.1c.5.2 1 .4 1.5.7l1.8-1.1.8.6 1.4 1.4.6.8-1.1 1.8c.3.5.5 1 .7 1.5l2.1.5.2 1v2l-2.1.5c-.2.5-.4 1-.7 1.5l1.1 1.8-.6.8-1.4 1.4-.8.6-1.8-1.1c-.5.3-1 .5-1.5.7l-.5 2.1-1 .2h-2l-1-.2-.5-2.1c-.5-.2-1-.4-1.5-.7l-1.8 1.1-.8-.6-1.4-1.4-.6-.8 1.1-1.8c-.3-.5-.5-1-.7-1.5L2.2 14l-.2-1v-2l.2-1 2.1-.5c.2-.5.4-1 .7-1.5L3.9 6.2l.6-.8 1.4-1.4.8-.6 1.8 1.1c.5-.3 1-.5 1.5-.7l.5-2.1 1-.2h2Z"/></svg></button>`
             : `<button class="${prefix}-close" type="button" aria-label="Close"><span aria-hidden="true">&times;</span></button>`;
         const search = toolbar
             ? `

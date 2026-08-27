@@ -1,35 +1,27 @@
 import { getSettings, migrateLegacySecretSettings, migrateSettingsSchema } from "./shared/storage.js";
 import { classifyQuery, mergeLexicalProfiles } from "./shared/query-utils.js";
 import {
+    annotateSectionSource,
+    buildSourceBadges,
+    cloneLookupResult,
+    mergeDictionaryEnrichment,
+    normalizeSectionKind,
+    sourceBadgeLabel
+} from "./shared/enrichment.js";
+import {
     LOOKUP_TEXT,
     LOOKUP_UPDATE,
     OPEN_LOOKUP_POPUP,
     VALIDATE_PROVIDER,
-    CANCEL_LOOKUP
+    CANCEL_LOOKUP,
+    INJECT_FRAME
 } from "./shared/messages.js";
 import { lookupTranslation, validateTranslationProvider } from "./providers/translate.js";
 import { lookupDictionary, lookupDictionaryEnrichment, validateDictionaryProvider } from "./providers/dictionary.js";
 import { lookupAiProvider, validateAiProvider } from "./providers/ai-provider.js";
 import { createSpeechPronunciation } from "./providers/pronunciation.js";
 import { canInjectIntoUrl } from "./shared/page-utils.js";
-
-const CONTENT_SCRIPT_JS = [
-    "src/ui/renderer.js",
-    "src/ui/audio.js",
-    "src/ui/popup-shell.js",
-    "src/shared/cache.js",
-    "src/shared/popup-helpers.js",
-    "src/content/popup-position.js",
-    "src/content/state.js",
-    "src/content/context.js",
-    "src/content/icons.js",
-    "src/content/selection.js",
-    "src/content/lookup-bridge.js",
-    "src/content/trigger.js",
-    "src/content/settings-bridge.js",
-    "src/content.js"
-];
-const CONTENT_SCRIPT_CSS = ["src/ui/popup.css"];
+import { CONTENT_SCRIPT_CSS, CONTENT_SCRIPT_JS } from "./shared/content-scripts.js";
 
 const CONTEXT_MENU_ID = "dictionary-helper-lookup";
 const MANUAL_LOOKUP_EMPTY_MESSAGE = "Enter a word or phrase to look up.";
@@ -37,12 +29,6 @@ const ENRICHED_CACHE_TTL_MS = 10 * 60 * 1000;
 const ENRICHED_CACHE_MAX = 20;
 const ENRICHMENT_CACHE_SCHEMA_VERSION = 2;
 const ENRICHMENT_CACHE_SCHEMA_KEY = "dictionaryHelperEnrichmentCacheSchemaVersion";
-const MAX_DEFINITIONS_SECTIONS = 2;
-const MAX_EXAMPLES_SECTIONS = 2;
-const MAX_SYNONYM_SECTIONS = 1;
-const MAX_ANTONYM_SECTIONS = 1;
-const MAX_PRONUNCIATIONS = 4;
-const MAX_ITEMS_PER_SECTION = 8;
 
 const enrichedCache = new Map();
 const enrichmentInFlight = new Map();
@@ -115,6 +101,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         cancelRequestsForTab(sender?.tab?.id);
         sendResponse({ ok: true });
         return false;
+    }
+
+    if (message?.type === INJECT_FRAME) {
+        const tabId = sender?.tab?.id;
+        if (!Number.isInteger(tabId)) {
+            sendResponse({ ok: false, error: "Missing tab." });
+            return false;
+        }
+        const frameId = Number(message.payload?.frameId);
+        const allFrames = Boolean(message.payload?.allFrames);
+        injectContentScript(tabId, allFrames ? null : (Number.isInteger(frameId) ? frameId : 0))
+            .then(() => sendResponse({ ok: true }))
+            .catch((error) => sendResponse({
+                ok: false,
+                error: error instanceof Error ? error.message : "Unable to inject into this frame."
+            }));
+        return true;
     }
 
     if (message?.type !== LOOKUP_TEXT) {
@@ -301,7 +304,7 @@ async function lookupCombinedDictionary(text, settings, requestId, sender = {}, 
     const hasDefinitions = hasUsableDictionaryDefinitions(dictionary);
     // AI phrase fallback is scheduled non-blocking after the initial result so
     // multi-word lookups are not delayed by the AI round-trip.
-    const needsPhraseFallback = phraseLike && !hasDefinitions && settings.enableAI;
+    const needsPhraseFallback = phraseLike && !hasDefinitions && settings.enableAI && settings.enablePhraseFallback !== false;
 
     if (dictionary?.sections?.length) {
         sections.push(...dictionary.sections.map((section) => annotateSectionSource(section, dictionary.sourceBadges)));
@@ -381,34 +384,90 @@ async function lookupCombinedDictionary(text, settings, requestId, sender = {}, 
 
     const primaryProviderId = dictionary?.providerId || settings.dictionaryProvider;
 
-    if (needsPhraseFallback) {
-        // Phrase AI first, then dictionary enrichment from the phrase-merged
-        // result so LOOKUP_UPDATE payloads remain cumulative.
-        scheduleAiPhraseFallback({
-            text,
-            settings,
-            requestId,
-            sender,
-            initialResult: result,
-            thenEnrich: settings.enableDictionary,
-            primaryProviderId,
-            signal
-        });
-    } else if (settings.enableDictionary) {
-        scheduleDictionaryEnrichment({
-            text,
-            settings,
-            requestId,
-            sender,
-            initialResult: result,
-            primaryProviderId,
-            signal
-        });
-    } else {
-        unregisterController(sender?.tab?.id, "dictionary", requestId);
-    }
+    scheduleDeferredDictionaryWork({
+        needsPhraseFallback,
+        text,
+        settings,
+        requestId,
+        sender,
+        initialResult: result,
+        primaryProviderId,
+        signal
+    });
 
     return result;
+}
+
+function delayWithSignal(ms, signal) {
+    if (signal?.aborted) {
+        const error = new Error("Request aborted");
+        error.name = "AbortError";
+        return Promise.reject(error);
+    }
+    return new Promise((resolve, reject) => {
+        const timeoutId = setTimeout(resolve, ms);
+        if (!signal) {
+            return;
+        }
+        const onAbort = () => {
+            clearTimeout(timeoutId);
+            const error = new Error("Request aborted");
+            error.name = "AbortError";
+            reject(error);
+        };
+        signal.addEventListener("abort", onAbort, { once: true });
+    });
+}
+
+function scheduleDeferredDictionaryWork({
+    needsPhraseFallback,
+    text,
+    settings,
+    requestId,
+    sender,
+    initialResult,
+    primaryProviderId,
+    signal
+}) {
+    const start = () => {
+        if (signal?.aborted) {
+            unregisterController(sender?.tab?.id, "dictionary", requestId);
+            return;
+        }
+        if (needsPhraseFallback) {
+            scheduleAiPhraseFallback({
+                text,
+                settings,
+                requestId,
+                sender,
+                initialResult,
+                thenEnrich: settings.enableDictionary,
+                primaryProviderId,
+                signal
+            });
+            return;
+        }
+        if (settings.enableDictionary) {
+            scheduleDictionaryEnrichment({
+                text,
+                settings,
+                requestId,
+                sender,
+                initialResult,
+                primaryProviderId,
+                signal
+            });
+            return;
+        }
+        unregisterController(sender?.tab?.id, "dictionary", requestId);
+    };
+
+    delayWithSignal(300, signal).then(start).catch((error) => {
+        if (error?.name !== "AbortError") {
+            console.warn("[dictionary-defer]", error?.message || error);
+        }
+        unregisterController(sender?.tab?.id, "dictionary", requestId);
+    });
 }
 
 function scheduleAiPhraseFallback({
@@ -676,406 +735,6 @@ async function runDictionaryEnrichment({ text, settings, initialResult, primaryP
     }
 
     return enrichmentResults;
-}
-
-function mergeDictionaryEnrichment(initialResult, enrichmentResults) {
-    if (!Array.isArray(enrichmentResults) || !enrichmentResults.length) {
-        return null;
-    }
-
-    const base = cloneLookupResult(initialResult);
-    const badges = Array.isArray(base.sourceBadges) ? [...base.sourceBadges] : [];
-    const sections = Array.isArray(base.sections) ? [...base.sections] : [];
-    let pronunciations = Array.isArray(base.pronunciations) && base.pronunciations.length
-        ? [...base.pronunciations]
-        : base.pronunciation
-            ? [base.pronunciation]
-            : [];
-
-    let contributed = false;
-
-    for (const providerResult of enrichmentResults) {
-        if (!providerResult) {
-            continue;
-        }
-
-        const providerLabel = sourceBadgeLabel(providerResult.sourceBadges) || providerResult.providerId;
-        const beforeCount = sections.length;
-        const beforePronunciations = pronunciations.length;
-
-        mergeProviderSections(sections, providerResult.sections || [], providerLabel);
-
-        const nextPronunciations = Array.isArray(providerResult.pronunciations) && providerResult.pronunciations.length
-            ? providerResult.pronunciations
-            : providerResult.pronunciation
-                ? [providerResult.pronunciation]
-                : [];
-        pronunciations = mergePronunciations(pronunciations, nextPronunciations);
-
-        const addedContent = sections.length > beforeCount || pronunciations.length > beforePronunciations;
-        // A successful provider is useful attribution even when its content
-        // duplicates data already supplied by an earlier provider.
-        contributed = true;
-        badges.push({
-            label: providerLabel,
-            kind: "dictionary",
-            providerId: providerResult.providerId || ""
-        });
-
-        if (!addedContent) {
-            continue;
-        }
-    }
-
-    if (!contributed) {
-        return null;
-    }
-
-    let mergedLexicalProfile = base.lexicalProfile || null;
-    for (const providerResult of enrichmentResults) {
-        if (providerResult?.lexicalProfile) {
-            mergedLexicalProfile = mergeLexicalProfiles(mergedLexicalProfile, providerResult.lexicalProfile);
-        }
-    }
-
-    const sourceBadges = buildSourceBadges(badges);
-    return {
-        ...base,
-        sourceBadges,
-        pronunciation: pronunciations[0] || base.pronunciation,
-        pronunciations,
-        sections,
-        lexicalProfile: mergedLexicalProfile || undefined,
-        enriched: true
-    };
-}
-
-function mergeProviderSections(targetSections, incomingSections, providerLabel) {
-    for (const section of incomingSections || []) {
-        const kind = normalizeSectionKind(section);
-        if (kind === "translation") {
-            continue;
-        }
-
-        const annotated = annotateSectionSource(section, providerLabel);
-        const existing = targetSections.find((item) => {
-            return normalizeSectionKind(item) === kind
-                && normalizeSectionTitle(item) === normalizeSectionTitle(annotated);
-        });
-
-        if (existing) {
-            if (mergeSectionContent(existing, annotated, providerLabel)) {
-                continue;
-            }
-        }
-
-        if (!canAddSectionOfKind(targetSections, kind)) {
-            // Try to merge into any same-kind section when the cap is already hit.
-            const sameKind = targetSections.find((item) => normalizeSectionKind(item) === kind);
-            if (sameKind && mergeSectionContent(sameKind, annotated, providerLabel)) {
-                continue;
-            }
-            continue;
-        }
-
-        targetSections.push(annotated);
-    }
-}
-
-function mergeSectionContent(target, incoming, providerLabel) {
-    let changed = false;
-
-    if (Array.isArray(incoming.items) && incoming.items.length) {
-        if (!Array.isArray(target.items)) {
-            target.items = [];
-        }
-
-        for (const item of incoming.items) {
-            const value = String(item || "").trim();
-            if (!value) {
-                continue;
-            }
-            if (target.items.some((existing) => normalizeComparableText(existing) === normalizeComparableText(value))) {
-                continue;
-            }
-            if (target.items.length >= MAX_ITEMS_PER_SECTION) {
-                break;
-            }
-            target.items.push(value);
-            changed = true;
-        }
-    }
-
-    const incomingText = String(incoming.text || "").trim();
-    if (incomingText) {
-        const targetText = String(target.text || "").trim();
-        if (!targetText) {
-            target.text = incomingText;
-            changed = true;
-        } else if (normalizeComparableText(targetText) !== normalizeComparableText(incomingText)
-            && !targetText.includes(incomingText)
-            && String(target.text || "").length < 600) {
-            target.text = `${targetText}\n\n${incomingText}`;
-            changed = true;
-        }
-    }
-
-    if (changed) {
-        target.meta = joinMetaLabels(target.meta, providerLabel || incoming.meta);
-    }
-
-    return changed;
-}
-
-function mergePronunciations(existing, incoming) {
-    const merged = Array.isArray(existing)
-        ? existing.map((entry) => (entry ? { ...entry } : entry))
-        : [];
-
-    for (const item of incoming || []) {
-        if (!item) {
-            continue;
-        }
-
-        const phonetic = String(item.phonetic || "").trim();
-        const audioUrl = String(item.audioUrl || "").trim();
-        const language = String(item.language || "").trim();
-
-        // Prefer filling empty IPA / audio on an existing accent slot over
-        // appending another Speak button with no phonetic text.
-        if (language || phonetic || audioUrl) {
-            const matchIndex = merged.findIndex((entry) => {
-                if (!entry) {
-                    return false;
-                }
-                const entryLanguage = String(entry.language || "").trim();
-                if (language && entryLanguage) {
-                    return entryLanguage === language;
-                }
-                // Speech-only fallback (empty language / empty phonetic) can
-                // accept the first real phonetic we get from enrichment.
-                const entryPhonetic = String(entry.phonetic || "").trim();
-                const entryAudio = String(entry.audioUrl || "").trim();
-                return !entryPhonetic && (!entryAudio || !audioUrl || entryAudio === audioUrl);
-            });
-
-            if (matchIndex >= 0) {
-                const current = merged[matchIndex];
-                const next = { ...current };
-                let changed = false;
-
-                if (phonetic && !String(next.phonetic || "").trim()) {
-                    next.phonetic = phonetic;
-                    changed = true;
-                }
-                if (audioUrl && !String(next.audioUrl || "").trim()) {
-                    next.audioUrl = audioUrl;
-                    changed = true;
-                }
-                if (language && !String(next.language || "").trim()) {
-                    next.language = language;
-                    changed = true;
-                }
-                if (changed) {
-                    if (next.audioUrl && next.fallbackOnly) {
-                        next.fallbackOnly = false;
-                    }
-                    if (!next.label || next.label === "Speak") {
-                        next.label = item.label || next.label || (next.audioUrl ? "Listen" : "Speak");
-                    }
-                    merged[matchIndex] = next;
-                }
-
-                // If this incoming entry only backfilled an existing slot, skip append.
-                const sameIdentity =
-                    language
-                    && String(current.language || "").trim() === language
-                    && (
-                        !phonetic
-                        || normalizeComparableText(current.phonetic) === normalizeComparableText(phonetic)
-                        || !String(current.phonetic || "").trim()
-                    );
-                if (sameIdentity || (!phonetic && !audioUrl)) {
-                    continue;
-                }
-                // If we already have this language with a phonetic, don't add a duplicate accent.
-                if (
-                    language
-                    && merged.some((entry, index) => (
-                        index !== matchIndex
-                        && String(entry?.language || "").trim() === language
-                        && normalizeComparableText(entry?.phonetic) === normalizeComparableText(phonetic)
-                    ))
-                ) {
-                    continue;
-                }
-            }
-        }
-
-        const key = `${language}|${normalizeComparableText(phonetic)}|${audioUrl}`;
-        const alreadyPresent = merged.some((entry) => {
-            const entryKey = `${String(entry.language || "").trim()}|${normalizeComparableText(entry.phonetic)}|${String(entry.audioUrl || "").trim()}`;
-            return entryKey === key;
-        });
-        if (alreadyPresent) {
-            continue;
-        }
-        // Also skip near-duplicates that only differ by empty fields.
-        if (language && phonetic) {
-            const accentDuplicate = merged.some((entry) => (
-                String(entry?.language || "").trim() === language
-                && normalizeComparableText(entry?.phonetic) === normalizeComparableText(phonetic)
-            ));
-            if (accentDuplicate) {
-                continue;
-            }
-        }
-        if (merged.length >= MAX_PRONUNCIATIONS) {
-            break;
-        }
-        merged.push({ ...item, phonetic, audioUrl, language });
-    }
-
-    return preferPhoneticPronunciations(merged);
-}
-
-function preferPhoneticPronunciations(pronunciations) {
-    if (!Array.isArray(pronunciations) || pronunciations.length < 2) {
-        return pronunciations;
-    }
-
-    // Surface entries that actually have IPA text first so the title row shows
-    // phonetic transcription instead of a bare Speak button when available.
-    return [...pronunciations].sort((a, b) => {
-        const aScore = (String(a?.phonetic || "").trim() ? 2 : 0) + (String(a?.audioUrl || "").trim() ? 1 : 0);
-        const bScore = (String(b?.phonetic || "").trim() ? 2 : 0) + (String(b?.audioUrl || "").trim() ? 1 : 0);
-        return bScore - aScore;
-    });
-}
-
-function canAddSectionOfKind(sections, kind) {
-    const count = sections.filter((section) => normalizeSectionKind(section) === kind).length;
-    if (kind === "definitions") {
-        return count < MAX_DEFINITIONS_SECTIONS;
-    }
-    if (kind === "examples") {
-        return count < MAX_EXAMPLES_SECTIONS;
-    }
-    if (kind === "synonyms") {
-        return count < MAX_SYNONYM_SECTIONS;
-    }
-    if (kind === "antonyms") {
-        return count < MAX_ANTONYM_SECTIONS;
-    }
-    if (kind === "translation") {
-        return count < 1;
-    }
-    return count < 1;
-}
-
-function annotateSectionSource(section, sourceBadges) {
-    const next = {
-        ...section,
-        items: Array.isArray(section?.items) ? [...section.items] : section?.items
-    };
-    const label = sourceBadgeLabel(sourceBadges);
-    if (label && !String(next.meta || "").trim()) {
-        next.meta = label;
-    }
-    return next;
-}
-
-function sourceBadgeLabel(sourceBadges) {
-    return Array.isArray(sourceBadges)
-        ? String(sourceBadges[0]?.label || "").trim()
-        : "";
-}
-
-function joinMetaLabels(...labels) {
-    const parts = [];
-    for (const label of labels) {
-        for (const piece of String(label || "").split(/[+•|,]/)) {
-            const value = piece.trim();
-            if (!value) {
-                continue;
-            }
-            if (!parts.some((existing) => existing.toLowerCase() === value.toLowerCase())) {
-                parts.push(value);
-            }
-        }
-    }
-    return parts.join(" + ");
-}
-
-function normalizeSectionKind(section) {
-    const explicit = String(section?.kind || "").trim().toLowerCase();
-    if (explicit) {
-        return explicit;
-    }
-    const title = String(section?.title || "").trim().toLowerCase();
-    if (title.includes("translation")) return "translation";
-    if (title.includes("example")) return "examples";
-    if (title.includes("synonym")) return "synonyms";
-    if (title.includes("antonym")) return "antonyms";
-    if (title.includes("definition") || title.includes("meaning") || !title) return "definitions";
-    return title.replace(/[^a-z0-9]+/g, "-") || "general";
-}
-
-function normalizeSectionTitle(section) {
-    return String(section?.title || "").trim().toLowerCase();
-}
-
-function normalizeComparableText(value) {
-    return String(value || "")
-        .toLowerCase()
-        .replace(/[^\p{L}\p{N}\s]/gu, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-}
-
-function buildSourceBadges(badges) {
-    const result = [];
-    const seen = new Set();
-
-    for (const badge of badges || []) {
-        if (!badge) {
-            continue;
-        }
-        const label = String(badge.label || "").trim();
-        if (!label) {
-            continue;
-        }
-        const key = label.toLowerCase();
-        if (seen.has(key)) {
-            continue;
-        }
-        seen.add(key);
-        result.push({
-            label,
-            kind: String(badge.kind || "default").trim() || "default",
-            providerId: String(badge.providerId || "").trim()
-        });
-    }
-
-    return result;
-}
-
-function cloneLookupResult(result) {
-    return {
-        ...result,
-        sourceBadges: Array.isArray(result?.sourceBadges)
-            ? result.sourceBadges.map((badge) => ({ ...badge }))
-            : [],
-        pronunciations: Array.isArray(result?.pronunciations)
-            ? result.pronunciations.map((item) => ({ ...item }))
-            : [],
-        sections: Array.isArray(result?.sections)
-            ? result.sections.map((section) => ({
-                ...section,
-                items: Array.isArray(section?.items) ? [...section.items] : section?.items
-            }))
-            : []
-    };
 }
 
 function createRequestId() {
@@ -1381,7 +1040,7 @@ async function injectContentScript(tabId, frameId = 0) {
         targets.push({ tabId, frameIds: [frameId] });
         targets.push({ tabId, allFrames: true });
     } else {
-        targets.push({ tabId, allFrames: true });
+        targets.push({ tabId, frameIds: [0] });
     }
 
     let lastError = null;
@@ -1409,4 +1068,23 @@ async function injectContentScript(tabId, frameId = 0) {
 function isMissingReceiverError(error) {
     const message = error?.message || String(error || "");
     return message.includes("Could not establish connection") || message.includes("Receiving end does not exist");
+}
+
+if (chrome.commands?.onCommand) {
+    chrome.commands.onCommand.addListener(async (command) => {
+        if (command !== "lookup-selection") {
+            return;
+        }
+
+        const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+        if (!tab?.id || !canInjectIntoUrl(tab.url)) {
+            return;
+        }
+
+        try {
+            await sendMessageToTabWithRetry(tab.id, { type: OPEN_LOOKUP_POPUP, payload: { fromSelection: true } }, 0);
+        } catch (_error) {
+            // Restricted pages already surface via the toolbar badge path when possible.
+        }
+    });
 }

@@ -22,13 +22,16 @@ This guide provides actionable solutions for common issues across extension relo
 - **Check 2 — Trigger Mode Setting:** Open Settings (`options/options.html`) and verify **Text selection & double-click lookup behavior** is set to `Floating lookup icon` or `Open popup immediately on selection` (not `Off`).
 - **Check 3 — Post-Selection Modifier Key:** If using the hotkey trigger, confirm you tap the configured key (`Shift`, `Alt`, or `Ctrl`) once immediately *after* highlighting the text.
 - **Check 4 — Viewport Positioning & Screen Edges:** If text is at the extreme edge of the screen, the positioning engine flips the card. Ensure browser zoom or high-DPI scaling is not hiding the card off-screen.
+- **Check 5 — Paused site:** The toolbar **Pause site** button or Settings → paused hostnames turns off in-page icons on that host. Toolbar search, Alt+L, and the context menu still work.
+- **Check 6 — Iframes:** Content scripts load in the top frame. A same-origin iframe injects on first selection. Cross-origin iframes cannot be read; use the toolbar or context menu.
+- **Check 7 — Keyboard command:** Highlight text and press Alt+L (rebind in `chrome://extensions/shortcuts`).
 
 ---
 
 ## 3. AI Requests & Context Errors
 
 ### Symptom: AI generation fails with error toasts or missing field alerts.
-- **Check 1 — Required Settings:** Verify in Settings that **Enable AI provider** is checked, and all three core fields are populated:
+- **Check 1 — Required Settings:** Verify in Settings that **Enable AI provider** is checked (fresh installs default this off), and all three core fields are populated:
   - **AI API base URL:** e.g. `https://generativelanguage.googleapis.com/v1beta/openai/` or your custom endpoint.
   - **AI API key:** `sk-...` or Google Gemini API key.
   - **AI model name:** e.g. `gemini-3.5-flash-lite`, `gpt-4o-mini`, `deepseek-chat`, or `llama3`.
@@ -49,7 +52,8 @@ This guide provides actionable solutions for common issues across extension relo
 
 ### Symptom: No definitions found for an inflected word (e.g. `went`, `taking care of`).
 - **Resolution:** The extension runs automatic English lemmatization and phrasal canonicalization fallback. If all exact lookups return `NotFoundError`, it retries root stems (`went` → `go`, `taking care of` → `take care of`) and displays a subtitle notice: `Showing definitions for root: <stem>`.
-- If an obscure idiom has no dictionary definitions across all 5 providers, Dictionary mode automatically invokes **AI Phrase Fallback** (when AI is enabled) to explain the phrase under `AI · Phrase explanation`.
+- If an obscure idiom has no dictionary definitions across all 5 providers, Dictionary mode invokes **AI Phrase Fallback** when both AI and **Use AI when a phrase has no dictionary definition** are enabled.
+- A primary provider with no API key is skipped. Transient 5xx/timeout from a free provider continues to the next free provider. An invalid key still fails that lookup.
 
 ### Symptom: Key-backed providers (Merriam-Webster, Wordnik, WordsAPI) don't enrich results.
 - **Check 1 — API Key Configuration:**

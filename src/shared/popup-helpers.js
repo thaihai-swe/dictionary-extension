@@ -161,6 +161,7 @@
         "enableTranslate",
         "enableDictionary",
         "enableAI",
+        "enablePhraseFallback",
         "aiBaseUrl",
         "aiApiKey",
         "aiModel",
@@ -335,6 +336,77 @@
         }
     }
 
+    function shouldApplyLookupUpdate({
+        payload,
+        activeTab,
+        activeText,
+        activeRequestId,
+        surfaceReady = true
+    } = {}) {
+        const result = payload?.result;
+        if (!result || !surfaceReady || activeTab !== "dictionary") {
+            return false;
+        }
+
+        const requestId = String(payload?.requestId || "").trim();
+        if (requestId && activeRequestId && requestId !== activeRequestId) {
+            return false;
+        }
+
+        const text = String(payload?.text || "").trim();
+        if (text && text.toLowerCase() !== String(activeText || "").trim().toLowerCase()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    async function runAiContextAction({
+        intent,
+        query,
+        getContext,
+        validate,
+        setBusy,
+        renderBusy,
+        renderResult,
+        renderError,
+        getLookup,
+        isCurrent
+    } = {}) {
+        const validationError = typeof validate === "function" ? validate() : null;
+        if (validationError) {
+            return { ok: false, error: validationError, cancelled: false };
+        }
+
+        setBusy?.(true);
+        renderBusy?.();
+
+        try {
+            const response = await getLookup(query, {
+                context: typeof getContext === "function" ? getContext() : "",
+                intent
+            });
+            if (isCurrent && !isCurrent()) {
+                return { ok: false, cancelled: true };
+            }
+            if (!response?.ok) {
+                throw new Error(response?.error || "Request failed.");
+            }
+            renderResult?.(response.result);
+            return { ok: true, result: response.result };
+        } catch (error) {
+            if ((isCurrent && !isCurrent()) || error?.name === "AbortError") {
+                return { ok: false, cancelled: true };
+            }
+            renderError?.(error);
+            return { ok: false, error };
+        } finally {
+            if (!isCurrent || isCurrent()) {
+                setBusy?.(false);
+            }
+        }
+    }
+
     async function writeLastTab(tab) {
         if (!global.chrome?.storage?.session) {
             return;
@@ -371,6 +443,8 @@
         getEligibleFollowUpIntents,
         followUpButtonState,
         syncAiActionButtonStatus,
+        shouldApplyLookupUpdate,
+        runAiContextAction,
         readLastTab,
         writeLastTab
     };

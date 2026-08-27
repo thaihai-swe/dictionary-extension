@@ -23,6 +23,8 @@
 4. Click the **Reload icon** (↻) on the extension card after making code changes.
 5. **Important:** Refresh all open webpage tabs where you are testing so content scripts re-inject.
 6. For local HTML/PDF testing, open the extension **Details** and enable **Allow access to file URLs**.
+7. Run unit tests before the manual matrix: `node --test tests/*.test.js`.
+8. Keep `manifest.json` `content_scripts[0].js` / `.css` identical to `src/shared/content-scripts.js`. The test in `tests/content-scripts.test.js` asserts that.
 
 ---
 
@@ -89,8 +91,9 @@ Run this comprehensive verification protocol before submitting code changes:
    - Query `apple`, then immediately type `orange` before `apple` finishes enrichment.
    - Confirm `apple` enrichment updates never overwrite `orange` (stale-response guard via `requestId`).
 4. Skip unconfigured providers:
-   - Clear API keys for Merriam-Webster, Wordnik, and WordsAPI.
+   - Set the primary dictionary to Merriam-Webster, Wordnik, or WordsAPI with an empty key.
    - Confirm lookups succeed via Free Dictionary and Wiktionary without network errors in the DevTools console.
+   - A transient 5xx/timeout from a free provider should fall through to the next free provider. An invalid API key (401/403) still stops the chain.
 
 ---
 
@@ -100,8 +103,9 @@ Run this comprehensive verification protocol before submitting code changes:
 6. Test multi-word phrasal expressions: `taking care of`, `looked up`, `ran out of`, `has taken off`.
    - Confirm phrasal canonicalization stems to base forms (`take care of`, `look up`, `run out of`) with root notices.
 7. Test obscure idiom fallback:
-   - Look up an idiom missing from all dictionary backends (e.g. `spill the beans`).
+   - With AI and phrase fallback enabled, look up an idiom missing from all dictionary backends (e.g. `spill the beans`).
    - Confirm automatic AI Phrase Fallback renders concise meaning under `AI · Phrase explanation`.
+   - Disable **Use AI when a phrase has no dictionary definition** and confirm the phrase lookup no longer starts that AI request.
 
 ---
 

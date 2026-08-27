@@ -1,4 +1,4 @@
-import { NotFoundError } from "./errors.js";
+import { NotFoundError, isFatalDictionaryError } from "./errors.js";
 import { lookupFreeDictionary } from "./free-dictionary.js";
 import { lookupMerriamWebster } from "./merriam-webster-dictionary.js";
 import { lookupWiktionary } from "./wiktionary-dictionary.js";
@@ -64,6 +64,28 @@ export async function lookupDictionary(text, settings, options = {}) {
     ];
 
     let lastNotFoundError = null;
+    let lastLookupError = null;
+
+    async function tryProviderLookup(provider, query) {
+        if (typeof provider.isConfigured === "function" && !provider.isConfigured(settings)) {
+            return null;
+        }
+
+        try {
+            return normalizeDictionaryResult(await provider.lookup(query, settings, options), provider, settings);
+        } catch (error) {
+            if (error instanceof NotFoundError) {
+                lastNotFoundError = error;
+                return null;
+            }
+            if (isFatalDictionaryError(error)) {
+                lastLookupError = error;
+                throw error;
+            }
+            lastLookupError = error;
+            return null;
+        }
+    }
 
     for (const providerId of fallbackChain) {
         const provider = DICTIONARY_PROVIDERS[providerId];
@@ -71,16 +93,9 @@ export async function lookupDictionary(text, settings, options = {}) {
             continue;
         }
 
-        try {
-            const result = await provider.lookup(text, settings, options);
-            return normalizeDictionaryResult(result, provider, settings);
-        } catch (error) {
-            if (error instanceof NotFoundError) {
-                lastNotFoundError = error;
-                continue;
-            }
-            // Real operational errors (auth missing/invalid, network failure, rate limit) stop the chain
-            throw error;
+        const result = await tryProviderLookup(provider, text);
+        if (result) {
+            return result;
         }
     }
 
@@ -92,24 +107,19 @@ export async function lookupDictionary(text, settings, options = {}) {
                 continue;
             }
 
-            try {
-                const result = await provider.lookup(candidateStem, settings, options);
-                const normalized = normalizeDictionaryResult(result, provider, settings);
-                normalized.lemmaFallback = {
-                    originalText: text,
-                    lemma: candidateStem
-                };
-                const rootNotice = `Showing definitions for root: ${candidateStem}`;
-                normalized.subtitle = normalized.subtitle
-                    ? `${normalized.subtitle} • ${rootNotice}`
-                    : rootNotice;
-                return normalized;
-            } catch (error) {
-                if (error instanceof NotFoundError) {
-                    continue;
-                }
-                throw error;
+            const result = await tryProviderLookup(provider, candidateStem);
+            if (!result) {
+                continue;
             }
+            result.lemmaFallback = {
+                originalText: text,
+                lemma: candidateStem
+            };
+            const rootNotice = `Showing definitions for root: ${candidateStem}`;
+            result.subtitle = result.subtitle
+                ? `${result.subtitle} • ${rootNotice}`
+                : rootNotice;
+            return result;
         }
     }
 
@@ -121,28 +131,23 @@ export async function lookupDictionary(text, settings, options = {}) {
                 continue;
             }
 
-            try {
-                const result = await provider.lookup(candidatePhrase, settings, options);
-                const normalized = normalizeDictionaryResult(result, provider, settings);
-                normalized.lemmaFallback = {
-                    originalText: text,
-                    lemma: candidatePhrase
-                };
-                const phraseNotice = `Showing definitions for phrase: ${candidatePhrase}`;
-                normalized.subtitle = normalized.subtitle
-                    ? `${normalized.subtitle} • ${phraseNotice}`
-                    : phraseNotice;
-                return normalized;
-            } catch (error) {
-                if (error instanceof NotFoundError) {
-                    continue;
-                }
-                throw error;
+            const result = await tryProviderLookup(provider, candidatePhrase);
+            if (!result) {
+                continue;
             }
+            result.lemmaFallback = {
+                originalText: text,
+                lemma: candidatePhrase
+            };
+            const phraseNotice = `Showing definitions for phrase: ${candidatePhrase}`;
+            result.subtitle = result.subtitle
+                ? `${result.subtitle} • ${phraseNotice}`
+                : phraseNotice;
+            return result;
         }
     }
 
-    throw lastNotFoundError || new Error(`No dictionary definition found for "${text}".`);
+    throw lastNotFoundError || lastLookupError || new Error(`No dictionary definition found for "${text}".`);
 }
 
 /**

@@ -41,6 +41,7 @@ if (window.__dictionaryHelperContentInitialized) {
     let restoreFocusElement = null;
     let focusPopupOnOpen = false;
     let isPopupClosing = false;
+    let unbindPopupResize = null;
 
     const renderer = window.DictionaryHelperRenderer;
     const audio = window.DictionaryHelperAudio;
@@ -64,6 +65,10 @@ if (window.__dictionaryHelperContentInitialized) {
         window.addEventListener("dblclick", handleDoubleClickTrigger, true);
         window.addEventListener("keydown", handleKeydown, true);
         document.addEventListener("selectionchange", handleSelectionChange);
+        if (window === window.top) {
+            window.addEventListener("mouseup", handleTopFrameIframeSelection, true);
+            window.addEventListener("dblclick", handleTopFrameIframeSelection, true);
+        }
 
         try {
             chrome.storage.onChanged.addListener(handleStorageChanges);
@@ -124,7 +129,41 @@ if (window.__dictionaryHelperContentInitialized) {
         selectionClearTimer = 0;
     }
 
+    function isSitePaused() {
+        return Boolean(shared.settings?.isHostnamePaused?.(location.hostname, settings.pausedHostnames));
+    }
+
+    function handleTopFrameIframeSelection(event) {
+        if (isSitePaused() || window !== window.top || eventContainsNode(popupRoot, event) || eventContainsNode(triggerIconRoot, event)) {
+            return;
+        }
+        const target = event.target;
+        if (!target || target.tagName !== "IFRAME") {
+            return;
+        }
+        try {
+            if (!target.contentDocument) {
+                return;
+            }
+        } catch (_error) {
+            return;
+        }
+        if (target.dataset.dictionaryHelperInjecting === "1") {
+            return;
+        }
+        target.dataset.dictionaryHelperInjecting = "1";
+        chrome.runtime.sendMessage({
+            type: window.DictionaryHelperMessages?.INJECT_FRAME || "INJECT_FRAME",
+            payload: { allFrames: true }
+        }).catch(() => {
+            target.dataset.dictionaryHelperInjecting = "";
+        });
+    }
+
     function handleMouseDown(event) {
+        if (isSitePaused() && !eventContainsNode(popupRoot, event) && !eventContainsNode(triggerIconRoot, event)) {
+            return;
+        }
         if (eventContainsNode(popupRoot, event) || eventContainsNode(triggerIconRoot, event)) {
             handleOutsidePointer(event);
             return;
@@ -140,7 +179,7 @@ if (window.__dictionaryHelperContentInitialized) {
     }
 
     function handleSelectionChange() {
-        if (isPointerSelecting || currentSelectionSnapshot) {
+        if (isSitePaused() || isPointerSelecting || currentSelectionSnapshot) {
             return;
         }
 
@@ -178,6 +217,10 @@ if (window.__dictionaryHelperContentInitialized) {
 
     function handleMouseUpTrigger(event) {
         isPointerSelecting = false;
+
+        if (isSitePaused()) {
+            return;
+        }
 
         if (typeof event.button === "number" && event.button !== 0) {
             return;
@@ -231,6 +274,9 @@ if (window.__dictionaryHelperContentInitialized) {
     }
 
     function handleDoubleClickTrigger(event) {
+        if (isSitePaused()) {
+            return;
+        }
         const mode = getSelectionTriggerMode();
         if (mode === "off") {
             return;
@@ -272,7 +318,7 @@ if (window.__dictionaryHelperContentInitialized) {
     }
 
     function getSelectionTriggerMode() {
-        return settings.selectionTriggerMode || "off";
+        return settings.selectionTriggerMode || "icon";
     }
 
     function captureSelectionSnapshot(event) {
@@ -327,7 +373,6 @@ if (window.__dictionaryHelperContentInitialized) {
         applyTheme();
         setPopupPosition(position);
         renderShell();
-        clearSelection();
         maybePreloadAi();
         loadTab(activeTab).then(() => {
             refinePopupAfterRender();
@@ -415,7 +460,7 @@ if (window.__dictionaryHelperContentInitialized) {
     }
 
     function handlePostSelectionModifier(event) {
-        if (isPointerSelecting || event.repeat) {
+        if (isSitePaused() || isPointerSelecting || event.repeat) {
             return;
         }
 
@@ -628,17 +673,7 @@ if (window.__dictionaryHelperContentInitialized) {
         let isResizing = false;
         let startX, startY, startWidth, startHeight;
 
-        resizer.addEventListener("mousedown", (e) => {
-            isResizing = true;
-            startX = e.clientX;
-            startY = e.clientY;
-            startWidth = parseInt(document.defaultView.getComputedStyle(popupCard).width, 10);
-            startHeight = popupCard.getBoundingClientRect().height;
-            document.body.style.userSelect = "none";
-            e.preventDefault();
-        });
-
-        document.addEventListener("mousemove", (e) => {
+        const handleResizeMove = (e) => {
             if (!isResizing || !popupCard) {
                 return;
             }
@@ -651,9 +686,9 @@ if (window.__dictionaryHelperContentInitialized) {
             popupCard.style.maxHeight = `${dimensions.height}px`;
             popupCard.classList.add("is-resizing");
             e.preventDefault();
-        }, true);
+        };
 
-        document.addEventListener("mouseup", () => {
+        const handleResizeUp = () => {
             if (!isResizing || !popupCard) {
                 return;
             }
@@ -668,7 +703,25 @@ if (window.__dictionaryHelperContentInitialized) {
                 settings.popupHeight = newHeight;
                 void chrome.storage.sync.set({ popupWidth: newWidth, popupHeight: newHeight });
             }
-        }, true);
+        };
+
+        resizer.addEventListener("mousedown", (e) => {
+            isResizing = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            startWidth = parseInt(document.defaultView.getComputedStyle(popupCard).width, 10);
+            startHeight = popupCard.getBoundingClientRect().height;
+            document.body.style.userSelect = "none";
+            e.preventDefault();
+        });
+
+        document.addEventListener("mousemove", handleResizeMove, true);
+        document.addEventListener("mouseup", handleResizeUp, true);
+        unbindPopupResize = () => {
+            document.removeEventListener("mousemove", handleResizeMove, true);
+            document.removeEventListener("mouseup", handleResizeUp, true);
+            unbindPopupResize = null;
+        };
 
         const mountNode = document.body || document.documentElement;
         mountNode.appendChild(popupRoot);
@@ -695,6 +748,9 @@ if (window.__dictionaryHelperContentInitialized) {
             return;
         }
 
+        if (typeof unbindPopupResize === "function") {
+            unbindPopupResize();
+        }
         popupRoot.remove();
         popupRoot = null;
         popupCard = null;
@@ -846,56 +902,69 @@ if (window.__dictionaryHelperContentInitialized) {
         const runInPageContextAction = ({ intent, errorMessage, validate = null, resolveContext = null }) => {
             const contextInput = popupRoot?.querySelector("#dictionary-helper-context-input");
             const query = activeText.trim();
-
-            if (validate) {
-                const error = validate(contextInput, query);
-                if (error) {
-                    const errorEl = popupRoot?.querySelector("#dictionary-helper-context-error");
-                    if (errorEl) {
-                        errorEl.textContent = error;
-                        errorEl.hidden = false;
-                    }
-                    contextInput?.setAttribute("aria-invalid", "true");
-                    contextInput?.focus();
-                    return;
+            const showValidationError = (error) => {
+                const errorEl = popupRoot?.querySelector("#dictionary-helper-context-error");
+                if (errorEl) {
+                    errorEl.textContent = error;
+                    errorEl.hidden = false;
                 }
-            } else {
-                const validation = popupHelpers.validateContext(contextInput?.value || activeContext);
-                activeContext = resolveContext ? resolveContext(validation, query) : (validation.ok ? validation.context : "");
-            }
+                contextInput?.setAttribute("aria-invalid", "true");
+                contextInput?.focus();
+            };
 
-            const errorEl = popupRoot?.querySelector("#dictionary-helper-context-error");
-            if (errorEl) errorEl.hidden = true;
-            contextInput?.removeAttribute("aria-invalid");
-
-            setContextButtonsDisabled(true);
-            activeAiIntent = intent;
-            syncAiActionButtonStatus();
             requestToken += 1;
             const token = requestToken;
             const body = popupRoot?.querySelector(".dictionary-helper-body");
-            if (body) {
-                body.setAttribute("aria-busy", "true");
-                body.innerHTML = renderer.renderSkeleton("dictionary-helper");
-            }
 
-            getLookupResponse("ai", query, { context: activeContext, intent })
-                .then((response) => {
-                    if (token !== requestToken || !popupRoot) return;
-                    if (!response?.ok) throw new Error(response?.error || "Request failed.");
-                    body.innerHTML = renderer.renderResult(response.result, getRenderOptions({ followUps: [] }));
+            void popupHelpers.runAiContextAction({
+                intent,
+                query,
+                validate: () => {
+                    if (validate) {
+                        const error = validate(contextInput, query);
+                        if (error) {
+                            showValidationError(error);
+                            return error;
+                        }
+                        return null;
+                    }
+                    const validation = popupHelpers.validateContext(contextInput?.value || activeContext);
+                    activeContext = resolveContext ? resolveContext(validation, query) : (validation.ok ? validation.context : "");
+                    return null;
+                },
+                getContext: () => activeContext,
+                setBusy: (busy) => {
+                    setContextButtonsDisabled(busy);
+                    if (!busy) {
+                        body?.setAttribute("aria-busy", "false");
+                        syncAiActionButtonStatus();
+                    }
+                },
+                renderBusy: () => {
+                    const errorEl = popupRoot?.querySelector("#dictionary-helper-context-error");
+                    if (errorEl) errorEl.hidden = true;
+                    contextInput?.removeAttribute("aria-invalid");
+                    activeAiIntent = intent;
                     syncAiActionButtonStatus();
-                })
-                .catch((error) => {
-                    if (token !== requestToken || !popupRoot || error?.name === "AbortError") return;
-                    body.innerHTML = `<div class="dictionary-helper-state is-error"><strong>Unable to process request</strong><span>${renderer.escapeHtml(error.message || errorMessage)}</span></div>`;
-                })
-                .finally(() => {
-                    if (token !== requestToken || !popupRoot) return;
-                    body?.setAttribute("aria-busy", "false");
-                    setContextButtonsDisabled(false);
+                    if (body) {
+                        body.setAttribute("aria-busy", "true");
+                        body.innerHTML = renderer.renderSkeleton("dictionary-helper");
+                    }
+                },
+                renderResult: (result) => {
+                    if (body) {
+                        body.innerHTML = renderer.renderResult(result, getRenderOptions({ followUps: [] }));
+                    }
                     syncAiActionButtonStatus();
-                });
+                },
+                renderError: (error) => {
+                    if (body) {
+                        body.innerHTML = `<div class="dictionary-helper-state is-error"><strong>Unable to process request</strong><span>${renderer.escapeHtml(error.message || errorMessage)}</span></div>`;
+                    }
+                },
+                getLookup: (text, requestOptions) => getLookupResponse("ai", text, requestOptions),
+                isCurrent: () => token === requestToken && Boolean(popupRoot)
+            });
         };
 
         popupRoot.querySelector("#dictionary-helper-explain-context")?.addEventListener("click", () => {
@@ -1330,10 +1399,11 @@ if (window.__dictionaryHelperContentInitialized) {
                 || changes.fontFamily
                 || changes.selectionTriggerMode
                 || changes.postSelectionModifier
+                || changes.pausedHostnames
             )
         ) {
             applyTheme();
-            if (settings.selectionTriggerMode !== "icon") {
+            if (settings.selectionTriggerMode !== "icon" || isSitePaused()) {
                 destroyTriggerIcon();
             }
         }
@@ -1383,19 +1453,14 @@ if (window.__dictionaryHelperContentInitialized) {
         const updateType = window.DictionaryHelperMessages?.LOOKUP_UPDATE || "LOOKUP_UPDATE";
         if (message?.type === updateType) {
             const payload = message.payload || {};
-            const text = String(payload.text || "").trim();
-            const requestId = String(payload.requestId || "").trim();
             const result = payload.result;
-
-            if (!result || !popupRoot || activeTab !== "dictionary") {
-                return false;
-            }
-
-            if (requestId && activeRequestId && requestId !== activeRequestId) {
-                return false;
-            }
-
-            if (text && text.toLowerCase() !== String(activeText || "").trim().toLowerCase()) {
+            if (!popupHelpers.shouldApplyLookupUpdate({
+                payload,
+                activeTab,
+                activeText,
+                activeRequestId,
+                surfaceReady: Boolean(popupRoot)
+            })) {
                 return false;
             }
 
@@ -1416,6 +1481,15 @@ if (window.__dictionaryHelperContentInitialized) {
 
         if (message?.type !== "OPEN_LOOKUP_POPUP") {
             return false;
+        }
+
+        if (message.payload?.fromSelection) {
+            const snapshot = currentSelectionSnapshot || captureSelectionSnapshot(null);
+            if (snapshot?.text) {
+                openPopupFromSnapshot(snapshot, null, { keyboard: true });
+            }
+            sendResponse?.({ ok: Boolean(snapshot?.text) });
+            return true;
         }
 
         openPopupForText(message.payload?.text || "", null, {

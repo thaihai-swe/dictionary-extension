@@ -90,14 +90,14 @@ User selects text on webpage OR types query in toolbar popup
 
 1. **Facade Dispatch:** The background worker calls `lookupDictionary(text, settings)` via `src/providers/dictionary.js`.
 2. **Primary Provider Selection:** The configured `dictionaryProvider` (`free_dictionary` by default) is attempted first.
-3. **Provider Fallback Chain:** If the primary provider returns `NotFoundError`, the fallback chain evaluates in order:
+3. **Provider Fallback Chain:** Unconfigured key-backed providers are skipped. `NotFoundError` and transient network/5xx/429/timeout continue to the next provider. The fallback chain evaluates in order:
    ```text
    free_dictionary ➔ wiktionary ➔ merriam_webster ➔ wordnik ➔ words_api
    ```
    *(The primary provider is prioritized at the front of this sequence.)*
 4. **Smart Lemmatization Fallback:** If exact matches fail with `NotFoundError` across all providers, `getEnglishLemmaCandidates(text)` generates candidate root stems (e.g. irregular verbs `went` → `go`, plurals `children` → `child`, comparative adjectives `better` → `good`, inflectional suffixes `-ing`, `-ed`, `-es`, `-s`, `-ly`, `-er`, `-est`) and retries the fallback chain. On success, `lemmaFallback` metadata and a subtitle notice (`Showing definitions for root: <stem>`) are attached.
 5. **Smart Phrasal Canonicalization Fallback:** If single-word lemma candidates fail, `getEnglishPhraseCandidates(text)` canonicalizes inflected or auxiliary-led multi-word expressions to base dictionary forms (e.g. `taking care of` → `take care of`, `ran out of` → `run out of`, `has taken off` → `take off`, `looked up` → `look up`) and retries the chain, attaching a phrase notice subtitle on success.
-6. **Operational Failure Gate:** Operational errors (missing credentials, network drop, rate limit, HTTP 403/429/500) immediately abort the fallback chain and bubble up to the user with actionable diagnostic error messages.
+6. **Operational Failure Gate:** Auth failures (missing/invalid key, HTTP 401/403) abort the fallback chain. Transient network, timeout, 429, and 5xx errors continue to the next configured provider.
 7. **Parallel Translation:** When `enableTranslate` is active, `lookupTranslation(text, settings)` executes concurrently with dictionary lookups via `Promise.allSettled`.
 8. **Initial Delivery:** The combined dictionary and translation result is returned immediately to the UI with `enriched: false` and `revision: 0` for sub-second rendering.
 
@@ -105,7 +105,7 @@ User selects text on webpage OR types query in toolbar popup
 
 After the initial result is dispatched to the popup, the background service worker executes non-blocking background enrichment:
 
-1. **AI Phrase Fallback (Multi-word Lookups):** If the query is phrase-like (`classifyQuery(text) === "phrase"`), lack usable dictionary definitions, and `enableAI` is enabled, `lookupAiProvider(text, settings, { intent: "phrase_fallback" })` is scheduled first. Upon completion, the phrase explanation is merged and broadcast via `LOOKUP_UPDATE` before proceeding to secondary dictionary enrichment.
+1. **AI Phrase Fallback (Multi-word Lookups):** After a ~300ms delay (so a dismissed card can cancel), if the query is phrase-like, lacks usable definitions, and both `enableAI` and `enablePhraseFallback` are on, `lookupAiProvider(text, settings, { intent: "phrase_fallback" })` runs first. Upon completion, the phrase explanation is merged and broadcast via `LOOKUP_UPDATE` before secondary dictionary enrichment.
 2. **Secondary Provider Filtering:** Key-backed providers (`merriam_webster`, `wordnik`, `words_api`) lacking API keys in `chrome.storage.local` are skipped upfront without network overhead.
 3. **Bounded Concurrency:** Remaining unqueried providers are fetched in concurrent batches of 2 (`ENRICHMENT_CONCURRENCY = 2`).
 4. **Resilient Failure Handling:** Secondary `NotFoundError` results and operational errors are caught and logged silently without disrupting the displayed primary result.
@@ -259,6 +259,10 @@ src/content/
 ├── icons.js           # Inline SVG icon assets (search, close, audio, practice)
 └── content.js         # Event orchestration, focus trapping, lifecycle & cleanup
 ```
+
+Content scripts inject in the top frame (`all_frames: false`). Same-origin iframes are injected on selection via `INJECT_FRAME`. Cross-origin iframes cannot be read. `pausedHostnames` disables in-page selection triggers only; toolbar, context menu, and the `lookup-selection` command still work.
+
+---
 
 ### Context Extraction Subsystem
 

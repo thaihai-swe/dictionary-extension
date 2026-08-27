@@ -12,7 +12,8 @@
     "permissions": [
         "storage",
         "contextMenus",
-        "scripting"
+        "scripting",
+        "activeTab"
     ],
     "web_accessible_resources": [
         {
@@ -70,10 +71,18 @@
                 "src/ui/popup.css"
             ],
             "run_at": "document_idle",
-            "all_frames": true,
-            "match_about_blank": true
+            "all_frames": false,
+            "match_about_blank": false
         }
     ],
+    "commands": {
+        "lookup-selection": {
+            "suggested_key": {
+                "default": "Alt+L"
+            },
+            "description": "Look up the selected text"
+        }
+    },
     "action": {
         "default_icon": "assets/icon-128.png",
         "default_title": "Dictionary",

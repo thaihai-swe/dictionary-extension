@@ -67,6 +67,10 @@ async function hydrate() {
 
         if (field.type === "checkbox") {
             field.checked = Boolean(settings[key]);
+        } else if (key === "pausedHostnames") {
+            field.value = Array.isArray(settings.pausedHostnames)
+                ? settings.pausedHostnames.join("\n")
+                : String(settings.pausedHostnames || "");
         } else {
             field.value = settings[key] ?? defaultValue ?? "";
         }
@@ -286,6 +290,8 @@ function collectFormSettings() {
         enableLexicalProfile: form.elements.namedItem("enableLexicalProfile").checked,
         enableAI: form.elements.namedItem("enableAI").checked,
         enableAiPreload: form.elements.namedItem("enableAiPreload").checked,
+        enablePhraseFallback: form.elements.namedItem("enablePhraseFallback").checked,
+        pausedHostnames: formData.get("pausedHostnames"),
         disablePageContextExtraction: form.elements.namedItem("disablePageContextExtraction")?.checked || false,
         dictionaryProvider: formData.get("dictionaryProvider"),
         dictionaryApiKey: formData.get("dictionaryApiKey"),

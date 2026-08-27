@@ -50,16 +50,17 @@ This document tracks shipped capabilities, near-term product work, and longer-te
 - Sanitized settings export/import (secrets omitted on export, ignored on import)
 - Tab-scoped request cancellation on popup dismissal
 - Calm Learning Studio surfaces: system/light/dark themes, editorial vs learner fonts, resizable cards, reduced-motion support
-
----
+- Per-site pause for in-page triggers (`pausedHostnames`)
+- Keyboard command `lookup-selection` (suggested Alt+L)
+- AI off on fresh installs; phrase fallback is its own setting
+- Primary dictionary chain skips unconfigured providers and continues on transient errors
+- Content scripts inject in the top frame; same-origin iframes inject on selection
+- Phase 2 enrichment waits ~300ms so a dismissed card can cancel it
 
 ## Planned Short Term
 
 Focused, incremental product controls that fit the current MV3 architecture:
 
-- Per-site blacklist and whitelist for in-page triggers
-- Configurable keyboard shortcut beyond the current post-selection modifier key
-- Option to disable automatic phrasal/idiom fallback in Dictionary mode
 - Capture selected sentence, page title, URL, and PDF page metadata with saved vocabulary
 
 ---

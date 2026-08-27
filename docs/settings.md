@@ -17,7 +17,8 @@ To guarantee that private credentials can never leak across browser sync channel
 │ • translateTargetLanguage, customLanguages, translateProvider          │
 │ • dictionaryProvider, libreTranslateBaseUrl                            │
 │ • enableTranslate, enableDictionary, enableLexicalProfile, enableAI    │
-│ • enableAiPreload, disablePageContextExtraction                        │
+│ • enableAiPreload, enablePhraseFallback, disablePageContextExtraction  │
+│ • pausedHostnames                                                      │
 │ • pronunciationRate, pronunciationVoiceURI                             │
 │ • aiBaseUrl, aiModel, and all 5 AI Prompt Templates                    │
 │ ➔ Synced across your signed-in Chrome devices.                        │
@@ -57,6 +58,9 @@ To guarantee that private credentials can never leak across browser sync channel
 | `selectionTriggerMode` | `string` | `"icon"`, `"direct"`, `"off"` | `"icon"` | Defines what happens when text is highlighted or double-clicked on a webpage. `"icon"` renders a floating button; `"direct"` opens the card immediately; `"off"` restricts lookups to hotkeys and context menus. |
 | `postSelectionModifier` | `string` | `"shift"`, `"alt"`, `"ctrl"` | `"shift"` | Modifier key tapped once after text selection to immediately trigger the in-page lookup card. |
 | `enableContextMenuTrigger` | `boolean` | `true`, `false` | `true` | When enabled, registers the **"Look up in Dictionary"** action in Chrome's right-click context menu. |
+| `pausedHostnames` | `string[]` | Hostnames, max 100 | `[]` | In-page selection, double-click, icon, and post-selection key stay off on these hosts. Toolbar search, Alt+L (`lookup-selection`), and the context menu still work. |
+
+The keyboard command **Look up the selected text** (`lookup-selection`, suggested `Alt+L`) is registered in `manifest.json`. Rebind it in `chrome://extensions/shortcuts`. It does not replace `postSelectionModifier`.
 
 ---
 
@@ -97,7 +101,8 @@ To guarantee that private credentials can never leak across browser sync channel
 
 | Setting Key | Type | Storage | Default | Description |
 |---|---|---|---|---|
-| `enableAI` | `boolean` | `sync` | `true` | Enables generative AI capabilities in the AI tab and automatic phrase fallback. |
+| `enableAI` | `boolean` | `sync` | `false` | Enables the AI tab. Fresh installs default off until a key is saved. Existing installs that never stored this key keep AI on (schema v10). |
+| `enablePhraseFallback` | `boolean` | `sync` | `true` | When AI is on, Dictionary mode may call AI to explain a phrase that no dictionary backend defined. |
 | `aiBaseUrl` | `string` | `sync` | `https://generativelanguage...` | Endpoint URL. Points to Google Gemini or any OpenAI-compatible endpoint (`/v1/chat/completions`). |
 | `aiApiKey` | `string` | `local` | `""` | Private API key for Google Gemini or your custom AI provider. |
 | `aiModel` | `string` | `sync` | `"gemini-3.5-flash-lite"` | Model identifier (e.g. `gemini-3.5-flash-lite`, `gpt-4o-mini`, `deepseek-chat`, `llama3`). |
@@ -171,7 +176,7 @@ Click **Import settings** and select a previously exported JSON file. The import
 
 ## 5. Schema Migration History
 
-The extension manages automatic schema migrations via `SETTINGS_SCHEMA_VERSION = 9`:
+The extension manages automatic schema migrations via `SETTINGS_SCHEMA_VERSION = 10`:
 
 - **Schema v1 → v2:** Upgraded Sentence Breakdown template to structural JSON without CEFR noise.
 - **Schema v3:** Purged legacy collocations templates and obsolete local vocabulary keys.
@@ -180,4 +185,5 @@ The extension manages automatic schema migrations via `SETTINGS_SCHEMA_VERSION =
 - **Schema v7:** Added sense-aware target language glosses to Translation & Meaning.
 - **Schema v8:** Enriched bilingual example translations and phrase core meaning target-language equivalents.
 - **Schema v9:** Upgraded Main AI for structured sense matrices with contextual relevance flags, Context Explain for direct substitutions/nuance loss, and Grammar for syntactic slots; added Compare Confusables and Rephrase prompt templates.
+- **Schema v10:** Adds `pausedHostnames` and `enablePhraseFallback`. Fresh installs default `enableAI` to `false`. Existing installs (schema ≥ 1) that never stored `enableAI` keep it enabled.
 *(Custom prompt modifications are detected and strictly preserved during all schema upgrades).*
