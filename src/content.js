@@ -1464,8 +1464,9 @@ if (window.__dictionaryHelperContentInitialized) {
             }
         }
 
+        let outputChanged = false;
         if (changes) {
-            const outputChanged = shared.settings?.affectsOutput
+            outputChanged = shared.settings?.affectsOutput
                 ? shared.settings.affectsOutput(changes)
                 : false;
 
@@ -1476,20 +1477,19 @@ if (window.__dictionaryHelperContentInitialized) {
         }
 
         const availableTabs = getAvailableTabs();
-        if (changes.lastActiveTab?.newValue) {
-            const nextTab = changes.lastActiveTab.newValue;
-            if (availableTabs.includes(nextTab)) {
-                activeTab = nextTab;
-            }
-        } else if (!availableTabs.includes(activeTab)) {
+        const tabAvailabilityChanged = !availableTabs.includes(activeTab);
+        if (tabAvailabilityChanged) {
             activeTab = availableTabs[0] || "dictionary";
         }
 
-        if (popupRoot) {
+        // Only re-render shell and reload API if output-affecting settings or tab availability actually changed
+        if (popupRoot && (outputChanged || tabAvailabilityChanged)) {
             applyPopupDimensions();
             setPopupPosition(currentPosition);
             renderShell();
-            loadTab(activeTab);
+            if (activeText) {
+                void loadTab(activeTab);
+            }
         }
     }
 
