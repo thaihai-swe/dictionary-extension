@@ -1098,23 +1098,54 @@ function hasUsableDictionaryDefinitions(dictionary) {
     });
 }
 
+let contextMenuInitPromise = null;
+
 async function initializeContextMenu() {
     if (!chrome.contextMenus) {
         return;
     }
 
-    const settings = await getCachedSettings();
-
-    await chrome.contextMenus.removeAll();
-    if (!settings.enableContextMenuTrigger) {
-        return;
+    if (contextMenuInitPromise) {
+        return contextMenuInitPromise;
     }
 
-    chrome.contextMenus.create({
-        id: CONTEXT_MENU_ID,
-        title: 'Look up "%s"',
-        contexts: ["selection"]
-    });
+    contextMenuInitPromise = (async () => {
+        try {
+            const settings = await getCachedSettings();
+
+            await new Promise((resolve) => {
+                chrome.contextMenus.removeAll(() => {
+                    if (chrome.runtime.lastError) {
+                        // Suppress removeAll error
+                    }
+                    resolve();
+                });
+            });
+
+            if (!settings.enableContextMenuTrigger) {
+                return;
+            }
+
+            await new Promise((resolve) => {
+                chrome.contextMenus.create({
+                    id: CONTEXT_MENU_ID,
+                    title: 'Look up "%s"',
+                    contexts: ["selection"]
+                }, () => {
+                    if (chrome.runtime.lastError) {
+                        // Suppress duplicate ID warning if racing
+                    }
+                    resolve();
+                });
+            });
+        } catch (_err) {
+            // Best-effort
+        } finally {
+            contextMenuInitPromise = null;
+        }
+    })();
+
+    return contextMenuInitPromise;
 }
 
 async function notifyPageRestricted(tabId, text) {
