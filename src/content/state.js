@@ -1,18 +1,15 @@
 /**
- * state.js — Constants, default UI settings, render options.
+ * state.js — Constants, default UI settings, shared mutable state object.
  *
  * Classic script (no module system) loaded in content_scripts before
- * content.js. Attaches to globalThis.DictionaryHelperContent for cross-module
- * access. This is a safe extraction of the pure constants and helpers from
- * the monolithic content.js.
+ * other content modules and content.js.
+ * Attaches to globalThis.DictionaryHelperContent for cross-module access.
  */
 (function (global) {
     "use strict";
 
     const TAB_ORDER = ["dictionary", "ai"];
 
-    // Minimal UI fallbacks used only until storage-backed settings load.
-    // Authoritative defaults and normalization live in src/shared/storage.js.
     const DEFAULT_UI_SETTINGS = {
         selectionTriggerMode: "icon",
         postSelectionModifier: "shift",
@@ -40,7 +37,47 @@
         aiModel: "gemini-3.5-flash-lite"
     };
 
+    const state = {
+        popupRoot: null,
+        popupCard: null,
+        triggerIconRoot: null,
+        activeText: "",
+        activeContext: "",
+        activeContextSource: "",
+        activeContextConfidence: "none",
+        activeTab: "dictionary",
+        currentPosition: { x: 24, y: 24 },
+        currentSelectionRect: null,
+        unbindViewportReposition: null,
+        requestToken: 0,
+        lastPreloadKey: "",
+        activeFollowUps: [],
+        activeAiIntent: "",
+        activeRequestId: "",
+        lastLookupRevision: -1,
+        isPointerSelecting: false,
+        selectionClearTimer: 0,
+        selectionCaptureToken: 0,
+        currentSelectionSnapshot: null,
+        restoreFocusElement: null,
+        focusPopupOnOpen: false,
+        isPopupClosing: false,
+        unbindPopupResize: null,
+        settings: { ...DEFAULT_UI_SETTINGS },
+        extensionContextValid: true
+    };
+
     const ns = global.DictionaryHelperContent = global.DictionaryHelperContent || {};
     ns.TAB_ORDER = TAB_ORDER;
     ns.DEFAULT_UI_SETTINGS = DEFAULT_UI_SETTINGS;
+    ns.state = state;
+
+    ns.getRenderOptions = (extra = {}) => ({
+        prefix: "dictionary-helper",
+        titleTag: "h3",
+        sectionTitleTag: "h4",
+        pronunciationRate: ns.state.settings?.pronunciationRate ?? 0.95,
+        pronunciationVoiceURI: ns.state.settings?.pronunciationVoiceURI ?? "",
+        followUps: extra.followUps || (ns.state.activeTab === "ai" ? ns.state.activeFollowUps : [])
+    });
 })(typeof window !== "undefined" ? window : globalThis);

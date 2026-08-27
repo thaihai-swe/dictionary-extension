@@ -42,7 +42,7 @@ const ENRICHMENT_CACHE_INVALIDATION_KEYS = new Set([
     "enableLexicalProfile"
 ]);
 
-// Initial migrations and menu setup
+// Initial migrations and context menu setup
 Promise.all([
     migrateLegacySecretSettings(),
     migrateSettingsSchema(),
@@ -67,60 +67,51 @@ chrome.runtime.onStartup?.addListener(() => {
     ]).catch(() => { });
 });
 
-// Runtime message listener
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message?.type === VALIDATE_PROVIDER) {
-        handleValidateProvider(message.payload)
-            .then((result) => sendResponse({ ok: true, result }))
-            .catch((error) => {
-                sendResponse({
-                    ok: false,
-                    error: error instanceof Error ? error.message : "Validation failed."
-                });
-            });
-        return true;
-    }
-
-    if (message?.type === CANCEL_LOOKUP) {
+// Message Dispatch Table (Strategy Pattern)
+const MESSAGE_HANDLERS = {
+    [VALIDATE_PROVIDER]: async (payload) => {
+        const result = await handleValidateProvider(payload);
+        return { ok: true, result };
+    },
+    [CANCEL_LOOKUP]: (_payload, sender) => {
         cancelRequestsForTab(sender?.tab?.id);
-        sendResponse({ ok: true });
-        return false;
-    }
-
-    if (message?.type === INJECT_FRAME) {
+        return { ok: true };
+    },
+    [INJECT_FRAME]: async (payload, sender) => {
         const tabId = sender?.tab?.id;
         if (!Number.isInteger(tabId)) {
-            sendResponse({ ok: false, error: "Missing tab." });
-            return false;
+            return { ok: false, error: "Missing tab." };
         }
-        const frameId = Number(message.payload?.frameId);
-        const allFrames = Boolean(message.payload?.allFrames);
-        injectContentScript(tabId, allFrames ? null : (Number.isInteger(frameId) ? frameId : 0))
-            .then(() => sendResponse({ ok: true }))
-            .catch((error) => sendResponse({
-                ok: false,
-                error: error instanceof Error ? error.message : "Unable to inject into this frame."
-            }));
-        return true;
+        const frameId = Number(payload?.frameId);
+        const allFrames = Boolean(payload?.allFrames);
+        await injectContentScript(tabId, allFrames ? null : (Number.isInteger(frameId) ? frameId : 0));
+        return { ok: true };
+    },
+    [LOOKUP_TEXT]: async (payload, sender) => {
+        const result = await handleLookup(payload, sender);
+        return { ok: true, result };
     }
+};
 
-    if (message?.type !== LOOKUP_TEXT) {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    const handler = MESSAGE_HANDLERS[message?.type];
+    if (!handler) {
         return false;
     }
 
-    handleLookup(message.payload, sender)
-        .then((result) => sendResponse({ ok: true, result }))
+    Promise.resolve(handler(message.payload, sender))
+        .then(sendResponse)
         .catch((error) => {
             sendResponse({
                 ok: false,
-                error: error instanceof Error ? error.message : "Lookup failed."
+                error: error instanceof Error ? error.message : "Operation failed."
             });
         });
 
     return true;
 });
 
-// Storage changes listener
+// Storage changes listener (reactive settings & cache invalidation)
 chrome.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === "sync" || areaName === "local") {
         invalidateCachedSettings();
@@ -186,7 +177,7 @@ if (chrome.commands?.onCommand) {
         try {
             await sendMessageToTabWithRetry(tab.id, { type: OPEN_LOOKUP_POPUP, payload: { fromSelection: true } }, 0);
         } catch (_error) {
-            // Restricted pages already surface via the toolbar badge path when possible.
+            // Restricted pages already surface via toolbar badge.
         }
     });
 }

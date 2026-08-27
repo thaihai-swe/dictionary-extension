@@ -3,6 +3,9 @@
  * Chrome cannot import this from manifest.json; tests assert they match.
  */
 export const CONTENT_SCRIPT_JS = [
+    "src/ui/renderer-base.js",
+    "src/ui/renderer-lexical.js",
+    "src/ui/renderer-ai.js",
     "src/ui/renderer.js",
     "src/ui/audio.js",
     "src/ui/popup-shell.js",
@@ -12,6 +15,7 @@ export const CONTENT_SCRIPT_JS = [
     "src/content/state.js",
     "src/content/context.js",
     "src/content/icons.js",
+    "src/content/event-utils.js",
     "src/content/selection.js",
     "src/content/lookup-bridge.js",
     "src/content/trigger.js",
