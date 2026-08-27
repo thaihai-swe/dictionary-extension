@@ -91,7 +91,7 @@
             if (!exampleText) {
                 return "";
             }
-            return `<div class="${prefix}-section-actions"><button type="button" class="${prefix}-section-action ${prefix}-pronounce" data-pronounce-text="${Renderer.escapeHtml(exampleText)}" data-pronounce-language="en-US" aria-label="Play example sentence" title="Play example">Listen</button></div>`;
+            return `<div class="${prefix}-section-actions"><button type="button" class="${prefix}-section-action ${prefix}-pronounce" data-pronounce-text="${Renderer.escapeHtml(exampleText)}" data-pronounce-language="en-US" aria-label="Play example sentence" title="Play example">🔊 Listen</button></div>`;
         },
 
         renderExampleListenButton(speechText, prefix = "dictionary-helper") {
@@ -99,7 +99,7 @@
             if (!cleaned) {
                 return "";
             }
-            return `<button type="button" class="${prefix}-example-listen ${prefix}-pronounce" data-pronounce-text="${Renderer.escapeHtml(cleaned)}" data-pronounce-language="en-US" aria-label="Play example sentence" title="Play example">Listen</button>`;
+            return `<button type="button" class="${prefix}-example-listen ${prefix}-pronounce" data-pronounce-text="${Renderer.escapeHtml(cleaned)}" data-pronounce-language="en-US" aria-label="Play example sentence" title="Play example">🔊 Listen</button>`;
         },
 
         isInlineBilingualExample(value) {
@@ -663,9 +663,10 @@
             const rate = pronunciation.rate || 0.95;
             const voiceURI = pronunciation.voiceURI ? Renderer.escapeHtml(pronunciation.voiceURI) : "";
             const baseLabel = pronunciation.label || (pronunciation.audioUrl ? "Listen" : "Speak");
-            const label = accent && !/\((?:US|UK)\)/i.test(baseLabel)
+            const rawLabel = accent && !/\((?:US|UK)\)/i.test(baseLabel)
                 ? `${baseLabel} (${accent})`
                 : baseLabel;
+            const label = /^\p{Extended_Pictographic}/u.test(rawLabel) ? rawLabel : `🔊 ${rawLabel}`;
             const ariaLabel = phoneticLabel
                 ? `Play pronunciation ${phoneticLabel}`
                 : accent
@@ -745,7 +746,7 @@
                 aria-label="Practice saying ${speechText}"
                 aria-pressed="false"
               >
-                <span class="${prefix}-speech-icon" aria-hidden="true">◉</span>
+                <span class="${prefix}-speech-icon" aria-hidden="true">🎙️</span>
                 <span data-eval-label>Practice</span>
               </button>
               <span class="${prefix}-speech-eval-result" data-speech-eval-result hidden aria-live="polite"></span>
