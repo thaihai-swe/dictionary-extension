@@ -12,6 +12,9 @@ const MAX_PHONETICS = 4;
 
 export async function lookupFreeDictionary(text, _settings, options = {}) {
     const term = normalizeDictionaryTerm(text);
+    if (!term || term.includes(" ")) {
+        throw new NotFoundError(`No dictionary entry found for "${term}".`);
+    }
     const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(term)}`;
     const response = await fetchWithRetry(url.toString(), { signal: options.signal }, {
         retries: 1,

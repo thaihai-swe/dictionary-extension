@@ -1,7 +1,7 @@
-import { DEFAULT_SETTINGS, getSettings, normalizeSettings, parsePublicSettingsImport, saveSettings, serializePublicSettings } from "../src/shared/storage.js";
-import { VALIDATE_PROVIDER } from "../src/shared/messages.js";
-import { populateLanguageSelect } from "../src/shared/languages.js";
-import { ensureProviderOriginPermission } from "../src/shared/permissions.js";
+import { DEFAULT_SETTINGS, getSettings, normalizeSettings, parsePublicSettingsImport, saveSettings, serializePublicSettings } from "../../shared/storage.js";
+import { VALIDATE_PROVIDER } from "../../shared/messages.js";
+import { populateLanguageSelect } from "../../shared/languages.js";
+import { ensureProviderOriginPermission } from "../../shared/permissions.js";
 
 const form = document.querySelector("#settings-form");
 const status = document.querySelector("#status");

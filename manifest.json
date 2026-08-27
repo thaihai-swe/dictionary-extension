@@ -18,10 +18,13 @@
     "web_accessible_resources": [
         {
             "resources": [
-                "assets/fonts/*"
+                "assets/fonts/*",
+                "tokens.css",
+                "src/ui/popup.css"
             ],
             "matches": [
-                "<all_urls>"
+                "<all_urls>",
+                "file:///*"
             ]
         }
     ],
@@ -69,14 +72,15 @@
                 "src/content/lookup-bridge.js",
                 "src/content/trigger.js",
                 "src/content/settings-bridge.js",
-                "src/content/selection-triggers.js",
-                "src/content/keyboard-handlers.js",
-                "src/content/popup-dom.js",
-                "src/content/tab-loader.js",
+                "src/content/selection-trigger.js",
+                "src/content/keyboard-trigger.js",
+                "src/content/popup-view.js",
+                "src/content/lookup-controller.js",
                 "src/content/message-router.js",
                 "src/content.js"
             ],
             "css": [
+                "tokens.css",
                 "src/ui/popup.css"
             ],
             "run_at": "document_idle",
@@ -95,7 +99,7 @@
     "action": {
         "default_icon": "assets/icon-128.png",
         "default_title": "Dictionary",
-        "default_popup": "action/popup.html"
+        "default_popup": "src/pages/popup/popup.html"
     },
-    "options_page": "options/options.html"
+    "options_page": "src/pages/options/options.html"
 }

@@ -1,5 +1,5 @@
-import { CANCEL_LOOKUP } from "../src/shared/messages.js";
-import { canInjectIntoUrl, classifyPageRestriction } from "../src/shared/page-utils.js";
+import { CANCEL_LOOKUP } from "../../shared/messages.js";
+import { canInjectIntoUrl, classifyPageRestriction } from "../../shared/page-utils.js";
 import {
     audio,
     contextInput,
@@ -11,7 +11,7 @@ import {
     renderer,
     resultRoot,
     state
-} from "./popup-state.js";
+} from "./state.js";
 import {
     getAvailableTabs,
     renderIdleState,
@@ -21,7 +21,7 @@ import {
     updateContextActionVisibility,
     updateContextHelp,
     updateContextHelpForRestriction
-} from "./popup-ui.js";
+} from "./view.js";
 
 export function syncFollowUpState(text = state.activeQuery, context = state.contextText) {
     if (!state.settings?.enableAiPreload || !state.settings?.enableAI) {

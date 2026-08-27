@@ -55,12 +55,46 @@
             return;
         }
 
+        state.popupHostWrapper = document.createElement("div");
+        state.popupHostWrapper.className = "dictionary-helper-host-wrapper";
+        state.popupHostWrapper.style.cssText = "all: initial !important; position: absolute !important; top: 0 !important; left: 0 !important; width: 0 !important; height: 0 !important; z-index: 2147483647 !important;";
+
+        state.shadowRoot = state.popupHostWrapper.attachShadow({ mode: "open" });
+
+        let tokensCssUrl = "";
+        let popupCssUrl = "";
+        try {
+            if (typeof chrome !== "undefined" && chrome.runtime?.getURL) {
+                tokensCssUrl = chrome.runtime.getURL("tokens.css");
+                popupCssUrl = chrome.runtime.getURL("src/ui/popup.css");
+            }
+        } catch (_error) {
+            state.extensionContextValid = false;
+        }
+
+        if (!state.extensionContextValid || !tokensCssUrl) {
+            state.extensionContextValid = false;
+            return;
+        }
+
+        const tokensLink = document.createElement("link");
+        tokensLink.rel = "stylesheet";
+        tokensLink.href = tokensCssUrl;
+
+        const popupCssLink = document.createElement("link");
+        popupCssLink.rel = "stylesheet";
+        popupCssLink.href = popupCssUrl;
+
+        state.shadowRoot.appendChild(tokensLink);
+        state.shadowRoot.appendChild(popupCssLink);
+
         state.popupRoot = document.createElement("div");
         state.popupRoot.className = "dictionary-helper-root";
         if (!popupShell) {
             return;
         }
         state.popupRoot.innerHTML = popupShell.createMarkup({ prefix: "dictionary-helper", host: "inpage" });
+        state.shadowRoot.appendChild(state.popupRoot);
 
         state.popupCard = state.popupRoot.querySelector(".dictionary-helper-card");
 
@@ -189,6 +223,14 @@
             }
 
             state.activeTab = button.dataset.tab;
+            if (state.activeTab === "ai" && !state.activeContext && state.activeText && !state.settings?.disablePageContextExtraction) {
+                const extracted = ns.eventUtils?.extractSurroundingContext(state.activeText);
+                if (extracted?.context) {
+                    state.activeContext = extracted.context;
+                    state.activeContextSource = extracted.source;
+                    state.activeContextConfidence = extracted.confidence;
+                }
+            }
             void popupHelpers.writeLastTab(state.activeTab);
             renderShell();
             audio?.stopPronunciation();
@@ -282,14 +324,6 @@
             e.stopPropagation();
         });
 
-        document.addEventListener("mousemove", handleResizeMove, true);
-        document.addEventListener("mouseup", handleResizeUp, true);
-        state.unbindPopupResize = () => {
-            document.removeEventListener("mousemove", handleResizeMove, true);
-            document.removeEventListener("mouseup", handleResizeUp, true);
-            state.unbindPopupResize = null;
-        };
-
         // Drag-to-move logic
         const dragHandle = state.popupRoot.querySelector(".dictionary-helper-header");
         let isDragging = false;
@@ -298,24 +332,7 @@
         let dragOriginLeft = 0;
         let dragOriginTop = 0;
 
-        dragHandle?.addEventListener("mousedown", (e) => {
-            if (e.button !== 0) return;
-            if (e.target.closest("select, button, input, textarea, a")) return;
-
-            isDragging = true;
-            dragStartX = e.clientX;
-            dragStartY = e.clientY;
-
-            const rect = state.popupCard.getBoundingClientRect();
-            dragOriginLeft = rect.left;
-            dragOriginTop = rect.top;
-
-            state.popupCard.classList.add("is-dragging");
-            document.body.style.userSelect = "none";
-            e.preventDefault();
-        });
-
-        document.addEventListener("mousemove", (e) => {
+        function handleDragMove(e) {
             if (!isDragging || !state.popupCard) return;
 
             const dx = e.clientX - dragStartX;
@@ -337,9 +354,9 @@
             state.popupCard.style.left = `${Math.round(newLeft)}px`;
             state.popupCard.style.top = `${Math.round(newTop)}px`;
             e.preventDefault();
-        }, true);
+        }
 
-        document.addEventListener("mouseup", () => {
+        function handleDragUp() {
             if (!isDragging || !state.popupCard) return;
 
             isDragging = false;
@@ -352,10 +369,40 @@
                 y: parseFloat(state.popupCard.style.top) || state.currentPosition.y,
                 useFixed: true
             };
-        }, true);
+        }
+
+        dragHandle?.addEventListener("mousedown", (e) => {
+            if (e.button !== 0) return;
+            if (e.target.closest("select, button, input, textarea, a")) return;
+
+            isDragging = true;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+
+            const rect = state.popupCard.getBoundingClientRect();
+            dragOriginLeft = rect.left;
+            dragOriginTop = rect.top;
+
+            state.popupCard.classList.add("is-dragging");
+            document.body.style.userSelect = "none";
+            e.preventDefault();
+        });
+
+        document.addEventListener("mousemove", handleResizeMove, true);
+        document.addEventListener("mouseup", handleResizeUp, true);
+        document.addEventListener("mousemove", handleDragMove, true);
+        document.addEventListener("mouseup", handleDragUp, true);
+
+        state.unbindPopupResize = () => {
+            document.removeEventListener("mousemove", handleResizeMove, true);
+            document.removeEventListener("mouseup", handleResizeUp, true);
+            document.removeEventListener("mousemove", handleDragMove, true);
+            document.removeEventListener("mouseup", handleDragUp, true);
+            state.unbindPopupResize = null;
+        };
 
         const mountNode = document.body || document.documentElement;
-        mountNode.appendChild(state.popupRoot);
+        mountNode.appendChild(state.popupHostWrapper || state.popupRoot);
         if (state.focusPopupOnOpen) {
             requestAnimationFrame(() => state.popupRoot?.querySelector(".dictionary-helper-tab.is-active, .dictionary-helper-close")?.focus());
         }
@@ -375,14 +422,17 @@
 
     function removePopup() {
         const state = ns.state;
-        if (!state.popupRoot) {
+        if (!state.popupRoot && !state.popupHostWrapper) {
             return;
         }
 
         if (typeof state.unbindPopupResize === "function") {
             state.unbindPopupResize();
         }
-        state.popupRoot.remove();
+        state.popupHostWrapper?.remove();
+        state.popupRoot?.remove();
+        state.popupHostWrapper = null;
+        state.shadowRoot = null;
         state.popupRoot = null;
         state.popupCard = null;
         state.isPopupClosing = false;
@@ -509,17 +559,11 @@
             }
         }
 
-        const contextButtons = [
-            state.popupRoot.querySelector("#dictionary-helper-explain-context"),
-            state.popupRoot.querySelector("#dictionary-helper-explain-grammar"),
-            state.popupRoot.querySelector("#dictionary-helper-explain-phrase-explorer"),
-            state.popupRoot.querySelector("#dictionary-helper-explain-sentence"),
-            state.popupRoot.querySelector("#dictionary-helper-explain-compare"),
-            state.popupRoot.querySelector("#dictionary-helper-explain-rephrase")
-        ].filter(Boolean);
-
+        // setContextButtonsDisabled uses live querySelectorAll because the buttons
+        // are re-created by renderShell() on every tab switch / query change.
         const setContextButtonsDisabled = (disabled) => {
-            contextButtons.forEach((btn) => { btn.disabled = disabled; });
+            state.popupRoot?.querySelectorAll(".dictionary-helper-context-btn[data-ai-intent]")
+                .forEach((btn) => { btn.disabled = disabled; });
         };
 
         const runInPageContextAction = ({ intent, errorMessage, validate = null, resolveContext = null }) => {
@@ -590,67 +634,63 @@
             });
         };
 
-        state.popupRoot.querySelector("#dictionary-helper-explain-context")?.addEventListener("click", () => {
-            runInPageContextAction({
-                intent: "explain_in_context",
-                errorMessage: "Unable to explain in context.",
-                validate: (contextInput) => {
-                    const validation = popupHelpers.validateContext(contextInput?.value || state.activeContext);
-                    if (!validation.ok) return "Please enter or paste the sentence containing this word.";
-                    state.activeContext = validation.context;
-                    return null;
-                }
-            });
-        });
-
-        state.popupRoot.querySelector("#dictionary-helper-explain-grammar")?.addEventListener("click", () => {
-            runInPageContextAction({
-                intent: "grammar",
-                errorMessage: "Unable to analyze grammar.",
-                validate: (contextInput) => {
-                    const validation = popupHelpers.validateContext(contextInput?.value || state.activeContext);
-                    if (!validation.ok) return "Please enter or paste the sentence containing this word.";
-                    state.activeContext = validation.context;
-                    return null;
-                }
-            });
-        });
-
-        state.popupRoot.querySelector("#dictionary-helper-explain-phrase-explorer")?.addEventListener("click", () => {
-            runInPageContextAction({
-                intent: "phrase_explorer",
-                errorMessage: "Unable to explore this phrase and collocations."
-            });
-        });
-
-        state.popupRoot.querySelector("#dictionary-helper-explain-sentence")?.addEventListener("click", () => {
-            runInPageContextAction({
-                intent: "sentence_breakdown",
-                errorMessage: "Unable to break down the sentence.",
-                validate: (contextInput, query) => {
-                    const queryIsSentence = /[.!?]/.test(query) || query.split(/\s+/).filter(Boolean).length >= 7;
-                    const validation = popupHelpers.validateContext(contextInput?.value || state.activeContext);
-                    if (!queryIsSentence && !validation.ok) {
-                        return "Enter or paste the sentence to break down.";
-                    }
-                    state.activeContext = validation.ok ? validation.context : query;
-                    return null;
-                }
-            });
-        });
-
-        state.popupRoot.querySelector("#dictionary-helper-explain-compare")?.addEventListener("click", () => {
-            runInPageContextAction({
-                intent: "compare_confusables",
-                errorMessage: "Unable to compare these words."
-            });
-        });
-
-        state.popupRoot.querySelector("#dictionary-helper-explain-rephrase")?.addEventListener("click", () => {
-            runInPageContextAction({
-                intent: "rephrase",
-                errorMessage: "Unable to rephrase this text."
-            });
+        // Use event delegation on contextHost so listeners survive renderShell() re-renders.
+        contextHost?.addEventListener("click", (event) => {
+            const btn = event.target.closest("[data-ai-intent]");
+            if (!btn || btn.disabled) return;
+            const intent = btn.dataset.aiIntent;
+            switch (intent) {
+                case "explain_in_context":
+                    runInPageContextAction({
+                        intent,
+                        errorMessage: "Unable to explain in context.",
+                        validate: (contextInput) => {
+                            const validation = popupHelpers.validateContext(contextInput?.value || state.activeContext);
+                            if (!validation.ok) return "Please enter or paste the sentence containing this word.";
+                            state.activeContext = validation.context;
+                            return null;
+                        }
+                    });
+                    break;
+                case "grammar":
+                    runInPageContextAction({
+                        intent,
+                        errorMessage: "Unable to analyze grammar.",
+                        validate: (contextInput) => {
+                            const validation = popupHelpers.validateContext(contextInput?.value || state.activeContext);
+                            if (!validation.ok) return "Please enter or paste the sentence containing this word.";
+                            state.activeContext = validation.context;
+                            return null;
+                        }
+                    });
+                    break;
+                case "phrase_explorer":
+                    runInPageContextAction({ intent, errorMessage: "Unable to explore this phrase and collocations." });
+                    break;
+                case "sentence_breakdown":
+                    runInPageContextAction({
+                        intent,
+                        errorMessage: "Unable to break down the sentence.",
+                        validate: (contextInput, query) => {
+                            const queryIsSentence = /[.!?]/.test(query) || query.split(/\s+/).filter(Boolean).length >= 7;
+                            const validation = popupHelpers.validateContext(contextInput?.value || state.activeContext);
+                            if (!queryIsSentence && !validation.ok) {
+                                return "Enter or paste the sentence to break down.";
+                            }
+                            state.activeContext = validation.ok ? validation.context : query;
+                            return null;
+                        }
+                    });
+                    break;
+                case "compare_confusables":
+                    runInPageContextAction({ intent, errorMessage: "Unable to compare these words." });
+                    break;
+                case "rephrase":
+                    runInPageContextAction({ intent, errorMessage: "Unable to rephrase this text." });
+                    break;
+                default:
+                    break;
+            }
         });
 
         syncAiActionButtonStatus();
@@ -701,7 +741,7 @@
         }
     }
 
-    ns.popupDom = {
+    ns.popupView = ns.popupDom = {
         applyTheme,
         applyPopupDimensions,
         populateContentLanguageSelect,

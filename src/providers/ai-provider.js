@@ -142,7 +142,7 @@ export async function lookupAiProvider(text, settings, options = {}) {
 
     if (intent === "compare_confusables") {
         const compareData = normalizeComparisonData(rawContent, { text, context });
-        if (compareData.table.length || compareData.coreDistinction) {
+        if (compareData && ((Array.isArray(compareData.rows) && compareData.rows.length) || compareData.distinction || (Array.isArray(compareData.pairs) && compareData.pairs.length))) {
             return {
                 title: "",
                 subtitle: "Confusable words side-by-side comparison",
@@ -184,10 +184,10 @@ export async function lookupAiProvider(text, settings, options = {}) {
         for (const sec of contentSections) {
             const titleLower = String(sec.title || "").toLowerCase();
             if (titleLower.includes("sense") || titleLower.includes("meanings")) {
-                const senses = parseSenseMatrix(sec.text, { preferContext: Boolean(context) });
-                if (senses.length) {
+                const senseData = parseSenseMatrix(sec.text, { preferContext: Boolean(context) });
+                if (senseData && Array.isArray(senseData.senses) && senseData.senses.length) {
                     sec.kind = "senses";
-                    sec.data = { senses };
+                    sec.data = senseData;
                 }
             }
         }

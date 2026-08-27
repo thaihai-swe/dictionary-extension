@@ -38,6 +38,8 @@
     };
 
     const state = {
+        popupHostWrapper: null,
+        shadowRoot: null,
         popupRoot: null,
         popupCard: null,
         triggerIconRoot: null,

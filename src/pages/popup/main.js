@@ -1,5 +1,5 @@
-import { getUiSettings, saveSettings } from "../src/shared/storage.js";
-import { populateLanguageSelect } from "../src/shared/languages.js";
+import { getUiSettings, saveSettings } from "../../shared/storage.js";
+import { populateLanguageSelect } from "../../shared/languages.js";
 import {
     audio,
     contextInput,
@@ -22,25 +22,29 @@ import {
     resultRoot,
     state,
     tabsRoot
-} from "./popup-state.js";
+} from "./state.js";
 import {
     applyDimensions,
     clearContextError,
     getInitialTab,
     handlePauseSite,
+    isSentenceLikeQuery,
     renderIdleState,
     renderState,
     renderTabs,
+    setContextActionButtonsDisabled,
+    syncAiActionButtonStatus,
     updateContextActionVisibility,
     updateContextHelp,
     updatePauseSiteButton
-} from "./popup-ui.js";
+} from "./view.js";
 import {
     cancelPendingLookup,
     consumeStashedFallbackLookup,
     loadTab,
-    prefillPageContext
-} from "./popup-lookup.js";
+    prefillPageContext,
+    preloadFollowUpIntents
+} from "./lookup.js";
 import {
     handleCompareConfusables,
     handleExplainGrammar,
@@ -54,7 +58,7 @@ import {
     handleStorageChanges,
     handleSubmit,
     handleTabClick
-} from "./popup-actions.js";
+} from "./actions.js";
 
 init().catch((error) => {
     renderState(error.message || "Unable to load popup.", true);
@@ -114,7 +118,7 @@ async function init() {
     form?.addEventListener("submit", handleSubmit);
     openSettingsButton?.addEventListener("click", handleOpenSettings);
 
-    const themeToggleBtn = document.querySelector(".dictionary-helper-theme-toggle");
+    const themeToggleBtn = document.querySelector(".toolbar-popup-theme-toggle, .dictionary-helper-theme-toggle");
     themeToggleBtn?.addEventListener("click", async () => {
         const currentTheme = state.settings.theme || "system";
         let isCurrentlyDark = false;
@@ -131,9 +135,9 @@ async function init() {
         await saveSettings({ theme: nextTheme });
     });
 
-    const shortcutsBtn = document.querySelector(".dictionary-helper-shortcuts-btn");
-    const shortcutsModal = document.querySelector(".dictionary-helper-shortcuts-modal");
-    const shortcutsClose = document.querySelector(".dictionary-helper-shortcuts-close");
+    const shortcutsBtn = document.querySelector(".toolbar-popup-shortcuts-btn, .dictionary-helper-shortcuts-btn");
+    const shortcutsModal = document.querySelector(".toolbar-popup-shortcuts-modal, .dictionary-helper-shortcuts-modal");
+    const shortcutsClose = document.querySelector(".toolbar-popup-shortcuts-close, .dictionary-helper-shortcuts-close");
 
     shortcutsBtn?.addEventListener("click", (event) => {
         event.stopPropagation();

@@ -124,7 +124,7 @@
         }
     }
 
-    ns.keyboard = {
+    ns.keyboardTrigger = ns.keyboard = {
         handleKeydown,
         handlePostSelectionModifier,
         isConfiguredPostSelectionKey,

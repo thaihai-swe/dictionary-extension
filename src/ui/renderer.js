@@ -136,56 +136,61 @@
                 voiceURI: options.pronunciationVoiceURI
             }, prefix)).join("");
             const speechPractice = base().renderSpeechPractice(result, prefix);
-            const isAiResult = result.presentation?.surface === "ai";
-            const aiIntent = isAiResult ? String(result.presentation?.intent || "default") : "";
-            const rawSections = ai().orderSectionsForPresentation(result.sections, result.presentation);
-            const totalSections = rawSections.length;
+            const isAiResult = result?.presentation?.surface === "ai";
+            const aiIntent = isAiResult ? String(result?.presentation?.intent || "default") : "";
+            const rawSections = (ai()?.orderSectionsForPresentation
+                ? ai().orderSectionsForPresentation(result?.sections, result?.presentation)
+                : (result?.sections || [])) || [];
+            const totalSections = Array.isArray(rawSections) ? rawSections.length : 0;
             const sections = rawSections.map((section, index) => {
-                const kind = base().normalizeSectionKind(section);
+                if (!section) return "";
+                const kind = base()?.normalizeSectionKind ? base().normalizeSectionKind(section) : (section.kind || "general");
                 const isExamples = kind === "examples";
                 const items = (section.items || [])
                     .map((item) => isExamples
-                        ? base().renderExampleItem(item, prefix)
-                        : `<li class="${prefix}-section-list-item">${base().formatInlineMarkdown(item)}</li>`)
+                        ? (base()?.renderExampleItem ? base().renderExampleItem(item, prefix) : `<li>${item}</li>`)
+                        : `<li class="${prefix}-section-list-item">${base()?.formatInlineMarkdown ? base().formatInlineMarkdown(item) : item}</li>`)
                     .join("");
                 const hasTitle = Boolean(String(section.title || "").trim());
                 const metaBadge = section.meta
-                    ? `<span class="${prefix}-section-meta">${base().escapeHtml(section.meta)}</span>`
+                    ? `<span class="${prefix}-section-meta">${base()?.escapeHtml ? base().escapeHtml(section.meta) : section.meta}</span>`
                     : "";
 
                 let sectionBody = "";
                 const bodyStrategy = SECTION_BODY_RENDERERS[kind];
                 if (section.data && bodyStrategy) {
                     sectionBody = bodyStrategy(section, options, prefix);
-                } else if (section.data && Array.isArray(section.data.pairs)) {
+                } else if (section.data && Array.isArray(section.data.pairs) && ai()?.renderMinimalPairs) {
                     sectionBody = ai().renderMinimalPairs(section.data.pairs, prefix);
                 } else if (kind === "context") {
-                    sectionBody = base().renderTokenizedContext(section.text || "", result?.title || options.query || "", prefix);
+                    sectionBody = base()?.renderTokenizedContext ? base().renderTokenizedContext(section.text || "", result?.title || options.query || "", prefix) : "";
                 } else if (section.markdown) {
                     let mdText = section.text || "";
-                    if (kind === "context" && result?.title) {
+                    if (kind === "context" && result?.title && base()?.highlightContextQuery) {
                         mdText = base().highlightContextQuery(mdText, result.title);
                     }
-                    sectionBody = `<div class="${prefix}-markdown">${base().renderSimpleMarkdown(mdText, prefix, { listenOnQuotes: isExamples, listenOnListItems: isExamples })}</div>`;
+                    sectionBody = `<div class="${prefix}-markdown">${base()?.renderSimpleMarkdown ? base().renderSimpleMarkdown(mdText, prefix, { listenOnQuotes: isExamples, listenOnListItems: isExamples }) : mdText}</div>`;
                 } else if (section.text) {
                     const inlineMeta = (!hasTitle && section.meta)
-                        ? ` <small class="${prefix}-inline-meta">${base().escapeHtml(section.meta)}</small>`
+                        ? ` <small class="${prefix}-inline-meta">${base()?.escapeHtml ? base().escapeHtml(section.meta) : section.meta}</small>`
                         : "";
-                    sectionBody = `<p class="${prefix}-section-paragraph">${base().escapeHtml(section.text)}${inlineMeta}</p>`;
+                    sectionBody = `<p class="${prefix}-section-paragraph">${base()?.escapeHtml ? base().escapeHtml(section.text) : section.text}${inlineMeta}</p>`;
                 } else if (section.meta && !hasTitle) {
-                    sectionBody = `<p class="${prefix}-section-paragraph"><small class="${prefix}-inline-meta">${base().escapeHtml(section.meta)}</small></p>`;
+                    sectionBody = `<p class="${prefix}-section-paragraph"><small class="${prefix}-inline-meta">${base()?.escapeHtml ? base().escapeHtml(section.meta) : section.meta}</small></p>`;
                 }
 
                 const contentHtml = `${sectionBody}${items ? `<ul class="${prefix}-section-list">${items}</ul>` : ""}`;
-                const actionsHtml = base().renderSectionActions(section, kind, prefix);
-                const collapsible = ai().shouldCollapseSection(section, kind, index, totalSections, aiIntent);
+                const actionsHtml = base()?.renderSectionActions ? base().renderSectionActions(section, kind, prefix) : "";
+                const collapsible = ai()?.shouldCollapseSection
+                    ? ai().shouldCollapseSection(section, kind, index, totalSections, aiIntent)
+                    : false;
                 const sectionClasses = `${prefix}-section ${prefix}-section--${kind}${collapsible ? ` ${prefix}-section--collapsible` : ""}`;
 
-                const formattedTitle = base().formatSectionTitle(section.title, kind);
+                const formattedTitle = base()?.formatSectionTitle ? base().formatSectionTitle(section.title, kind) : (section.title || "");
                 if (collapsible) {
-                    const sectionLabel = `<${sectionTitleTag} class="${prefix}-section-title">${base().escapeHtml(formattedTitle)}</${sectionTitleTag}>${metaBadge}${actionsHtml}`;
+                    const sectionLabel = `<${sectionTitleTag} class="${prefix}-section-title">${base()?.escapeHtml ? base().escapeHtml(formattedTitle) : formattedTitle}</${sectionTitleTag}>${metaBadge}${actionsHtml}`;
                     return `
-              <details class="${sectionClasses}" data-section-kind="${base().escapeHtml(kind)}" data-section-index="${index}" style="--section-index: ${index};">
+              <details class="${sectionClasses}" data-section-kind="${base()?.escapeHtml ? base().escapeHtml(kind) : kind}" data-section-index="${index}" style="--section-index: ${index};">
                 <summary class="${prefix}-section-summary">${sectionLabel}</summary>
                 <div class="${prefix}-section-body">
                   ${contentHtml}

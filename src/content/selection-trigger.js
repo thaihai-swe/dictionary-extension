@@ -262,7 +262,7 @@
         });
     }
 
-    ns.selectionTriggers = {
+    ns.selectionTrigger = ns.selectionTriggers = {
         cancelSelectionClear,
         getSelectionTriggerMode,
         captureSelectionSnapshot,

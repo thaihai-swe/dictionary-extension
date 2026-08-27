@@ -20,14 +20,15 @@ export const CONTENT_SCRIPT_JS = [
     "src/content/lookup-bridge.js",
     "src/content/trigger.js",
     "src/content/settings-bridge.js",
-    "src/content/selection-triggers.js",
-    "src/content/keyboard-handlers.js",
-    "src/content/popup-dom.js",
-    "src/content/tab-loader.js",
+    "src/content/selection-trigger.js",
+    "src/content/keyboard-trigger.js",
+    "src/content/popup-view.js",
+    "src/content/lookup-controller.js",
     "src/content/message-router.js",
     "src/content.js"
 ];
 
 export const CONTENT_SCRIPT_CSS = [
+    "tokens.css",
     "src/ui/popup.css"
 ];

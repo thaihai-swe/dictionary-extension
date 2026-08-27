@@ -1,5 +1,5 @@
-import { LOOKUP_UPDATE } from "../src/shared/messages.js";
-import { populateLanguageSelect } from "../src/shared/languages.js";
+import { LOOKUP_UPDATE } from "../../shared/messages.js";
+import { populateLanguageSelect } from "../../shared/languages.js";
 import {
     audio,
     contextInput,
@@ -13,7 +13,7 @@ import {
     renderer,
     resultRoot,
     state
-} from "./popup-state.js";
+} from "./state.js";
 import {
     applyDimensions,
     clearContextError,
@@ -28,12 +28,12 @@ import {
     updateContextActionVisibility,
     updateContextHelp,
     updatePauseSiteButton
-} from "./popup-ui.js";
+} from "./view.js";
 import {
     loadTab,
     maybePreloadAi,
     prefillPageContext
-} from "./popup-lookup.js";
+} from "./lookup.js";
 
 const OUTPUT_AFFECTING_SETTING_KEYS = popupHelpers?.OUTPUT_AFFECTING_SETTING_KEYS || new Set();
 

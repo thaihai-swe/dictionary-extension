@@ -1,4 +1,4 @@
-import { isHostnamePaused, saveSettings } from "../src/shared/storage.js";
+import { isHostnamePaused, saveSettings } from "../../shared/storage.js";
 import {
     DEFAULT_BODY_MESSAGE,
     TAB_ORDER,
@@ -20,7 +20,7 @@ import {
     resultRoot,
     state,
     tabsRoot
-} from "./popup-state.js";
+} from "./state.js";
 
 export function applyDimensions() {
     const dimensions = popupShell?.clampDimensions(state.settings?.popupWidth, state.settings?.popupHeight)

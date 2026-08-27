@@ -2,7 +2,7 @@
  * Compact, fast, definition-first layout with smooth micro-interactions.
  */
 
-@import "../tokens.css";
+@import "../../../tokens.css";
 
 :root {
     --color-primary: var(--color-accent);
@@ -29,10 +29,10 @@
 
 html,
 body {
-    width: 100%;
-    max-width: 100%;
-    height: 100%;
-    min-width: 280px;
+    width: 480px;
+    height: 580px;
+    min-width: 320px;
+    min-height: 400px;
     overflow: hidden !important;
     margin: 0;
     padding: 0;
@@ -40,6 +40,14 @@ body {
     font-family: var(--font-body);
     color: var(--color-text-primary);
     background: var(--color-bg);
+}
+
+.toolbar-popup {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
 }
 
 html::-webkit-scrollbar,
@@ -120,6 +128,13 @@ body::-webkit-scrollbar {
     min-width: 0;
 }
 
+.toolbar-popup-identity {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
 .toolbar-popup-eyebrow {
     margin: 0;
     font-family: var(--font-display);
@@ -132,6 +147,42 @@ body::-webkit-scrollbar {
     gap: 6px;
     white-space: nowrap;
 }
+
+.toolbar-popup-header-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    min-width: 0;
+}
+
+.toolbar-popup-shortcuts-btn,
+.toolbar-popup-theme-toggle {
+    flex-shrink: 0;
+    display: inline-grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-surface-muted);
+    color: var(--color-ink-2);
+    cursor: pointer;
+    transition: color var(--transition-fast), border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.toolbar-popup-shortcuts-btn:hover,
+.toolbar-popup-theme-toggle:hover {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+    background: var(--color-accent-soft);
+}
+
+.toolbar-popup-theme-icon--sun { display: none; }
+.toolbar-popup-theme-icon--moon { display: block; }
+[data-theme="dark"] .toolbar-popup-theme-icon--sun { display: block; }
+[data-theme="dark"] .toolbar-popup-theme-icon--moon { display: none; }
 
 .toolbar-popup-header-select,
 .toolbar-popup-header-lang {
@@ -228,6 +279,128 @@ body::-webkit-scrollbar {
     color: var(--color-accent);
     border-color: var(--color-accent);
     background: var(--color-accent-soft);
+}
+
+/* Shortcuts Modal / Popover Overlay */
+.toolbar-popup-shortcuts-modal,
+.dictionary-helper-shortcuts-modal {
+    position: absolute;
+    top: 50px;
+    left: 14px;
+    right: 14px;
+    z-index: 50;
+    padding: 14px 16px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-panel);
+    animation: contextReveal 160ms var(--ease-out) forwards;
+    backdrop-filter: blur(12px);
+}
+.toolbar-popup-shortcuts-modal[hidden],
+.dictionary-helper-shortcuts-modal[hidden] {
+    display: none !important;
+}
+.toolbar-popup-shortcuts-header,
+.dictionary-helper-shortcuts-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--color-border);
+}
+.toolbar-popup-shortcuts-title-wrap,
+.dictionary-helper-shortcuts-title-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.toolbar-popup-shortcuts-title,
+.dictionary-helper-shortcuts-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+.toolbar-popup-shortcuts-subtitle,
+.dictionary-helper-shortcuts-subtitle {
+    font-size: 0.7rem;
+    color: var(--color-ink-muted);
+}
+.toolbar-popup-shortcuts-close,
+.dictionary-helper-shortcuts-close {
+    display: inline-grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: var(--color-ink-muted);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+.toolbar-popup-shortcuts-close:hover,
+.dictionary-helper-shortcuts-close:hover {
+    color: var(--color-danger);
+    background: var(--color-danger-soft);
+}
+.toolbar-popup-shortcuts-list,
+.dictionary-helper-shortcuts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.toolbar-popup-shortcut-item,
+.dictionary-helper-shortcut-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 0.78rem;
+    color: var(--color-text-secondary);
+}
+.toolbar-popup-shortcut-desc-wrap,
+.dictionary-helper-shortcut-desc-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+.toolbar-popup-shortcut-desc,
+.dictionary-helper-shortcut-desc {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+.toolbar-popup-shortcut-sub,
+.dictionary-helper-shortcut-sub {
+    font-size: 0.7rem;
+    color: var(--color-ink-muted);
+}
+.toolbar-popup-shortcut-keys,
+.dictionary-helper-shortcut-keys {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    color: var(--color-text-primary);
+}
+.toolbar-popup-shortcut-keys kbd,
+.dictionary-helper-shortcut-keys kbd {
+    display: inline-block;
+    padding: 2px 6px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    background: var(--color-surface-muted);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
 }
 
 /* Search Form */
@@ -353,6 +526,11 @@ body::-webkit-scrollbar {
 }
 
 /* AI Context Action Panel */
+[hidden],
+.toolbar-popup-context-action[hidden] {
+    display: none !important;
+}
+
 .toolbar-popup-context-action {
     display: grid;
     gap: 6px;
@@ -774,27 +952,31 @@ body::-webkit-scrollbar {
     border-color: var(--color-border);
 }
 
-.toolbar-popup-section-summary {
+.toolbar-popup-section-summary,
+.dictionary-helper-section-summary {
     display: flex;
     align-items: center;
     gap: 8px;
     cursor: pointer;
-    list-style: none;
+    list-style: none !important;
+    list-style-type: none !important;
     font-weight: 600;
     font-size: 0.85rem;
     color: var(--color-text-primary);
 }
 
-.toolbar-popup-section-summary .toolbar-popup-section-meta,
-.dictionary-helper-section-summary .dictionary-helper-section-meta {
-    margin-left: auto;
-    min-width: 0;
-    text-align: right;
-    white-space: nowrap;
+.toolbar-popup-section-summary::-webkit-details-marker,
+.dictionary-helper-section-summary::-webkit-details-marker {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
 }
 
-.toolbar-popup-section-summary::-webkit-details-marker {
-    display: none;
+.toolbar-popup-section-summary::marker,
+.dictionary-helper-section-summary::marker {
+    display: none !important;
+    content: "" !important;
+    font-size: 0 !important;
 }
 
 .toolbar-popup-section-summary::after {
@@ -850,13 +1032,33 @@ body::-webkit-scrollbar {
 
 /* Loading & Shimmer State */
 .toolbar-popup-state {
-    padding: var(--space-md) var(--space-xs);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: var(--space-xl) var(--space-md);
     text-align: center;
     color: var(--color-ink-2);
     font-size: var(--text-sm);
 }
 
+.toolbar-popup-state strong {
+    display: block;
+    font-size: var(--text-md);
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.toolbar-popup-state span {
+    display: block;
+    color: var(--color-ink-muted);
+}
+
 .toolbar-popup-state.is-error {
+    color: var(--color-danger);
+}
+.toolbar-popup-state.is-error strong {
     color: var(--color-danger);
 }
 

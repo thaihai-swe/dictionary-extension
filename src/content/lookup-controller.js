@@ -230,6 +230,13 @@
         }
 
         const query = state.activeText.trim();
+        if (!query) {
+            const body = state.popupRoot?.querySelector(".dictionary-helper-body");
+            if (body) {
+                body.innerHTML = `<div class="dictionary-helper-state"><strong>No text selected</strong><span>Select text on the page or type a word in the search box.</span></div>`;
+            }
+            return;
+        }
         state.requestToken += 1;
         const token = state.requestToken;
         state.activeRequestId = "";
@@ -383,6 +390,11 @@
         }
 
         const normalizedText = snapshot.text.trim();
+        const audio = window.DictionaryHelperAudio;
+        if (state.activeText !== normalizedText) {
+            audio?.clearPracticeResults();
+        }
+        state.activeText = normalizedText;
         state.restoreFocusElement = options.keyboard && document.activeElement ? document.activeElement : null;
         state.focusPopupOnOpen = Boolean(options.keyboard);
 
@@ -395,10 +407,18 @@
 
         state.currentSelectionRect = rect;
         state.currentPosition = getPopupPosition(rect, event);
-        state.activeText = normalizedText;
         state.activeContext = snapshot.context || "";
         state.activeContextSource = snapshot.contextSource || "";
         state.activeContextConfidence = snapshot.contextConfidence || "none";
+
+        if (!state.activeContext && !state.settings?.disablePageContextExtraction) {
+            const extracted = ns.eventUtils?.extractSurroundingContext(normalizedText);
+            if (extracted?.context) {
+                state.activeContext = extracted.context;
+                state.activeContextSource = extracted.source;
+                state.activeContextConfidence = extracted.confidence;
+            }
+        }
         state.lastPreloadKey = "";
         state.activeAiIntent = "";
         const available = getAvailableTabs();
@@ -414,7 +434,7 @@
         loadTab(state.activeTab);
     }
 
-    ns.tabLoader = {
+    ns.lookupController = ns.tabLoader = {
         getAvailableTabs,
         getLookupResponse,
         getSelectionRectForText,
