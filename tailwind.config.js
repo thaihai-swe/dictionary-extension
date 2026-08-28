@@ -30,9 +30,10 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
-        serif: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
-        mono: ['"SFMono-Regular"', 'Consolas', '"Liberation Mono"', 'monospace'],
+        sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        heading: ['"Lexend"', '"Plus Jakarta Sans"', 'sans-serif'],
+        serif: ['"Newsreader"', 'Georgia', 'serif'],
+        mono: ['"JetBrains Mono"', 'Consolas', 'monospace'],
       }
     },
   },

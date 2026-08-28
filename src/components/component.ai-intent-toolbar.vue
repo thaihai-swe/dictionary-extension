@@ -20,10 +20,10 @@ const emit = defineEmits<{
       :disabled="disabled"
       @click="emit('select-intent', intent.id)"
       :class="[
-        'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm',
+        'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 border outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-xs active:scale-95 hover:scale-[1.02]',
         activeIntent === intent.id
-          ? 'bg-teal-500/15 border-teal-500/40 text-teal-300 font-bold ring-1 ring-teal-500/30'
-          : 'bg-dark-surface border-dark-border text-slate-300 hover:text-white hover:bg-dark-muted hover:border-slate-700'
+          ? 'bg-teal-500/15 border-teal-500/45 text-teal-300 font-bold ring-1 ring-teal-500/30 shadow-teal-500/10'
+          : 'bg-dark-surface border-dark-border text-slate-300 hover:text-white hover:bg-dark-muted hover:border-slate-600'
       ]"
     >
       <span>{{ intent.icon }}</span>

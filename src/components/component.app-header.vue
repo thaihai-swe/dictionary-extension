@@ -97,25 +97,25 @@ function handleTargetLangChange(e: Event) {
       <button
         @click="stopAllAudio()"
         :class="[
-          'px-2 py-1 rounded-lg border transition-all cursor-pointer text-xs flex items-center gap-1 font-bold',
+          'px-2 py-1 rounded-lg border transition-all duration-150 cursor-pointer text-xs flex items-center gap-1 font-bold active:scale-95 shadow-sm',
           isAudioPlaying
-            ? 'bg-rose-500/25 text-rose-300 border-rose-500/50 shadow-md shadow-rose-500/20 animate-pulse'
-            : 'bg-dark-muted hover:bg-dark-border text-slate-300 border-dark-border'
+            ? 'bg-rose-500/25 text-rose-300 border-rose-500/50 shadow-rose-500/20 animate-pulse'
+            : 'bg-dark-muted hover:bg-dark-border hover:border-slate-600 text-slate-300 border-dark-border'
         ]"
         :title="isAudioPlaying ? 'Dừng phát âm thanh/giọng nói đang chạy (Stop Voice)' : 'Dừng tất cả âm thanh/giọng nói (Global Stop Voice)'"
       >
         <span>{{ isAudioPlaying ? '⏹️' : '🔇' }}</span>
-        <span v-if="isAudioPlaying" class="text-[10px] uppercase tracking-wider text-rose-300">Stop Voice</span>
+        <span v-if="isAudioPlaying" class="text-[10px] uppercase tracking-wider text-rose-300 font-bold">Stop Voice</span>
       </button>
 
       <!-- Shortcuts Modal Toggle Button -->
       <button
         @click="emit('toggle-shortcuts')"
         :class="[
-          'p-1.5 rounded-lg border transition-colors cursor-pointer text-xs',
+          'p-1.5 rounded-lg border transition-all duration-150 cursor-pointer text-xs hover:scale-105 active:scale-95 shadow-xs',
           showShortcuts
             ? 'bg-teal-500/20 text-teal-300 border-teal-500/40'
-            : 'bg-dark-muted hover:bg-dark-border text-slate-300 border-dark-border'
+            : 'bg-dark-muted hover:bg-dark-border hover:border-slate-600 text-slate-300 border-dark-border'
         ]"
         title="Keyboard Shortcuts Guide (Shift+Q)"
       >
@@ -125,7 +125,7 @@ function handleTargetLangChange(e: Event) {
       <!-- Dark / Light Theme Toggle Button -->
       <button
         @click="emit('toggle-theme')"
-        class="p-1.5 rounded-lg bg-dark-muted hover:bg-dark-border text-slate-300 border border-dark-border transition-colors cursor-pointer text-xs"
+        class="p-1.5 rounded-lg bg-dark-muted hover:bg-dark-border hover:border-slate-600 text-slate-300 border border-dark-border transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer text-xs shadow-xs"
         :title="isDarkMode ? 'Switch to Light Theme' : 'Switch to Dark Theme'"
       >
         <span>{{ isDarkMode ? '🌙' : '☀️' }}</span>
@@ -134,7 +134,7 @@ function handleTargetLangChange(e: Event) {
       <!-- Fullscreen / Maximize Workbench Toggle Button -->
       <button
         @click="emit('toggle-maximize')"
-        class="p-1.5 rounded-lg bg-dark-muted hover:bg-dark-border text-slate-300 border border-dark-border transition-colors cursor-pointer text-xs"
+        class="p-1.5 rounded-lg bg-dark-muted hover:bg-dark-border hover:border-slate-600 text-slate-300 border border-dark-border transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer text-xs shadow-xs"
         :title="isMaximized ? 'Restore Popup Size' : 'Maximize Workbench View'"
       >
         <span>{{ isMaximized ? '⤓' : '⤢' }}</span>
@@ -143,7 +143,7 @@ function handleTargetLangChange(e: Event) {
       <!-- Settings & API Key Modal Toggle Button -->
       <button
         @click="emit('open-settings')"
-        class="p-1.5 rounded-lg bg-dark-muted hover:bg-dark-border text-slate-300 border border-dark-border transition-colors cursor-pointer text-xs"
+        class="p-1.5 rounded-lg bg-dark-muted hover:bg-dark-border hover:border-slate-600 text-slate-300 border border-dark-border transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer text-xs shadow-xs"
         title="Extension Settings & Gemini API Key"
       >
         <span>⚙️</span>
