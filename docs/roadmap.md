@@ -7,27 +7,16 @@ This document tracks shipped capabilities, near-term product work, and longer-te
 ## Recently Shipped
 
 ### Lookup Engine
-- Five dictionary backends with primary-first fallback: `free_dictionary`, `wiktionary`, `merriam_webster`, `wordnik`, `words_api`
-- Removal of the paid-only Oxford provider (no usable free tier)
-- Phase 1 fast primary lookup plus Phase 2 lazy enrichment (`ENRICHMENT_CONCURRENCY = 2`)
-- Incremental `LOOKUP_UPDATE` messaging with `requestId`, `revision`, stale-response guards, and scroll-preserving progressive paints
-- Primary-first lemma/phrase retries before secondary backends; dictionary HTTP timeouts of 6s
-- Non-blocking translation: first paint can ship dictionary-only, then merge translation at `revision: 1`
-- Smart English lemmatization (`went` → `go`, `children` → `child`) and phrasal canonicalization (`taking care of` → `take care of`)
-- Automatic AI phrase/idiom fallback in Dictionary mode when structured definitions are missing
-- Two-level enrichment cache: L1 in-memory Map (max 20, TTL 10 minutes) plus L2 `chrome.storage.session`
+- Integrated dictionary backends: `free_dictionary`, `google_translate`, `wiktionary`, `merriam_webster`, `wordnik`, `libre_translate`
+- Vue 3 + TypeScript architecture with Vite 5 bundler under `src/entrypoints/`
+- Parallel neural translation with Google Translate and LibreTranslate
+- Offline Rule-Based Grammar Analysis Engine fallback when no Gemini API key is configured
 
-### Results & Attribution
-- Canonical `sourceBadges` for dictionary, translation, AI, and every successful enrichment provider
-- Source-label deduplication so provider names are not repeated in the subtitle
-- Section merging with duplicate suppression across definitions, examples, synonyms, and antonyms
-- Pronunciation merging with language/accent matching, IPA/audio backfilling, and phonetic-first ordering
-
-### Pronunciation & Practice
+### Pronunciation & Voice Control
 - Remote dictionary audio with Web Speech synthesis fallback
 - Configurable playback rate (`0.5`–`1.5`) and preferred speech voice
+- **Global Stop Voice Button** (`⏹️ Stop Voice` / `🔇`) in AppHeader for 1-click speech cancellation
 - Speech Practice Evaluator with Levenshtein scoring and grade badges
-- Zero audio blob/metadata caching
 
 ### Contextual AI
 - Seven complementary AI actions: Main AI, Context Explain, Grammar & Nuance, Phrase & Collocations, Sentence Breakdown, Compare Confusables, Rephrase

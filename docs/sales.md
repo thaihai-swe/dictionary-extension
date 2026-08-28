@@ -28,7 +28,7 @@ The in-page card positions itself intelligently near your selection, flips bound
 The product is built around two complementary learning surfaces:
 
 - **Dictionary Mode:** Delivers sub-second primary definitions, parallel neural translations, US/UK pronunciation audio, and structured lexical relationships. As you read, non-blocking background workers lazily enrich the card with secondary dictionary data.
-- **AI Mode:** Unlocks 5 specialized contextual actions (Main AI, Context Explain, Grammar & Nuance, Phrase & Collocations, and Sentence Breakdown) powered by Google Gemini or your own self-hosted/OpenAI-compatible LLMs.
+- **AI Mode:** Unlocks 6 specialized contextual actions (Explain in Context, Grammar & Nuance, Phrase & Collocations, Sentence Breakdown, Compare Confusables, Rephrase & Styles) powered by Google Gemini AI and an offline local grammar engine.
 
 Users get immediate clarity in under a second, with the power to explore grammatical nuance and sentence mechanics whenever a word is difficult, technical, or idiomatic.
 

@@ -81,19 +81,18 @@ The keyboard command **Look up the selected text** (`lookup-selection`, suggeste
 | Setting Key | Type | Storage | Default | Description |
 |---|---|---|---|---|
 | `enableDictionary` | `boolean` | `sync` | `true` | Displays structured dictionary definitions in the Dictionary tab. |
-| `dictionaryProvider` | `string` | `sync` | `"free_dictionary"` | Primary dictionary backend: `"free_dictionary"`, `"wiktionary"`, `"merriam_webster"`, `"wordnik"`, or `"words_api"`. |
-| `dictionaryApiKey` | `string` | `local` | `""` | Merriam-Webster Collegiate API key (from [dictionaryapi.com](https://dictionaryapi.com/register)). |
-| `wordnikApiKey` | `string` | `local` | `""` | Wordnik API key (from [developer.wordnik.com](https://developer.wordnik.com/)). |
-| `wordsApiKey` | `string` | `local` | `""` | WordsAPI RapidAPI key (from [wordsapi.com](https://www.wordsapi.com/)). |
+| `dictionaryProvider` | `string` | `sync` | `"free_dictionary"` | Primary dictionary backend: `"free_dictionary"`, `"google_translate"`, `"wiktionary"`, `"merriam_webster"`, `"wordnik"`, or `"libre_translate"`. |
+| `dictionaryApiKey` | `string` | `local` | `""` | Merriam-Webster Collegiate API key. |
+| `wordnikApiKey` | `string` | `local` | `""` | Wordnik API key. |
 | `enableTranslate` | `boolean` | `sync` | `true` | Shows translation card alongside dictionary definitions in the Dictionary tab. |
 | `translateProvider` | `string` | `sync` | `"google"` | Translation service: `"google"` (Google Translate) or `"libretranslate"`. |
-| `translateTargetLanguage`| `string`| `sync` | `"English"` | Target language display name (e.g. `English`, `Vietnamese`, `Spanish`, `German`, `Japanese`). |
-| `customLanguages` | `string` | `sync` | `"English, Vietnamese"` | Comma-separated list of target language display names to populate in the quick-select dropdown. |
-| `libreTranslateBaseUrl` | `string` | `sync` | `"https://libretranslate.com"` | Server endpoint for LibreTranslate queries (supports self-hosted instances). |
-| `libreTranslateApiKey` | `string` | `local` | `""` | Optional API key for authenticated or self-hosted LibreTranslate servers. |
-| `enableLexicalProfile` | `boolean` | `sync` | `true` | Enriches lookups with Word Family chips, Word Formation tags, Usage warnings, Confusable pairs, Learner mistakes, and Collocations. |
-| `pronunciationRate` | `number` | `sync` | `0.95` | Playback speed for remote audio MP3s and speech synthesis fallback (clamped `0.5` to `1.5`). |
-| `pronunciationVoiceURI` | `string` | `sync` | `""` | Preferred operating system voice for browser speech synthesis fallback (empty string uses browser default). |
+| `translateTargetLanguage`| `string`| `sync` | `"Vietnamese"` | Target language display name (e.g. `Vietnamese`, `English`, `Japanese`, `Chinese`, `Korean`, `French`, `German`, `Spanish`). |
+| `customLanguages` | `string` | `sync` | `"Vietnamese, English, Chinese, Japanese, Korean, French, German, Spanish"` | Comma-separated list of target language display names to populate in dropdowns. |
+| `libreTranslateBaseUrl` | `string` | `sync` | `"https://libretranslate.com"` | Server endpoint for LibreTranslate queries. |
+| `libreTranslateApiKey` | `string` | `local` | `""` | Optional API key for authenticated LibreTranslate servers. |
+| `enableLexicalProfile` | `boolean` | `sync` | `true` | Enriches lookups with Word Family chips, Word Formation tags, Usage warnings, Common Learner mistakes, and Collocations. |
+| `pronunciationRate` | `number` | `sync` | `0.95` | Playback speed for dictionary audio MP3s and speech synthesis fallback (`0.5` to `1.5`). |
+| `pronunciationVoiceURI` | `string` | `sync` | `""` | Preferred operating system voice for browser speech synthesis fallback. |
 
 ---
 

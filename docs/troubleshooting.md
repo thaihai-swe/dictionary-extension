@@ -19,7 +19,7 @@ This guide provides actionable solutions for common issues across extension relo
 
 ### Symptom: Highlighting text or double-clicking does not open the lookup card or show the floating icon.
 - **Check 1 — Editable Form Fields:** Selection triggers are intentionally disabled inside `<input>`, `<textarea>`, and elements with `contenteditable="true"` to avoid disrupting typing. Use the right-click context menu or toolbar popup instead.
-- **Check 2 — Trigger Mode Setting:** Open Settings (`options/options.html`) and verify **Text selection & double-click lookup behavior** is set to `Floating lookup icon` or `Open popup immediately on selection` (not `Off`).
+- **Check 2 — Trigger Mode Setting:** Open Settings (click the ⚙️ Settings button in the header) and verify **Text selection & double-click lookup behavior** is set to `Floating lookup icon` or `Open popup immediately on selection` (not `Off`).
 - **Check 3 — Post-Selection Modifier Key:** If using the hotkey trigger, confirm you tap the configured key (`Shift`, `Alt`, or `Ctrl`) once immediately *after* highlighting the text.
 - **Check 4 — Viewport Positioning & Screen Edges:** If text is at the extreme edge of the screen, the positioning engine flips the card. Ensure browser zoom or high-DPI scaling is not hiding the card off-screen.
 - **Check 5 — Paused site:** The toolbar **Pause site** button or Settings → paused hostnames turns off in-page icons on that host. Toolbar search, Alt+L, and the context menu still work.
