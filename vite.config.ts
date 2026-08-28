@@ -21,7 +21,7 @@ function buildContentScriptPlugin(): Plugin {
           outDir: 'dist',
           emptyOutDir: false,
           lib: {
-            entry: resolve(__dirname, 'src/content/script.content-script.ts'),
+            entry: resolve(__dirname, 'src/entrypoints/content-script/index.ts'),
             name: 'ContentScript',
             formats: ['iife'],
             fileName: () => 'content-script.js',
@@ -52,7 +52,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         popup: resolve(__dirname, 'index.html'),
-        background: resolve(__dirname, 'src/background/worker.service-worker.ts'),
+        background: resolve(__dirname, 'src/entrypoints/background/service-worker.ts'),
       },
       output: {
         entryFileNames: (chunkInfo) => {

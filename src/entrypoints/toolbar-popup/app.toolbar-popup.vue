@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue';
-import { useStorage } from '../composables/composable.storage';
-import AppHeader from '../components/component.app-header.vue';
-import TabNavigation from '../components/component.tab-navigation.vue';
-import WordLookupView from '../components/view.word-lookup.vue';
-import AiAssistantView from '../components/view.ai-assistant.vue';
-import ShortcutsModal from '../components/modal.shortcuts.vue';
-import SettingsModal from '../components/modal.settings.vue';
-import { TabId } from '../types';
+import { useStorage } from '@/composables/composable.storage';
+import AppHeader from '@/components/component.app-header.vue';
+import TabNavigation from '@/components/component.tab-navigation.vue';
+import WordLookupView from '@/components/view.word-lookup.vue';
+import AiAssistantView from '@/components/view.ai-assistant.vue';
+import ShortcutsModal from '@/components/modal.shortcuts.vue';
+import SettingsModal from '@/components/modal.settings.vue';
+import { TabId } from '@/types';
 
 const { activeTab, settings, saveSettings } = useStorage();
 const showShortcuts = ref<boolean>(false);

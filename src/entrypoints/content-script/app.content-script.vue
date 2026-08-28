@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { useStorage } from '../composables/composable.storage';
-import { abortActiveAiRequest } from '../composables/composable.ai-assistant';
-import { abortActiveDictRequest, stopAllAudio } from '../composables/composable.dictionary';
-import InPagePopup from './popup.in-page.vue';
+import { useStorage } from '@/composables/composable.storage';
+import { abortActiveAiRequest } from '@/composables/composable.ai-assistant';
+import { abortActiveDictRequest, stopAllAudio } from '@/composables/composable.dictionary';
+import InPageOverlay from './overlay.in-page.vue';
 
 const { settings, saveSettings } = useStorage();
 
@@ -333,7 +333,7 @@ onUnmounted(() => {
           : 'bg-[#4f46a5] hover:bg-[#4338ca] text-white border-2 border-[#ffffff] shadow-[#4f46a5]/35'
       ]"
     >
-      <!-- SVG Search Icon from main branch -->
+      <!-- SVG Search Icon -->
       <svg class="w-4.5 h-4.5 text-white fill-current" viewBox="0 0 20 20" aria-hidden="true">
         <path d="M9 3.5a5.5 5.5 0 1 0 3.5 9.7l3.15 3.15a1 1 0 0 0 1.4-1.4l-3.15-3.15A5.5 5.5 0 0 0 9 3.5Zm-3.5 5.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z"></path>
       </svg>
@@ -358,7 +358,7 @@ onUnmounted(() => {
       ]"
       :style="isMaximized ? {} : { left: `${popupX}px`, top: `${popupY}px` }"
     >
-      <InPagePopup
+      <InPageOverlay
         :selectedText="selectedText"
         :contextSentence="contextSentence"
         :isMaximized="isMaximized"

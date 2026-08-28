@@ -1,6 +1,6 @@
 import { createApp } from 'vue';
 import ContentScriptApp from './app.content-script.vue';
-import styleText from '../assets/main.css?inline';
+import styleText from '@/assets/main.css?inline';
 
 (function initContentScript() {
   if (document.getElementById('dictionary-extension-root')) return;
