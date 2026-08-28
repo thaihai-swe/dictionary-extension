@@ -101,12 +101,13 @@ Translation runs alongside dictionary lookups:
 
 Pronunciation tools are integrated directly into the result header:
 
-### Audio Playback
+### Audio Playback & Global Voice Control
 1. **Remote Audio:** Prefers high-fidelity MP3/WAV recordings from native dictionary databases (US and UK variants).
 2. **Web Speech Synthesis Fallback:** If dictionary audio is unavailable, falls back to the browser's built-in speech synthesis engine.
-3. **Speed Control:** Customize speech rate in Settings (clamped from `0.5x` to `1.5x`).
-4. **Voice Selection:** Choose your preferred operating system voice in Settings for speech synthesis fallback.
-5. **Equalizer Wave:** An animated 3-bar equalizer visually confirms active playback.
+3. **Global Stop Voice Button:** The top header bar features a global audio stop button (`⏹️ Stop Voice` / `🔇`). When audio or TTS is actively playing, the button glows with a red pulsing indicator—allowing you to instantly pause or cancel any speech playback with a single click from anywhere. Pressing `Esc` also cancels active voice audio.
+4. **Speed Control:** Customize speech rate in Settings (clamped from `0.5x` to `1.5x`).
+5. **Voice Selection:** Choose your preferred operating system voice in Settings for speech synthesis fallback.
+6. **Equalizer Wave:** An animated 3-bar equalizer visually confirms active playback.
 
 ### Speech Practice Evaluator
 Click the **Practice** button (`🎙️ Practice`) next to pronunciation controls to test and refine your spoken English:

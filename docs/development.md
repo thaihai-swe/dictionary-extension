@@ -2,29 +2,36 @@
 
 ## 1. Architectural Philosophy & Environment
 
-**Dictionary** is engineered with zero external build dependencies:
-- **Runtime Stack:** Plain ES Modules, Native Web APIs, Chrome Manifest V3, HTML5, and CSS3.
-- **Zero Build Step:** No bundler (Webpack/Vite/Rollup), no Babel transpilation, and no npm runtime dependencies. Code is executed directly by Chrome.
-- **Module Architecture:**
-  - Background service worker, options page, and toolbar action use native ES modules (`import` / `export`).
-  - Content scripts are injected as classic scripts using carefully scoped namespaces (`DictionaryHelperContent`, `DictionaryHelperMessages`, `DictionaryHelperPopupHelpers`).
-- **Visual Design System (Calm Learning Studio):**
-  - Three-tier token architecture declared in `tokens.css` (Primitives → Semantics → Surface tokens).
-  - Shared UI shell (`src/ui/popup-shell.js`) and unified renderer (`src/ui/renderer.js`) driving both toolbar (`action/popup.css`) and in-page (`src/ui/popup.css`) surfaces.
-  - Atkinson Hyperlegible bundled locally in `assets/fonts/` for **Learner Font** mode.
+**Dictionary** is engineered with a modern, high-performance web extension stack:
+- **Runtime Stack:** Vue 3 (Composition API), TypeScript 5, Vite 5, Tailwind CSS, Chrome Manifest V3.
+- **Module Architecture:** Organized under `src/entrypoints/` (`background/`, `content-script/`, `toolbar-popup/`).
+- **Isolation:** Content script overlay is mounted inside Shadow DOM (`#dictionary-extension-root`) with encapsulated Tailwind CSS, preventing style leaks into or out of host pages.
+- **Type Safety:** Full TypeScript interfaces defined in `src/types/index.ts` checked with `yarn typecheck` (`vue-tsc --noEmit`).
 
 ---
 
 ## 2. Local Setup & Workflow
 
+```bash
+# 1. Install dependencies
+yarn install
+
+# 2. Development mode with HMR / fast re-bundling
+yarn dev
+
+# 3. Typechecking
+yarn typecheck
+
+# 4. Production Build (outputs to /dist)
+yarn build
+```
+
 1. Open Chrome and navigate to `chrome://extensions`.
 2. Toggle on **Developer mode** in the top-right corner.
-3. Click **Load unpacked** and select this repository's root directory.
-4. Click the **Reload icon** (↻) on the extension card after making code changes.
-5. **Important:** Refresh all open webpage tabs where you are testing so content scripts re-inject.
-6. For local HTML/PDF testing, open the extension **Details** and enable **Allow access to file URLs**.
-7. Run unit tests before the manual matrix: `node --test tests/*.test.js`.
-8. Keep `manifest.json` `content_scripts[0].js` / `.css` identical to `src/shared/content-scripts.js`. The test in `tests/content-scripts.test.js` asserts that.
+3. Click **Load unpacked** and select the repository root or the built `dist/` directory.
+4. Click the **Reload icon** (↻) on the extension card after rebuilding code changes.
+5. **Important:** Refresh open webpage tabs where you are testing so content scripts re-inject.
+6. For local HTML/PDF testing, open extension **Details** and enable **Allow access to file URLs**.
 
 ---
 

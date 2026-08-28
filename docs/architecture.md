@@ -2,15 +2,19 @@
 
 ## Overview
 
-Dictionary is a lightweight Chrome Manifest V3 extension built with plain JavaScript, CSS, and HTML. It has zero external runtime dependencies: no framework, no bundler, and no build step.
+**Dictionary** is a modern Chrome Manifest V3 extension engineered with **Vite 5**, **Vue 3**, **TypeScript 5**, and **Tailwind CSS**.
 
-The runtime architecture is organized into five decoupled layers:
+The runtime architecture is organized into clean, decoupled layers following modern Chrome Extension entrypoint standards:
 
-1. **Toolbar popup** (`action/`) — Standalone browser action UI for manual search, mode switching, editable context, contextual AI actions, and inline settings access.
-2. **Content script & in-page popup** (`src/content/`, `src/content.js`) — Modular in-page overlay system handling text selection, floating triggers, exact/suggested context extraction, collision-safe visual viewport positioning, keyboard trapping, and dynamic result rendering.
-3. **Background service worker** (`src/background.js`) — Central orchestrator managing request routing, two-phase progressive lookups, multi-backend fallback chains, lazy enrichment, two-level result caching, tab-scoped request cancellation, context menu actions, settings migrations, and dynamic script injection.
-4. **Provider modules** (`src/providers/`) — Vendor adapters and facades for multi-source dictionary lookups, neural machine translation, generative AI endpoints (Gemini native + OpenAI-compatible), and pronunciation engines.
-5. **Shared services and UI helpers** (`src/shared/`, `src/ui/`) — Reusable subsystems for storage/secrets, messaging contracts, query classification, Markdown parsing, lexical profile manipulation, audio synthesis/playback, network fetch with backoff/timeouts, and the shared "Calm Learning Studio" UI shell and design tokens.
+1. **Toolbar Popup Entrypoint** (`src/entrypoints/toolbar-popup/`) — Standalone browser action UI (`app.toolbar-popup.vue`, `main.ts`) for manual search, mode switching, editable context, 6 contextual AI intents, global audio controls, and settings.
+2. **Content Script & In-Page Overlay** (`src/entrypoints/content-script/`) — Injected Shadow DOM overlay system (`app.content-script.vue`, `overlay.in-page.vue`, `index.ts`) handling text selection, floating trigger icon, exact context extraction, collision-safe viewport positioning, dragging & resizing, and result rendering.
+3. **Background Service Worker Entrypoint** (`src/entrypoints/background/service-worker.ts`) — Central background service worker handling context menu actions, CORS-bypassing fetch proxies (`FETCH_PROXY`), network cancellation, and keyboard shortcut commands.
+4. **Vue Composables Layer** (`src/composables/`) — Reactive state management engines:
+   - `composable.dictionary.ts`: Handles caching, dictionary lookups, audio playback & reactive `isAudioPlaying` state with global `stopAllAudio()`.
+   - `composable.ai-assistant.ts`: Handles Gemini AI prompts, intent pipelines, and offline grammar engines.
+   - `composable.storage.ts`: Reactive chrome.storage settings sync and history management.
+5. **Provider Adapters** (`src/providers/`) — Vendor adapters for 5 dictionary providers (`free_dictionary`, `wiktionary`, `merriam_webster`, `wordnik`, `google_translate`), Google Translate, and Gemini AI.
+6. **UI Component System** (`src/components/`) — Modular Vue 3 components: `AppHeader` (with Global Stop Voice button), `SenseMatrixCard`, `WordFamilyCard`, `UsageNotesCard`, `WordFormationCard`, `LearnerMistakesCard`, `CollocationsCard`, `SentenceBreakdownCard`, `MarkdownRenderer`, `TokenizedContext`, and Modals.
 
 ---
 
