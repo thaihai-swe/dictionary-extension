@@ -204,35 +204,48 @@ function updateSelectionTrigger(event?: MouseEvent) {
   selectedText.value = text;
   contextSentence.value = extractSurroundingContext(text);
 
-  // Calculate precise positioning right next to selection end
-  let x = event?.clientX ? event.clientX + 10 : window.innerWidth / 2;
-  let y = event?.clientY ? event.clientY + 10 : window.innerHeight / 2;
+  const iconSize = 38;
+  const margin = 10;
+  let x = window.innerWidth / 2;
+  let y = window.innerHeight / 2;
 
-  try {
-    if (selection && selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      if (rect && (rect.width || rect.height)) {
-        const iconSize = 38;
-        const margin = 8;
-        x = rect.right + margin;
-        y = rect.top + Math.max(0, (rect.height - iconSize) / 2);
+  // If mouse event is available, position trigger icon right next to mouse cursor pointer
+  if (event && typeof event.clientX === 'number' && typeof event.clientY === 'number') {
+    x = event.clientX + 12;
+    y = event.clientY + 8;
 
-        if (x + iconSize > window.innerWidth - margin) {
-          x = rect.left - iconSize - margin;
-        }
-        if (x < margin) {
-          x = Math.max(margin, Math.min(rect.left, window.innerWidth - iconSize - margin));
-          y = rect.bottom + margin;
+    if (x + iconSize > window.innerWidth - margin) {
+      x = event.clientX - iconSize - 12;
+    }
+    if (y + iconSize > window.innerHeight - margin) {
+      y = event.clientY - iconSize - 8;
+    }
+  } else {
+    // Fallback for keyboard shortcut or programmatic triggers: position next to selection bounding rect
+    try {
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        if (rect && (rect.width || rect.height)) {
+          x = rect.right + margin;
+          y = rect.top + Math.max(0, (rect.height - iconSize) / 2);
+
+          if (x + iconSize > window.innerWidth - margin) {
+            x = rect.left - iconSize - margin;
+          }
+          if (x < margin) {
+            x = Math.max(margin, Math.min(rect.left, window.innerWidth - iconSize - margin));
+            y = rect.bottom + margin;
+          }
         }
       }
+    } catch (e) {
+      // Ignore range rect error
     }
-  } catch (e) {
-    // Fallback to clientX / clientY
   }
 
-  triggerX.value = Math.max(8, Math.min(x, window.innerWidth - 46));
-  triggerY.value = Math.max(8, Math.min(y, window.innerHeight - 46));
+  triggerX.value = Math.max(margin, Math.min(x, window.innerWidth - iconSize - margin));
+  triggerY.value = Math.max(margin, Math.min(y, window.innerHeight - iconSize - margin));
 
   if (mode === 'direct') {
     openPopup(triggerX.value, triggerY.value, text, contextSentence.value);
