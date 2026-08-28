@@ -94,7 +94,7 @@ export type PostSelectionModifier = 'shift' | 'alt' | 'ctrl';
 export type AppTheme = 'system' | 'light' | 'dark';
 export type AppFontFamily = 'editorial' | 'learner';
 export type TranslationProviderId = 'google' | 'libretranslate';
-export type DictionaryProviderId = 'free_dictionary' | 'wiktionary' | 'merriam_webster' | 'wordnik' | 'words_api';
+export type DictionaryProviderId = 'free_dictionary' | 'google_translate' | 'wiktionary' | 'merriam_webster' | 'wordnik' | 'words_api' | 'gemini_ai';
 
 export interface AppSettings {
   theme: AppTheme;

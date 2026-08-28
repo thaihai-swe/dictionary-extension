@@ -62,11 +62,12 @@ function handleTargetLangChange(e: Event) {
           class="bg-dark-muted border border-dark-border text-slate-200 text-[11px] font-medium rounded-lg px-2 py-1 outline-none focus:border-teal-500 cursor-pointer appearance-none pr-5 transition-colors"
           title="Select Dictionary Provider"
         >
-          <option value="free_dictionary">🌐 Google / FreeDict</option>
+          <option value="free_dictionary">🌐 Free Dictionary</option>
           <option value="google_translate">🌐 Google Translate</option>
           <option value="wiktionary">📖 Wiktionary</option>
           <option value="merriam_webster">🏛️ Merriam-Webster</option>
           <option value="wordnik">📚 Wordnik</option>
+          <option value="gemini_ai">✨ Gemini AI ({{ settings.aiModel || 'gemini-2.5-flash' }})</option>
         </select>
         <span class="absolute right-1.5 text-[9px] text-slate-400 pointer-events-none">▼</span>
       </div>

@@ -18,6 +18,7 @@ const props = defineProps<{
 
 const { query, result, isLoading, error, searchWord, playAudio } = useDictionary();
 const { recentQueries, addRecentQuery } = useStorage();
+
 const searchInput = ref<string>('');
 const searchInputElement = ref<HTMLInputElement | null>(null);
 const copiedNotice = ref<boolean>(false);
@@ -71,7 +72,8 @@ watch(() => props.initialQuery, (newQuery) => {
 
 watch([() => props.provider, () => props.targetLang], ([newProv, newLang]) => {
   if (searchInput.value.trim()) {
-    searchWord(searchInput.value.trim(), newProv || 'free_dictionary', newLang || 'vi');
+    const clean = searchInput.value.trim();
+    searchWord(clean, newProv || 'free_dictionary', newLang || 'vi');
   }
 });
 </script>

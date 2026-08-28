@@ -5,12 +5,15 @@ import { fetchWiktionary } from './provider.wiktionary';
 import { fetchMerriamWebster } from './provider.merriam-webster';
 import { fetchWordnik } from './provider.wordnik';
 import { fetchLibreTranslate } from './provider.libre-translate';
+import { fetchAiAnalysis } from './provider.gemini-ai';
 
 export async function fetchDictionaryResult(
   word: string,
   provider: string,
   targetLang: string = 'vi',
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  userApiKey?: string,
+  userModelName?: string
 ): Promise<DictionaryEntry> {
   const cleanWord = word.trim();
 
@@ -25,6 +28,24 @@ export async function fetchDictionaryResult(
       return fetchWordnik(cleanWord, targetLang, signal);
     case 'libre_translate':
       return fetchLibreTranslate(cleanWord, targetLang, signal);
+    case 'gemini_ai': {
+      const aiRes = await fetchAiAnalysis('explain_in_context', cleanWord, targetLang, userApiKey, userModelName, signal);
+      const modelName = userModelName || 'gemini-2.5-flash';
+      return {
+        word: cleanWord,
+        phonetic: `⚡ Gemini AI Engine (${modelName})`,
+        meanings: [
+          {
+            partOfSpeech: 'AI Explanation',
+            definitions: [
+              {
+                definition: aiRes.summary || aiRes.translation || cleanWord,
+              }
+            ]
+          }
+        ]
+      };
+    }
     case 'free_dictionary':
     default:
       try {

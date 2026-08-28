@@ -77,7 +77,14 @@ export function useDictionary() {
     isLoading.value = true;
 
     try {
-      const data = await fetchDictionaryResult(cleanWord, provider, lang, activeDictController.signal);
+      const data = await fetchDictionaryResult(
+        cleanWord,
+        provider,
+        lang,
+        activeDictController.signal,
+        settings.value.aiApiKey,
+        settings.value.aiModel
+      );
       result.value = data;
 
       // Save entry to LRU Cache
