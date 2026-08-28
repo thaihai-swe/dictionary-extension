@@ -8,6 +8,8 @@ const result = ref<DictionaryEntry | null>(null);
 const isLoading = ref<boolean>(false);
 const error = ref<string | null>(null);
 
+export const isAudioPlaying = ref<boolean>(false);
+
 let activeDictController: AbortController | null = null;
 let currentAudioElement: HTMLAudioElement | null = null;
 
@@ -20,6 +22,7 @@ function getDictCacheKey(word: string, provider: string, lang: string): string {
 }
 
 export function stopAllAudio() {
+  isAudioPlaying.value = false;
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     window.speechSynthesis.cancel();
   }
@@ -99,6 +102,13 @@ export function useDictionary() {
     stopAllAudio();
     if (audioUrl) {
       currentAudioElement = new Audio(audioUrl);
+      isAudioPlaying.value = true;
+      currentAudioElement.onended = () => { isAudioPlaying.value = false; };
+      currentAudioElement.onerror = () => {
+        isAudioPlaying.value = false;
+        speakTTS(fallbackWord || query.value, accent);
+      };
+      currentAudioElement.onpause = () => { isAudioPlaying.value = false; };
       currentAudioElement.play().catch(() => speakTTS(fallbackWord || query.value, accent));
     } else {
       speakTTS(fallbackWord || query.value, accent);
@@ -118,6 +128,11 @@ export function useDictionary() {
       if (match) utterance.voice = match;
     }
 
+    utterance.onstart = () => { isAudioPlaying.value = true; };
+    utterance.onend = () => { isAudioPlaying.value = false; };
+    utterance.onerror = () => { isAudioPlaying.value = false; };
+
+    isAudioPlaying.value = true;
     window.speechSynthesis.speak(utterance);
   }
 
@@ -126,6 +141,7 @@ export function useDictionary() {
     result,
     isLoading,
     error,
+    isAudioPlaying,
     searchWord,
     playAudio,
     speakTTS,

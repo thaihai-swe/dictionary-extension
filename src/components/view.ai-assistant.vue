@@ -22,7 +22,7 @@ const emit = defineEmits<{
 }>();
 
 const { activeContext, activeIntent, aiResult, isAiLoading, aiError, runIntent } = useAiAssistant();
-const { searchWord } = useDictionary();
+const { searchWord, speakTTS } = useDictionary();
 const { settings } = useStorage();
 const contextInput = ref<string>('');
 const copied = ref<boolean>(false);
@@ -82,12 +82,8 @@ function handleTokenSelect(word: string) {
 }
 
 function speakText(text?: string) {
-  if (!text || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-  stopAllAudio();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'en-US';
-  utterance.rate = 0.9;
-  window.speechSynthesis.speak(utterance);
+  if (!text) return;
+  speakTTS(text);
 }
 
 function copyResult(text?: string) {

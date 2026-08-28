@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useStorage } from '../composables/composable.storage';
+import { isAudioPlaying, stopAllAudio } from '../composables/composable.dictionary';
 import { ExtensionSettings } from '../types';
 
 defineProps<{
@@ -91,6 +92,21 @@ function handleTargetLangChange(e: Event) {
 
       <!-- Divider -->
       <div class="w-[1px] h-4 bg-dark-border mx-0.5"></div>
+
+      <!-- Global Stop Voice Audio Button -->
+      <button
+        @click="stopAllAudio()"
+        :class="[
+          'px-2 py-1 rounded-lg border transition-all cursor-pointer text-xs flex items-center gap-1 font-bold',
+          isAudioPlaying
+            ? 'bg-rose-500/25 text-rose-300 border-rose-500/50 shadow-md shadow-rose-500/20 animate-pulse'
+            : 'bg-dark-muted hover:bg-dark-border text-slate-300 border-dark-border'
+        ]"
+        :title="isAudioPlaying ? 'Dừng phát âm thanh/giọng nói đang chạy (Stop Voice)' : 'Dừng tất cả âm thanh/giọng nói (Global Stop Voice)'"
+      >
+        <span>{{ isAudioPlaying ? '⏹️' : '🔇' }}</span>
+        <span v-if="isAudioPlaying" class="text-[10px] uppercase tracking-wider text-rose-300">Stop Voice</span>
+      </button>
 
       <!-- Shortcuts Modal Toggle Button -->
       <button

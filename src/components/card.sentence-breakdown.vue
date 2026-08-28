@@ -1,22 +1,19 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { SentenceStructureItem } from '../types';
-import { stopAllAudio } from '../composables/composable.dictionary';
+import { useDictionary } from '../composables/composable.dictionary';
 
 defineProps<{
   structure?: SentenceStructureItem[];
   translation?: string;
 }>();
 
+const { speakTTS } = useDictionary();
 const copied = ref(false);
 
 function speakText(text: string) {
-  stopAllAudio();
-  if (!('speechSynthesis' in window)) return;
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'en-US';
-  utterance.rate = 0.9;
-  window.speechSynthesis.speak(utterance);
+  if (!text) return;
+  speakTTS(text);
 }
 
 function copyTranslation(text: string) {

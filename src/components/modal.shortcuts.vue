@@ -9,7 +9,8 @@ const emit = defineEmits<{
 
 const shortcuts = [
   { key: 'Shift + Q', label: 'Quick Lookup Selected Text', sub: 'Tra cứu nhanh từ/câu đang bôi đen' },
-  { key: 'Esc', label: 'Close Lookup Popup', sub: 'Đóng cửa sổ tra cứu' },
+  { key: 'Esc', label: 'Close Lookup Popup & Stop Voice', sub: 'Đóng cửa sổ & dừng phát giọng nói' },
+  { key: 'Nút ⏹️ / 🔇', label: 'Global Stop Voice', sub: 'Dừng ngay âm thanh / phát âm TTS' },
   { key: 'Alt + 1', label: 'Switch to Dictionary Tab', sub: 'Chuyển sang tab Từ điển' },
   { key: 'Alt + 2', label: 'Switch to AI Assistant Tab', sub: 'Chuyển sang tab Trợ lý AI' },
   { key: 'Nút ⤢', label: 'Maximize / Restore Popup', sub: 'Phóng to / Thu nhỏ cửa sổ' },
