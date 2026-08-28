@@ -135,3 +135,5 @@ export interface AppSettings {
   aiComparePromptTemplate: string;
   aiRephrasePromptTemplate: string;
 }
+
+export type ExtensionSettings = AppSettings;

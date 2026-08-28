@@ -188,7 +188,7 @@ function copyResult(text?: string) {
       <div class="flex items-center gap-2">
         <span class="text-teal-400 text-sm">✨</span>
         <h2 class="text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
-          <span>{{ intentTitleMap[aiResult.type] || 'AI ANALYSIS' }}</span>
+          <span>{{ intentTitleMap[aiResult.type as AiIntentId] || 'AI ANALYSIS' }}</span>
           <span :class="['text-[9px] px-1.5 py-0.2 rounded font-bold border', hasApiKey ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20']">
             {{ hasApiKey ? '⚡ REALTIME GEMINI' : '⚙️ OFFLINE ENGINE' }}
           </span>
