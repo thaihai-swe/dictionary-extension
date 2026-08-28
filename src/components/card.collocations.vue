@@ -37,8 +37,8 @@ const hasAnyData = computed(() => {
 </script>
 
 <template>
-  <div v-if="hasAnyData" class="rounded-xl border border-teal-500/25 bg-teal-500/10 p-3.5 space-y-3">
-    <div class="flex items-center gap-2 text-xs font-bold text-teal-400 uppercase tracking-wider">
+  <div v-if="hasAnyData" class="pt-3 border-t border-dark-border/50 space-y-2.5">
+    <div class="flex items-center gap-1.5 text-[11px] font-extrabold text-teal-400 uppercase tracking-wider">
       <span>🔗</span>
       <span>COLLOCATIONS</span>
     </div>
@@ -51,7 +51,7 @@ const hasAnyData = computed(() => {
             v-for="item in calculatedCollocations.verbs"
             :key="item"
             @click="emit('select-word', item)"
-            class="px-2.5 py-0.5 rounded-full bg-teal-500/15 hover:bg-teal-500/30 text-teal-300 border border-teal-500/35 text-[11px] transition-all cursor-pointer"
+            class="px-2.5 py-0.5 rounded-full bg-dark-muted hover:bg-teal-500/20 hover:text-teal-300 text-teal-300 text-[11px] transition-all cursor-pointer font-medium"
           >
             {{ item }}
           </button>
@@ -65,7 +65,7 @@ const hasAnyData = computed(() => {
             v-for="item in calculatedCollocations.nouns"
             :key="item"
             @click="emit('select-word', item)"
-            class="px-2.5 py-0.5 rounded-full bg-teal-500/15 hover:bg-teal-500/30 text-teal-300 border border-teal-500/35 text-[11px] transition-all cursor-pointer"
+            class="px-2.5 py-0.5 rounded-full bg-dark-muted hover:bg-teal-500/20 hover:text-teal-300 text-teal-300 text-[11px] transition-all cursor-pointer font-medium"
           >
             {{ item }}
           </button>
@@ -79,7 +79,7 @@ const hasAnyData = computed(() => {
             v-for="item in calculatedCollocations.prepositions"
             :key="item"
             @click="emit('select-word', item)"
-            class="px-2.5 py-0.5 rounded-full bg-teal-500/15 hover:bg-teal-500/30 text-teal-300 border border-teal-500/35 text-[11px] transition-all cursor-pointer"
+            class="px-2.5 py-0.5 rounded-full bg-dark-muted hover:bg-teal-500/20 hover:text-teal-300 text-teal-300 text-[11px] transition-all cursor-pointer font-medium"
           >
             {{ item }}
           </button>

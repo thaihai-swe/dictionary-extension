@@ -141,18 +141,18 @@ watch([() => props.provider, () => props.targetLang], ([newProv, newLang]) => {
     </div>
 
     <!-- Main Dictionary Result Card -->
-    <div v-else-if="result" class="space-y-3.5">
-      <!-- Headword Header Block -->
-      <div class="p-4 rounded-xl border border-dark-border bg-dark-surface space-y-3 shadow-md">
+    <div v-else-if="result" class="space-y-4">
+      <!-- Headword Header Block (Frameless Editorial) -->
+      <div class="pb-3.5 border-b border-dark-border/60 space-y-2.5">
         <div class="flex items-start justify-between gap-3">
           <div class="space-y-1">
             <div class="flex items-center gap-2.5 flex-wrap">
-              <h2 class="text-xl font-bold text-slate-100 tracking-tight">{{ result.word }}</h2>
+              <h2 class="text-2xl font-extrabold text-slate-100 tracking-tight font-heading">{{ result.word }}</h2>
               
               <!-- CEFR Level Pill -->
               <span
                 v-if="result.lexicalProfile?.cefr"
-                class="px-2.5 py-0.5 rounded-full bg-brand-500/20 text-brand-300 font-extrabold border border-brand-500/40 text-[10px] uppercase tracking-wider"
+                class="px-2.5 py-0.5 rounded-full bg-teal-500/15 text-teal-300 font-extrabold border border-teal-500/30 text-[10px] uppercase tracking-wider font-mono"
               >
                 {{ result.lexicalProfile.cefr }}
               </span>
@@ -167,7 +167,7 @@ watch([() => props.provider, () => props.targetLang], ([newProv, newLang]) => {
             </div>
 
             <!-- Phonetics -->
-            <p v-if="result.phonetic || result.phonetics?.[0]?.text" class="text-xs font-mono font-semibold text-brand-400">
+            <p v-if="result.phonetic || result.phonetics?.[0]?.text" class="text-xs font-mono font-bold text-teal-400">
               {{ result.phonetic || result.phonetics?.[0]?.text }}
             </p>
           </div>
@@ -176,7 +176,7 @@ watch([() => props.provider, () => props.targetLang], ([newProv, newLang]) => {
           <div class="flex items-center gap-1.5 flex-shrink-0">
             <button
               @click="playAudio(result.phonetics?.[0]?.audio, result.word, 'uk')"
-              class="px-2.5 py-1 rounded-lg bg-dark-muted hover:bg-brand-500/20 hover:text-brand-400 text-slate-200 border border-dark-border text-[11px] font-bold transition-all flex items-center gap-1 shadow-sm cursor-pointer"
+              class="px-2.5 py-1 rounded-lg bg-dark-muted hover:bg-teal-500/20 hover:text-teal-300 text-slate-200 border border-dark-border text-[11px] font-bold transition-all flex items-center gap-1 shadow-xs cursor-pointer active:scale-95 font-mono"
               title="Listen UK Pronunciation"
             >
               <span>🇬🇧 UK</span>
@@ -184,7 +184,7 @@ watch([() => props.provider, () => props.targetLang], ([newProv, newLang]) => {
 
             <button
               @click="playAudio(result.phonetics?.[1]?.audio || result.phonetics?.[0]?.audio, result.word, 'us')"
-              class="px-2.5 py-1 rounded-lg bg-dark-muted hover:bg-brand-500/20 hover:text-brand-400 text-slate-200 border border-dark-border text-[11px] font-bold transition-all flex items-center gap-1 shadow-sm cursor-pointer"
+              class="px-2.5 py-1 rounded-lg bg-dark-muted hover:bg-teal-500/20 hover:text-teal-300 text-slate-200 border border-dark-border text-[11px] font-bold transition-all flex items-center gap-1 shadow-xs cursor-pointer active:scale-95 font-mono"
               title="Listen US Pronunciation"
             >
               <span>🇺🇸 US</span>
@@ -193,7 +193,7 @@ watch([() => props.provider, () => props.targetLang], ([newProv, newLang]) => {
             <button
               @click="copyWordDefinition()"
               title="Copy definition"
-              class="p-1.5 rounded-lg bg-dark-muted hover:bg-dark-border text-slate-300 hover:text-white border border-dark-border text-xs transition-colors cursor-pointer"
+              class="p-1.5 rounded-lg bg-dark-muted hover:bg-dark-border text-slate-300 hover:text-white border border-dark-border text-xs transition-colors cursor-pointer active:scale-95"
             >
               {{ copiedNotice ? '✓' : '📋' }}
             </button>

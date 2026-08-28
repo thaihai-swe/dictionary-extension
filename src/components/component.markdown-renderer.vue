@@ -77,40 +77,41 @@ function formatInlineMarkdown(text: string): string {
 </script>
 
 <template>
-  <div class="space-y-3 text-xs">
+  <div class="space-y-4 text-sm">
     <div
       v-for="(block, bIdx) in parsedBlocks"
       :key="bIdx"
-      class="p-3.5 rounded-xl border border-dark-border bg-[#0a161d] space-y-2.5 shadow-sm transition-all hover:border-slate-700/80"
+      class="space-y-2.5 pb-4 border-b border-dark-border/40 last:border-b-0 last:pb-0"
     >
       <!-- Subheading with Distinct Visual Icon -->
-      <h4 v-if="block.title" class="font-bold text-xs flex items-center gap-2 text-teal-400 uppercase tracking-wide border-b border-dark-border/60 pb-2">
+      <h4 v-if="block.title" class="font-extrabold text-xs flex items-center gap-1.5 text-teal-400 uppercase tracking-wider pb-0.5">
         <span class="text-sm leading-none">{{ block.icon }}</span>
         <span>{{ block.title }}</span>
       </h4>
 
       <!-- Lines -->
-      <div class="space-y-2 text-slate-200 leading-relaxed text-xs">
+      <div class="space-y-2.5 text-slate-100 leading-relaxed text-sm">
         <template v-for="(line, lIdx) in block.lines" :key="lIdx">
           <!-- Blockquote -->
           <blockquote
             v-if="line.trim().startsWith('>')"
-            class="my-1.5 pl-3 border-l-2 border-teal-500/80 italic text-slate-200 bg-teal-500/10 py-1.5 px-3 rounded-r-lg"
+            class="my-2 pl-3.5 border-l-2 border-teal-500/80 italic text-slate-100 bg-teal-500/10 py-2 px-3.5 rounded-r-lg text-sm"
             v-html="formatInlineMarkdown(line.trim().replace(/^>\s*/, ''))"
           ></blockquote>
 
           <!-- Bullet point -->
           <div
             v-else-if="line.trim().startsWith('•') || line.trim().startsWith('* ') || line.trim().startsWith('- ')"
-            class="flex items-start gap-2 pl-0.5"
+            class="flex items-start gap-2.5 pl-0.5"
           >
-            <span class="font-bold text-teal-400 text-sm leading-none pt-0.5">•</span>
-            <span class="flex-1" v-html="formatInlineMarkdown(line.trim().replace(/^([•*-]\s*)/, ''))"></span>
+            <span class="font-bold text-teal-400 text-base leading-none pt-0.5">•</span>
+            <span class="flex-1 text-sm text-slate-100 leading-relaxed" v-html="formatInlineMarkdown(line.trim().replace(/^([•*-]\s*)/, ''))"></span>
           </div>
 
           <!-- Paragraph -->
           <p
             v-else-if="line.trim()"
+            class="text-sm text-slate-100 leading-relaxed"
             v-html="formatInlineMarkdown(line)"
           ></p>
         </template>

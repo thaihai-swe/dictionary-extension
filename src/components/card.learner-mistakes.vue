@@ -73,24 +73,24 @@ function listenExample(item: MistakeItem) {
 </script>
 
 <template>
-  <div v-if="calculatedMistakes.length > 0" class="rounded-xl border border-amber-500/35 bg-amber-500/10 p-3.5 space-y-2.5">
-    <div class="flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-wider">
+  <div v-if="calculatedMistakes.length > 0" class="pt-3 border-t border-dark-border/50 space-y-2.5">
+    <div class="flex items-center gap-1.5 text-[11px] font-extrabold text-amber-400 uppercase tracking-wider">
       <span>⚠️</span>
       <span>COMMON LEARNER MISTAKES</span>
     </div>
 
-    <div class="space-y-2.5">
+    <div class="space-y-2">
       <div
         v-for="(item, idx) in calculatedMistakes"
         :key="idx"
-        class="p-3 rounded-xl border border-dark-border/80 bg-[#08131a] text-xs space-y-1.5 relative shadow-sm"
+        class="pl-3.5 py-2.5 pr-3 rounded-r-lg border-l-2 border-amber-500/70 bg-amber-500/5 text-xs space-y-1.5"
       >
         <div class="text-rose-400 font-semibold leading-relaxed">
-          <span class="font-bold">Mistake:</span> {{ item.mistake }}
+          <span class="font-extrabold">Mistake:</span> {{ item.mistake }}
         </div>
 
         <div class="text-emerald-400 font-semibold leading-relaxed">
-          <span class="font-bold">Correction:</span> {{ item.correction }}
+          <span class="font-extrabold">Correction:</span> {{ item.correction }}
         </div>
 
         <div v-if="item.exampleIncorrect || item.exampleCorrect" class="text-slate-300 italic text-[11px] leading-relaxed pt-1 flex items-center justify-between flex-wrap gap-2">
@@ -102,7 +102,7 @@ function listenExample(item: MistakeItem) {
           <button
             @click="listenExample(item)"
             title="Listen correct pronunciation"
-            class="px-2 py-0.5 rounded-md bg-dark-muted hover:bg-brand-500/20 hover:text-brand-400 text-slate-300 border border-dark-border text-[10px] font-semibold transition-all flex items-center gap-1 ml-auto cursor-pointer"
+            class="px-2 py-0.5 rounded bg-dark-muted hover:bg-dark-border text-slate-300 hover:text-white text-[10px] font-semibold transition-all flex items-center gap-1 ml-auto cursor-pointer"
           >
             <span>🔊 Listen</span>
           </button>

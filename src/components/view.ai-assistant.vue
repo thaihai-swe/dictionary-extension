@@ -226,8 +226,8 @@ function copyResult(text?: string) {
       ⚠️ {{ aiError }}
     </div>
 
-    <!-- AI Result View (Matching clean cohesive dark design) -->
-    <div v-else-if="aiResult" class="space-y-3">
+    <!-- AI Result View (Frameless Clean Editorial) -->
+    <div v-else-if="aiResult" class="space-y-4">
       <!-- Sentence Breakdown Component -->
       <SentenceBreakdownCard
         v-if="aiResult.type === 'sentence_breakdown'"
@@ -237,7 +237,7 @@ function copyResult(text?: string) {
 
       <!-- Grammar & Nuance Card -->
       <template v-else-if="aiResult.type === 'grammar'">
-        <div class="p-3.5 rounded-xl border border-dark-border bg-[#0a161d] space-y-2 text-xs shadow-sm">
+        <div class="pt-2 border-t border-dark-border/50 space-y-2 text-xs">
           <MarkdownRenderer :content="aiResult.summary" />
         </div>
         <LearnerMistakesCard :word="aiResult.query" />
@@ -246,13 +246,13 @@ function copyResult(text?: string) {
       <!-- Word Morphology & Collocations Card -->
       <template v-else-if="aiResult.type === 'collocations'">
         <WordFormationCard :word="aiResult.query" />
-        <div class="p-3.5 rounded-xl border border-dark-border bg-[#0a161d] space-y-2 text-xs shadow-sm">
+        <div class="pt-2 border-t border-dark-border/50 space-y-2 text-xs">
           <MarkdownRenderer :content="aiResult.summary" />
         </div>
       </template>
 
       <!-- Generic / Explain in Context Markdown View -->
-      <div v-else class="space-y-3">
+      <div v-else class="pt-2 border-t border-dark-border/50 space-y-3">
         <MarkdownRenderer :content="aiResult.summary" />
       </div>
     </div>

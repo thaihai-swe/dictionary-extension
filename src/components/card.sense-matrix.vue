@@ -23,74 +23,74 @@ function getPosClass(pos: string): string {
 </script>
 
 <template>
-  <div class="space-y-3">
+  <div class="space-y-6 pt-1">
     <div
       v-for="(meaning, mIdx) in meanings"
       :key="mIdx"
-      class="p-3.5 rounded-xl border border-dark-border bg-dark-surface space-y-3 text-xs shadow-sm hover:border-dark-border/80 transition-colors"
+      class="space-y-3.5 border-b border-dark-border/50 pb-5 last:border-b-0 last:pb-0"
     >
-      <!-- Part of Speech Pill Badge -->
-      <div class="flex items-center justify-between border-b border-dark-border/60 pb-2">
+      <!-- Part of Speech Pill Badge & Header Row -->
+      <div class="flex items-center justify-between pb-1">
         <div class="flex items-center gap-2">
           <span
             :class="[
-              'inline-flex items-center px-2.5 py-0.5 rounded-full font-bold text-[11px] border capitalize tracking-wide',
+              'inline-flex items-center px-3 py-0.5 rounded-full font-extrabold text-xs uppercase tracking-wider',
               getPosClass(meaning.partOfSpeech)
             ]"
           >
             {{ meaning.partOfSpeech }}
           </span>
         </div>
-        <span v-if="mIdx === 0" class="px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-400 font-semibold border border-brand-500/20 text-[10px]">
+        <span v-if="mIdx === 0" class="px-2.5 py-0.5 rounded-full bg-teal-500/10 text-teal-400 font-bold border border-teal-500/20 text-xs">
           Primary Meaning
         </span>
       </div>
 
-      <!-- Definitions List -->
-      <ol class="space-y-3 text-slate-200">
+      <!-- Definitions List in Crisp Editorial Typography -->
+      <ol class="space-y-4 text-slate-100">
         <li
           v-for="(def, dIdx) in meaning.definitions"
           :key="dIdx"
-          class="space-y-1.5 border-b border-dark-border/40 pb-2.5 last:border-b-0 last:pb-0"
+          class="space-y-2.5"
         >
-          <div class="flex items-start gap-2">
-            <span class="font-bold text-brand-400 text-[11px] mt-0.5 flex-shrink-0">{{ dIdx + 1 }}.</span>
-            <span class="font-medium text-slate-100 leading-relaxed">{{ def.definition }}</span>
+          <div class="flex items-start gap-2.5">
+            <span class="font-bold text-teal-400 text-sm mt-0.5 flex-shrink-0 font-mono">{{ dIdx + 1 }}.</span>
+            <span class="font-serif text-base text-slate-100 leading-relaxed font-normal">{{ def.definition }}</span>
           </div>
           
-          <!-- Example Sentence Box with Listen TTS Button -->
-          <div v-if="def.example" class="mt-2 pl-3 py-1.5 pr-2 border-l-2 border-brand-500/60 bg-brand-500/5 rounded-r-lg text-slate-300 italic text-[11px] leading-relaxed flex items-center justify-between gap-2">
+          <!-- Example Sentence Box with Left Accent Line -->
+          <div v-if="def.example" class="mt-2.5 pl-3.5 py-2 pr-3 border-l-2 border-teal-500/70 bg-teal-500/5 rounded-r-lg text-slate-200 italic text-sm leading-relaxed flex items-center justify-between gap-3">
             <span>"{{ def.example }}"</span>
             <button
               @click="speakTTS(def.example)"
               title="Listen example sentence"
-              class="px-1.5 py-0.5 rounded bg-dark-muted hover:bg-dark-border text-slate-300 hover:text-white border border-dark-border text-[10px] not-italic flex-shrink-0 transition-colors flex items-center gap-1 cursor-pointer"
+              class="px-2.5 py-1 rounded bg-dark-muted hover:bg-dark-border text-slate-200 hover:text-white border border-dark-border text-xs not-italic flex-shrink-0 transition-colors flex items-center gap-1 cursor-pointer font-semibold"
             >
               <span>🔊 Listen</span>
             </button>
           </div>
 
           <!-- Synonyms Chips -->
-          <div v-if="def.synonyms && def.synonyms.length > 0" class="mt-2 flex flex-wrap items-center gap-1">
-            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mr-1">Synonyms:</span>
+          <div v-if="def.synonyms && def.synonyms.length > 0" class="mt-2.5 flex flex-wrap items-center gap-1.5">
+            <span class="text-xs text-slate-400 font-bold uppercase tracking-wider mr-1">Synonyms:</span>
             <button
               v-for="syn in def.synonyms.slice(0, 5)"
               :key="syn"
               @click="emit('select-word', syn)"
-              class="px-2 py-0.5 rounded-md bg-dark-muted hover:bg-brand-500/20 hover:text-brand-400 hover:border-brand-500/40 text-slate-300 border border-dark-border text-[10px] font-medium transition-all cursor-pointer"
+              class="px-3 py-1 rounded-full bg-dark-muted hover:bg-teal-500/20 hover:text-teal-300 text-slate-200 text-xs font-semibold transition-all cursor-pointer"
             >
               {{ syn }}
             </button>
           </div>
 
           <!-- Antonyms Chips -->
-          <div v-if="def.antonyms && def.antonyms.length > 0" class="mt-1.5 flex flex-wrap items-center gap-1">
-            <span class="text-[10px] text-rose-400/80 font-bold uppercase tracking-wider mr-1">Antonyms:</span>
+          <div v-if="def.antonyms && def.antonyms.length > 0" class="mt-2 flex flex-wrap items-center gap-1.5">
+            <span class="text-xs text-rose-400/80 font-bold uppercase tracking-wider mr-1">Antonyms:</span>
             <button
               v-for="ant in def.antonyms.slice(0, 5)"
               :key="ant"
               @click="emit('select-word', ant)"
-              class="px-2 py-0.5 rounded-md bg-dark-muted hover:bg-rose-500/20 hover:text-rose-400 hover:border-rose-500/40 text-slate-300 border border-dark-border text-[10px] font-medium transition-all cursor-pointer"
+              class="px-3 py-1 rounded-full bg-dark-muted hover:bg-rose-500/20 hover:text-rose-400 text-slate-200 text-xs font-semibold transition-all cursor-pointer"
             >
               {{ ant }}
             </button>
