@@ -23,10 +23,10 @@ export default {
           700: '#4338ca',
         },
         dark: {
-          paper: '#081217',
-          surface: '#0f1d24',
-          muted: '#172832',
-          border: '#203642',
+          paper: '#0f172a',
+          surface: '#1e293b',
+          muted: '#334155',
+          border: '#334155',
         }
       },
       fontFamily: {

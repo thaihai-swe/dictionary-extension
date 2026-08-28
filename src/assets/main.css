@@ -3,12 +3,12 @@
 @tailwind utilities;
 
 :root {
-  --bg-paper: #081217;
-  --bg-surface: #0f1d24;
-  --bg-muted: #172832;
-  --border-color: #203642;
-  --text-main: #f0fdfa;
-  --text-muted: #749a9f;
+  --bg-paper: #0f172a;
+  --bg-surface: #1e293b;
+  --bg-muted: #334155;
+  --border-color: #334155;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
   color-scheme: dark;
 }
 
@@ -190,4 +190,22 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.5);
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Theme-responsive scroll mask gradients */
+.scroll-mask-left {
+  background: linear-gradient(to right, var(--bg-paper) 0%, var(--bg-paper) 55%, transparent 100%);
+}
+
+.scroll-mask-right {
+  background: linear-gradient(to left, var(--bg-paper) 0%, var(--bg-paper) 55%, transparent 100%);
 }
