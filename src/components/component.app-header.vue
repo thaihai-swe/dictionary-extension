@@ -97,14 +97,15 @@ function handleTargetLangChange(e: Event) {
       <button
         @click="stopAllAudio()"
         :class="[
-          'px-2 py-1 rounded-lg border transition-all duration-150 cursor-pointer text-xs flex items-center gap-1 font-bold active:scale-95 shadow-sm',
+          'px-2 py-1.5 rounded-lg border transition-all duration-150 cursor-pointer text-xs flex items-center gap-1.5 font-bold active:scale-95 shadow-sm',
           isAudioPlaying
             ? 'bg-rose-500/25 text-rose-300 border-rose-500/50 shadow-rose-500/20 animate-pulse'
             : 'bg-dark-muted hover:bg-dark-border hover:border-slate-600 text-slate-300 border-dark-border'
         ]"
         :title="isAudioPlaying ? 'Dừng phát âm thanh/giọng nói đang chạy (Stop Voice)' : 'Dừng tất cả âm thanh/giọng nói (Global Stop Voice)'"
       >
-        <span>{{ isAudioPlaying ? '⏹️' : '🔇' }}</span>
+        <svg v-if="isAudioPlaying" class="w-3.5 h-3.5 fill-rose-300" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+        <svg v-else class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
         <span v-if="isAudioPlaying" class="text-[10px] uppercase tracking-wider text-rose-300 font-bold">Stop Voice</span>
       </button>
 
@@ -112,41 +113,43 @@ function handleTargetLangChange(e: Event) {
       <button
         @click="emit('toggle-shortcuts')"
         :class="[
-          'p-1.5 rounded-lg border transition-all duration-150 cursor-pointer text-xs hover:scale-105 active:scale-95 shadow-xs',
+          'p-1.5 rounded-lg border transition-all duration-150 cursor-pointer hover:scale-105 active:scale-95 shadow-xs flex items-center justify-center',
           showShortcuts
             ? 'bg-teal-500/20 text-teal-300 border-teal-500/40'
             : 'bg-dark-muted hover:bg-dark-border hover:border-slate-600 text-slate-300 border-dark-border'
         ]"
         title="Keyboard Shortcuts Guide (Shift+Q)"
       >
-        <span>⌨️</span>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
       </button>
 
       <!-- Dark / Light Theme Toggle Button -->
       <button
         @click="emit('toggle-theme')"
-        class="p-1.5 rounded-lg bg-dark-muted hover:bg-dark-border hover:border-slate-600 text-slate-300 border border-dark-border transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer text-xs shadow-xs"
+        class="p-1.5 rounded-lg bg-dark-muted hover:bg-dark-border hover:border-slate-600 text-slate-300 border border-dark-border transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer shadow-xs flex items-center justify-center"
         :title="isDarkMode ? 'Switch to Light Theme' : 'Switch to Dark Theme'"
       >
-        <span>{{ isDarkMode ? '🌙' : '☀️' }}</span>
+        <svg v-if="isDarkMode" class="w-4 h-4 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        <svg v-else class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
       </button>
 
       <!-- Fullscreen / Maximize Workbench Toggle Button -->
       <button
         @click="emit('toggle-maximize')"
-        class="p-1.5 rounded-lg bg-dark-muted hover:bg-dark-border hover:border-slate-600 text-slate-300 border border-dark-border transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer text-xs shadow-xs"
+        class="p-1.5 rounded-lg bg-dark-muted hover:bg-dark-border hover:border-slate-600 text-slate-300 border border-dark-border transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer shadow-xs flex items-center justify-center"
         :title="isMaximized ? 'Restore Popup Size' : 'Maximize Workbench View'"
       >
-        <span>{{ isMaximized ? '⤓' : '⤢' }}</span>
+        <svg v-if="isMaximized" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 9L4 4m0 0l5 5M4 4v4m0-4h4m11 5l-5-5m0 0l5 5m0-5v4m0-4h-4m-5 11l5 5m0 0l-5-5m5 5v-4m0 4h-4m-11-5l5-5m0 0l-5 5m0 5v-4m0 4h4"/></svg>
+        <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
       </button>
 
       <!-- Settings & API Key Modal Toggle Button -->
       <button
         @click="emit('open-settings')"
-        class="p-1.5 rounded-lg bg-dark-muted hover:bg-dark-border hover:border-slate-600 text-slate-300 border border-dark-border transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer text-xs shadow-xs"
+        class="p-1.5 rounded-lg bg-dark-muted hover:bg-dark-border hover:border-slate-600 text-slate-300 border border-dark-border transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer shadow-xs flex items-center justify-center"
         title="Extension Settings & Gemini API Key"
       >
-        <span>⚙️</span>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
       </button>
     </div>
   </header>

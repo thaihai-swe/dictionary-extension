@@ -120,9 +120,9 @@ function copyResult(text?: string) {
 
       <button
         @click="showSettings = true"
-        class="px-2.5 py-1 rounded-lg bg-dark-surface hover:bg-dark-border text-slate-200 border border-dark-border text-[10px] font-bold transition-all flex items-center gap-1 shadow-sm flex-shrink-0 cursor-pointer ml-2"
+        class="px-2.5 py-1 rounded-lg bg-dark-surface hover:bg-dark-border hover:border-slate-600 text-slate-200 border border-dark-border text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs flex-shrink-0 cursor-pointer ml-2 active:scale-95"
       >
-        <span>🔑</span>
+        <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 0121 9z"/></svg>
         <span>{{ hasApiKey ? 'Đổi Key' : 'Nhập Gemini Key' }}</span>
       </button>
     </div>
@@ -134,10 +134,12 @@ function copyResult(text?: string) {
       @select-intent="handleIntentSelect"
     />
 
-    <!-- Single-line Lookup Search Bar (Exact design from user screenshot) -->
+    <!-- Single-line Lookup Search Bar -->
     <div class="space-y-2">
       <div class="relative flex items-center">
-        <span class="absolute left-3.5 text-xs text-slate-400">🔍</span>
+        <span class="absolute left-3 text-slate-400 pointer-events-none">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </span>
         <input
           v-model="contextInput"
           @keyup.enter="handleIntentSelect(activeIntent)"
@@ -150,15 +152,15 @@ function copyResult(text?: string) {
           v-if="contextInput"
           @click="contextInput = ''; activeContext = ''; stopAllAudio();"
           title="Clear search text"
-          class="absolute right-20 text-slate-400 hover:text-slate-200 text-xs px-1 cursor-pointer"
+          class="absolute right-20 text-slate-400 hover:text-slate-200 p-1 cursor-pointer flex items-center justify-center"
         >
-          ✕
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
 
         <button
           @click="handleIntentSelect(activeIntent)"
           :disabled="!contextInput || isAiLoading"
-          class="absolute right-1.5 px-3.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-all disabled:opacity-50 shadow-sm cursor-pointer flex items-center gap-1"
+          class="absolute right-1.5 px-3.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 active:scale-95 text-white text-xs font-bold transition-all disabled:opacity-50 shadow-sm cursor-pointer flex items-center gap-1"
         >
           <span>{{ isAiLoading ? 'Analyzing…' : 'Lookup' }}</span>
         </button>
@@ -166,13 +168,14 @@ function copyResult(text?: string) {
 
       <!-- Listen & Interactive Tokenized Context Sentence below search bar -->
       <div v-if="contextInput.trim()" class="flex items-center justify-between px-1">
-        <span class="text-[10px] text-slate-400 font-medium">Click any word below → lookup in Dictionary:</span>
+        <span class="text-xs text-slate-400 font-medium">Click any word below → lookup in Dictionary:</span>
         <button
           @click="speakText(contextInput)"
           title="Read context aloud"
-          class="text-[11px] px-2 py-0.5 rounded-lg bg-dark-surface hover:bg-dark-border text-slate-300 hover:text-white border border-dark-border transition-colors flex items-center gap-1 cursor-pointer"
+          class="text-xs px-2.5 py-1 rounded-lg bg-dark-surface hover:bg-dark-border text-slate-300 hover:text-white border border-dark-border transition-colors flex items-center gap-1.5 cursor-pointer font-semibold"
         >
-          <span>🔊 Listen</span>
+          <svg class="w-3.5 h-3.5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+          <span>Listen</span>
         </button>
       </div>
 

@@ -81,29 +81,31 @@ watch([() => props.provider, () => props.targetLang], ([newProv, newLang]) => {
     <!-- Search Bar -->
     <div class="space-y-2">
       <div class="relative flex items-center">
-        <span class="absolute left-3.5 text-xs text-slate-400">🔍</span>
+        <span class="absolute left-3 text-slate-400 pointer-events-none">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </span>
         <input
           ref="searchInputElement"
           v-model="searchInput"
           @keyup.enter="handleSearch()"
           type="text"
           placeholder="Lookup word or sentence..."
-          class="w-full bg-dark-muted border border-dark-border rounded-xl pl-9 pr-28 py-2.5 text-xs text-slate-100 placeholder-slate-400 outline-none focus:border-brand-500 transition-all shadow-sm"
+          class="w-full bg-dark-muted border border-dark-border rounded-xl pl-9 pr-28 py-2.5 text-xs text-slate-100 placeholder-slate-400 outline-none focus:border-teal-500 transition-all shadow-sm font-sans"
         />
         
         <button
           v-if="searchInput"
           @click="clearSearch()"
           title="Clear search text"
-          class="absolute right-20 text-slate-400 hover:text-slate-200 text-xs px-1 cursor-pointer"
+          class="absolute right-20 text-slate-400 hover:text-slate-200 p-1 cursor-pointer flex items-center justify-center"
         >
-          ✕
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
 
         <button
           @click="handleSearch()"
           :disabled="!searchInput || isLoading"
-          class="absolute right-1.5 px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition-all disabled:opacity-50 shadow-sm cursor-pointer"
+          class="absolute right-1.5 px-3.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 active:scale-95 text-white text-xs font-bold transition-all disabled:opacity-50 shadow-sm cursor-pointer"
         >
           Lookup
         </button>
