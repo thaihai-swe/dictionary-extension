@@ -17,6 +17,18 @@ const currentProvider = ref<string>(settings.value.dictionaryProvider || 'free_d
 const isDarkMode = ref<boolean>(settings.value.theme !== 'light');
 const isFullTab = ref<boolean>(false);
 
+watch(() => settings.value.dictionaryProvider, (newProv) => {
+  if (newProv) currentProvider.value = newProv;
+}, { immediate: true });
+
+watch(() => settings.value.translateTargetLanguage, (newLang) => {
+  if (newLang) targetLang.value = newLang;
+}, { immediate: true });
+
+watch(() => settings.value.theme, (newTheme) => {
+  isDarkMode.value = newTheme !== 'light';
+});
+
 function updateResponsiveMode() {
   if (typeof window !== 'undefined') {
     isFullTab.value = window.innerWidth > 760;

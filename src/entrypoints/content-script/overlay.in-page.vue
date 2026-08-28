@@ -33,10 +33,18 @@ const { activeTab, settings, saveSettings } = useStorage();
 const showShortcuts = ref<boolean>(false);
 const showSettings = ref<boolean>(false);
 const isDarkMode = ref<boolean>(settings.value.theme !== 'light');
-const currentProvider = ref<string>('free_dictionary');
+const currentProvider = ref<string>(settings.value.dictionaryProvider || 'free_dictionary');
 const currentText = ref<string>(props.selectedText || '');
 const currentContext = ref<string>(props.contextSentence || props.selectedText || '');
-const currentLang = ref<string>(props.targetLang || 'vi');
+const currentLang = ref<string>(props.targetLang || settings.value.translateTargetLanguage || 'vi');
+
+watch(() => settings.value.dictionaryProvider, (newProv) => {
+  if (newProv) currentProvider.value = newProv;
+}, { immediate: true });
+
+watch(() => settings.value.translateTargetLanguage, (newLang) => {
+  if (newLang && !props.targetLang) currentLang.value = newLang;
+}, { immediate: true });
 
 watch(() => settings.value.theme, (newTheme) => {
   isDarkMode.value = newTheme !== 'light';

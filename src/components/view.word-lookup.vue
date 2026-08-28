@@ -17,18 +17,26 @@ const props = defineProps<{
 }>();
 
 const { query, result, isLoading, error, searchWord, playAudio } = useDictionary();
-const { recentQueries, addRecentQuery } = useStorage();
+const { recentQueries, addRecentQuery, settings } = useStorage();
 
 const searchInput = ref<string>('');
 const searchInputElement = ref<HTMLInputElement | null>(null);
 const copiedNotice = ref<boolean>(false);
+
+function getActiveProvider(): string {
+  return props.provider || settings.value.dictionaryProvider || 'free_dictionary';
+}
+
+function getActiveLang(): string {
+  return props.targetLang || settings.value.translateTargetLanguage || 'vi';
+}
 
 function handleSearch(wordToSearch?: string) {
   const target = wordToSearch || searchInput.value;
   if (target?.trim()) {
     const cleanTarget = target.trim();
     searchInput.value = cleanTarget;
-    searchWord(cleanTarget, props.provider || 'free_dictionary', props.targetLang || 'vi');
+    searchWord(cleanTarget, getActiveProvider(), getActiveLang());
     addRecentQuery(cleanTarget);
   }
 }
@@ -52,7 +60,7 @@ onMounted(() => {
   const target = props.initialQuery?.trim() || query.value || '';
   if (target) {
     searchInput.value = target;
-    searchWord(target, props.provider || 'free_dictionary', props.targetLang || 'vi');
+    searchWord(target, getActiveProvider(), getActiveLang());
   }
 
   if (props.autoFocus && searchInputElement.value) {
@@ -65,15 +73,15 @@ watch(() => props.initialQuery, (newQuery) => {
   if (newQuery?.trim()) {
     const cleanQuery = newQuery.trim();
     searchInput.value = cleanQuery;
-    searchWord(cleanQuery, props.provider || 'free_dictionary', props.targetLang || 'vi');
+    searchWord(cleanQuery, getActiveProvider(), getActiveLang());
     addRecentQuery(cleanQuery);
   }
 });
 
-watch([() => props.provider, () => props.targetLang], ([newProv, newLang]) => {
+watch([() => props.provider, () => props.targetLang, () => settings.value.dictionaryProvider, () => settings.value.translateTargetLanguage], () => {
   if (searchInput.value.trim()) {
     const clean = searchInput.value.trim();
-    searchWord(clean, newProv || 'free_dictionary', newLang || 'vi');
+    searchWord(clean, getActiveProvider(), getActiveLang());
   }
 });
 </script>
