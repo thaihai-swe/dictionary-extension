@@ -49,6 +49,20 @@ function isDecimalDot(text: string, index: number): boolean {
   return text[index] === '.' && /\d/.test(text[index - 1] || '') && /\d/.test(text[index + 1] || '');
 }
 
+const TITLE_ABBREVIATIONS = new Set([
+  'mr', 'mrs', 'ms', 'dr', 'prof', 'sr', 'jr', 'st', 'vs', 'etc', 'inc', 'ltd', 'vol', 'fig',
+]);
+
+function isLikelyAbbreviationDot(text: string, index: number): boolean {
+  if (text[index] !== '.') return false;
+  let start = index;
+  while (start > 0 && /[A-Za-z]/.test(text[start - 1])) start -= 1;
+  const token = text.slice(start, index);
+  if (!token) return false;
+  if (token.length === 1) return true;
+  return TITLE_ABBREVIATIONS.has(token.toLowerCase());
+}
+
 function extendSentenceEnd(text: string, index: number): number {
   let end = index + 1;
   while (end < text.length && /[.!?。！？]/.test(text[end])) end += 1;
@@ -60,11 +74,13 @@ function isSentenceBoundaryAt(text: string, index: number): boolean {
   const character = text[index];
   if (!character || !/[.!?。！？]/.test(character)) return false;
   if (/[。！？]/.test(character)) return true;
-  if (isDecimalDot(text, index)) return false;
+  if (isDecimalDot(text, index) || isLikelyAbbreviationDot(text, index)) return false;
 
   let next = extendSentenceEnd(text, index);
+  if (next >= text.length) return true;
+  if (!/\s/.test(text[next])) return false;
   while (next < text.length && /\s/.test(text[next])) next += 1;
-  return next >= text.length || next > index + 1;
+  return next >= text.length || /["'“‘(\[]/.test(text[next]) || /[\p{Lu}\p{N}]/u.test(text[next]);
 }
 
 function splitIntoSentences(value: string): string[] {
@@ -83,6 +99,15 @@ function splitIntoSentences(value: string): string[] {
   const tail = text.slice(start).trim();
   if (tail) sentences.push(tail);
   return sentences;
+}
+
+function containsNeedle(value: string, needle: string): boolean {
+  const haystack = normalizeSentenceText(value);
+  const query = normalizeSentenceText(needle);
+  if (!haystack || !query) return false;
+  const pattern = buildWordBoundaryPattern(query);
+  if (pattern?.test(haystack)) return true;
+  return haystack.toLowerCase().includes(query.toLowerCase());
 }
 
 export function extractSentenceAtOffset(value: string, offset: number): string {
@@ -109,9 +134,11 @@ export function extractSentenceAtOffset(value: string, offset: number): string {
 }
 
 export function findSentenceContaining(value: string, needle: string): string {
-  const pattern = buildWordBoundaryPattern(needle);
-  if (!pattern) return '';
-  return splitIntoSentences(value).find((sentence) => pattern.test(sentence)) || '';
+  if (!containsNeedle(value, needle)) return '';
+  const match = splitIntoSentences(value).find((sentence) => containsNeedle(sentence, needle));
+  if (match) return match;
+  const text = normalizeSentenceText(value);
+  return containsNeedle(text, needle) ? text : '';
 }
 
 export interface RankedSentenceCandidate {
@@ -141,20 +168,41 @@ function sanitizeText(value: string, maxLength = MAX_CANDIDATE_TEXT_LENGTH): str
     .replace(/\s+/g, ' ');
 }
 
-function sanitizeBlockText(element: ParentNode | null, maxLength = MAX_CANDIDATE_TEXT_LENGTH): string {
+function sanitizeBlockText(element: ParentNode | null, maxLength = MAX_CANDIDATE_TEXT_LENGTH, needle = ''): string {
   if (!element) return '';
-  return sanitizeText(String((element as HTMLElement).textContent || ''), maxLength);
+  const raw = String((element as HTMLElement).textContent || '');
+  const query = normalizeSentenceText(needle);
+  if (query && raw.length > maxLength) {
+    const index = raw.toLowerCase().indexOf(query.toLowerCase());
+    if (index >= 0) {
+      const start = Math.max(0, index - Math.floor(maxLength / 2));
+      return sanitizeText(raw.slice(start, start + maxLength), maxLength);
+    }
+  }
+  return sanitizeText(raw, maxLength);
 }
 
-function getSelectionOffsetInBlock(block: Node, range: Range): number {
+function getRawSelectionOffsetInBlock(block: Node, range: Range): number {
   try {
     const preRange = range.cloneRange();
     preRange.selectNodeContents(block);
     preRange.setEnd(range.startContainer, range.startOffset);
-    return sanitizeText(preRange.toString()).length;
+    return preRange.toString().length;
   } catch {
     return -1;
   }
+}
+
+function windowedBlockText(block: Node, range: Range, radius = 2000): { text: string; offset: number } | null {
+  const rawOffset = getRawSelectionOffsetInBlock(block, range);
+  if (rawOffset < 0) return null;
+  const raw = String((block as HTMLElement).textContent || '');
+  if (!raw) return null;
+  const start = Math.max(0, rawOffset - radius);
+  const end = Math.min(raw.length, rawOffset + radius);
+  const prefix = sanitizeText(raw.slice(start, rawOffset), radius);
+  const windowText = sanitizeText(raw.slice(start, end), radius * 2);
+  return { text: windowText, offset: Math.min(prefix.length, windowText.length) };
 }
 
 function isElementVisible(element: Element): boolean {
@@ -183,37 +231,58 @@ function asElement(node: Node | null): HTMLElement | null {
   return node.parentElement;
 }
 
+function hasSentenceTerminator(value: string): boolean {
+  return /[.!?。！？]["'”’»)]*$/.test(normalizeSentenceText(value));
+}
+
+function isCompleteBlockSentence(sentence: string, block: HTMLElement): boolean {
+  if (hasSentenceTerminator(sentence)) return true;
+  if (typeof block.matches === 'function' && block.matches(LEAF_CONTENT_SELECTOR)) {
+    return normalizeSentenceText(sanitizeBlockText(block)) === normalizeSentenceText(sentence);
+  }
+  return false;
+}
+
 function sentenceFromBlock(block: Node, range: Range, needle: string): string {
-  const rawBlockText = sanitizeBlockText(block as ParentNode);
-  const normalizedBlockText = normalizeSentenceText(rawBlockText);
+  const windowed = windowedBlockText(block, range);
+  const normalizedBlockText = normalizeSentenceText(windowed?.text || sanitizeBlockText(block as ParentNode));
   if (!normalizedBlockText) return '';
 
-  const offset = getSelectionOffsetInBlock(block, range);
-  if (offset >= 0) {
-    const exact = extractSentenceAtOffset(rawBlockText, offset);
-    if (isDistinctContext(needle, exact) && findSentenceContaining(exact, needle)) {
+  if (windowed && windowed.offset >= 0) {
+    const exact = extractSentenceAtOffset(windowed.text, windowed.offset);
+    if (isDistinctContext(needle, exact) && containsNeedle(exact, needle)) {
       return normalizeContext(exact);
     }
   }
 
   const blockSentence = findSentenceContaining(normalizedBlockText, needle);
-  return isDistinctContext(needle, blockSentence) ? normalizeContext(blockSentence) : '';
+  if (isDistinctContext(needle, blockSentence)) return normalizeContext(blockSentence);
+  if (isDistinctContext(needle, normalizedBlockText) && containsNeedle(normalizedBlockText, needle)) {
+    return normalizeContext(normalizedBlockText);
+  }
+  return '';
 }
 
 function extractExactSentenceFromRange(range: Range, needle: string): string {
   const container = asElement(range.commonAncestorContainer);
   if (!container || typeof container.closest !== 'function') return '';
 
-  let current: HTMLElement | null = container.closest(BLOCK_SELECTOR) || container;
+  let current: HTMLElement | null = container.closest(LEAF_CONTENT_SELECTOR)
+    || container.closest(BLOCK_SELECTOR)
+    || container;
   let hops = 0;
+  let best = '';
   while (current && hops < MAX_ANCESTOR_HOPS) {
     const sentence = sentenceFromBlock(current, range, needle);
-    if (sentence) return sentence;
+    if (sentence) {
+      if (isCompleteBlockSentence(sentence, current)) return sentence;
+      if (sentence.length > best.length) best = sentence;
+    }
     if (current === document.body || current === document.documentElement) break;
     current = current.parentElement;
     hops += 1;
   }
-  return '';
+  return best;
 }
 
 function findBestPageSentenceCandidate(needle: string): PageContextResult {
@@ -228,7 +297,7 @@ function findBestPageSentenceCandidate(needle: string): PageContextResult {
   const nodes = [...containers, ...leaves];
 
   nodes.forEach((element, documentOrder) => {
-    const text = sanitizeBlockText(element);
+    const text = sanitizeBlockText(element, MAX_CANDIDATE_TEXT_LENGTH, needle);
     const sentence = findSentenceContaining(text, needle);
     if (!isDistinctContext(needle, sentence) || seen.has(sentence)) return;
     seen.add(sentence);
@@ -264,14 +333,22 @@ function findBestPageSentenceCandidate(needle: string): PageContextResult {
   };
 }
 
-function rangeFromSelection(selection: Selection | null, preferred?: Range | null): Range | null {
-  if (preferred) return preferred;
-  if (!selection || selection.rangeCount <= 0) return null;
-  try {
-    return selection.getRangeAt(0);
-  } catch {
-    return null;
+function rangeFromSelection(selection: Selection | null, preferred?: Range | null, needle = ''): Range | null {
+  const normalizedNeedle = normalizeSentenceText(needle);
+  const liveRange = (() => {
+    if (!selection || selection.rangeCount <= 0) return null;
+    try {
+      return selection.getRangeAt(0);
+    } catch {
+      return null;
+    }
+  })();
+  const liveText = normalizeSentenceText(liveRange?.toString() || selection?.toString() || '');
+  if (liveRange && (!normalizedNeedle || liveText === normalizedNeedle || !liveText)) {
+    return liveRange;
   }
+  if (preferred) return preferred;
+  return liveRange;
 }
 
 export function extractSurroundingContext(
@@ -283,7 +360,7 @@ export function extractSurroundingContext(
   if (!needle || disabled) return { context: '', source: '', confidence: 'none' };
   try {
     const selection = typeof window !== 'undefined' ? window.getSelection() : null;
-    const activeRange = rangeFromSelection(selection, range);
+    const activeRange = rangeFromSelection(selection, range, needle);
     if (activeRange) {
       const selected = normalizeSentenceText(activeRange.toString() || selection?.toString() || '');
       const normalizedNeedle = normalizeSentenceText(needle);

@@ -294,9 +294,29 @@ describe('page context ranking', () => {
     assert.equal(extractSentenceAtOffset(text, 20), 'The placeholders were unused.');
   });
 
+  it('does not treat decimals, hostnames, or abbreviations as sentence boundaries', () => {
+    const decimal = 'The price is $3.50 at example.com today.';
+    assert.equal(extractSentenceAtOffset(decimal, 12), decimal);
+    assert.equal(findSentenceContaining(decimal, 'today'), decimal);
+    const abbreviation = 'Dr. Smith evaluated the placeholders today.';
+    assert.equal(extractSentenceAtOffset(abbreviation, 18), abbreviation);
+    assert.equal(findSentenceContaining(abbreviation, 'placeholders'), abbreviation);
+  });
+
+  it('keeps the whole sentence when punctuation is followed by a quote', () => {
+    const text = 'She said, "The placeholders were unused." Next sentence.';
+    assert.equal(extractSentenceAtOffset(text, 20), 'She said, "The placeholders were unused."');
+  });
+
   it('finds a word-boundary sentence match', () => {
     const text = 'A placeholder is useful. The placeholders were unused.';
     assert.equal(findSentenceContaining(text, 'placeholders'), 'The placeholders were unused.');
+  });
+
+  it('falls back to the full block when there is no sentence terminator', () => {
+    const text = 'The placeholders were unused';
+    assert.equal(findSentenceContaining(text, 'placeholders'), text);
+    assert.equal(extractSentenceAtOffset(text, 4), text);
   });
 
   it('ranks visible in-content sentences first', () => {

@@ -195,12 +195,12 @@ async function startBootstrap() {
   }
 
   function snapshotSelection(selection: Selection | null) {
-    selectionRange = null;
     if (!selection || selection.rangeCount <= 0) return;
     try {
-      selectionRange = selection.getRangeAt(0).cloneRange();
+      const range = selection.getRangeAt(0).cloneRange();
+      if (range.toString().trim()) selectionRange = range;
     } catch {
-      selectionRange = null;
+      // Keep the previous snapshot if the live selection is no longer readable.
     }
   }
 
@@ -422,6 +422,7 @@ async function startBootstrap() {
 
   window.addEventListener('mouseup', (event) => {
     if (host.contains(event.target as Node) || shadow.contains(event.target as Node)) return;
+    snapshotSelection(window.getSelection());
     setTimeout(() => updateSelectionTrigger(event), 10);
   });
 
