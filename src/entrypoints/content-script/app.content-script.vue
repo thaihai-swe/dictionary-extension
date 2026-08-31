@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useStorage } from '@/composables/composable.storage';
 import { abortActiveAiRequest } from '@/composables/composable.ai-assistant';
 import { abortActiveDictRequest, stopAllAudio } from '@/composables/composable.dictionary';
+import { extractSurroundingContext as extractPageContext } from '@/shared/page-context';
 import InPageOverlay from './overlay.in-page.vue';
 
 const { settings, saveSettings } = useStorage();
@@ -138,30 +139,7 @@ function handleResizeEnd() {
 }
 
 function extractSurroundingContext(selectedStr: string): string {
-  const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0) return selectedStr;
-
-  try {
-    const range = selection.getRangeAt(0);
-    let container: Node | null = range.commonAncestorContainer;
-    if (container && container.nodeType === Node.TEXT_NODE) {
-      container = container.parentNode;
-    }
-    const block = (container as HTMLElement)?.closest?.(
-      'p, li, td, th, blockquote, figcaption, dd, dt, h1, h2, h3, h4, h5, h6, pre, article, section, main, div'
-    ) || container;
-
-    const fullText = (block?.textContent || '').replace(/\s+/g, ' ').trim();
-    if (!fullText) return selectedStr;
-
-    // Split block into sentences cleanly
-    const sentences = fullText.match(/[^.!?]+[.!?]+(\s+|$)|[^.!?]+$/g) || [fullText];
-    const match = sentences.find(s => s.toLowerCase().includes(selectedStr.toLowerCase()));
-
-    return match?.trim() || fullText.slice(0, 300);
-  } catch (e) {
-    return selectedStr;
-  }
+  return extractPageContext(selectedStr, settings.value.disablePageContextExtraction).context || selectedStr;
 }
 
 function openPopup(x: number, y: number, text: string, context?: string) {
@@ -309,10 +287,13 @@ onMounted(() => {
   window.addEventListener('click', handleGlobalClick, true);
 
   if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
-    chrome.runtime.onMessage.addListener((message: { type?: string; text?: string }) => {
-      if (message.type === 'DICTIONARY_LOOKUP' && message.text) {
-        openPopup(window.innerWidth / 2 - 220, 60, message.text);
-      }
+    chrome.runtime.onMessage.addListener((message: { type?: string; text?: string; payload?: { text?: string; context?: string; fromSelection?: boolean } }) => {
+      const payload = message.payload || {};
+      const fromLookup = message.type === 'OPEN_LOOKUP_POPUP' || message.type === 'DICTIONARY_LOOKUP';
+      if (!fromLookup) return;
+      const text = String(payload.text || message.text || '').trim() || (payload.fromSelection ? window.getSelection()?.toString().trim() : '') || '';
+      if (!text) return;
+      openPopup(window.innerWidth / 2 - 220, 60, text, payload.context);
     });
   }
 });

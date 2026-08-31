@@ -1,18 +1,21 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
-import { useAiAssistant } from '../composables/composable.ai-assistant';
+import { PRELOAD_ALL_INTENTS, useAiAssistant } from '../composables/composable.ai-assistant';
 import { useDictionary, stopAllAudio } from '../composables/composable.dictionary';
 import { useStorage } from '../composables/composable.storage';
 import { AiIntentId, TabId } from '../types';
 import AiIntentToolbar from './component.ai-intent-toolbar.vue';
-import SentenceBreakdownCard from './card.sentence-breakdown.vue';
-import WordFormationCard from './card.word-formation.vue';
-import LearnerMistakesCard from './card.learner-mistakes.vue';
 import TokenizedContext from './component.tokenized-context.vue';
-import MarkdownRenderer from './component.markdown-renderer.vue';
-import SettingsModal from './modal.settings.vue';
+import {
+  AiMarkdownIntent,
+  ConfusablesIntent,
+  SentenceBreakdownIntent,
+  SettingsModal,
+  preloadAiIntentChunks,
+} from './async-views';
 
 const props = defineProps<{
+  initialQuery?: string;
   initialContext?: string;
   targetLang?: string;
 }>();
@@ -24,27 +27,74 @@ const emit = defineEmits<{
 const { activeContext, activeIntent, aiResult, isAiLoading, aiError, runIntent } = useAiAssistant();
 const { searchWord, speakTTS } = useDictionary();
 const { settings } = useStorage();
+const queryInput = ref<string>('');
 const contextInput = ref<string>('');
 const copied = ref<boolean>(false);
 const showSettings = ref<boolean>(false);
+const contextError = ref<string>('');
+const isEditingContext = ref<boolean>(false);
 
 const hasApiKey = computed(() => Boolean(settings.value.aiApiKey?.trim()));
+const hasDistinctContext = computed(() => {
+  const query = queryInput.value.trim().toLowerCase();
+  const context = contextInput.value.trim().toLowerCase();
+  return Boolean(context) && context !== query;
+});
+const showContextEditor = computed(() => isEditingContext.value || !contextInput.value.trim());
+const showContextCard = computed(() => (
+  showContextEditor.value || hasDistinctContext.value || Boolean(contextError.value)
+));
+const resultTargetLang = computed(() => props.targetLang || settings.value.translateTargetLanguage);
 
 const intentTitleMap: Record<AiIntentId, string> = {
+  default: 'MAIN AI EXPLANATION',
   explain_in_context: 'EXPLAIN IN CONTEXT',
   grammar: 'GRAMMAR & NUANCE',
   collocations: 'PHRASE & COLLOCATIONS',
   sentence_breakdown: 'SENTENCE BREAKDOWN',
   confusables: 'COMPARE CONFUSABLES',
   rephrase: 'REPHRASE & STYLES',
+  phrase_fallback: 'PHRASE EXPLANATION',
 };
 
+function resolveQuery(query?: string, context?: string): string {
+  const selected = String(query || '').trim();
+  if (selected) return selected;
+  return String(context || '').trim();
+}
+
+function resolveContext(query?: string, context?: string): string {
+  const selected = String(query || '').trim();
+  const surrounding = String(context || '').replace(/\s+/g, ' ').trim();
+  if (!surrounding) return '';
+  if (selected && surrounding.toLowerCase() === selected.toLowerCase()) return '';
+  return surrounding;
+}
+
+function runCurrentIntent(intentId = activeIntent.value) {
+  const query = resolveQuery(queryInput.value, contextInput.value);
+  if (!query) return;
+  const context = contextInput.value.trim();
+  if (intentId === 'explain_in_context' && !context) {
+    contextError.value = 'Please enter or paste the sentence containing this word.';
+    return;
+  }
+  contextError.value = '';
+  runIntent(intentId, query, props.targetLang, context);
+}
+
 onMounted(() => {
-  const target = props.initialContext?.trim() || activeContext.value || '';
-  contextInput.value = target;
-  activeContext.value = target;
-  if (target) {
-    runIntent(activeIntent.value, target, props.targetLang);
+  if (settings.value.enableAiPreload) {
+    void preloadAiIntentChunks(PRELOAD_ALL_INTENTS);
+  }
+  const query = resolveQuery(props.initialQuery, props.initialContext);
+  const context = resolveContext(query, props.initialContext);
+  queryInput.value = query;
+  contextInput.value = context;
+  activeContext.value = context;
+  isEditingContext.value = !context;
+  if (query) {
+    runCurrentIntent();
   }
 });
 
@@ -52,27 +102,29 @@ onUnmounted(() => {
   stopAllAudio();
 });
 
-watch(() => props.initialContext, (newContext) => {
-  if (newContext?.trim()) {
-    const clean = newContext.trim();
-    contextInput.value = clean;
-    activeContext.value = clean;
-    runIntent(activeIntent.value, clean, props.targetLang);
+watch(
+  () => [props.initialQuery, props.initialContext] as const,
+  ([newQuery, newContext]) => {
+    const query = resolveQuery(newQuery, newContext);
+    if (!query) return;
+    const context = resolveContext(query, newContext);
+    queryInput.value = query;
+    contextInput.value = context;
+    activeContext.value = context;
+    isEditingContext.value = !context;
+    runCurrentIntent();
   }
-});
+);
 
 watch(() => props.targetLang, (newLang) => {
-  if (newLang && contextInput.value.trim()) {
-    runIntent(activeIntent.value, contextInput.value.trim(), newLang);
+  if (newLang && resolveQuery(queryInput.value, contextInput.value)) {
+    runCurrentIntent();
   }
 });
 
 function handleIntentSelect(intentId: AiIntentId) {
   stopAllAudio();
-  const text = contextInput.value.trim();
-  if (text) {
-    runIntent(intentId, text, props.targetLang);
-  }
+  runCurrentIntent(intentId);
 }
 
 function handleTokenSelect(word: string) {
@@ -127,7 +179,7 @@ function copyResult(text?: string) {
       </button>
     </div>
 
-    <!-- AI 6 Intent Buttons Toolbar (Top Navigation) -->
+    <!-- AI Intent Buttons Toolbar (Main AI + specialized follow-ups) -->
     <AiIntentToolbar
       :activeIntent="activeIntent"
       :disabled="isAiLoading"
@@ -141,7 +193,7 @@ function copyResult(text?: string) {
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
         </span>
         <input
-          v-model="contextInput"
+          v-model="queryInput"
           @keyup.enter="handleIntentSelect(activeIntent)"
           type="text"
           placeholder="Type or paste any word or sentence here to analyze..."
@@ -149,8 +201,8 @@ function copyResult(text?: string) {
         />
 
         <button
-          v-if="contextInput"
-          @click="contextInput = ''; activeContext = ''; stopAllAudio();"
+          v-if="queryInput"
+          @click="queryInput = ''; stopAllAudio();"
           title="Clear search text"
           class="absolute right-20 text-slate-400 hover:text-slate-200 p-1 cursor-pointer flex items-center justify-center"
         >
@@ -159,31 +211,70 @@ function copyResult(text?: string) {
 
         <button
           @click="handleIntentSelect(activeIntent)"
-          :disabled="!contextInput || isAiLoading"
+          :disabled="!queryInput || isAiLoading"
           class="absolute right-1.5 px-3.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 active:scale-95 text-white text-xs font-bold transition-all disabled:opacity-50 shadow-sm cursor-pointer flex items-center gap-1"
         >
           <span>{{ isAiLoading ? 'Analyzing…' : 'Lookup' }}</span>
         </button>
       </div>
 
-      <!-- Listen & Interactive Tokenized Context Sentence below search bar -->
-      <div v-if="contextInput.trim()" class="flex items-center justify-between px-1">
-        <span class="text-xs text-slate-400 font-medium">Click any word below → lookup in Dictionary:</span>
+      <!-- One context surface: hidden when it would duplicate the query -->
+      <div v-if="!showContextCard" class="flex items-center justify-end px-1">
         <button
-          @click="speakText(contextInput)"
-          title="Read context aloud"
-          class="text-xs px-2.5 py-1 rounded-lg bg-dark-surface hover:bg-dark-border text-slate-300 hover:text-white border border-dark-border transition-colors flex items-center gap-1.5 cursor-pointer font-semibold"
+          type="button"
+          @click="isEditingContext = true"
+          class="text-[11px] text-teal-400 hover:text-teal-300 font-semibold cursor-pointer"
         >
-          <svg class="w-3.5 h-3.5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
-          <span>Listen</span>
+          + Add context
         </button>
       </div>
 
-      <TokenizedContext
-        v-if="contextInput.trim()"
-        :text="contextInput"
-        @select-token="handleTokenSelect"
-      />
+      <div v-else class="rounded-xl border border-dark-border bg-dark-muted/40 p-2.5 space-y-2">
+        <div class="flex items-center justify-between gap-2">
+          <div>
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Context</div>
+            <p class="text-[10px] text-slate-500">
+              {{ showContextEditor ? 'Paste the sentence that contains this word. Used only for this explanation.' : 'Click any word → lookup in Dictionary' }}
+            </p>
+          </div>
+          <div class="flex items-center gap-1.5 flex-shrink-0">
+            <button
+              v-if="contextInput.trim()"
+              type="button"
+              @click="speakText(contextInput)"
+              title="Read context aloud"
+              class="text-xs px-2.5 py-1 rounded-lg bg-dark-surface hover:bg-dark-border text-slate-300 hover:text-white border border-dark-border transition-colors flex items-center gap-1.5 cursor-pointer font-semibold"
+            >
+              <span>🔊 Listen</span>
+            </button>
+            <button
+              type="button"
+              @click="isEditingContext = !showContextEditor"
+              class="text-xs px-2.5 py-1 rounded-lg bg-dark-surface hover:bg-dark-border text-slate-300 hover:text-white border border-dark-border transition-colors cursor-pointer font-semibold"
+            >
+              {{ showContextEditor ? 'Done' : 'Edit' }}
+            </button>
+          </div>
+        </div>
+
+        <textarea
+          v-if="showContextEditor"
+          v-model="contextInput"
+          rows="2"
+          placeholder="Paste the sentence or context here..."
+          class="w-full bg-dark-muted border border-dark-border rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-400 outline-none focus:border-teal-500 resize-y min-h-[52px]"
+          @blur="isEditingContext = !contextInput.trim()"
+        ></textarea>
+
+        <TokenizedContext
+          v-else
+          :text="contextInput"
+          :query="queryInput"
+          @select-token="handleTokenSelect"
+        />
+
+        <p v-if="contextError" class="text-[11px] text-rose-400">{{ contextError }}</p>
+      </div>
     </div>
 
     <!-- AI Header Row with Listen & Copy Buttons -->
@@ -229,36 +320,18 @@ function copyResult(text?: string) {
       ⚠️ {{ aiError }}
     </div>
 
-    <!-- AI Result View (Frameless Clean Editorial) -->
-    <div v-else-if="aiResult" class="space-y-4">
-      <!-- Sentence Breakdown Component -->
-      <SentenceBreakdownCard
-        v-if="aiResult.type === 'sentence_breakdown'"
-        :structure="aiResult.structure"
-        :translation="aiResult.translation"
-      />
-
-      <!-- Grammar & Nuance Card -->
-      <template v-else-if="aiResult.type === 'grammar'">
-        <div class="pt-2 border-t border-dark-border/50 space-y-2 text-xs">
-          <MarkdownRenderer :content="aiResult.summary" />
-        </div>
-        <LearnerMistakesCard :word="aiResult.query" />
-      </template>
-
-      <!-- Word Morphology & Collocations Card -->
-      <template v-else-if="aiResult.type === 'collocations'">
-        <WordFormationCard :word="aiResult.query" />
-        <div class="pt-2 border-t border-dark-border/50 space-y-2 text-xs">
-          <MarkdownRenderer :content="aiResult.summary" />
-        </div>
-      </template>
-
-      <!-- Generic / Explain in Context Markdown View -->
-      <div v-else class="pt-2 border-t border-dark-border/50 space-y-3">
-        <MarkdownRenderer :content="aiResult.summary" />
-      </div>
-    </div>
+    <!-- AI Result View: one lazy-loaded panel per intent -->
+    <component
+      v-else-if="aiResult"
+      :is="aiResult.type === 'sentence_breakdown'
+        ? SentenceBreakdownIntent
+        : aiResult.type === 'confusables'
+          ? ConfusablesIntent
+          : AiMarkdownIntent"
+      :result="aiResult"
+      :target-lang="resultTargetLang"
+      @select-word="handleTokenSelect"
+    />
 
     <!-- Settings Modal -->
     <SettingsModal

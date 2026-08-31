@@ -16,7 +16,8 @@ const calculatedCollocations = computed<Collocations>(() => {
     props.collocations.verbs?.length ||
     props.collocations.nouns?.length ||
     props.collocations.adjectives?.length ||
-    props.collocations.prepositions?.length
+    props.collocations.prepositions?.length ||
+    props.collocations.patterns?.length
   )) {
     return props.collocations;
   }
@@ -31,7 +32,8 @@ const hasAnyData = computed(() => {
     c.verbs?.length ||
     c.nouns?.length ||
     c.adjectives?.length ||
-    c.prepositions?.length
+    c.prepositions?.length ||
+    c.patterns?.length
   );
 });
 </script>
@@ -63,6 +65,20 @@ const hasAnyData = computed(() => {
         <div class="flex flex-wrap gap-1.5">
           <button
             v-for="item in calculatedCollocations.nouns"
+            :key="item"
+            @click="emit('select-word', item)"
+            class="px-2.5 py-0.5 rounded-full bg-dark-muted hover:bg-teal-500/20 hover:text-teal-300 text-teal-300 text-[11px] transition-all cursor-pointer font-medium"
+          >
+            {{ item }}
+          </button>
+        </div>
+      </div>
+
+      <div v-if="calculatedCollocations.patterns?.length" class="space-y-1">
+        <span class="text-slate-400 font-semibold text-[11px] block">Patterns</span>
+        <div class="flex flex-wrap gap-1.5">
+          <button
+            v-for="item in calculatedCollocations.patterns"
             :key="item"
             @click="emit('select-word', item)"
             class="px-2.5 py-0.5 rounded-full bg-dark-muted hover:bg-teal-500/20 hover:text-teal-300 text-teal-300 text-[11px] transition-all cursor-pointer font-medium"

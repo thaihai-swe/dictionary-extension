@@ -1,16 +1,20 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { Meaning } from '../types';
 import { useDictionary } from '../composables/composable.dictionary';
+import { mergeMeanings } from '../shared/enrichment';
 
-defineProps<{
+const props = defineProps<{
   meanings: Meaning[];
 }>();
+
+const groupedMeanings = computed(() => mergeMeanings(props.meanings || [], []));
 
 const emit = defineEmits<{
   (e: 'select-word', word: string): void;
 }>();
 
-const { speakTTS } = useDictionary();
+const { playPronunciation, playingKey } = useDictionary();
 
 function getPosClass(pos: string): string {
   const p = pos.toLowerCase();
@@ -25,8 +29,8 @@ function getPosClass(pos: string): string {
 <template>
   <div class="space-y-6 pt-1">
     <div
-      v-for="(meaning, mIdx) in meanings"
-      :key="mIdx"
+      v-for="(meaning, mIdx) in groupedMeanings"
+      :key="meaning.partOfSpeech || mIdx"
       class="space-y-3.5 border-b border-dark-border/50 pb-5 last:border-b-0 last:pb-0"
     >
       <!-- Part of Speech Pill Badge & Header Row -->
@@ -41,8 +45,8 @@ function getPosClass(pos: string): string {
             {{ meaning.partOfSpeech }}
           </span>
         </div>
-        <span v-if="mIdx === 0" class="px-2.5 py-0.5 rounded-full bg-teal-500/10 text-teal-400 font-bold border border-teal-500/20 text-xs">
-          Primary Meaning
+        <span v-if="meaning.source" class="px-2.5 py-0.5 rounded-full bg-dark-muted text-slate-300 font-bold border border-dark-border text-[10px]">
+          {{ meaning.source }}
         </span>
       </div>
 
@@ -62,9 +66,15 @@ function getPosClass(pos: string): string {
           <div v-if="def.example" class="mt-2.5 pl-3.5 py-2 pr-3 border-l-2 border-teal-500/70 bg-teal-500/5 rounded-r-lg text-slate-200 italic text-sm leading-relaxed flex items-center justify-between gap-3">
             <span>"{{ def.example }}"</span>
             <button
-              @click="speakTTS(def.example)"
+              @click="playPronunciation({ text: def.example, language: 'en-US', key: `sense-${mIdx}-${dIdx}` })"
               title="Listen example sentence"
-              class="px-2.5 py-1 rounded bg-dark-muted hover:bg-dark-border text-slate-200 hover:text-white border border-dark-border text-xs not-italic flex-shrink-0 transition-colors flex items-center gap-1 cursor-pointer font-semibold"
+              :class="[
+                'px-2.5 py-1 rounded border text-xs not-italic flex-shrink-0 transition-colors flex items-center gap-1 cursor-pointer font-semibold',
+                playingKey === `sense-${mIdx}-${dIdx}`
+                  ? 'bg-teal-500/25 text-teal-200 border-teal-500/50'
+                  : 'bg-dark-muted hover:bg-dark-border text-slate-200 hover:text-white border-dark-border'
+              ]"
+              :aria-pressed="playingKey === `sense-${mIdx}-${dIdx}`"
             >
               <span>🔊 Listen</span>
             </button>

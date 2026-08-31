@@ -5,6 +5,7 @@ import { useDictionary } from '../composables/composable.dictionary';
 interface MistakeItem {
   mistake: string;
   correction: string;
+  example?: string;
   exampleIncorrect?: string;
   exampleCorrect?: string;
 }
@@ -14,61 +15,12 @@ const props = defineProps<{
   mistakes?: MistakeItem[];
 }>();
 
-const { speakTTS } = useDictionary();
+const { playPronunciation, playingKey } = useDictionary();
 
-const calculatedMistakes = computed<MistakeItem[]>(() => {
-  if (props.mistakes && props.mistakes.length > 0) {
-    return props.mistakes;
-  }
+const calculatedMistakes = computed<MistakeItem[]>(() => props.mistakes || []);
 
-  const w = (props.word || '').toLowerCase().trim();
-  if (!w) return [];
-
-  // Authentic curated linguistic mistake rules for common learner verbs
-  if (w.includes('explain')) {
-    return [{
-      mistake: "Saying 'explain me something' instead of 'explain something to me'.",
-      correction: "Use 'explain something to someone'.",
-      exampleIncorrect: "Can you explain me this rule?",
-      exampleCorrect: "Can you explain this rule to me?"
-    }];
-  } else if (w.includes('suggest') || w.includes('recommend')) {
-    return [{
-      mistake: "Using infinitive 'suggest to do' instead of gerund or 'that' clause.",
-      correction: "Use 'suggest doing' or 'suggest that someone do'.",
-      exampleIncorrect: "I suggest to go home.",
-      exampleCorrect: "I suggest going home."
-    }];
-  } else if (w.includes('listen')) {
-    return [{
-      mistake: "Omitting 'to' after 'listen'.",
-      correction: "Always use 'listen to' when specifying an object.",
-      exampleIncorrect: "Listen the music.",
-      exampleCorrect: "Listen to the music."
-    }];
-  } else if (w.includes('discuss')) {
-    return [{
-      mistake: "Adding 'about' after 'discuss'.",
-      correction: "'Discuss' is a transitive verb; do not add 'about'.",
-      exampleIncorrect: "We discussed about the problem.",
-      exampleCorrect: "We discussed the problem."
-    }];
-  } else if (w.includes('watch') || w.includes('video')) {
-    return [{
-      mistake: "Using 'look' instead of 'watch' for moving media.",
-      correction: "Use 'watch' for videos and movies.",
-      exampleIncorrect: "Look 15s of the video.",
-      exampleCorrect: "Watch 15s of the video."
-    }];
-  }
-
-  // If no authentic mistake exists, return empty array so card is cleanly hidden
-  return [];
-});
-
-function listenExample(item: MistakeItem) {
-  const textToSpeak = item.exampleCorrect || item.correction;
-  speakTTS(textToSpeak);
+function listenText(item: MistakeItem): string {
+  return item.example || item.exampleCorrect || item.correction;
 }
 </script>
 
@@ -93,16 +45,42 @@ function listenExample(item: MistakeItem) {
           <span class="font-extrabold">Correction:</span> {{ item.correction }}
         </div>
 
-        <div v-if="item.exampleIncorrect || item.exampleCorrect" class="text-slate-300 italic text-[11px] leading-relaxed pt-1 flex items-center justify-between flex-wrap gap-2">
+        <blockquote
+          v-if="item.example"
+          class="text-slate-300 italic text-[11px] leading-relaxed pt-1 flex items-center justify-between flex-wrap gap-2"
+        >
+          <span>{{ item.example }}</span>
+          <button
+            @click="playPronunciation({ text: listenText(item), language: 'en-US', key: `mistake-${idx}` })"
+            title="Listen example"
+            :class="[
+              'px-2 py-0.5 rounded border text-[10px] font-semibold transition-all flex items-center gap-1 ml-auto cursor-pointer not-italic',
+              playingKey === `mistake-${idx}`
+                ? 'bg-teal-500/25 text-teal-200 border-teal-500/50'
+                : 'bg-dark-muted hover:bg-dark-border text-slate-300 hover:text-white border-dark-border'
+            ]"
+            :aria-pressed="playingKey === `mistake-${idx}`"
+          >
+            <span>🔊 Listen</span>
+          </button>
+        </blockquote>
+
+        <div v-else-if="item.exampleIncorrect || item.exampleCorrect" class="text-slate-300 italic text-[11px] leading-relaxed pt-1 flex items-center justify-between flex-wrap gap-2">
           <div>
             <span v-if="item.exampleIncorrect" class="mr-3"><span class="not-italic font-bold text-slate-300">Incorrect:</span> {{ item.exampleIncorrect }}</span>
             <span v-if="item.exampleCorrect"><span class="not-italic font-bold text-slate-300">Correct:</span> {{ item.exampleCorrect }}</span>
           </div>
 
           <button
-            @click="listenExample(item)"
+            @click="playPronunciation({ text: listenText(item), language: 'en-US', key: `mistake-${idx}` })"
             title="Listen correct pronunciation"
-            class="px-2 py-0.5 rounded bg-dark-muted hover:bg-dark-border text-slate-300 hover:text-white text-[10px] font-semibold transition-all flex items-center gap-1 ml-auto cursor-pointer"
+            :class="[
+              'px-2 py-0.5 rounded border text-[10px] font-semibold transition-all flex items-center gap-1 ml-auto cursor-pointer not-italic',
+              playingKey === `mistake-${idx}`
+                ? 'bg-teal-500/25 text-teal-200 border-teal-500/50'
+                : 'bg-dark-muted hover:bg-dark-border text-slate-300 hover:text-white border-dark-border'
+            ]"
+            :aria-pressed="playingKey === `mistake-${idx}`"
           >
             <span>🔊 Listen</span>
           </button>

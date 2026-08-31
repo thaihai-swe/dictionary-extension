@@ -1,18 +1,19 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { defineAsyncComponent, ref, onMounted, onUnmounted, watch } from 'vue';
 import { useStorage } from '@/composables/composable.storage';
 import AppHeader from '@/components/component.app-header.vue';
 import TabNavigation from '@/components/component.tab-navigation.vue';
 import WordLookupView from '@/components/view.word-lookup.vue';
-import AiAssistantView from '@/components/view.ai-assistant.vue';
-import ShortcutsModal from '@/components/modal.shortcuts.vue';
-import SettingsModal from '@/components/modal.settings.vue';
 import { TabId } from '@/types';
+
+const AiAssistantView = defineAsyncComponent(() => import('@/components/view.ai-assistant.vue'));
+const ShortcutsModal = defineAsyncComponent(() => import('@/components/modal.shortcuts.vue'));
+const SettingsModal = defineAsyncComponent(() => import('@/components/modal.settings.vue'));
 
 const { activeTab, settings, saveSettings } = useStorage();
 const showShortcuts = ref<boolean>(false);
 const showSettings = ref<boolean>(false);
-const targetLang = ref<string>(settings.value.translateTargetLanguage || 'vi');
+const targetLang = ref<string>(settings.value.translateTargetLanguage || 'Vietnamese');
 const currentProvider = ref<string>(settings.value.dictionaryProvider || 'free_dictionary');
 const isDarkMode = ref<boolean>(settings.value.theme !== 'light');
 const isFullTab = ref<boolean>(false);
@@ -58,6 +59,10 @@ function toggleTheme() {
 }
 
 function handleTabChange(newTab: TabId) {
+  if (newTab === 'ai_assistant' && settings.value.enableAI === false) {
+    activeTab.value = 'dictionary';
+    return;
+  }
   activeTab.value = newTab;
   saveSettings({ defaultTab: newTab });
 }
@@ -116,13 +121,13 @@ function handleKeydown(event: KeyboardEvent) {
     <!-- Toolbar Popup Main Search & Workbench View -->
     <main class="flex-1 overflow-y-auto">
       <WordLookupView
-        v-if="activeTab === 'dictionary'"
-        :autoFocus="true"
+        v-show="activeTab === 'dictionary'"
+        :autoFocus="activeTab === 'dictionary'"
         :targetLang="targetLang"
         :provider="currentProvider"
       />
       <AiAssistantView
-        v-else-if="activeTab === 'ai_assistant'"
+        v-if="activeTab === 'ai_assistant'"
         :targetLang="targetLang"
         @switch-tab="handleTabChange"
       />

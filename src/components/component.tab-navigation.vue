@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { TabId } from '../types';
+import { useStorage } from '../composables/composable.storage';
 
 const props = defineProps<{
   activeTab?: TabId;
@@ -13,7 +14,15 @@ const emit = defineEmits<{
   (e: 'change-tab', tab: TabId): void;
 }>();
 
+const { settings } = useStorage();
 const currentActive = computed(() => props.modelValue || props.activeTab || 'dictionary');
+const showAiTab = computed(() => settings.value.enableAI !== false);
+
+watch(showAiTab, (enabled) => {
+  if (!enabled && currentActive.value === 'ai_assistant') {
+    selectTab('dictionary');
+  }
+});
 
 function selectTab(id: TabId) {
   emit('update:modelValue', id);
@@ -43,6 +52,7 @@ const tabs: { id: TabId; label: string; icon: string }[] = [
     </button>
 
     <button
+      v-if="showAiTab"
       @click="selectTab('ai_assistant')"
       :class="[
         'flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all duration-200 outline-none cursor-pointer',

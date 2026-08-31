@@ -3,9 +3,9 @@ import vue from '@vitejs/plugin-vue';
 import { resolve } from 'path';
 import { copyFileSync, existsSync } from 'fs';
 
-function buildContentScriptPlugin(): Plugin {
+function buildExtensionScriptsPlugin(): Plugin {
   return {
-    name: 'build-content-script',
+    name: 'build-extension-scripts',
     async closeBundle() {
       await viteBuild({
         configFile: false,
@@ -21,10 +21,67 @@ function buildContentScriptPlugin(): Plugin {
           outDir: 'dist',
           emptyOutDir: false,
           lib: {
-            entry: resolve(__dirname, 'src/entrypoints/content-script/index.ts'),
-            name: 'ContentScript',
+            entry: resolve(__dirname, 'src/entrypoints/background/service-worker.ts'),
+            name: 'DictionaryServiceWorker',
+            formats: ['iife'],
+            fileName: () => 'service-worker.js',
+          },
+          rollupOptions: {
+            output: {
+              inlineDynamicImports: true,
+            },
+          },
+        },
+      });
+
+      await viteBuild({
+        configFile: false,
+        plugins: [vue()],
+        define: {
+          'process.env.NODE_ENV': JSON.stringify('production'),
+        },
+        resolve: {
+          alias: { '@': resolve(__dirname, 'src') },
+        },
+        build: {
+          write: true,
+          outDir: 'dist',
+          emptyOutDir: false,
+          lib: {
+            entry: resolve(__dirname, 'src/entrypoints/content-script/bootstrap.ts'),
+            name: 'ContentScriptBootstrap',
             formats: ['iife'],
             fileName: () => 'content-script.js',
+          },
+        },
+      });
+
+      await viteBuild({
+        configFile: false,
+        plugins: [vue()],
+        define: {
+          'process.env.NODE_ENV': JSON.stringify('production'),
+        },
+        resolve: {
+          alias: { '@': resolve(__dirname, 'src') },
+        },
+        build: {
+          write: true,
+          outDir: 'dist',
+          emptyOutDir: false,
+          cssCodeSplit: false,
+          lib: {
+            entry: resolve(__dirname, 'src/entrypoints/content-script/overlay-app.ts'),
+            name: 'DictionaryOverlay',
+            formats: ['es'],
+            fileName: () => 'overlay.js',
+          },
+          rollupOptions: {
+            output: {
+              inlineDynamicImports: false,
+              chunkFileNames: 'overlay-[name]-[hash].js',
+              assetFileNames: 'overlay-[name]-[hash][extname]',
+            },
           },
         },
       });
@@ -37,7 +94,7 @@ function buildContentScriptPlugin(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [vue(), buildContentScriptPlugin()],
+  plugins: [vue(), buildExtensionScriptsPlugin()],
   define: {
     'process.env.NODE_ENV': JSON.stringify('production'),
   },
@@ -52,13 +109,10 @@ export default defineConfig({
     rollupOptions: {
       input: {
         popup: resolve(__dirname, 'index.html'),
-        background: resolve(__dirname, 'src/entrypoints/background/service-worker.ts'),
       },
       output: {
-        entryFileNames: (chunkInfo) => {
-          if (chunkInfo.name === 'background') return 'service-worker.js';
-          return 'assets/[name]-[hash].js';
-        },
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]',
       },
     },

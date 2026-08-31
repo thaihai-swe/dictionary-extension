@@ -17,7 +17,8 @@ const calculatedFamily = computed<WordFamily>(() => {
     props.family.verbs?.length ||
     props.family.adjectives?.length ||
     props.family.adverbs?.length ||
-    props.family.inflections?.length
+    props.family.inflections?.length ||
+    props.family.derivatives?.length
   )) {
     return props.family;
   }
@@ -33,7 +34,8 @@ const hasAnyData = computed(() => {
     f.verbs?.length ||
     f.adjectives?.length ||
     f.adverbs?.length ||
-    f.inflections?.length
+    f.inflections?.length ||
+    f.derivatives?.length
   );
 });
 </script>
@@ -79,6 +81,34 @@ const hasAnyData = computed(() => {
         <div class="flex flex-wrap gap-1.5">
           <button
             v-for="item in calculatedFamily.adjectives"
+            :key="item"
+            @click="emit('select-word', item)"
+            class="px-3 py-1 rounded-full bg-dark-muted hover:bg-emerald-500/20 hover:text-emerald-300 text-slate-200 text-xs font-semibold transition-all cursor-pointer"
+          >
+            {{ item }}
+          </button>
+        </div>
+      </div>
+
+      <div v-if="calculatedFamily.adverbs?.length" class="flex items-center gap-3">
+        <span class="w-20 text-slate-400 font-bold text-xs flex-shrink-0">Adverb</span>
+        <div class="flex flex-wrap gap-1.5">
+          <button
+            v-for="item in calculatedFamily.adverbs"
+            :key="item"
+            @click="emit('select-word', item)"
+            class="px-3 py-1 rounded-full bg-dark-muted hover:bg-emerald-500/20 hover:text-emerald-300 text-slate-200 text-xs font-semibold transition-all cursor-pointer"
+          >
+            {{ item }}
+          </button>
+        </div>
+      </div>
+
+      <div v-if="calculatedFamily.derivatives?.length" class="flex items-center gap-3">
+        <span class="w-20 text-slate-400 font-bold text-xs flex-shrink-0">Derivatives</span>
+        <div class="flex flex-wrap gap-1.5">
+          <button
+            v-for="item in calculatedFamily.derivatives"
             :key="item"
             @click="emit('select-word', item)"
             class="px-3 py-1 rounded-full bg-dark-muted hover:bg-emerald-500/20 hover:text-emerald-300 text-slate-200 text-xs font-semibold transition-all cursor-pointer"

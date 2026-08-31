@@ -1,197 +1,289 @@
-import { AiIntentId, AiResult } from '../types';
-import { fetchGoogleTranslate } from './provider.google-translate';
-import { safeFetch } from './provider.http';
+import { AiIntentId, AiResult, AppSettings } from '../types';
+import { lookupGoogleTranslation } from './provider.google-translate';
+import { AI_FETCH_TIMEOUT_MS, safeFetch } from './provider.http';
+import {
+  DEFAULT_AI_COMPARE_PROMPT_TEMPLATE,
+  DEFAULT_AI_CONTEXT_PROMPT_TEMPLATE,
+  DEFAULT_AI_GRAMMAR_PROMPT_TEMPLATE,
+  DEFAULT_AI_PHRASE_EXPLORER_PROMPT_TEMPLATE,
+  DEFAULT_AI_PHRASE_FALLBACK_PROMPT_TEMPLATE,
+  DEFAULT_AI_PROMPT_TEMPLATE,
+  DEFAULT_AI_REPHRASE_PROMPT_TEMPLATE,
+  DEFAULT_AI_SENTENCE_PROMPT_TEMPLATE,
+  appendInputContract,
+  applyTemplate,
+  canonicalAiIntent,
+  countWords,
+  shouldRequestLexicalProfile,
+} from '../shared/ai-prompts';
+import {
+  normalizeComparisonData,
+  normalizeSentenceBreakdown,
+  parseLexicalProfileFromResponse,
+  stripLexicalProfileBlock,
+  extractJsonObject,
+} from '../shared/query-utils';
 
 const GEMINI_MODELS = [
   'gemini-2.5-flash',
   'gemini-3.5-flash-lite',
   'gemini-1.5-flash',
+  'gemini-2.5-flash-lite',
 ];
 
-// ── Built-in Prompt Templates (Synced with main branch) ──────────────────────
-const PROMPT_TEMPLATES: Record<AiIntentId, (str: string, targetLang: string, context: string) => string> = {
-  explain_in_context: (str, targetLang, context) => `
-Explain the selected text in its surrounding context for an English language learner.
-Selected text: "${str}"
-Target language for translations: ${targetLang}
-Surrounding context:
-"""
-${context || str}
-"""
+function resolveQueryAndContext(query: string, context?: string): { term: string; surrounding: string } {
+  const term = query.trim();
+  const surrounding = String(context || '').trim();
+  return {
+    term,
+    surrounding: surrounding && surrounding.toLowerCase() !== term.toLowerCase() ? surrounding : '',
+  };
+}
 
-Use level-3 Markdown headings (###), bullets, and short paragraphs. Do not use HTML or code fences.
-### Meaning in Context
-Explain what "${str}" means specifically in this surrounding sentence, including its contextual translation into ${targetLang}.
+function isGeminiBaseUrl(baseUrl?: string): boolean {
+  const normalized = String(baseUrl || '').toLowerCase();
+  return !normalized || normalized.includes('generativelanguage.googleapis.com');
+}
 
-### Direct Substitutions
-Provide 2-3 natural synonyms or phrases that could directly replace "${str}" in this specific sentence without altering grammatical structure, each with a brief ${targetLang} gloss.
+function isTransientGeminiError(message: string, status?: number): boolean {
+  const text = String(message || '').toLowerCase();
+  return (
+    status === 429
+    || status === 500
+    || status === 503
+    || text.includes('high demand')
+    || text.includes('overloaded')
+    || text.includes('resource_exhausted')
+    || text.includes('too many requests')
+    || text.includes('rate limit')
+  );
+}
 
-### Nuance & Connotation
-Explain in 1-2 sentences what tone, emphasis, or subtle nuance is lost if replaced by a plain synonym.
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
-### Natural Paraphrases
-Provide 2 natural ways to rephrase the entire context sentence with brief glosses in ${targetLang}.
-`.trim(),
-
-  grammar: (str, targetLang, context) => `
-Analyze the grammatical structure, syntactic slots, register, and tone of the selected text for a language learner.
-Selected text: "${str}"
-Target language: ${targetLang}
-Optional context:
-"""
-${context || str}
-"""
-
-Use clear markdown subheadings at level 3 (###) for each distinct section:
-### Syntactic Breakdown
-Identify part of speech, grammatical slot / syntactic role in the sentence (e.g. subject complement, transitive verb head, modifier), and clause relations.
-
-### Formality & Tone
-Explain nuance, formality, and register in 1-2 sentences.
-
-### Pattern Rules
-List 1-2 governing syntactic rules or clause patterns for this structure.
-
-### Short Examples
-Provide 2 short example sentences illustrating this pattern, with brief translations into ${targetLang}.
-`.trim(),
-
-  collocations: (str, targetLang, context) => `
-Explore the phrase, idiom, phrasal verb, collocation, or expression "${str}" for a language learner.
-Target language: ${targetLang}
-Optional context:
-"""
-${context || str}
-"""
-
-Use level-3 Markdown headings (###) and bullet lists:
-### Core Meaning
-Give the natural meaning first, then explain any literal meaning or word partnerships.
-
-### Grammar & Patterns
-Show the grammatical pattern, separability for phrasal verbs, and required preposition combinations (e.g. depend + on, fond + of).
-
-### Natural Collocations
-List 3-5 frequent word partnerships (verb+noun, adjective+noun, noun+noun) with brief translations into ${targetLang}.
-
-### Natural Examples
-Give 2-3 realistic example sentences in context with brief translations into ${targetLang}.
-`.trim(),
-
-  sentence_breakdown: (str, targetLang, context) => `
-Deconstruct and break down the sentence syntax and clause structure for a language learner.
-Sentence: "${str}"
-Target language: ${targetLang}
-
-Use level-3 Markdown headings (###):
-### Clause & Structure Breakdown
-Break down the main subject, predicate verb phrase, object, and dependent clauses.
-
-### Grammatical Roles
-Explain how clauses link together (coordination, subordination, relative clauses).
-
-### Translation & Context
-Provide a smooth, natural translation into ${targetLang}.
-`.trim(),
-
-  confusables: (str, targetLang, context) => `
-Compare and contrast the confusable terms or query "${str}" for a language learner.
-Target language: ${targetLang}
-Optional context:
-"""
-${context || str}
-"""
-
-Use level-3 Markdown headings (###):
-### Core Distinction
-Give a 2-sentence rule of thumb explaining the fundamental difference in meaning, register, or grammatical class.
-
-### Comparison Matrix
-Compare the terms across 2 key dimensions (Function/Meaning, Typical Usage/Register).
-
-### Minimal Pairs & Examples
-Provide 2 minimal-pair sentence comparisons demonstrating when to choose one over the other, with brief ${targetLang} translations.
-`.trim(),
-
-  rephrase: (str, targetLang, context) => `
-Rephrase the supplied text or sentence for an English language learner across three distinct stylistic targets.
-Original text: "${str}"
-Target language for explanations: ${targetLang}
-
-Use level-3 Markdown headings (###) and blockquotes:
-### Simplified Version
-> Rewritten sentence using Oxford 3000 / A2-B1 high-frequency vocabulary.
-Brief note explaining why this is easier to read.
-
-### Academic & Formal
-> Rewritten sentence suitable for formal essays, academic publications, or business correspondence.
-Brief note explaining the elevated register and syntactic choices.
-
-### Native & Idiomatic
-> Rewritten sentence as a native speaker would naturally say in informal context.
-`.trim(),
-};
-
-function extractTargetTerm(str: string): string {
-  const clean = str.trim();
-  if (clean.length <= 30 && clean.split(/\s+/).length <= 4) {
-    return clean;
+function templateForIntent(intent: AiIntentId, settings?: AppSettings): string {
+  const pick = (value?: string, fallback?: string) => (value && value.trim() ? value : fallback || '');
+  switch (intent) {
+    case 'explain_in_context':
+      return pick(settings?.aiContextPromptTemplate, DEFAULT_AI_CONTEXT_PROMPT_TEMPLATE);
+    case 'grammar':
+      return pick(settings?.aiGrammarPromptTemplate, DEFAULT_AI_GRAMMAR_PROMPT_TEMPLATE);
+    case 'sentence_breakdown':
+      return pick(settings?.aiSentencePromptTemplate, DEFAULT_AI_SENTENCE_PROMPT_TEMPLATE);
+    case 'collocations':
+      return pick(settings?.aiPhraseExplorerPromptTemplate, DEFAULT_AI_PHRASE_EXPLORER_PROMPT_TEMPLATE);
+    case 'confusables':
+      return pick(settings?.aiComparePromptTemplate, DEFAULT_AI_COMPARE_PROMPT_TEMPLATE);
+    case 'rephrase':
+      return pick(settings?.aiRephrasePromptTemplate, DEFAULT_AI_REPHRASE_PROMPT_TEMPLATE);
+    case 'phrase_fallback':
+      return DEFAULT_AI_PHRASE_FALLBACK_PROMPT_TEMPLATE;
+    default:
+      return pick(settings?.aiPromptTemplate || settings?.aiDefaultPromptTemplate, DEFAULT_AI_PROMPT_TEMPLATE);
   }
-  const quoteMatch = clean.match(/["']([^"']+)["']/);
-  if (quoteMatch) return quoteMatch[1];
+}
 
-  const phrases = clean.split(/[,:;—–]/).map(s => s.trim()).filter(Boolean);
-  if (phrases.length > 1 && phrases[1].length < 35) {
-    return phrases[1];
+export function buildPrompt(
+  text: string,
+  settings: AppSettings | undefined,
+  context: string,
+  intent: AiIntentId,
+): string {
+  const canonical = canonicalAiIntent(intent);
+  if (canonical === 'explain_in_context' && !String(context || '').trim()) {
+    throw new Error('No surrounding page context is available for this lookup.');
   }
-
-  const words = clean.split(/\s+/);
-  return words.slice(0, 3).join(' ');
+  const variables = {
+    text,
+    str: text,
+    sentence: context || text,
+    context: context || '',
+    word_count: countWords(text),
+    targetLang: settings?.translateTargetLanguage || 'Vietnamese',
+    enableLexicalProfile: shouldRequestLexicalProfile(canonical, settings?.enableLexicalProfile),
+  };
+  return appendInputContract(applyTemplate(templateForIntent(canonical, settings), variables), variables);
 }
 
 export function abortGeminiApiRequest() {
-  // Signal abortion
+  // Abort is handled via AbortSignal on the in-flight fetch.
+}
+
+async function requestGeminiText(prompt: string, apiKey: string, model: string, signal?: AbortSignal): Promise<string> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const res = await safeFetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.3, maxOutputTokens: 6144, responseMimeType: 'text/plain' },
+    }),
+    signal,
+    timeoutMs: AI_FETCH_TIMEOUT_MS,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const message = data?.error?.message || `Gemini request failed (HTTP ${res.status}).`;
+    const error = new Error(message) as Error & { status?: number };
+    error.status = res.status;
+    throw error;
+  }
+  const text = data.candidates?.[0]?.content?.parts?.map((part: { text?: string }) => part.text || '').join('\n');
+  if (!text) throw new Error('Gemini returned an empty response.');
+  return String(text).trim();
 }
 
 async function callGeminiApi(prompt: string, apiKey: string, preferredModel?: string, signal?: AbortSignal): Promise<string> {
+  const models = preferredModel
+    ? [preferredModel, ...GEMINI_MODELS.filter((model) => model !== preferredModel)]
+    : GEMINI_MODELS;
   let lastErr = 'Gemini API call failed';
 
-  const models = preferredModel
-    ? [preferredModel, ...GEMINI_MODELS.filter(m => m !== preferredModel)]
-    : GEMINI_MODELS;
-
-  for (const model of models) {
-    if (signal?.aborted) {
-      throw new DOMException('The user aborted a request.', 'AbortError');
-    }
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      const res = await safeFetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.3, maxOutputTokens: 2048 },
-        }),
-        signal,
-      });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        lastErr = errData.error?.message || `HTTP ${res.status}`;
-        continue;
+  for (let i = 0; i < models.length; i += 1) {
+    const model = models[i];
+    const maxAttempts = i === 0 ? 2 : 1;
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      if (signal?.aborted) throw new DOMException('The user aborted a request.', 'AbortError');
+      try {
+        return await requestGeminiText(prompt, apiKey, model, signal);
+      } catch (error: unknown) {
+        if (error instanceof Error && error.name === 'AbortError') throw error;
+        const status = (error as { status?: number })?.status;
+        const message = error instanceof Error ? error.message : String(error);
+        lastErr = message;
+        if (!isTransientGeminiError(message, status)) {
+          if (i === models.length - 1) throw error;
+          break;
+        }
+        if (attempt < maxAttempts - 1) await sleep(700 * (attempt + 1));
       }
-
-      const data = await res.json();
-      const text = data.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join('\n');
-      if (text) return text.trim();
-    } catch (e: any) {
-      if (e?.name === 'AbortError') throw e;
-      lastErr = e.message;
     }
   }
 
   throw new Error(lastErr);
+}
+
+function buildChatCompletionsUrl(baseUrl: string): string {
+  const normalized = String(baseUrl || '').trim().replace(/\/+$/, '');
+  if (normalized.endsWith('/chat/completions')) return normalized;
+  return `${normalized}/chat/completions`;
+}
+
+async function requestOpenAiCompatible(prompt: string, settings: AppSettings, signal?: AbortSignal): Promise<string> {
+  const url = buildChatCompletionsUrl(settings.aiBaseUrl);
+  const res = await safeFetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${settings.aiApiKey}`,
+    },
+    body: JSON.stringify({
+      model: settings.aiModel || 'gpt-4o-mini',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.2,
+    }),
+    signal,
+    timeoutMs: AI_FETCH_TIMEOUT_MS,
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(json?.error?.message || `AI provider request failed (${res.status})`);
+  }
+  const content = json.choices?.[0]?.message?.content;
+  if (!content) throw new Error('AI provider returned an empty response.');
+  return Array.isArray(content) ? content.map((part: { text?: string }) => part?.text || '').join('\n') : String(content);
+}
+
+export async function validateAiProvider(settings: AppSettings): Promise<{ ok: boolean; latencyMs?: number; error?: string; message?: string }> {
+  const missing: string[] = [];
+  if (!settings?.aiApiKey) missing.push('API key');
+  if (!settings?.aiModel) missing.push('model');
+  if (missing.length) return { ok: false, error: `Missing AI setting: ${missing.join(', ')}.` };
+
+  const startTime = Date.now();
+  try {
+    const prompt = 'Reply with exactly: ok';
+    const content = isGeminiBaseUrl(settings.aiBaseUrl)
+      ? await callGeminiApi(prompt, settings.aiApiKey, settings.aiModel)
+      : await requestOpenAiCompatible(prompt, settings);
+    const latencyMs = Date.now() - startTime;
+    if (!String(content || '').trim()) return { ok: false, latencyMs, error: 'AI provider returned an empty response.' };
+    return { ok: true, latencyMs, message: `AI provider is connected (${latencyMs}ms).` };
+  } catch (error) {
+    return {
+      ok: false,
+      latencyMs: Date.now() - startTime,
+      error: error instanceof Error ? error.message : 'AI provider connection failed.',
+    };
+  }
+}
+
+function buildOfflineFallback(intentId: AiIntentId, term: string, trimmed: string, translation: string, targetLang: string): AiResult {
+  const isLong = trimmed.split(/\s+/).length > 4;
+  if (intentId === 'sentence_breakdown') {
+    return {
+      type: 'sentence_breakdown',
+      query: trimmed,
+      summary: `### Clause & Structure Breakdown\nEnter a Gemini API key in Settings for a real syntactic parse.\n\n### Translation & Context\n${translation}`,
+      translation,
+    };
+  }
+  if (intentId === 'default') {
+    return {
+      type: intentId,
+      query: term,
+      summary: `**${term}** *word*\n\n${translation}\n\n### Senses & Meanings\n1. *(word)* Concise definition — ${translation}\n\n### Translation & Meaning\n**${term}** — ${translation}\n\n### Usage Note\nRegister and nuance depend on the surrounding sentence.\n\n### Example Sentences\n> "${trimmed}"\n\n### Deep Understanding\nEnter a Gemini API key in Settings for Oxford-style senses, bilingual glosses, usage notes, and etymology.`,
+      translation,
+    };
+  }
+  if (intentId === 'explain_in_context') {
+    return {
+      type: intentId,
+      query: term,
+      summary: `### Meaning in Context\nIn this sentence, **"${term}"** means **${translation}**.\n\n### Direct Substitutions\nEnter an API key for contextual synonyms.\n\n> "${trimmed}"`,
+      translation,
+    };
+  }
+  if (intentId === 'grammar') {
+    return {
+      type: intentId,
+      query: term,
+      summary: `### Syntactic Breakdown\n• Selected text: "${term}"\n• Structure: ${isLong ? 'clause / complex sentence' : 'phrase'}\n• Translation: ${translation}\n\n> "${trimmed}"`,
+      translation,
+    };
+  }
+  if (intentId === 'collocations') {
+    return {
+      type: intentId,
+      query: term,
+      summary: `### Core Meaning\n• Query: "${term}"\n• Translation: ${translation}\n\n> "${trimmed}"`,
+      translation,
+    };
+  }
+  if (intentId === 'confusables') {
+    return {
+      type: intentId,
+      query: term,
+      summary: `### Core Distinction\n• Term: "${term}"\n• Meaning: ${translation}\n\n> "${trimmed}"`,
+      translation,
+    };
+  }
+  if (intentId === 'rephrase') {
+    return {
+      type: intentId,
+      query: term,
+      summary: `### Simplified Version\n> "${trimmed}"\n\n### Academic & Formal\nEnter a Gemini API key to rewrite in three styles (${targetLang}).`,
+      translation,
+    };
+  }
+  return {
+    type: intentId,
+    query: term,
+    summary: `### AI analysis\n"${term}": ${translation}`,
+    translation,
+  };
 }
 
 export async function fetchAiAnalysis(
@@ -201,150 +293,110 @@ export async function fetchAiAnalysis(
   userApiKey?: string,
   userModelName?: string,
   signal?: AbortSignal,
+  context?: string,
+  settings?: AppSettings,
 ): Promise<AiResult> {
   const trimmed = text.trim();
   if (!trimmed) throw new Error('Context text cannot be empty');
 
-  const term = extractTargetTerm(trimmed);
+  const canonical = canonicalAiIntent(intentId);
+  const { term, surrounding } = resolveQueryAndContext(trimmed, context);
+  const promptContext = surrounding || (canonical === 'explain_in_context' ? '' : trimmed);
 
-  // Fetch real Google Translation as baseline
   let translation = trimmed;
   try {
-    const gtResult = await fetchGoogleTranslate(trimmed, targetLang, signal);
-    translation = gtResult.meanings?.[0]?.definitions?.[0]?.definition || trimmed;
-  } catch (e) {
+    const gtResult = await lookupGoogleTranslation(trimmed, targetLang, signal);
+    translation = gtResult.translatedText || trimmed;
+  } catch {
     // Ignore translation fallback failure
   }
 
-  if (signal?.aborted) {
-    throw new DOMException('The user aborted a request.', 'AbortError');
-  }
+  if (signal?.aborted) throw new DOMException('The user aborted a request.', 'AbortError');
 
-  // Resolve API key & preferred model from param, localStorage, or chrome.storage
-  let apiKey = userApiKey?.trim() || (typeof localStorage !== 'undefined' ? localStorage.getItem('gemini_api_key') : null);
-  let modelName = userModelName?.trim();
+  let apiKey = userApiKey?.trim() || settings?.aiApiKey?.trim() || (typeof localStorage !== 'undefined' ? localStorage.getItem('gemini_api_key') : null) || '';
+  let modelName = userModelName?.trim() || settings?.aiModel?.trim();
+  let baseUrl = settings?.aiBaseUrl || '';
 
   if (typeof chrome !== 'undefined' && chrome.storage) {
     try {
       if (!apiKey) {
-        const resKey = await new Promise<any>((r) => chrome.storage.local.get('aiApiKey', r));
-        if (resKey?.aiApiKey) apiKey = resKey.aiApiKey;
+        const resKey = await chrome.storage.local.get(['aiApiKey']);
+        if (typeof resKey?.aiApiKey === 'string') apiKey = resKey.aiApiKey;
       }
-      if (!modelName) {
-        const resModel = await new Promise<any>((r) => chrome.storage.sync.get('aiModel', (s) => chrome.storage.local.get('aiModel', (l) => r({ ...s, ...l }))));
-        if (resModel?.aiModel) modelName = resModel.aiModel;
+      if (!modelName || !baseUrl) {
+        const [syncItems, localItems] = await Promise.all([
+          chrome.storage.sync.get(['aiModel', 'aiBaseUrl']),
+          chrome.storage.local.get(['aiModel', 'aiBaseUrl']),
+        ]);
+        const stored = { ...syncItems, ...localItems } as Record<string, unknown>;
+        if (!modelName && typeof stored.aiModel === 'string') modelName = stored.aiModel;
+        if (!baseUrl && typeof stored.aiBaseUrl === 'string') baseUrl = stored.aiBaseUrl;
       }
-    } catch (e) {
+    } catch {
       // Ignore read error
     }
   }
 
+  const effectiveSettings = {
+    ...(settings || {}),
+    aiApiKey: apiKey,
+    aiModel: modelName || 'gemini-2.5-flash',
+    aiBaseUrl: baseUrl,
+    translateTargetLanguage: targetLang,
+  } as AppSettings;
+
   if (apiKey) {
     try {
-      const promptBuilder = PROMPT_TEMPLATES[intentId] || PROMPT_TEMPLATES.explain_in_context;
-      const prompt = promptBuilder(term, targetLang, trimmed);
-      const aiResponse = await callGeminiApi(prompt, apiKey, modelName || undefined, signal);
+      const prompt = buildPrompt(term, effectiveSettings, promptContext, canonical);
+      const raw = isGeminiBaseUrl(effectiveSettings.aiBaseUrl)
+        ? await callGeminiApi(prompt, apiKey, modelName || undefined, signal)
+        : await requestOpenAiCompatible(prompt, effectiveSettings, signal);
+      const lexicalProfile = parseLexicalProfileFromResponse(raw) || undefined;
+      const content = stripLexicalProfileBlock(raw);
 
-      if (intentId === 'sentence_breakdown') {
-        const words = trimmed.split(/\s+/);
-        const third = Math.ceil(words.length / 3);
+      if (canonical === 'sentence_breakdown') {
+        const structured = normalizeSentenceBreakdown(extractJsonObject(raw) || extractJsonObject(content), {
+          text: trimmed,
+          context: promptContext,
+          sentence: promptContext || trimmed,
+        });
+        if (structured) {
+          return {
+            type: 'sentence_breakdown',
+            query: trimmed,
+            summary: content,
+            structure: structured.structure,
+            phrases: structured.phrases,
+            translation: structured.translation || translation,
+            lexicalProfile,
+          };
+        }
+      }
+
+      if (canonical === 'confusables') {
+        const comparison = normalizeComparisonData(content, { text: term });
         return {
-          type: 'sentence_breakdown',
-          query: trimmed,
-          summary: aiResponse,
-          structure: [
-            { text: words.slice(0, third).join(' ') || 'Subject Clause', role: 'Subject Clause' },
-            { text: words.slice(third, third * 2).join(' ') || 'Predicate Verb', role: 'Predicate Verb' },
-            { text: words.slice(third * 2).join(' ') || 'Object Complement', role: 'Object Complement' },
-          ],
+          type: canonical,
+          query: term,
+          summary: content,
           translation,
+          lexicalProfile,
+          comparison: comparison || undefined,
         };
       }
 
       return {
-        type: intentId,
+        type: canonical,
         query: term,
-        summary: aiResponse,
+        summary: content,
         translation,
+        lexicalProfile,
       };
-    } catch (err: any) {
-      if (err?.name === 'AbortError') throw err;
-      console.warn('Gemini API call failed, falling back to rich offline analysis template:', err);
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') throw err;
+      throw err instanceof Error ? err : new Error('AI provider request failed.');
     }
   }
 
-  // ── Offline Dynamic Multi-Section Fallback Templates ──────
-  const isLong = trimmed.split(/\s+/).length > 4;
-
-  if (intentId === 'sentence_breakdown') {
-    const words = trimmed.split(/\s+/);
-    const third = Math.ceil(words.length / 3);
-    const seg1 = words.slice(0, third).join(' ') || 'Chủ ngữ / Cụm đầu';
-    const seg2 = words.slice(third, third * 2).join(' ') || 'Động詞 / Cụm vị ngữ';
-    const seg3 = words.slice(third * 2).join(' ') || 'Bổ ngữ / Tân ngữ';
-
-    return {
-      type: 'sentence_breakdown',
-      query: trimmed,
-      summary: `### Phân Tích Cú Pháp Câu\n• **Chủ ngữ / Mở đầu**: ${seg1}\n• **Vị ngữ / Hành động**: ${seg2}\n• **Bổ ngữ / Tân ngữ**: ${seg3}\n\n### Bản Dịch Ngữ Cảnh\n${translation}`,
-      structure: [
-        { text: seg1, role: 'Subject / Opening' },
-        { text: seg2, role: 'Verb / Action' },
-        { text: seg3, role: 'Object / Complement' },
-      ],
-      translation,
-    };
-  }
-
-  if (intentId === 'explain_in_context') {
-    return {
-      type: intentId,
-      query: term,
-      summary: `### Ý Nghĩa Trong Ngữ Cảnh\nTrong câu này, cụm từ **"${term}"** mang nghĩa chính là: **${translation}**.\n\n### Ngữ Cảnh Gốc\n> "${trimmed}"\n\n### Ghi Chú Ngữ Pháp\nCụm từ được sử dụng như một thành phần nghĩa quan trọng trong câu.\n\n*(💡 Nhập Gemini API Key trong Cài đặt để nhận phân tích sâu real-time từ AI)*`,
-      translation,
-    };
-  }
-
-  if (intentId === 'grammar') {
-    return {
-      type: intentId,
-      query: term,
-      summary: `### Phân Tích Ngữ Pháp\n• **Cụm từ được chọn**: "${term}"\n• **Cấu trúc**: ${isLong ? 'Mệnh đề / Câu phức hợp' : 'Cụm danh từ / Động từ chính'}\n• **Bản dịch**: ${translation}\n\n### Ngữ Cảnh Xuất Hiện\n> "${trimmed}"\n\n*(💡 Nhập Gemini API Key trong Cài đặt để nhận phân tích ngữ pháp chi tiết từ AI)*`,
-      translation,
-    };
-  }
-
-  if (intentId === 'collocations') {
-    return {
-      type: intentId,
-      query: term,
-      summary: `### Cụm Từ & Collocations\n• **Cụm từ tra cứu**: "${term}"\n• **Bản dịch**: ${translation}\n\n### Sử Dụng Trong Câu\n> "${trimmed}"\n\n*(💡 Nhập Gemini API Key trong Cài đặt để khám phá danh sách Collocations phong phú từ AI)*`,
-      translation,
-    };
-  }
-
-  if (intentId === 'confusables') {
-    return {
-      type: intentId,
-      query: term,
-      summary: `### So Sánh Từ Cùng Loại\n• **Từ đang xét**: "${term}"\n• **Ý nghĩa cơ bản**: ${translation}\n\n### Xuất Hiện Trong Ngữ Cảnh\n> "${trimmed}"\n\n*(💡 Nhập Gemini API Key trong Cài đặt để nhận ma trận phân biệt từ dễ nhầm lẫn từ AI)*`,
-      translation,
-    };
-  }
-
-  if (intentId === 'rephrase') {
-    return {
-      type: intentId,
-      query: term,
-      summary: `### Văn Phong Gốc\n> "${trimmed}"\n\n### Dịch Tự Nhiên (${targetLang})\n${translation}\n\n*(💡 Nhập Gemini API Key trong Cài đặt để AI viết lại câu theo 3 văn phong: Đơn giản, Viện hàn & Bản ngữ)*`,
-      translation,
-    };
-  }
-
-  return {
-    type: intentId,
-    query: term,
-    summary: `### Phân Tích AI\nNội dung cho "${term}": ${translation}`,
-    translation,
-  };
+  return buildOfflineFallback(canonical, term, trimmed, translation, targetLang);
 }

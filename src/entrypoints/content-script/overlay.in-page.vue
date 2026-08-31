@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { defineAsyncComponent, ref, onMounted, onUnmounted, watch } from 'vue';
 import { useStorage } from '@/composables/composable.storage';
-import { abortActiveAiRequest } from '@/composables/composable.ai-assistant';
 import { abortActiveDictRequest, stopAllAudio } from '@/composables/composable.dictionary';
 import AppHeader from '@/components/component.app-header.vue';
 import TabNavigation from '@/components/component.tab-navigation.vue';
 import WordLookupView from '@/components/view.word-lookup.vue';
-import AiAssistantView from '@/components/view.ai-assistant.vue';
-import ShortcutsModal from '@/components/modal.shortcuts.vue';
-import SettingsModal from '@/components/modal.settings.vue';
 import { TabId } from '@/types';
+import { isDistinctContext } from '@/shared/page-context';
+
+const AiAssistantView = defineAsyncComponent(() => import('@/components/view.ai-assistant.vue'));
+const ShortcutsModal = defineAsyncComponent(() => import('@/components/modal.shortcuts.vue'));
+const SettingsModal = defineAsyncComponent(() => import('@/components/modal.settings.vue'));
 
 const props = defineProps<{
   selectedText?: string;
@@ -35,8 +36,10 @@ const showSettings = ref<boolean>(false);
 const isDarkMode = ref<boolean>(settings.value.theme !== 'light');
 const currentProvider = ref<string>(settings.value.dictionaryProvider || 'free_dictionary');
 const currentText = ref<string>(props.selectedText || '');
-const currentContext = ref<string>(props.contextSentence || props.selectedText || '');
-const currentLang = ref<string>(props.targetLang || settings.value.translateTargetLanguage || 'vi');
+const currentContext = ref<string>(
+  isDistinctContext(props.selectedText || '', props.contextSentence) ? String(props.contextSentence || '').trim() : '',
+);
+const currentLang = ref<string>(props.targetLang || settings.value.translateTargetLanguage || 'Vietnamese');
 
 watch(() => settings.value.dictionaryProvider, (newProv) => {
   if (newProv) currentProvider.value = newProv;
@@ -55,11 +58,16 @@ function toggleTheme() {
   saveSettings({ theme: isDarkMode.value ? 'dark' : 'light' });
 }
 
+function distinctContext(text: string, context?: string): string {
+  const trimmedContext = String(context || '').replace(/\s+/g, ' ').trim();
+  return isDistinctContext(text, trimmedContext) ? trimmedContext : '';
+}
+
 function syncTextFromSelection(text?: string, context?: string) {
   if (!text?.trim()) return;
   const trimmed = text.trim();
   currentText.value = trimmed;
-  currentContext.value = context?.trim() || trimmed;
+  currentContext.value = distinctContext(trimmed, context);
 
   if (settings.value.defaultTab) {
     activeTab.value = settings.value.defaultTab;
@@ -68,14 +76,21 @@ function syncTextFromSelection(text?: string, context?: string) {
 
 function handleTabChange(newTab: TabId) {
   stopAllAudio();
+  if (newTab === 'ai_assistant' && settings.value.enableAI === false) {
+    activeTab.value = 'dictionary';
+    return;
+  }
   activeTab.value = newTab;
   saveSettings({ defaultTab: newTab });
 }
 
 function handleClose() {
   stopAllAudio();
-  abortActiveAiRequest();
   abortActiveDictRequest();
+  void import('@/composables/composable.ai-assistant').then(({ abortActiveAiRequest, cancelAiPreload }) => {
+    abortActiveAiRequest();
+    cancelAiPreload();
+  });
   emit('close');
 }
 
@@ -91,8 +106,12 @@ onMounted(() => {
   const shadowRoot = document.getElementById('dictionary-extension-root')?.shadowRoot;
   if (shadowRoot) {
     shadowRoot.addEventListener('dict-update-text', (e: Event) => {
-      const text = (e as CustomEvent<string>).detail;
-      syncTextFromSelection(text);
+      const detail = (e as CustomEvent<string | { text?: string; context?: string }>).detail;
+      if (typeof detail === 'string') {
+        syncTextFromSelection(detail, currentContext.value);
+        return;
+      }
+      syncTextFromSelection(detail?.text, detail?.context || currentContext.value);
     });
 
     shadowRoot.addEventListener('dict-switch-tab', (e: Event) => {
@@ -104,8 +123,11 @@ onMounted(() => {
 
 onUnmounted(() => {
   stopAllAudio();
-  abortActiveAiRequest();
   abortActiveDictRequest();
+  void import('@/composables/composable.ai-assistant').then(({ abortActiveAiRequest, cancelAiPreload }) => {
+    abortActiveAiRequest();
+    cancelAiPreload();
+  });
 });
 
 watch(() => props.selectedText, (newText) => {
@@ -113,9 +135,7 @@ watch(() => props.selectedText, (newText) => {
 });
 
 watch(() => props.contextSentence, (newContext) => {
-  if (newContext?.trim()) {
-    currentContext.value = newContext.trim();
-  }
+  currentContext.value = distinctContext(currentText.value, newContext);
 });
 
 watch(() => props.targetLang, (newLang) => {
@@ -178,13 +198,15 @@ watch(activeTab, (newTab) => {
     <!-- Main Content -->
     <main class="flex-1 overflow-y-auto">
       <WordLookupView
-        v-if="activeTab === 'dictionary'"
+        v-show="activeTab === 'dictionary'"
         :initialQuery="currentText"
+        :initialContext="currentContext"
         :targetLang="currentLang"
         :provider="currentProvider"
       />
       <AiAssistantView
-        v-else-if="activeTab === 'ai_assistant'"
+        v-if="activeTab === 'ai_assistant'"
+        :initialQuery="currentText"
         :initialContext="currentContext"
         :targetLang="currentLang"
         @switch-tab="handleTabChange"

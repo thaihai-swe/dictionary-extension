@@ -75,18 +75,18 @@ function handleTargetLangChange(e: Event) {
       <!-- Target Translation Language Selector -->
       <div class="relative flex items-center">
         <select
-          :value="settings.translateTargetLanguage || 'vi'"
+          :value="settings.translateTargetLanguage || 'Vietnamese'"
           @change="handleTargetLangChange"
           class="bg-dark-muted border border-dark-border text-slate-200 text-[11px] font-medium rounded-lg px-2 py-1 outline-none focus:border-teal-500 cursor-pointer appearance-none pr-5 transition-colors"
           title="Select Translation Target Language"
         >
-          <option value="vi">VN VI</option>
-          <option value="en">US EN</option>
-          <option value="ja">JP JA</option>
-          <option value="zh">CN ZH</option>
-          <option value="ko">KR KO</option>
-          <option value="fr">FR FR</option>
-          <option value="es">ES ES</option>
+          <option value="Vietnamese">VN VI</option>
+          <option value="English">US EN</option>
+          <option value="Japanese">JP JA</option>
+          <option value="Chinese">CN ZH</option>
+          <option value="Korean">KR KO</option>
+          <option value="French">FR FR</option>
+          <option value="Spanish">ES ES</option>
         </select>
         <span class="absolute right-1.5 text-[9px] text-slate-400 pointer-events-none">▼</span>
       </div>
