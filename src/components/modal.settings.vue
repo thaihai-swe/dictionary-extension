@@ -248,9 +248,9 @@ async function testTranslationConnection() {
 
 <template>
   <div class="min-h-screen bg-[#0f172a] text-slate-100 p-4 sm:p-6 flex items-start justify-center">
-    <div class="w-full max-w-lg bg-dark-surface border border-dark-border rounded-2xl p-5 shadow-2xl space-y-4 text-xs flex flex-col my-4">
+    <div class="w-full max-w-5xl bg-dark-surface border border-dark-border rounded-2xl p-8 shadow-2xl space-y-5 text-sm flex flex-col my-4">
       <div class="flex items-center justify-between border-b border-dark-border pb-3 flex-shrink-0">
-        <h3 class="font-bold text-sm text-slate-100 flex items-center gap-2">
+        <h3 class="font-bold text-xl text-slate-100 flex items-center gap-2">
           <span>⚙️</span>
           <span>Dictionary Settings</span>
         </h3>
@@ -261,7 +261,7 @@ async function testTranslationConnection() {
         <button
           @click="activeTab = 'general'"
           :class="[
-            'flex-1 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer',
+            'flex-1 py-2.5 rounded-lg text-sm font-bold transition-all cursor-pointer',
             activeTab === 'general' ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30' : 'text-slate-400 hover:text-slate-200'
           ]"
         >
@@ -271,7 +271,7 @@ async function testTranslationConnection() {
         <button
           @click="activeTab = 'appearance'"
           :class="[
-            'flex-1 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer',
+            'flex-1 py-2.5 rounded-lg text-sm font-bold transition-all cursor-pointer',
             activeTab === 'appearance' ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30' : 'text-slate-400 hover:text-slate-200'
           ]"
         >
@@ -281,7 +281,7 @@ async function testTranslationConnection() {
         <button
           @click="activeTab = 'sources'"
           :class="[
-            'flex-1 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer',
+            'flex-1 py-2.5 rounded-lg text-sm font-bold transition-all cursor-pointer',
             activeTab === 'sources' ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30' : 'text-slate-400 hover:text-slate-200'
           ]"
         >
@@ -291,7 +291,7 @@ async function testTranslationConnection() {
         <button
           @click="activeTab = 'ai'"
           :class="[
-            'flex-1 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer',
+            'flex-1 py-2.5 rounded-lg text-sm font-bold transition-all cursor-pointer',
             activeTab === 'ai' ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30' : 'text-slate-400 hover:text-slate-200'
           ]"
         >
@@ -336,7 +336,7 @@ async function testTranslationConnection() {
             <label class="font-bold text-slate-200 block">⌨️ Quick Post-Selection Shortcut:</label>
             <select
               v-model="localSettings.postSelectionModifier"
-              class="w-full bg-dark-muted border border-dark-border text-slate-200 text-xs font-medium rounded-xl px-3 py-2 outline-none focus:border-teal-500 cursor-pointer"
+              class="w-full bg-dark-muted border border-dark-border text-slate-200 text-sm font-medium rounded-xl px-3 py-2 outline-none focus:border-teal-500 cursor-pointer"
             >
               <option value="shift">Hold Shift + Press Q (Shift+Q)</option>
               <option value="alt">Hold Alt + Press Q (Alt+Q)</option>
@@ -393,9 +393,9 @@ async function testTranslationConnection() {
               v-model="pausedSitesInput"
               rows="3"
               placeholder="example.com&#10;docs.google.com"
-              class="w-full bg-dark-muted border border-dark-border rounded-xl p-2.5 text-xs text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 font-mono"
+              class="w-full bg-dark-muted border border-dark-border rounded-xl p-2.5 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 font-mono"
             ></textarea>
-            <p class="text-[10px] text-slate-400">The floating lookup icon will be suppressed on these domain names.</p>
+            <p class="text-xs text-slate-400">The floating lookup icon will be suppressed on these domain names.</p>
           </div>
         </div>
 
@@ -440,7 +440,7 @@ async function testTranslationConnection() {
             <label class="font-bold text-slate-200 block">🔤 Display Font Family:</label>
             <select
               v-model="localSettings.fontFamily"
-              class="w-full bg-dark-muted border border-dark-border text-slate-200 text-xs font-medium rounded-xl px-3 py-2 outline-none focus:border-teal-500 cursor-pointer"
+              class="w-full bg-dark-muted border border-dark-border text-slate-200 text-sm font-medium rounded-xl px-3 py-2 outline-none focus:border-teal-500 cursor-pointer"
             >
               <option value="learner">Modern Academic Font (Plus Jakarta Sans / Sans-Serif)</option>
               <option value="editorial">Classic Editorial Font (Newsreader / Serif)</option>
@@ -462,7 +462,7 @@ async function testTranslationConnection() {
                 v-model.number="localSettings.popupWidth"
                 min="360"
                 max="1000"
-                class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-xs text-slate-100 outline-none focus:border-teal-500 font-mono"
+                class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-sm text-slate-100 outline-none focus:border-teal-500 font-mono"
               />
             </div>
 
@@ -473,7 +473,7 @@ async function testTranslationConnection() {
                 v-model.number="localSettings.popupHeight"
                 min="380"
                 max="900"
-                class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-xs text-slate-100 outline-none focus:border-teal-500 font-mono"
+                class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-sm text-slate-100 outline-none focus:border-teal-500 font-mono"
               />
             </div>
           </div>
@@ -496,7 +496,7 @@ async function testTranslationConnection() {
             <label class="font-bold text-slate-200 block">🌐 Default Target Translation Language:</label>
             <select
               v-model="localSettings.translateTargetLanguage"
-              class="w-full bg-dark-muted border border-dark-border text-slate-200 text-xs font-medium rounded-xl px-3 py-2 outline-none focus:border-teal-500 cursor-pointer"
+              class="w-full bg-dark-muted border border-dark-border text-slate-200 text-sm font-medium rounded-xl px-3 py-2 outline-none focus:border-teal-500 cursor-pointer"
             >
               <option v-for="lang in languageOptions" :key="lang" :value="lang">{{ lang }}</option>
             </select>
@@ -508,7 +508,7 @@ async function testTranslationConnection() {
               v-model="localSettings.customLanguages"
               type="text"
               placeholder="Vietnamese, English, Japanese"
-              class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500"
+              class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500"
             />
           </div>
 
@@ -516,7 +516,7 @@ async function testTranslationConnection() {
             <label class="font-bold text-slate-200 block">🌍 Translation provider:</label>
             <select
               v-model="localSettings.translateProvider"
-              class="w-full bg-dark-muted border border-dark-border text-slate-200 text-xs font-medium rounded-xl px-3 py-2 outline-none focus:border-teal-500 cursor-pointer"
+              class="w-full bg-dark-muted border border-dark-border text-slate-200 text-sm font-medium rounded-xl px-3 py-2 outline-none focus:border-teal-500 cursor-pointer"
             >
               <option value="google">Google Translate</option>
               <option value="libretranslate">LibreTranslate</option>
@@ -524,13 +524,13 @@ async function testTranslationConnection() {
             <div class="flex items-center gap-2">
               <button
                 type="button"
-                class="px-2.5 py-1.5 rounded-lg bg-dark-muted border border-dark-border text-[11px] font-bold text-slate-200 hover:border-teal-500 cursor-pointer"
+                class="px-2.5 py-1.5 rounded-lg bg-dark-muted border border-dark-border text-sm font-bold text-slate-200 hover:border-teal-500 cursor-pointer"
                 :disabled="connectionBusy[`translation:${localSettings.translateProvider}`]"
                 @click="testTranslationConnection"
               >
                 Test translation
               </button>
-              <span class="text-[10px] text-slate-400">{{ connectionStatus[`translation:${localSettings.translateProvider}`] }}</span>
+              <span class="text-xs text-slate-400">{{ connectionStatus[`translation:${localSettings.translateProvider}`] }}</span>
             </div>
           </div>
 
@@ -540,14 +540,14 @@ async function testTranslationConnection() {
               v-model="localSettings.libreTranslateBaseUrl"
               type="url"
               placeholder="https://libretranslate.com"
-              class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 font-mono"
+              class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 font-mono"
             />
             <label class="font-bold text-slate-200 block">LibreTranslate API key (optional):</label>
             <input
               v-model="localSettings.libreTranslateApiKey"
               type="password"
               placeholder="LibreTranslate API key"
-              class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 font-mono"
+              class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 font-mono"
             />
           </div>
 
@@ -555,7 +555,7 @@ async function testTranslationConnection() {
             <label class="font-bold text-slate-200 block">📚 Default Dictionary Provider:</label>
             <select
               v-model="localSettings.dictionaryProvider"
-              class="w-full bg-dark-muted border border-dark-border text-slate-200 text-xs font-medium rounded-xl px-3 py-2 outline-none focus:border-teal-500 cursor-pointer"
+              class="w-full bg-dark-muted border border-dark-border text-slate-200 text-sm font-medium rounded-xl px-3 py-2 outline-none focus:border-teal-500 cursor-pointer"
             >
               <option value="free_dictionary">🌐 Free Dictionary API (Google Baseline)</option>
               <option value="google_translate">🌐 Google Translate API</option>
@@ -572,9 +572,9 @@ async function testTranslationConnection() {
               v-model="localSettings.dictionaryApiKey"
               type="password"
               placeholder="MW Collegiate API key"
-              class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 font-mono"
+              class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 font-mono"
             />
-            <p class="text-[10px] text-slate-400">Free key from dictionaryapi.com. Required only for Merriam-Webster.</p>
+            <p class="text-xs text-slate-400">Free key from dictionaryapi.com. Required only for Merriam-Webster.</p>
           </div>
 
           <div class="space-y-2 pt-2 border-t border-dark-border/60">
@@ -583,7 +583,7 @@ async function testTranslationConnection() {
               v-model="localSettings.wordnikApiKey"
               type="password"
               placeholder="Wordnik API Key..."
-              class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 font-mono"
+              class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 font-mono"
             />
           </div>
 
@@ -593,20 +593,20 @@ async function testTranslationConnection() {
               v-model="localSettings.wordsApiKey"
               type="password"
               placeholder="WordsAPI Key..."
-              class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 font-mono"
+              class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 font-mono"
             />
           </div>
 
           <div class="space-y-2 pt-2 border-t border-dark-border/60">
             <label class="font-bold text-slate-200 block">🔎 Test dictionary connection:</label>
             <div class="grid grid-cols-2 gap-2">
-              <button type="button" class="px-2 py-1.5 rounded-lg bg-dark-muted border border-dark-border text-[11px] font-bold cursor-pointer" :disabled="connectionBusy.free_dictionary" @click="testDictionaryConnection('free_dictionary')">Test Free Dictionary</button>
-              <button type="button" class="px-2 py-1.5 rounded-lg bg-dark-muted border border-dark-border text-[11px] font-bold cursor-pointer" :disabled="connectionBusy.wiktionary" @click="testDictionaryConnection('wiktionary')">Test Wiktionary</button>
-              <button type="button" class="px-2 py-1.5 rounded-lg bg-dark-muted border border-dark-border text-[11px] font-bold cursor-pointer" :disabled="connectionBusy.merriam_webster" @click="testDictionaryConnection('merriam_webster')">Test Merriam-Webster</button>
-              <button type="button" class="px-2 py-1.5 rounded-lg bg-dark-muted border border-dark-border text-[11px] font-bold cursor-pointer" :disabled="connectionBusy.wordnik" @click="testDictionaryConnection('wordnik')">Test Wordnik</button>
-              <button type="button" class="px-2 py-1.5 rounded-lg bg-dark-muted border border-dark-border text-[11px] font-bold cursor-pointer" :disabled="connectionBusy.words_api" @click="testDictionaryConnection('words_api')">Test WordsAPI</button>
+              <button type="button" class="px-2 py-1.5 rounded-lg bg-dark-muted border border-dark-border text-sm font-bold cursor-pointer" :disabled="connectionBusy.free_dictionary" @click="testDictionaryConnection('free_dictionary')">Test Free Dictionary</button>
+              <button type="button" class="px-2 py-1.5 rounded-lg bg-dark-muted border border-dark-border text-sm font-bold cursor-pointer" :disabled="connectionBusy.wiktionary" @click="testDictionaryConnection('wiktionary')">Test Wiktionary</button>
+              <button type="button" class="px-2 py-1.5 rounded-lg bg-dark-muted border border-dark-border text-sm font-bold cursor-pointer" :disabled="connectionBusy.merriam_webster" @click="testDictionaryConnection('merriam_webster')">Test Merriam-Webster</button>
+              <button type="button" class="px-2 py-1.5 rounded-lg bg-dark-muted border border-dark-border text-sm font-bold cursor-pointer" :disabled="connectionBusy.wordnik" @click="testDictionaryConnection('wordnik')">Test Wordnik</button>
+              <button type="button" class="px-2 py-1.5 rounded-lg bg-dark-muted border border-dark-border text-sm font-bold cursor-pointer" :disabled="connectionBusy.words_api" @click="testDictionaryConnection('words_api')">Test WordsAPI</button>
             </div>
-            <p class="text-[10px] text-slate-400">
+            <p class="text-xs text-slate-400">
               {{ connectionStatus[localSettings.dictionaryProvider] || Object.values(connectionStatus).filter((item) => !String(item).startsWith('translation:')).slice(-1)[0] }}
             </p>
           </div>
@@ -616,7 +616,7 @@ async function testTranslationConnection() {
             <label class="font-bold text-slate-200 block">🔊 Speech Synthesis Voice (TTS Voice):</label>
             <select
               v-model="localSettings.pronunciationVoiceURI"
-              class="w-full bg-dark-muted border border-dark-border text-slate-200 text-xs font-medium rounded-xl px-3 py-2 outline-none focus:border-teal-500 cursor-pointer"
+              class="w-full bg-dark-muted border border-dark-border text-slate-200 text-sm font-medium rounded-xl px-3 py-2 outline-none focus:border-teal-500 cursor-pointer"
             >
               <option value="">Auto-select system default voice</option>
               <option v-for="voice in availableVoices" :key="voice.voiceURI" :value="voice.voiceURI">
@@ -652,7 +652,7 @@ async function testTranslationConnection() {
             <label class="flex items-center justify-between cursor-pointer">
               <div>
                 <span class="font-bold text-slate-200 block">⚡ Enable AI Preload (Background Pre-fetch):</span>
-                <span class="text-[10px] text-slate-400 block">After Dictionary lookup finishes, load Main AI first, then Context, Grammar, and the other intents in the background.</span>
+                <span class="text-xs text-slate-400 block">After Dictionary lookup finishes, load Main AI first, then Context, Grammar, and the other intents in the background.</span>
               </div>
               <input type="checkbox" v-model="localSettings.enableAiPreload" class="accent-teal-500 w-4 h-4 cursor-pointer flex-shrink-0 ml-2" />
             </label>
@@ -662,7 +662,7 @@ async function testTranslationConnection() {
             <label class="flex items-center justify-between cursor-pointer">
               <div>
                 <span class="font-bold text-slate-200 block">💬 Use AI when a phrase has no dictionary definition:</span>
-                <span class="text-[10px] text-slate-400 block">Only runs when AI is enabled. Explains idioms dictionary backends miss.</span>
+                <span class="text-xs text-slate-400 block">Only runs when AI is enabled. Explains idioms dictionary backends miss.</span>
               </div>
               <input type="checkbox" v-model="localSettings.enablePhraseFallback" class="accent-teal-500 w-4 h-4 cursor-pointer flex-shrink-0 ml-2" />
             </label>
@@ -675,7 +675,7 @@ async function testTranslationConnection() {
               <a
                 href="https://aistudio.google.com/app/apikey"
                 target="_blank"
-                class="text-[10px] text-teal-400 hover:underline flex items-center gap-1"
+                class="text-xs text-teal-400 hover:underline flex items-center gap-1"
               >
                 <span>Get Free API Key ↗</span>
               </a>
@@ -685,9 +685,9 @@ async function testTranslationConnection() {
               v-model="localSettings.aiApiKey"
               type="password"
               placeholder="Paste API Key (AIzaSy...)"
-              class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 transition-all font-mono"
+              class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 transition-all font-mono"
             />
-            <p class="text-[10px] text-slate-400 leading-normal">
+            <p class="text-xs text-slate-400 leading-normal">
               Stored only on this device in `chrome.storage.local`. It is not synced and is never exported. Leave blank to keep the current key.
             </p>
           </div>
@@ -700,7 +700,7 @@ async function testTranslationConnection() {
               <button
                 type="button"
                 @click="toggleManualModelMode"
-                class="text-[10px] px-2 py-0.5 rounded bg-dark-muted hover:bg-dark-border text-teal-400 font-bold border border-dark-border transition-colors cursor-pointer"
+                class="text-xs px-2 py-0.5 rounded bg-dark-muted hover:bg-dark-border text-teal-400 font-bold border border-dark-border transition-colors cursor-pointer"
               >
                 {{ isManualModelInput ? '📋 Preset List' : '✏️ Custom Model ID' }}
               </button>
@@ -710,7 +710,7 @@ async function testTranslationConnection() {
             <select
               v-if="!isManualModelInput"
               v-model="localSettings.aiModel"
-              class="w-full bg-dark-muted border border-dark-border text-slate-200 text-xs font-medium rounded-xl px-3 py-2 outline-none focus:border-teal-500 cursor-pointer"
+              class="w-full bg-dark-muted border border-dark-border text-slate-200 text-sm font-medium rounded-xl px-3 py-2 outline-none focus:border-teal-500 cursor-pointer"
             >
               <option value="gemini-2.5-flash">⚡ gemini-2.5-flash (Recommended - Fast &amp; Smart)</option>
               <option value="gemini-3.5-flash-lite">🚀 gemini-3.5-flash-lite (Maximum Speed)</option>
@@ -724,7 +724,7 @@ async function testTranslationConnection() {
               v-model="localSettings.aiModel"
               type="text"
               placeholder="Enter custom Gemini model ID (e.g. gemini-2.5-pro)..."
-              class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 transition-all font-mono"
+              class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 transition-all font-mono"
             />
           </div>
 
@@ -734,19 +734,19 @@ async function testTranslationConnection() {
               v-model="localSettings.aiBaseUrl"
               type="text"
               placeholder="https://generativelanguage.googleapis.com"
-              class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 transition-all font-mono"
+              class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 transition-all font-mono"
             />
-            <p class="text-[10px] text-slate-400">Gemini URLs use generateContent. Any other URL is treated as OpenAI-compatible /chat/completions.</p>
+            <p class="text-xs text-slate-400">Gemini URLs use generateContent. Any other URL is treated as OpenAI-compatible /chat/completions.</p>
             <div class="flex items-center gap-2">
               <button
                 type="button"
-                class="px-2.5 py-1.5 rounded-lg bg-dark-muted border border-dark-border text-[11px] font-bold text-slate-200 hover:border-teal-500 cursor-pointer"
+                class="px-2.5 py-1.5 rounded-lg bg-dark-muted border border-dark-border text-sm font-bold text-slate-200 hover:border-teal-500 cursor-pointer"
                 :disabled="connectionBusy.ai"
                 @click="testAiConnection"
               >
                 Test AI connection
               </button>
-              <span class="text-[10px] text-slate-400">{{ connectionStatus.ai }}</span>
+              <span class="text-xs text-slate-400">{{ connectionStatus.ai }}</span>
             </div>
           </div>
 
@@ -755,19 +755,19 @@ async function testTranslationConnection() {
               <label class="font-bold text-slate-200">📝 Prompt templates</label>
               <button
                 type="button"
-                class="text-[10px] px-2 py-0.5 rounded bg-dark-muted hover:bg-dark-border text-teal-400 font-bold border border-dark-border cursor-pointer"
+                class="text-xs px-2 py-0.5 rounded bg-dark-muted hover:bg-dark-border text-teal-400 font-bold border border-dark-border cursor-pointer"
                 @click="restoreAllPrompts"
               >
                 Restore all defaults
               </button>
             </div>
-            <p class="text-[10px] text-slate-400">Variables: <code v-pre>{{str}}</code>, <code v-pre>{{text}}</code>, <code v-pre>{{sentence}}</code>, <code v-pre>{{context}}</code>, <code v-pre>{{targetLang}}</code>, <code v-pre>{{word_count}}</code></p>
+            <p class="text-xs text-slate-400">Variables: <code v-pre>{{str}}</code>, <code v-pre>{{text}}</code>, <code v-pre>{{sentence}}</code>, <code v-pre>{{context}}</code>, <code v-pre>{{targetLang}}</code>, <code v-pre>{{word_count}}</code></p>
             <div v-for="editor in promptEditors" :key="editor.key" class="space-y-1.5">
               <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-slate-300">{{ editor.label }}</span>
+                <span class="text-sm font-bold text-slate-300">{{ editor.label }}</span>
                 <button
                   type="button"
-                  class="text-[10px] text-teal-400 font-bold cursor-pointer"
+                  class="text-xs text-teal-400 font-bold cursor-pointer"
                   @click="restorePrompt(editor.key)"
                 >
                   Restore default
@@ -776,7 +776,7 @@ async function testTranslationConnection() {
               <textarea
                 v-model="(localSettings as any)[editor.key]"
                 rows="5"
-                class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-[11px] text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 font-mono"
+                class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 font-mono"
               ></textarea>
             </div>
           </div>
@@ -789,14 +789,14 @@ async function testTranslationConnection() {
           <button
             @click="exportSettings"
             title="Download settings JSON backup"
-            class="px-2.5 py-1.5 rounded-xl bg-dark-muted hover:bg-dark-border text-slate-300 text-[11px] font-medium border border-dark-border transition-colors cursor-pointer"
+            class="px-2.5 py-1.5 rounded-xl bg-dark-muted hover:bg-dark-border text-slate-300 text-sm font-medium border border-dark-border transition-colors cursor-pointer"
           >
             📥 Export JSON
           </button>
           <button
             @click="triggerImportFile"
             title="Restore settings from JSON file"
-            class="px-2.5 py-1.5 rounded-xl bg-dark-muted hover:bg-dark-border text-slate-300 text-[11px] font-medium border border-dark-border transition-colors cursor-pointer"
+            class="px-2.5 py-1.5 rounded-xl bg-dark-muted hover:bg-dark-border text-slate-300 text-sm font-medium border border-dark-border transition-colors cursor-pointer"
           >
             📤 Import JSON
           </button>
@@ -807,14 +807,14 @@ async function testTranslationConnection() {
           <button
             type="button"
             @click="resetForm"
-            class="px-4 py-2 rounded-xl bg-dark-muted hover:bg-dark-border text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+            class="px-4 py-2 rounded-xl bg-dark-muted hover:bg-dark-border text-slate-300 text-sm font-bold transition-colors cursor-pointer"
           >
             Reset
           </button>
 
           <button
             @click="handleSave"
-            class="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+            class="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
           >
             <span>{{ isSavedNotice ? '✓ Saved!' : 'Save Settings' }}</span>
           </button>
