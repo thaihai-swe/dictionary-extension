@@ -1,7 +1,6 @@
 import { defineAsyncComponent } from 'vue';
 import type { AiIntentId } from '../types';
 
-export const SettingsModal = defineAsyncComponent(() => import('./modal.settings.vue'));
 export const ShortcutsModal = defineAsyncComponent(() => import('./modal.shortcuts.vue'));
 export const WordFamilyCard = defineAsyncComponent(() => import('./card.word-family.vue'));
 export const UsageNotesCard = defineAsyncComponent(() => import('./card.usage-notes.vue'));

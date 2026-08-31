@@ -105,7 +105,7 @@ The keyboard command **Look up the selected text** (`lookup-selection`, suggeste
 | `aiBaseUrl` | `string` | `sync` | `https://generativelanguage...` | Endpoint URL. Points to Google Gemini or any OpenAI-compatible endpoint (`/v1/chat/completions`). |
 | `aiApiKey` | `string` | `local` | `""` | Private API key for Google Gemini or your custom AI provider. |
 | `aiModel` | `string` | `sync` | `"gemini-3.5-flash-lite"` | Model identifier (e.g. `gemini-3.5-flash-lite`, `gpt-4o-mini`, `deepseek-chat`, `llama3`). |
-| `enableAiPreload` | `boolean` | `sync` | `false` | Asynchronously preloads Main AI explanations, then automatically preloads Context Explain, Grammar & Nuance, Phrase & Collocations, and Sentence Breakdown when the main result completes. |
+| `enableAiPreload` | `boolean` | `sync` | `true` | Asynchronously preloads Main AI explanations, then automatically preloads Context Explain, Grammar & Nuance, Phrase & Collocations, and Sentence Breakdown when the main result completes. |
 | `disablePageContextExtraction`| `boolean`| `sync`| `false` | When `true`, suppresses automatic extraction of surrounding webpage sentences. Manual context entry remains available. |
 | `aiPromptTemplate` | `string` | `sync` | *(Built-in)* | Prompt template for **Main AI Explanation**. |
 | `aiContextPromptTemplate` | `string` | `sync` | *(Built-in)* | Prompt template for **Context Explain** (requires `{{context}}`). |

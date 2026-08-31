@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { defineAsyncComponent, ref, onMounted, onUnmounted, watch } from 'vue';
 import { useStorage } from '@/composables/composable.storage';
+import { useDictionary } from '@/composables/composable.dictionary';
 import AppHeader from '@/components/component.app-header.vue';
 import TabNavigation from '@/components/component.tab-navigation.vue';
 import WordLookupView from '@/components/view.word-lookup.vue';
@@ -8,11 +9,10 @@ import { TabId } from '@/types';
 
 const AiAssistantView = defineAsyncComponent(() => import('@/components/view.ai-assistant.vue'));
 const ShortcutsModal = defineAsyncComponent(() => import('@/components/modal.shortcuts.vue'));
-const SettingsModal = defineAsyncComponent(() => import('@/components/modal.settings.vue'));
 
 const { activeTab, settings, saveSettings } = useStorage();
+const { query } = useDictionary();
 const showShortcuts = ref<boolean>(false);
-const showSettings = ref<boolean>(false);
 const targetLang = ref<string>(settings.value.translateTargetLanguage || 'Vietnamese');
 const currentProvider = ref<string>(settings.value.dictionaryProvider || 'free_dictionary');
 const isDarkMode = ref<boolean>(settings.value.theme !== 'light');
@@ -31,9 +31,15 @@ watch(() => settings.value.theme, (newTheme) => {
 });
 
 function updateResponsiveMode() {
-  if (typeof window !== 'undefined') {
-    isFullTab.value = window.innerWidth > 760;
+  if (typeof chrome !== 'undefined' && chrome.windows?.getCurrent) {
+    void chrome.windows.getCurrent().then((win) => {
+      isFullTab.value = win.type === 'normal';
+    }).catch(() => {
+      isFullTab.value = window.innerWidth > 1100;
+    });
+    return;
   }
+  isFullTab.value = typeof window !== 'undefined' && window.innerWidth > 1100;
 }
 
 onMounted(() => {
@@ -92,7 +98,7 @@ function handleKeydown(event: KeyboardEvent) {
   <div
     :class="[
       'bg-dark-paper text-slate-100 flex flex-col select-none overflow-hidden transition-all duration-200',
-      isFullTab ? 'w-full max-w-6xl min-h-[calc(100vh-2rem)] mx-auto my-4 rounded-2xl border border-dark-border shadow-2xl' : 'w-[720px] h-[530px]',
+      isFullTab ? 'w-full max-w-6xl min-h-[calc(100vh-2rem)] mx-auto my-4 rounded-2xl border border-dark-border shadow-2xl' : 'w-full h-full',
       !isDarkMode ? 'light-theme' : '',
       settings.fontFamily === 'editorial' ? 'font-serif' : 'font-sans'
     ]"
@@ -107,7 +113,6 @@ function handleKeydown(event: KeyboardEvent) {
       @toggle-shortcuts="showShortcuts = !showShortcuts"
       @toggle-maximize="openFullTab"
       @toggle-theme="toggleTheme()"
-      @open-settings="showSettings = true"
       @update:provider="(v: string) => currentProvider = v"
       @update:targetLang="(v: string) => targetLang = v"
     />
@@ -128,6 +133,7 @@ function handleKeydown(event: KeyboardEvent) {
       />
       <AiAssistantView
         v-if="activeTab === 'ai_assistant'"
+        :initialQuery="query"
         :targetLang="targetLang"
         @switch-tab="handleTabChange"
       />
@@ -139,10 +145,5 @@ function handleKeydown(event: KeyboardEvent) {
       @close="showShortcuts = false"
     />
 
-    <!-- Extension Settings Modal -->
-    <SettingsModal
-      :show="showSettings"
-      @close="showSettings = false"
-    />
   </div>
 </template>

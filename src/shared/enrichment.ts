@@ -292,12 +292,37 @@ export function mergeDictionaryEntries(base: DictionaryEntry, incoming: Dictiona
     lexicalProfile: incoming.lexicalProfile || base.lexicalProfile,
     sourceBadges: mergeSourceBadges(base.sourceBadges, incoming.sourceBadges),
     subtitle: base.subtitle || incoming.subtitle,
-    lemmaFallback: base.lemmaFallback || incoming.lemmaFallback,
     translation,
     phraseExplanation: base.phraseExplanation?.length ? base.phraseExplanation : incoming.phraseExplanation,
     syllables: base.syllables || incoming.syllables,
     enriched: true,
   };
+}
+
+export function hasUsableDefinitions(entry?: DictionaryEntry | null): boolean {
+  return Boolean(entry?.meanings?.some((meaning) => meaning.definitions?.some((item) => item.definition?.trim())));
+}
+
+function hasPhoneticText(entry?: DictionaryEntry | null): boolean {
+  const word = String(entry?.word || '').trim().toLowerCase();
+  const phonetics = [...(entry?.pronunciations || []), ...(entry?.phonetics || [])];
+  if (String(entry?.phonetic || '').trim() && String(entry?.phonetic || '').trim().toLowerCase() !== word) {
+    return true;
+  }
+  return phonetics.some((item) => {
+    const phonetic = String(item?.phonetic || item?.text || '').trim();
+    return Boolean(phonetic && phonetic.toLowerCase() !== word);
+  });
+}
+
+function hasExampleSentences(entry?: DictionaryEntry | null): boolean {
+  if (entry?.examples?.some((item) => item.text?.trim())) return true;
+  return Boolean(entry?.meanings?.some((meaning) => meaning.definitions?.some((item) => item.example?.trim())));
+}
+
+export function isThinDictionaryEntry(entry?: DictionaryEntry | null): boolean {
+  if (!entry) return true;
+  return !hasUsableDefinitions(entry) || !hasPhoneticText(entry) || !hasExampleSentences(entry);
 }
 
 export function cloneDictionaryEntry(entry: DictionaryEntry): DictionaryEntry {

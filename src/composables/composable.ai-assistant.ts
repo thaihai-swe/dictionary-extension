@@ -1,8 +1,9 @@
 import { ref } from 'vue';
-import { useStorage } from './composable.storage';
+import { useStorage, whenSettingsReady } from './composable.storage';
 import { stopAllAudio } from './composable.dictionary';
 import { AiResult, AiIntentId, AppSettings } from '../types';
 import { canonicalAiIntent, PRELOAD_ALL_INTENTS, PRELOAD_FOLLOW_UPS } from '../shared/ai-prompts';
+import { hasConfiguredAiApiKey } from '../shared/settings-export';
 import { cancelAiLookup, createRequestId, requestAiLookup } from '../shared/runtime-client';
 
 export { PRELOAD_ALL_INTENTS, PRELOAD_FOLLOW_UPS };
@@ -31,6 +32,7 @@ const aiError = ref<string | null>(null);
 
 let activeAiRequestId: string | null = null;
 let preloadToken = 0;
+let activePreloadKey = '';
 let aiGeneration = 0;
 
 const MAX_AI_CACHE_SIZE = 50;
@@ -101,6 +103,15 @@ export function abortActiveAiRequest() {
 
 export function cancelAiPreload() {
   preloadToken += 1;
+  activePreloadKey = '';
+}
+
+function makePreloadKey(text: string, context: string, lang: string): string {
+  return `${text.toLowerCase()}\0${context.toLowerCase()}\0${lang.toLowerCase()}`;
+}
+
+function shouldPreloadAi(settings: AppSettings): boolean {
+  return Boolean(settings.enableAiPreload && settings.enableAI && hasConfiguredAiApiKey(settings));
 }
 
 export function useAiAssistant() {
@@ -112,6 +123,7 @@ export function useAiAssistant() {
     targetLang: string,
     context: string,
   ): Promise<AiResult> {
+    await whenSettingsReady();
     const cacheKey = getAiCacheKey(intentId, text, targetLang, context, settings.value);
     const cached = readAiCache(cacheKey);
     if (cached) return cached;
@@ -159,15 +171,15 @@ export function useAiAssistant() {
     if (cached) {
       aiResult.value = cached;
       isAiLoading.value = false;
-      if (settings.value.enableAiPreload) {
+      if (shouldPreloadAi(settings.value)) {
         void continuePreloadAfter(nextIntent, cleanText, cleanContext, lang);
       }
       return;
     }
 
-    abortActiveAiRequest();
-    const requestId = createRequestId('ai');
-    activeAiRequestId = requestId;
+    if (!pending) {
+      abortActiveAiRequest();
+    }
     const generation = ++aiGeneration;
     if (aiResult.value?.query?.trim().toLowerCase() !== cleanText.toLowerCase()) {
       aiResult.value = null;
@@ -175,19 +187,10 @@ export function useAiAssistant() {
     isAiLoading.value = true;
 
     try {
-      const result = await (pending || requestAiLookup({
-        text: cleanText,
-        context: cleanContext,
-        intent: nextIntent,
-        targetLang: lang,
-        requestId,
-      }).then((value) => {
-        writeAiCache(cacheKey, value);
-        return value;
-      }));
+      const result = await requestAnalysis(nextIntent, cleanText, lang, cleanContext);
       if (generation !== aiGeneration) return;
       aiResult.value = result;
-      if (settings.value.enableAiPreload) {
+      if (shouldPreloadAi(settings.value)) {
         void continuePreloadAfter(nextIntent, cleanText, cleanContext, lang);
       }
     } catch (err: unknown) {
@@ -201,7 +204,6 @@ export function useAiAssistant() {
     } finally {
       if (generation === aiGeneration) {
         isAiLoading.value = false;
-        if (activeAiRequestId === requestId) activeAiRequestId = null;
       }
     }
   }
@@ -215,20 +217,20 @@ export function useAiAssistant() {
     text: string,
     context: string,
     targetLang: string,
-    skipIntent?: AiIntentId,
-    token = ++preloadToken,
+    skipIntent: AiIntentId | undefined,
+    token: number,
   ) {
     const remaining = PRELOAD_FOLLOW_UPS.filter((intent) => intent !== skipIntent);
     void preloadIntentChunks(remaining);
-    await Promise.allSettled(remaining.map(async (intent) => {
+    for (const intent of remaining) {
       if (token !== preloadToken) return;
-      if (intent === 'explain_in_context' && !context) return;
+      if (intent === 'explain_in_context' && !context) continue;
       try {
         await requestAnalysis(intent, text, targetLang, context);
       } catch {
         // Keep follow-up preload failures silent.
       }
-    }));
+    }
   }
 
   async function continuePreloadAfter(
@@ -237,19 +239,28 @@ export function useAiAssistant() {
     context: string,
     targetLang: string,
   ) {
-    if (!settings.value.enableAiPreload || !settings.value.enableAI) return;
-    await preloadRemainingIntents(text, context, targetLang, currentIntent);
+    await whenSettingsReady();
+    if (!shouldPreloadAi(settings.value)) return;
+    const key = makePreloadKey(text, context, targetLang);
+    if (activePreloadKey === key) return;
+    const token = ++preloadToken;
+    activePreloadKey = key;
+    await preloadRemainingIntents(text, context, targetLang, currentIntent, token);
   }
 
   async function preloadIntents(text: string, context?: string, targetLang?: string) {
-    if (!settings.value.enableAiPreload || !settings.value.enableAI) return;
+    await whenSettingsReady();
+    if (!shouldPreloadAi(settings.value)) return;
     const cleanText = String(text || '').trim();
     if (!cleanText) return;
     const lang = targetLang || settings.value.translateTargetLanguage || 'Vietnamese';
     const rawContext = String(context || activeContext.value || '').replace(/\s+/g, ' ').trim();
     const cleanContext = rawContext && rawContext.toLowerCase() !== cleanText.toLowerCase() ? rawContext : '';
     activeContext.value = cleanContext;
+    const key = makePreloadKey(cleanText, cleanContext, lang);
+    if (activePreloadKey === key) return;
     const token = ++preloadToken;
+    activePreloadKey = key;
     void preloadIntentChunks(PRELOAD_ALL_INTENTS);
 
     try {

@@ -5,6 +5,7 @@ import overlayCss from '@/assets/main.css?inline';
 interface OverlayProps {
   selectedText?: string;
   contextSentence?: string;
+  lookupRequestId?: string;
   isMaximized?: boolean;
   isDragging?: boolean;
   isResizing?: boolean;
@@ -38,6 +39,7 @@ export function mountOverlay(
       return () => h(Overlay, {
         selectedText: state.selectedText,
         contextSentence: state.contextSentence,
+        lookupRequestId: state.lookupRequestId,
         isMaximized: state.isMaximized,
         isDragging: state.isDragging,
         isResizing: state.isResizing,

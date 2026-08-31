@@ -14,6 +14,7 @@ import {
   applyTemplate,
   canonicalAiIntent,
   countWords,
+  lexicalExtrasForIntent,
   shouldRequestLexicalProfile,
 } from '../shared/ai-prompts';
 import {
@@ -103,6 +104,9 @@ export function buildPrompt(
     word_count: countWords(text),
     targetLang: settings?.translateTargetLanguage || 'Vietnamese',
     enableLexicalProfile: shouldRequestLexicalProfile(canonical, settings?.enableLexicalProfile),
+    lexicalExtras: shouldRequestLexicalProfile(canonical, settings?.enableLexicalProfile)
+      ? lexicalExtrasForIntent(canonical)
+      : [],
   };
   return appendInputContract(applyTemplate(templateForIntent(canonical, settings), variables), variables);
 }
@@ -313,29 +317,9 @@ export async function fetchAiAnalysis(
 
   if (signal?.aborted) throw new DOMException('The user aborted a request.', 'AbortError');
 
-  let apiKey = userApiKey?.trim() || settings?.aiApiKey?.trim() || (typeof localStorage !== 'undefined' ? localStorage.getItem('gemini_api_key') : null) || '';
+  let apiKey = userApiKey?.trim() || settings?.aiApiKey?.trim() || '';
   let modelName = userModelName?.trim() || settings?.aiModel?.trim();
   let baseUrl = settings?.aiBaseUrl || '';
-
-  if (typeof chrome !== 'undefined' && chrome.storage) {
-    try {
-      if (!apiKey) {
-        const resKey = await chrome.storage.local.get(['aiApiKey']);
-        if (typeof resKey?.aiApiKey === 'string') apiKey = resKey.aiApiKey;
-      }
-      if (!modelName || !baseUrl) {
-        const [syncItems, localItems] = await Promise.all([
-          chrome.storage.sync.get(['aiModel', 'aiBaseUrl']),
-          chrome.storage.local.get(['aiModel', 'aiBaseUrl']),
-        ]);
-        const stored = { ...syncItems, ...localItems } as Record<string, unknown>;
-        if (!modelName && typeof stored.aiModel === 'string') modelName = stored.aiModel;
-        if (!baseUrl && typeof stored.aiBaseUrl === 'string') baseUrl = stored.aiBaseUrl;
-      }
-    } catch {
-      // Ignore read error
-    }
-  }
 
   const effectiveSettings = {
     ...(settings || {}),

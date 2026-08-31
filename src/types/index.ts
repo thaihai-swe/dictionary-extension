@@ -155,12 +155,6 @@ export interface PracticeResult {
   details?: Array<{ word: string; matched: boolean; closeMatch?: boolean }>;
 }
 
-export interface LemmaFallback {
-  originalText: string;
-  lemma: string;
-  kind: 'root' | 'phrase';
-}
-
 export interface TranslationResult {
   translatedText: string;
   detectedLanguage?: string;
@@ -182,7 +176,6 @@ export interface DictionaryEntry {
   subtitle?: string;
   sourceBadges?: SourceBadge[];
   providerId?: string;
-  lemmaFallback?: LemmaFallback;
   translation?: TranslationResult;
   originalText?: string;
   phraseExplanation?: PhraseExplanationSection[];
@@ -228,6 +221,7 @@ export interface AppSettings {
   pronunciationVoiceURI: string;
   aiBaseUrl: string;
   aiApiKey: string;
+  hasAiApiKey: boolean;
   aiModel: string;
   aiPromptTemplate: string;
   aiDefaultPromptTemplate: string;

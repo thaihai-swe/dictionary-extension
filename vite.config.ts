@@ -109,6 +109,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         popup: resolve(__dirname, 'index.html'),
+        options: resolve(__dirname, 'options.html'),
       },
       output: {
         entryFileNames: 'assets/[name]-[hash].js',

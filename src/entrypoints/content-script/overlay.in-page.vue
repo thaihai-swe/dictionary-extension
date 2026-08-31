@@ -10,11 +10,11 @@ import { isDistinctContext } from '@/shared/page-context';
 
 const AiAssistantView = defineAsyncComponent(() => import('@/components/view.ai-assistant.vue'));
 const ShortcutsModal = defineAsyncComponent(() => import('@/components/modal.shortcuts.vue'));
-const SettingsModal = defineAsyncComponent(() => import('@/components/modal.settings.vue'));
 
 const props = defineProps<{
   selectedText?: string;
   contextSentence?: string;
+  lookupRequestId?: string;
   targetLang?: string;
   isMaximized?: boolean;
   isDragging?: boolean;
@@ -32,7 +32,6 @@ const emit = defineEmits<{
 
 const { activeTab, settings, saveSettings } = useStorage();
 const showShortcuts = ref<boolean>(false);
-const showSettings = ref<boolean>(false);
 const isDarkMode = ref<boolean>(settings.value.theme !== 'light');
 const currentProvider = ref<string>(settings.value.dictionaryProvider || 'free_dictionary');
 const currentText = ref<string>(props.selectedText || '');
@@ -176,7 +175,6 @@ watch(activeTab, (newTab) => {
         @toggle-shortcuts="showShortcuts = !showShortcuts"
         @toggle-maximize="emit('toggle-maximize')"
         @toggle-theme="toggleTheme()"
-        @open-settings="showSettings = true"
         @update:provider="(v: string) => currentProvider = v"
         @update:targetLang="(v: string) => currentLang = v"
       />
@@ -201,6 +199,7 @@ watch(activeTab, (newTab) => {
         v-show="activeTab === 'dictionary'"
         :initialQuery="currentText"
         :initialContext="currentContext"
+        :lookupRequestId="lookupRequestId"
         :targetLang="currentLang"
         :provider="currentProvider"
       />
@@ -229,11 +228,6 @@ watch(activeTab, (newTab) => {
       @close="showShortcuts = false"
     />
 
-    <!-- Settings & API Key Modal -->
-    <SettingsModal
-      :show="showSettings"
-      @close="showSettings = false"
-    />
   </div>
 </template>
 

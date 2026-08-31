@@ -10,20 +10,26 @@ import { NotFoundError, isFatalDictionaryError } from './errors';
 import {
   DICTIONARY_FALLBACK_ORDER,
   getPrimaryDictionaryLookupAttempts,
-  getEnglishLemma,
   isPhraseLike,
-  LookupAttemptKind,
-  prefersLemmaHeadword,
   extractLexicalProfileFromMarkdown,
   mergeLexicalProfiles,
   parseLexicalProfile,
   splitPhraseExplanation,
 } from '../shared/query-utils';
-import { cloneDictionaryEntry, mergeDictionaryEntries, mergeMeanings, mergeSourceBadges } from '../shared/enrichment';
+import { cloneDictionaryEntry, isThinDictionaryEntry, mergeDictionaryEntries, mergeMeanings, mergeSourceBadges } from '../shared/enrichment';
 
 const ENRICHMENT_CONCURRENCY = 2;
 const ENRICHMENT_TTL_MS = 10 * 60 * 1000;
 const MAX_ENRICHMENT_CACHE = 20;
+const COMBINED_RESULT_TTL_MS = 10 * 60 * 1000;
+const MAX_COMBINED_RESULT_CACHE = 20;
+
+interface CombinedResultCacheEntry {
+  result: DictionaryEntry;
+  timestamp: number;
+}
+
+const combinedResultCache = new Map<string, CombinedResultCacheEntry>();
 
 interface EnrichmentCacheEntry {
   results: DictionaryEntry[];
@@ -34,6 +40,42 @@ const enrichmentMemoryCache = new Map<string, EnrichmentCacheEntry>();
 
 export function clearEnrichmentCache() {
   enrichmentMemoryCache.clear();
+  combinedResultCache.clear();
+}
+
+function combinedResultCacheKey(word: string, settings: AppSettings): string {
+  return JSON.stringify({
+    word: word.toLowerCase().trim(),
+    provider: settings.dictionaryProvider || 'free_dictionary',
+    lang: String(settings.translateTargetLanguage || '').toLowerCase(),
+    enableTranslate: Boolean(settings.enableTranslate),
+    enableDictionary: Boolean(settings.enableDictionary),
+    enablePhraseFallback: Boolean(settings.enablePhraseFallback),
+    enableLexicalProfile: settings.enableLexicalProfile !== false,
+  });
+}
+
+function readCombinedResultCache(key: string): DictionaryEntry | undefined {
+  const entry = combinedResultCache.get(key);
+  if (!entry) return undefined;
+  if (Date.now() - entry.timestamp > COMBINED_RESULT_TTL_MS) {
+    combinedResultCache.delete(key);
+    return undefined;
+  }
+  combinedResultCache.delete(key);
+  combinedResultCache.set(key, entry);
+  return cloneDictionaryEntry(entry.result);
+}
+
+function writeCombinedResultCache(key: string, result: DictionaryEntry) {
+  if (!result.enriched) return;
+  combinedResultCache.delete(key);
+  combinedResultCache.set(key, { result: cloneDictionaryEntry(result), timestamp: Date.now() });
+  while (combinedResultCache.size > MAX_COMBINED_RESULT_CACHE) {
+    const oldest = combinedResultCache.keys().next().value;
+    if (!oldest) break;
+    combinedResultCache.delete(oldest);
+  }
 }
 
 function isProviderConfigured(providerId: string, settings?: AppSettings): boolean {
@@ -47,42 +89,6 @@ function resolvePrimaryProviderId(provider: string, settings?: AppSettings): str
   const requested = provider || settings?.dictionaryProvider || 'free_dictionary';
   if (isProviderConfigured(requested, settings)) return requested;
   return DICTIONARY_FALLBACK_ORDER.find((id) => isProviderConfigured(id, settings)) || requested;
-}
-
-function applyLemmaFallback(
-  result: DictionaryEntry,
-  originalText: string,
-  candidate: string,
-  kind: LookupAttemptKind,
-): DictionaryEntry {
-  if (kind !== 'root' && kind !== 'phrase') return result;
-  const notice = kind === 'phrase'
-    ? `Showing definitions for phrase: ${candidate}`
-    : `Showing definitions for root: ${candidate}`;
-  return {
-    ...result,
-    word: candidate || result.word,
-    lemmaFallback: { originalText, lemma: candidate, kind },
-    subtitle: result.subtitle ? `${result.subtitle} • ${notice}` : notice,
-  };
-}
-
-function forceLemmaHeadword(result: DictionaryEntry, originalText: string): DictionaryEntry {
-  const lemma = getEnglishLemma(originalText);
-  if (!lemma || !prefersLemmaHeadword(originalText)) return result;
-
-  const notice = `Showing definitions for root: ${lemma}`;
-  return {
-    ...result,
-    word: lemma,
-    originalText: originalText || result.originalText,
-    lemmaFallback: {
-      originalText: originalText || result.lemmaFallback?.originalText || result.word,
-      lemma,
-      kind: 'root',
-    },
-    subtitle: result.subtitle?.includes(notice) ? result.subtitle : (result.subtitle ? `${result.subtitle} • ${notice}` : notice),
-  };
 }
 
 function hasUsableDefinitions(entry?: DictionaryEntry | null): boolean {
@@ -181,12 +187,9 @@ export async function fetchDictionaryResult(
   } as AppSettings;
 
   if (provider === 'google_translate' || provider === 'libre_translate' || provider === 'gemini_ai') {
-    return forceLemmaHeadword(
-      normalizeDictionaryResult(
-        await lookupSingleProvider(provider, cleanWord, targetLang, signal, settingsWithKeys),
-        settingsWithKeys,
-        cleanWord,
-      ),
+    return normalizeDictionaryResult(
+      await lookupSingleProvider(provider, cleanWord, targetLang, signal, settingsWithKeys),
+      settingsWithKeys,
       cleanWord,
     );
   }
@@ -202,15 +205,7 @@ export async function fetchDictionaryResult(
     if (!isProviderConfigured(attempt.providerId, settingsWithKeys)) continue;
     try {
       const result = await lookupSingleProvider(attempt.providerId, attempt.query, targetLang, signal, settingsWithKeys);
-      const normalized = forceLemmaHeadword(
-        applyLemmaFallback(
-          normalizeDictionaryResult(result, settingsWithKeys, cleanWord),
-          cleanWord,
-          attempt.query,
-          attempt.kind,
-        ),
-        cleanWord,
-      );
+      const normalized = normalizeDictionaryResult(result, settingsWithKeys, cleanWord);
       if (hasUsableDefinitions(normalized)) return normalized;
       if (!bestPartial) bestPartial = normalized;
     } catch (error) {
@@ -314,7 +309,7 @@ export async function runDictionaryEnrichment(
   signal?: AbortSignal,
 ) {
   const primaryProviderId = baseResult.providerId || settings.dictionaryProvider || 'free_dictionary';
-  const queryTerm = baseResult.lemmaFallback?.lemma || word.trim();
+  const queryTerm = word.trim();
   const targetLang = settings.translateTargetLanguage || 'Vietnamese';
   const cacheKey = enrichmentCacheKey(word, settings, primaryProviderId, queryTerm);
 
@@ -375,6 +370,12 @@ export async function fetchCombinedDictionaryResult(
   const cleanWord = word.trim();
   const provider = settings.dictionaryProvider || 'free_dictionary';
   const targetLang = settings.translateTargetLanguage || 'Vietnamese';
+  const combinedKey = combinedResultCacheKey(cleanWord, settings);
+  const cachedCombined = readCombinedResultCache(combinedKey);
+  if (cachedCombined?.enriched) {
+    emitUpdate(onEnrichUpdate, cachedCombined, cachedCombined.revision || 0);
+    return cachedCombined;
+  }
 
   const dictionaryPromise = settings.enableDictionary !== false
     ? fetchDictionaryResult(cleanWord, provider, targetLang, signal, settings.aiApiKey, settings.aiModel, settings)
@@ -412,10 +413,7 @@ export async function fetchCombinedDictionaryResult(
   }
 
   let current: DictionaryEntry = dictionary
-    ? forceLemmaHeadword(
-      { ...dictionary, revision: 0, originalText: cleanWord, meanings: mergeMeanings(dictionary.meanings || [], []) },
-      cleanWord,
-    )
+    ? { ...dictionary, revision: 0, originalText: cleanWord, meanings: mergeMeanings(dictionary.meanings || [], []) }
     : {
         word: cleanWord,
         meanings: [],
@@ -461,7 +459,8 @@ export async function fetchCombinedDictionaryResult(
     })
     : Promise.resolve();
 
-  const enrichmentTask = settings.enableDictionary !== false
+  const shouldEnrichSecondaries = settings.enableDictionary !== false && isThinDictionaryEntry(latest);
+  const enrichmentTask = shouldEnrichSecondaries
     ? runDictionaryEnrichment(cleanWord, latest, settings, (updated) => {
       applyLiveUpdate({ ...updated, enriched: true }, 3);
     }, backgroundSignal)
@@ -485,8 +484,9 @@ export async function fetchCombinedDictionaryResult(
     latest = {
       ...latest,
       enriched: true,
-      revision: Math.max(latest.revision || 0, pendingTranslation || canEnrich || needsPhraseFallback ? 3 : 0),
+      revision: Math.max(latest.revision || 0, pendingTranslation || shouldEnrichSecondaries || needsPhraseFallback ? 3 : 0),
     };
+    writeCombinedResultCache(combinedKey, latest);
     emitUpdate(onEnrichUpdate, latest, latest.revision || 0);
     return latest;
   }).catch((error) => {

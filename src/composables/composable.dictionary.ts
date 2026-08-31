@@ -1,6 +1,12 @@
 import { ref } from 'vue';
-import { useStorage } from './composable.storage';
-import { cancelDictionaryLookup, createRequestId, requestDictionaryLookup, subscribeLookupUpdates } from '../shared/runtime-client';
+import { useStorage, whenSettingsReady } from './composable.storage';
+import { cancelAiPreload } from './composable.ai-assistant';
+import {
+  cancelDictionaryLookup,
+  createRequestId,
+  startDictionaryLookup,
+  subscribeLookupUpdates,
+} from '../shared/dictionary-lookup-client';
 import { AppSettings, DictionaryEntry, PracticeResult } from '../types';
 
 const query = ref<string>('');
@@ -269,20 +275,34 @@ export function abortActiveDictRequest() {
   isLoading.value = false;
 }
 
-function maybePreloadAi(text: string, targetLang: string, context?: string) {
-  void import('./composable.ai-assistant').then(({ useAiAssistant }) => {
-    useAiAssistant().preloadIntents(text, context, targetLang);
-  });
+let dictPreloadGeneration = 0;
+
+function maybePreloadAi(text: string, targetLang: string, context?: string, generation = dictPreloadGeneration) {
+  void (async () => {
+    await whenSettingsReady();
+    if (generation !== dictPreloadGeneration) return;
+    const { useAiAssistant } = await import('./composable.ai-assistant');
+    if (generation !== dictPreloadGeneration) return;
+    await useAiAssistant().preloadIntents(text, context, targetLang);
+  })();
 }
 
 export function useDictionary() {
   const { settings } = useStorage();
 
-  async function searchWord(wordToSearch: string, providerName?: string, targetLang?: string, context?: string) {
+  async function searchWord(
+    wordToSearch: string,
+    providerName?: string,
+    targetLang?: string,
+    context?: string,
+    attachedRequestId?: string,
+  ) {
     if (!wordToSearch || !wordToSearch.trim()) return;
 
     stopAllAudio();
-    void import('./composable.ai-assistant').then(({ cancelAiPreload }) => cancelAiPreload());
+    dictPreloadGeneration += 1;
+    const preloadGeneration = dictPreloadGeneration;
+    cancelAiPreload();
 
     const cleanWord = wordToSearch.trim();
     const provider = providerName || settings.value.dictionaryProvider || 'free_dictionary';
@@ -294,9 +314,9 @@ export function useDictionary() {
     };
     const cacheKey = getDictCacheKey(cleanWord, lookupSettings, provider, lang);
     const pending = dictPendingMap.get(cacheKey);
-    const reusedRequestId = pending ? dictPendingRequestIds.get(cacheKey) : undefined;
+    const reusedRequestId = attachedRequestId || (pending ? dictPendingRequestIds.get(cacheKey) : undefined);
 
-    if (!pending && activeDictRequestId) {
+    if (!pending && !attachedRequestId && activeDictRequestId) {
       cancelDictionaryLookup(activeDictRequestId);
       activeDictRequestId = null;
     }
@@ -312,16 +332,25 @@ export function useDictionary() {
     const cached = readDictCache(cacheKey);
     result.value = cached || null;
     isLoading.value = !cached;
+    let didPreload = false;
+    const preload = () => {
+      if (didPreload) return;
+      didPreload = true;
+      maybePreloadAi(cleanWord, lang, context, preloadGeneration);
+    };
     if (cached) {
-      maybePreloadAi(cleanWord, lang, context);
-      if (cached.enriched) return;
+      preload();
+      if (cached.enriched && !attachedRequestId) return;
     }
 
     let enrichmentTimeout: ReturnType<typeof setTimeout> | null = null;
-    const unsubscribe = subscribeLookupUpdates((payload) => {
-      if (generation !== lookupGeneration) return;
-      if (payload.requestId !== requestId || payload.source !== 'dictionary') return;
-      const enriched = payload.result as DictionaryEntry;
+    let pendingUpdate: DictionaryEntry | null = null;
+    let updateFrame = 0;
+    const flushUpdate = () => {
+      updateFrame = 0;
+      if (!pendingUpdate) return;
+      const enriched = pendingUpdate;
+      pendingUpdate = null;
       if ((result.value?.revision || 0) > (enriched.revision || 0)) return;
       result.value = enriched;
       isLoading.value = false;
@@ -330,13 +359,24 @@ export function useDictionary() {
         if (enrichmentTimeout) clearTimeout(enrichmentTimeout);
         unsubscribe();
       }
+    };
+    const unsubscribe = subscribeLookupUpdates((payload) => {
+      if (generation !== lookupGeneration) return;
+      if (payload.requestId !== requestId || payload.source !== 'dictionary') return;
+      const enriched = payload.result as DictionaryEntry;
+      if ((result.value?.revision || 0) > (enriched.revision || 0)) return;
+      pendingUpdate = enriched;
+      if (typeof requestAnimationFrame === 'function') {
+        if (!updateFrame) updateFrame = requestAnimationFrame(flushUpdate);
+      } else {
+        flushUpdate();
+      }
     });
 
-    const request = pending || requestDictionaryLookup({
+    const request = pending || startDictionaryLookup({
       text: cleanWord,
       context,
-      provider,
-      targetLang: lang,
+      ...(attachedRequestId ? {} : { provider, targetLang: lang }),
       requestId,
     });
     if (!pending) {
@@ -353,7 +393,7 @@ export function useDictionary() {
       } else if (!cached) {
         writeDictCache(cacheKey, result.value);
       }
-      maybePreloadAi(cleanWord, lang, context);
+      preload();
     } catch (err: unknown) {
       if (err instanceof Error && (/abort/i.test(err.message) || err.name === 'AbortError')) {
         return;

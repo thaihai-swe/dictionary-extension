@@ -18,10 +18,6 @@ interface NormalizedLookupResult {
     kind: "dictionary" | "translation" | "ai" | string;
     providerId?: string;
   }>;
-  lemmaFallback?: {
-    originalText: string;
-    lemma: string;
-  };
   lexicalProfile?: LexicalProfile;
   sections: Array<{
     title?: string;
@@ -108,9 +104,9 @@ The AI subsystem operates in dual modes:
 
 | Intent ID | Label | Description | Output Format |
 |---|---|---|---|
-| `explain_in_context` | **Explain in Context** | In-depth contextual explanation & nuances | Structured Markdown |
-| `grammar` | **Grammar & Nuance** | Syntactic analysis & common learner mistakes | Markdown + Learner Mistakes Card |
-| `collocations` | **Phrase & Collocations** | Natural word pairings & phrase usage | Markdown + Collocations Card |
+| `explain_in_context` | **Explain in Context** | In-sentence meaning, substitutions, and nuance lost if replaced | Structured Markdown |
+| `grammar` | **Grammar & Nuance** | Syntactic analysis, pattern rules, and common learner mistakes | Markdown + Learner Mistakes Card |
+| `collocations` | **Phrase & Collocations** | Idiom meaning, preposition patterns, and natural word pairings | Markdown + Collocations Card |
 | `sentence_breakdown` | **Sentence Breakdown** | Clause-by-clause structural breakdown | Clause Structure Card + Translation |
 | `confusables` | **Compare Confusables** | Comparison with easily confused words | Structured Markdown |
 | `rephrase` | **Rephrase & Styles** | Alternate phrasing in different registers | Structured Markdown |

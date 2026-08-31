@@ -76,7 +76,7 @@ Welcome to the comprehensive documentation for **Dictionary**, a lightweight, ze
 
 | Feature Domain | Capabilities & Specifications | Documentation Guide |
 |---|---|---|
-| **Multi-Source Dictionary** | 5 integrated backends (`free_dictionary`, `wiktionary`, `merriam_webster`, `wordnik`, `words_api`), progressive fallback, smart lemmatization, and phrasal canonicalization. | [Providers](providers.md), [User Guide](user-guide.md) |
+| **Multi-Source Dictionary** | 5 integrated backends (`free_dictionary`, `wiktionary`, `merriam_webster`, `wordnik`, `words_api`) with progressive fallback. Lookups use the selected text as-is. | [Providers](providers.md), [User Guide](user-guide.md) |
 | **Lazy Enrichment** | Non-blocking secondary query batches (`concurrency: 2`), cumulative definition merging, IPA phonetic backfilling, and 2-level caching (Memory + Session storage). | [Architecture](architecture.md), [Providers](providers.md) |
 | **Neural Translation** | Parallel translation with Google Translate or self-hosted LibreTranslate; dynamic dropdown with custom language definitions. | [Settings](settings.md), [Providers](providers.md) |
 | **Pronunciation & Practice** | High-quality dictionary MP3s + Web Speech fallback, adjustable speed (0.5x–1.5x), animated visual equalizer, and microphone Speech Practice Evaluator with Levenshtein scoring. | [User Guide](user-guide.md), [Providers](providers.md) |

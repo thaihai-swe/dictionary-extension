@@ -4,6 +4,7 @@ import {
   CANCEL_LOOKUP,
   LOOKUP_TEXT,
   LOOKUP_UPDATE,
+  OPEN_OPTIONS,
   VALIDATE_PROVIDER,
   aiAbortScope,
   createRequestId,
@@ -20,6 +21,24 @@ import {
 } from './messages';
 
 export { createRequestId } from './messages';
+
+export async function openExtensionSettings(): Promise<void> {
+  if (typeof chrome === 'undefined' || !chrome.runtime) return;
+  if (typeof chrome.runtime.openOptionsPage === 'function') {
+    try {
+      await chrome.runtime.openOptionsPage();
+      return;
+    } catch {
+      // Content scripts do not expose openOptionsPage.
+    }
+  }
+  try {
+    await sendMessage({ type: OPEN_OPTIONS });
+  } catch {
+    const url = chrome.runtime.getURL?.('options.html');
+    if (url && typeof window !== 'undefined') window.open(url, '_blank');
+  }
+}
 
 function runtimeUnavailable(): Error {
   return new Error('Extension runtime is unavailable.');

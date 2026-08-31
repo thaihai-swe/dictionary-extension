@@ -29,7 +29,7 @@ User selects text on webpage OR types query in toolbar popup
            Trigger Activation & Surface Prep
   - In-Page: Floating icon, post-selection key, direct selection, dblclick, or context menu
   - Toolbar: Manual query entry or active tab selection lookup
-  - Automatic Context: Exact selection sentence or ranked page candidate prefill
+  - Automatic Context: Range-only sentence extract after popup open (page scan is not on mouseup)
                         │
                         ▼
          LOOKUP_TEXT Message to Service Worker
@@ -50,7 +50,7 @@ User selects text on webpage OR types query in toolbar popup
 │  - Dictionary lookup first   │ │  - Format prompt & variables │
 │  - Translation in parallel;  │ │  - Sandbox input boundaries  │
 │    attach if already ready   │ │  - Route: Gemini / OpenAI-cb │
-│  - Primary lemma/phrase      │ │  - Parse JSON / Markdown     │
+│  - Exact selected query      │ │  - Parse JSON / Markdown     │
 │    before secondary backends │ │  - Extract lexical profile   │
 │  - Return dictionary result  │ │  - Return result to popup    │
 │    immediately (blocking)    │ │                              │
@@ -70,11 +70,12 @@ User selects text on webpage OR types query in toolbar popup
 │              Phase 2: Lazy Enrichment (Non-Blocking)          │
 │                                                              │
 │  1. Attach late translation via LOOKUP_UPDATE (revision: 1)  │
-│  2. If phrase-like & no defs: run AI Phrase Fallback first   │
-│  3. Query non-primary dictionary providers (concurrency: 2)  │
+│  2. If phrase-like & no defs: run AI Phrase Fallback         │
+│  3. Secondary providers only if Phase 1 entry is thin        │
+│     (no defs, no IPA, or no examples; concurrency: 2)        │
 │  4. Merge definitions, examples, syns/ants, IPA, & profile   │
-│  5. Update L1 (memory) & L2 (chrome.storage.session) cache   │
-│  6. Send LOOKUP_UPDATE with requestId and revision: 2        │
+│  5. Update SW combined-result memory cache                   │
+│  6. UI coalesces LOOKUP_UPDATE onto requestAnimationFrame    │
 └──────────────┬───────────────────────────────────────────────┘
                │
                ▼
@@ -101,8 +102,8 @@ User selects text on webpage OR types query in toolbar popup
    free_dictionary ➔ wiktionary ➔ merriam_webster ➔ wordnik ➔ words_api
    ```
    *(The primary provider is prioritized at the front of this sequence.)*
-4. **Primary-First Lemma/Phrase:** The primary provider retries lemma and phrase candidates before any secondary backend is contacted, so common inflections (`running` → `run`) do not wait on 404 fan-out.
-5. **Secondary Exact Then Lemma/Phrase:** If the primary still has no hit, remaining configured providers try the exact query, then lemma/phrase candidates. Unconfigured key-backed providers are skipped. `NotFoundError` and transient network/5xx/429/timeout continue to the next provider.
+4. **Primary Exact Query:** The primary provider looks up the selected text as-is. Inflections and phrases are not rewritten to a root lemma.
+5. **Secondary Exact Query:** If the primary still has no hit, remaining configured providers try the same exact query. Unconfigured key-backed providers are skipped. `NotFoundError` and transient network/5xx/429/timeout continue to the next provider.
 6. **Operational Failure Gate:** Auth failures (missing/invalid key, HTTP 401/403) abort the fallback chain. Transient network, timeout, 429, and 5xx errors continue to the next configured provider. Dictionary HTTP timeouts are 6s (translation 8s).
 7. **Non-Blocking Translation:** When `enableTranslate` is active, translation starts in parallel. If it finishes before the dictionary result, it is included in the first paint. Otherwise the dictionary result is returned immediately and translation is merged later via `LOOKUP_UPDATE` (`revision: 1`).
 8. **Initial Delivery:** The dictionary result is returned immediately to the UI with `enriched: false` and `revision: 0` for first paint. Settings are cached in the service worker until `chrome.storage` changes.
@@ -113,10 +114,11 @@ After the initial result is dispatched to the popup, the background service work
 
 1. **Late Translation Merge:** If translation was still in flight at first paint, it is merged via `LOOKUP_UPDATE` (`revision: 1`) before phrase fallback or dictionary enrichment.
 2. **AI Phrase Fallback (Multi-word Lookups):** After a ~300ms delay when translation was already included (so a dismissed card can cancel), if the query is phrase-like, lacks usable definitions, and both `enableAI` and `enablePhraseFallback` are on, `lookupAiProvider(text, settings, { intent: "phrase_fallback" })` runs first. Upon completion, the phrase explanation is merged and broadcast via `LOOKUP_UPDATE` before secondary dictionary enrichment.
-3. **Secondary Provider Filtering:** Key-backed providers (`merriam_webster`, `wordnik`, `words_api`) lacking API keys in `chrome.storage.local` are skipped upfront without network overhead.
-4. **Bounded Concurrency:** Remaining unqueried providers are fetched in concurrent batches of 2 (`ENRICHMENT_CONCURRENCY = 2`).
-5. **Resilient Failure Handling:** Secondary `NotFoundError` results and operational errors are caught and logged silently without disrupting the displayed primary result.
-6. **Cumulative Merge Engine (`mergeDictionaryEnrichment`):**
+3. **Thin-entry gate:** Secondary dictionary providers run only when Phase 1 is thin (no usable definitions, no IPA/phonetic text, or no example sentences). Fat Free Dictionary hits skip Wiktionary and other secondaries.
+4. **Secondary Provider Filtering:** When enrichment runs, key-backed providers (`merriam_webster`, `wordnik`, `words_api`) lacking API keys in `chrome.storage.local` are skipped upfront without network overhead.
+5. **Bounded Concurrency:** Remaining unqueried providers are fetched in concurrent batches of 2 (`ENRICHMENT_CONCURRENCY = 2`).
+6. **Resilient Failure Handling:** Secondary `NotFoundError` results and operational errors are caught and logged silently without disrupting the displayed primary result.
+7. **Cumulative Merge Engine (`mergeDictionaryEntries`):**
    - **Sections:** Definitions, examples, synonyms, and antonyms are matched by normalized kind/title, deduplicated by normalized text, and clamped by strict limits:
      - `MAX_DEFINITIONS_SECTIONS = 2`
      - `MAX_EXAMPLES_SECTIONS = 2`
@@ -126,7 +128,7 @@ After the initial result is dispatched to the popup, the background service work
    - **Pronunciations:** Audio URLs and IPA phonetic transcriptions are backfilled onto matching language/accent slots (`en-US`, `en-GB`). Phonetic entries are sorted first (`preferPhoneticPronunciations`) so the header row always surfaces transcription text when any provider supplies it. Clamped to `MAX_PRONUNCIATIONS = 4`.
    - **Lexical Profiles:** Normalized word family forms, word formation, warnings, learner mistakes, and collocations are merged across providers via `mergeLexicalProfiles`.
    - **Source Badges:** Every provider that successfully returned data is added to `sourceBadges`, ensuring full attribution even when content duplicates an existing section.
-7. **Incremental Broadcast:** The enriched payload is sent to the originating tab/frame via `LOOKUP_UPDATE` (`revision: 2`, `enriched: true`). Popups ignore equal-or-older revisions and restore scroll position on re-render.
+8. **Incremental Broadcast:** The enriched payload is sent to the originating tab/frame via `LOOKUP_UPDATE`. The UI coalesces revisions onto `requestAnimationFrame` and ignores equal-or-older revisions.
 
 ---
 
@@ -153,7 +155,7 @@ Check L2 Session Storage (chrome.storage.session with "enrich_" prefix)
                      Write to L1 Map & L2 Session Storage
 ```
 
-- **Cache Key Serialization:** Formed from normalized query text, lemma stem, primary provider ID, translation parameters, and provider API key availability flags.
+- **Cache Key Serialization:** Formed from normalized query text, primary provider ID, translation parameters, and provider API key availability flags.
 - **In-flight Deduplication:** `enrichmentInFlight` tracks active enrichment promises by cache key, ensuring duplicate rapid queries share the same network execution.
 - **Cache Invalidation:** Any change in `chrome.storage.sync` or `chrome.storage.local` to provider selection, enabled features, target language, or API keys triggers `clearEnrichmentSessionCache()`, clearing both L1 and L2 session storage.
 - **Schema Migrations:** `migrateEnrichmentCacheSchema()` tracks `ENRICHMENT_CACHE_SCHEMA_VERSION = 2` to purge incompatible serialized cache shapes across extension updates.
@@ -166,10 +168,10 @@ The AI subsystem (`src/providers/ai-provider.js`) provides generative explanatio
 
 | Intent | Action / Role | Prompt Template Setting | Output Format | Lexical Profile Requested |
 |---|---|---|---|---|
-| `default` | Main AI tab explanation | `aiPromptTemplate` | Semantic Markdown plus parsed sense cards | Yes |
-| `explain_in_context` | Context Explain | `aiContextPromptTemplate` | Meaning, substitutions, nuance Markdown | No |
-| `grammar` | Grammar & Nuance | `aiGrammarPromptTemplate` | Syntax, register, and tone Markdown | Yes |
-| `phrase_explorer` | Phrase & Collocations | `aiPhraseExplorerPromptTemplate` | Idiom & collocation Markdown | Yes |
+| `default` | Main AI tab explanation | `aiPromptTemplate` | Semantic Markdown plus parsed sense cards | No |
+| `explain_in_context` | Context Explain | `aiContextPromptTemplate` | Meaning in context, substitutions, nuance-lost Markdown | No |
+| `grammar` | Grammar & Nuance | `aiGrammarPromptTemplate` | Syntax, pattern rules, and short examples | Learner mistakes only |
+| `phrase_explorer` | Phrase & Collocations | `aiPhraseExplorerPromptTemplate` | Core meaning, grammar patterns, and examples | Collocations only |
 | `sentence_breakdown` | Sentence Breakdown | `aiSentencePromptTemplate` | Structured JSON (`data` object) | No |
 | `phrase_fallback` | Automatic phrase fallback | Built-in fallback template | Concise Markdown explanation | No |
 | `compare_confusables` | Compare Confusables | `aiComparePromptTemplate` | Distinction, matrix, minimal pairs | No |
@@ -214,7 +216,7 @@ When `enableLexicalProfile` is enabled (default `true`), dictionary and AI looku
 ```
 
 1. **Provider-First Extraction:** Parts of speech, derivations, inflections, and usage notes returned by primary and secondary dictionary adapters (e.g. WordsAPI, Wordnik, Wiktionary) are automatically extracted during normalization.
-2. **AI Structured Block Extraction:** Prompts for `default`, `grammar`, and `phrase_explorer` request an optional `<lexical-profile>` JSON block. The AI provider extracts and strips this block from the visible Markdown using `parseLexicalProfileFromResponse()` and parses it with `parseLexicalProfile()`.
+2. **AI Structured Block Extraction:** Prompts for `grammar` and `phrase_explorer` request a **subset** `<lexical-profile>` JSON block (learner mistakes and collocations respectively). Main AI does not request extras. The AI provider extracts and strips this block from the visible Markdown using `parseLexicalProfileFromResponse()` and parses it with `parseLexicalProfile()`.
 3. **Deep Profile Merging:** `mergeLexicalProfiles` combines provider-extracted data with AI-generated profiles, enforcing strict deduplication and category bounds:
    - `MAX_LEXICAL_ITEMS = 12`
    - `MAX_DERIVATIVES = 12`

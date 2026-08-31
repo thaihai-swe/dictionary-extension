@@ -7,6 +7,7 @@ import {
   LOOKUP_TEXT,
   LOOKUP_UPDATE,
   OPEN_LOOKUP_POPUP,
+  OPEN_OPTIONS,
   VALIDATE_PROVIDER,
   aiAbortScope,
   createRequestId,
@@ -28,6 +29,7 @@ const RESTRICTED_URL_RE = /^(chrome|chrome-extension|edge|about|devtools|https:\
 
 const activeProxyRequests = new Map<string, AbortController>();
 const lookupControllers = new Map<string, AbortController>();
+const inflightDictionaryLookups = new Map<string, Promise<DictionaryEntry & { requestId: string }>>();
 
 let cachedSettings: AppSettings | null = null;
 let cachedSettingsAt = 0;
@@ -46,9 +48,12 @@ function getRequestKey(tabId: number | undefined, scope: string, requestId: stri
 }
 
 function registerController(tabId: number | undefined, scope: string, requestId: string): AbortController {
-  cancelRequestsForScope(tabId, scope);
+  const key = getRequestKey(tabId, scope, requestId);
+  const existing = lookupControllers.get(key);
+  if (existing) return existing;
+  cancelRequestsForScope(tabId, scope, requestId);
   const controller = new AbortController();
-  lookupControllers.set(getRequestKey(tabId, scope, requestId), controller);
+  lookupControllers.set(key, controller);
   return controller;
 }
 
@@ -56,12 +61,18 @@ function unregisterController(tabId: number | undefined, scope: string, requestI
   lookupControllers.delete(getRequestKey(tabId, scope, requestId));
 }
 
-function cancelRequestsForScope(tabId: number | undefined, scope: string) {
+function cancelRequestsForScope(tabId: number | undefined, scope: string, exceptRequestId?: string) {
   const prefix = `${Number.isInteger(tabId) ? tabId : 'popup'}:${scope}:`;
+  const exceptKey = exceptRequestId ? getRequestKey(tabId, scope, exceptRequestId) : '';
   for (const [key, controller] of lookupControllers.entries()) {
-    if (key.startsWith(prefix)) {
-      controller.abort();
-      lookupControllers.delete(key);
+    if (!key.startsWith(prefix) || key === exceptKey) continue;
+    controller.abort();
+    lookupControllers.delete(key);
+  }
+  if (scope === dictionaryAbortScope()) {
+    for (const key of inflightDictionaryLookups.keys()) {
+      if (!key.startsWith(prefix) || key === exceptKey) continue;
+      inflightDictionaryLookups.delete(key);
     }
   }
 }
@@ -73,6 +84,9 @@ function cancelRequestsForTab(tabId: number | undefined) {
       controller.abort();
       lookupControllers.delete(key);
     }
+  }
+  for (const key of inflightDictionaryLookups.keys()) {
+    if (key.startsWith(prefix)) inflightDictionaryLookups.delete(key);
   }
 }
 
@@ -141,38 +155,48 @@ async function handleDictionaryLookup(payload: LookupTextPayload, sender: chrome
   if (!text) throw new Error('No text selected.');
 
   const requestId = payload.requestId || createRequestId('dict');
-  const settings = await getCachedSettings();
-  const lookupSettings = normalizeSettings({
-    ...settings,
-    dictionaryProvider: (payload.provider || settings.dictionaryProvider) as AppSettings['dictionaryProvider'],
-    translateTargetLanguage: payload.targetLang || settings.translateTargetLanguage,
-  });
   const tabId = sender?.tab?.id;
   const scope = dictionaryAbortScope();
-  const controller = registerController(tabId, scope, requestId);
+  const requestKey = getRequestKey(tabId, scope, requestId);
+  const existing = inflightDictionaryLookups.get(requestKey);
+  if (existing) return existing;
 
-  try {
-    const { fetchCombinedDictionaryResult } = await loadDictionaryLookupModule();
-    const result = await fetchCombinedDictionaryResult(
-      text,
-      lookupSettings,
-      controller.signal,
-      (enriched) => {
-        void publishLookupUpdate({
-          requestId,
-          source: 'dictionary',
-          text,
-          revision: enriched.revision || 0,
-          result: enriched,
-          sender,
-        });
-      },
-      controller.signal,
-    );
-    return { ...result, requestId };
-  } finally {
-    unregisterController(tabId, scope, requestId);
-  }
+  const work = (async () => {
+    const settings = await getCachedSettings();
+    const lookupSettings = normalizeSettings({
+      ...settings,
+      dictionaryProvider: (payload.provider || settings.dictionaryProvider) as AppSettings['dictionaryProvider'],
+      translateTargetLanguage: payload.targetLang || settings.translateTargetLanguage,
+    });
+    const controller = registerController(tabId, scope, requestId);
+
+    try {
+      const { fetchCombinedDictionaryResult } = await loadDictionaryLookupModule();
+      const result = await fetchCombinedDictionaryResult(
+        text,
+        lookupSettings,
+        controller.signal,
+        (enriched) => {
+          void publishLookupUpdate({
+            requestId,
+            source: 'dictionary',
+            text,
+            revision: enriched.revision || 0,
+            result: enriched,
+            sender,
+          });
+        },
+        controller.signal,
+      );
+      return { ...result, requestId };
+    } finally {
+      unregisterController(tabId, scope, requestId);
+      inflightDictionaryLookups.delete(requestKey);
+    }
+  })();
+
+  inflightDictionaryLookups.set(requestKey, work);
+  return work;
 }
 
 async function handleAiLookup(payload: AiLookupPayload, sender: chrome.runtime.MessageSender) {
@@ -260,6 +284,36 @@ async function openLookupOnTab(tab: chrome.tabs.Tab | undefined, payload: OpenLo
   return true;
 }
 
+const TOOLBAR_WINDOW_WIDTH = 1100;
+const TOOLBAR_WINDOW_HEIGHT = 800;
+const TOOLBAR_WINDOW_ID_KEY = 'toolbarWindowId';
+let toolbarWindowId: number | null = null;
+
+async function openToolbarWindow() {
+  const stored = await chrome.storage.session?.get(TOOLBAR_WINDOW_ID_KEY).catch(() => ({} as Record<string, unknown>));
+  const existingId = Number(stored?.[TOOLBAR_WINDOW_ID_KEY] || toolbarWindowId || 0) || null;
+  if (existingId) {
+    try {
+      await chrome.windows.update(existingId, { focused: true });
+      toolbarWindowId = existingId;
+      return;
+    } catch {
+      toolbarWindowId = null;
+    }
+  }
+  const win = await chrome.windows.create({
+    url: chrome.runtime.getURL('index.html'),
+    type: 'popup',
+    width: TOOLBAR_WINDOW_WIDTH,
+    height: TOOLBAR_WINDOW_HEIGHT,
+    focused: true,
+  });
+  toolbarWindowId = win?.id ?? null;
+  if (toolbarWindowId != null) {
+    await chrome.storage.session?.set({ [TOOLBAR_WINDOW_ID_KEY]: toolbarWindowId }).catch(() => undefined);
+  }
+}
+
 function initializeContextMenu() {
   if (!chrome.contextMenus) return;
   chrome.contextMenus.removeAll(() => {
@@ -274,6 +328,7 @@ function initializeContextMenu() {
 chrome.runtime.onInstalled.addListener(() => {
   void Promise.all([
     migrateSettingsSchema(),
+    loadFullSettings(),
     Promise.resolve(initializeContextMenu()),
     loadDictionaryLookupModule(),
   ]).catch(() => undefined);
@@ -281,12 +336,24 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.runtime.onStartup?.addListener(() => {
   void migrateSettingsSchema().catch(() => undefined);
+  void loadFullSettings().catch(() => undefined);
   initializeContextMenu();
   void loadDictionaryLookupModule();
 });
 
 chrome.storage?.onChanged?.addListener((_changes, area) => {
   if (area === 'sync' || area === 'local') invalidateSettingsCache();
+});
+
+chrome.windows?.onRemoved?.addListener((removedId) => {
+  if (removedId === toolbarWindowId) {
+    toolbarWindowId = null;
+    void chrome.storage.session?.remove(TOOLBAR_WINDOW_ID_KEY).catch(() => undefined);
+  }
+});
+
+chrome.action?.onClicked?.addListener(() => {
+  void openToolbarWindow().catch(() => undefined);
 });
 
 chrome.contextMenus?.onClicked.addListener(async (info, tab) => {
@@ -366,6 +433,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       .catch((error) => sendResponse({
         ok: false,
         error: error instanceof Error ? error.message : 'Lookup failed.',
+      }));
+    return true;
+  }
+
+  if (message?.type === OPEN_OPTIONS) {
+    chrome.runtime.openOptionsPage()
+      .then(() => sendResponse({ ok: true, result: true }))
+      .catch((error) => sendResponse({
+        ok: false,
+        error: error instanceof Error ? error.message : 'Failed to open settings.',
       }));
     return true;
   }

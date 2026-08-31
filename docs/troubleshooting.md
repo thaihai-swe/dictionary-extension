@@ -51,7 +51,7 @@ This guide provides actionable solutions for common issues across extension relo
 ## 4. Multi-Source Dictionary & Enrichment
 
 ### Symptom: No definitions found for an inflected word (e.g. `went`, `taking care of`).
-- **Resolution:** The extension runs automatic English lemmatization and phrasal canonicalization fallback. If all exact lookups return `NotFoundError`, it retries root stems (`went` → `go`, `taking care of` → `take care of`) and displays a subtitle notice: `Showing definitions for root: <stem>`.
+- **Cause:** Lookups use the selected text exactly. Inflected or phrasal forms are not rewritten to a root (`went` is not retried as `go`).
 - If an obscure idiom has no dictionary definitions across all 5 providers, Dictionary mode invokes **AI Phrase Fallback** when both AI and **Use AI when a phrase has no dictionary definition** are enabled.
 - A primary provider with no API key is skipped. Transient 5xx/timeout from a free provider continues to the next free provider. An invalid key still fails that lookup.
 

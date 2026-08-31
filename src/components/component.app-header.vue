@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useStorage } from '../composables/composable.storage';
 import { isAudioPlaying, stopAllAudio } from '../composables/composable.dictionary';
+import { openExtensionSettings } from '../shared/runtime-client';
 import { ExtensionSettings } from '../types';
 
 defineProps<{
@@ -13,7 +14,6 @@ const emit = defineEmits<{
   (e: 'toggle-shortcuts'): void;
   (e: 'toggle-maximize'): void;
   (e: 'toggle-theme'): void;
-  (e: 'open-settings'): void;
   (e: 'update:provider', value: string): void;
   (e: 'update:targetLang', value: string): void;
 }>();
@@ -144,11 +144,11 @@ function handleTargetLangChange(e: Event) {
         <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
       </button>
 
-      <!-- Settings & API Key Modal Toggle Button -->
       <button
-        @click="emit('open-settings')"
+        type="button"
+        @click="openExtensionSettings()"
         class="p-1.5 rounded-lg bg-dark-muted hover:bg-dark-border hover:border-slate-600 text-slate-300 border border-dark-border transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer shadow-xs flex items-center justify-center"
-        title="Extension Settings & Gemini API Key"
+        title="Open Settings"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
       </button>

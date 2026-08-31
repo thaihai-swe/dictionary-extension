@@ -104,11 +104,11 @@ Run this comprehensive verification protocol before submitting code changes:
 
 ---
 
-### B. Smart Lemmatization & Phrasal Fallback
-5. Test irregular verbs and inflections: `went`, `children`, `better`, `running`, `evaluated`.
-   - Confirm the primary provider retries the lemma before secondary backends, and definition displays `Showing definitions for root: <stem>`.
-6. Test multi-word phrasal expressions: `taking care of`, `looked up`, `ran out of`, `has taken off`.
-   - Confirm phrasal canonicalization stems to base forms (`take care of`, `look up`, `run out of`) with root notices.
+### B. Exact Selection & Phrase Fallback
+5. Test inflected words: `went`, `children`, `better`, `running`, `evaluated`.
+   - Confirm the popup looks up and displays the selected form, not a root lemma, and never shows `Showing definitions for root:`.
+6. Test multi-word expressions: `taking care of`, `looked up`, `ran out of`.
+   - Confirm the dictionary query is the exact phrase, not a stemmed canonical form.
 7. Test obscure idiom fallback:
    - With AI and phrase fallback enabled, look up an idiom missing from all dictionary backends (e.g. `spill the beans`).
    - Confirm automatic AI Phrase Fallback renders concise meaning under `AI · Phrase explanation`.

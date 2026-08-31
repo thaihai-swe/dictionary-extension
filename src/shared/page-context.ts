@@ -351,7 +351,7 @@ function rangeFromSelection(selection: Selection | null, preferred?: Range | nul
   return liveRange;
 }
 
-export function extractSurroundingContext(
+export function extractSelectionContext(
   selectedText: string,
   disabled = false,
   range?: Range | null,
@@ -361,16 +361,32 @@ export function extractSurroundingContext(
   try {
     const selection = typeof window !== 'undefined' ? window.getSelection() : null;
     const activeRange = rangeFromSelection(selection, range, needle);
-    if (activeRange) {
-      const selected = normalizeSentenceText(activeRange.toString() || selection?.toString() || '');
-      const normalizedNeedle = normalizeSentenceText(needle);
-      if (!selected || selected === normalizedNeedle) {
-        const exactSentence = extractExactSentenceFromRange(activeRange, needle);
-        if (exactSentence) {
-          return { context: exactSentence, source: 'selection', confidence: 'exact' };
-        }
-      }
+    if (!activeRange) return { context: '', source: '', confidence: 'none' };
+    const selected = normalizeSentenceText(activeRange.toString() || selection?.toString() || '');
+    const normalizedNeedle = normalizeSentenceText(needle);
+    if (selected && selected !== normalizedNeedle) {
+      return { context: '', source: '', confidence: 'none' };
     }
+    const exactSentence = extractExactSentenceFromRange(activeRange, needle);
+    if (exactSentence) {
+      return { context: exactSentence, source: 'selection', confidence: 'exact' };
+    }
+    return { context: '', source: '', confidence: 'none' };
+  } catch {
+    return { context: '', source: '', confidence: 'none' };
+  }
+}
+
+export function extractSurroundingContext(
+  selectedText: string,
+  disabled = false,
+  range?: Range | null,
+): PageContextResult {
+  const needle = String(selectedText || '').trim();
+  if (!needle || disabled) return { context: '', source: '', confidence: 'none' };
+  const exact = extractSelectionContext(needle, disabled, range);
+  if (exact.context) return exact;
+  try {
     return findBestPageSentenceCandidate(needle);
   } catch {
     return { context: '', source: '', confidence: 'none' };

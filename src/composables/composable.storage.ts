@@ -11,6 +11,7 @@ import {
   saveSettingsPartial,
   serializePublicSettings,
 } from '../shared/settings';
+import { hasConfiguredAiApiKey, shouldPersistSecretValue } from '../shared/settings-export';
 
 export {
   DEFAULT_SETTINGS,
@@ -34,6 +35,7 @@ const CACHE_INVALIDATION_KEYS = new Set([
   'wordsApiKey',
   'libreTranslateApiKey',
   'aiApiKey',
+  'hasAiApiKey',
   'aiModel',
   'aiBaseUrl',
   'aiPromptTemplate',
@@ -69,7 +71,23 @@ const STORAGE_KEYS = {
 };
 
 const settingsRef: Ref<AppSettings> = ref<AppSettings>({ ...DEFAULT_SETTINGS });
+const settingsHydratedRef = ref(false);
 let initialized = false;
+let settingsWriteEpoch = 0;
+let resolveSettingsReady: (() => void) | null = null;
+const settingsReady: Promise<void> = new Promise((resolve) => {
+  resolveSettingsReady = resolve;
+});
+
+function markSettingsReady() {
+  settingsHydratedRef.value = true;
+  resolveSettingsReady?.();
+  resolveSettingsReady = null;
+}
+
+export function whenSettingsReady(): Promise<void> {
+  return settingsHydratedRef.value ? Promise.resolve() : settingsReady;
+}
 
 function normalizeSettingsArrayFields(settings: AppSettings): AppSettings {
   if (!Array.isArray(settings.pausedHostnames)) {
@@ -85,9 +103,11 @@ function normalizeSettingsArrayFields(settings: AppSettings): AppSettings {
   return settings;
 }
 
-function isExtensionPopup(): boolean {
+export function canAccessSecretSettings(): boolean {
   try {
-    return typeof window !== 'undefined' && window.location?.protocol === 'chrome-extension:';
+    if (typeof window === 'undefined') return false;
+    const path = window.location?.pathname || '';
+    return path.includes('options.html');
   } catch {
     return false;
   }
@@ -96,7 +116,7 @@ function isExtensionPopup(): boolean {
 async function loadSettingsFromStorage(): Promise<AppSettings> {
   try {
     if (typeof chrome !== 'undefined' && chrome.storage) {
-      const loaded = isExtensionPopup() ? await loadFullSettings() : await loadPublicSettings();
+      const loaded = canAccessSecretSettings() ? await loadFullSettings() : await loadPublicSettings();
       return normalizeSettingsArrayFields(loaded);
     }
   } catch (e) {
@@ -122,16 +142,27 @@ async function loadSettingsFromStorage(): Promise<AppSettings> {
 }
 
 export async function saveSettingsToStorage(partial: Partial<AppSettings>): Promise<void> {
+  settingsWriteEpoch += 1;
   const writable: Record<string, unknown> = { ...partial };
   const secretWrites: Record<string, unknown> = {};
-  if (!isExtensionPopup()) {
-    for (const key of SECRET_KEYS) {
-      const value = writable[key];
-      if (String(value || '').trim()) secretWrites[key] = value;
-      delete writable[key];
-    }
+  const trustedSecrets = canAccessSecretSettings();
+  for (const key of SECRET_KEYS) {
+    if (!(key in writable)) continue;
+    const value = writable[key];
+    delete writable[key];
+    if (!trustedSecrets) continue;
+    if (!shouldPersistSecretValue(value, settingsHydratedRef.value)) continue;
+    secretWrites[key] = value;
+  }
+  if (trustedSecrets && Object.prototype.hasOwnProperty.call(secretWrites, 'aiApiKey')) {
+    writable.hasAiApiKey = Boolean(String(secretWrites.aiApiKey ?? '').trim());
+  } else {
+    delete writable.hasAiApiKey;
   }
   Object.assign(settingsRef.value, writable);
+  if (trustedSecrets) {
+    Object.assign(settingsRef.value, secretWrites);
+  }
   normalizeSettingsArrayFields(settingsRef.value);
 
   for (const [key, val] of Object.entries(writable)) {
@@ -160,17 +191,32 @@ export async function saveSettingsToStorage(partial: Partial<AppSettings>): Prom
 export function useStorage() {
   if (!initialized) {
     initialized = true;
-    loadSettingsFromStorage().then((s) => {
-      settingsRef.value = s;
-    });
+    const loadEpoch = settingsWriteEpoch;
+    loadSettingsFromStorage()
+      .then((s) => {
+        if (settingsWriteEpoch !== loadEpoch) return;
+        settingsRef.value = s;
+      })
+      .catch((error) => {
+        console.warn('Settings load failed:', error);
+      })
+      .finally(() => {
+        markSettingsReady();
+      });
 
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
-      chrome.storage.onChanged.addListener((changes) => {
+      chrome.storage.onChanged.addListener((changes, areaName) => {
+        const allowSecrets = canAccessSecretSettings();
         for (const [key, change] of Object.entries(changes)) {
-          if (SECRET_KEYS.has(key)) continue;
+          if (SECRET_KEYS.has(key) && (!allowSecrets || areaName !== 'local')) continue;
           if (key in settingsRef.value) {
-            (settingsRef.value as any)[key] = change.newValue;
+            (settingsRef.value as any)[key] = change.newValue ?? DEFAULT_SETTINGS[key as keyof AppSettings];
           }
+        }
+        if (allowSecrets) {
+          settingsRef.value.hasAiApiKey = hasConfiguredAiApiKey(settingsRef.value);
+        } else if ('hasAiApiKey' in changes) {
+          settingsRef.value.hasAiApiKey = Boolean(changes.hasAiApiKey.newValue);
         }
         normalizeSettingsArrayFields(settingsRef.value);
         if (shouldInvalidateLookupCache(Object.keys(changes))) {
@@ -210,6 +256,7 @@ export function useStorage() {
 
   return {
     settings: settingsRef,
+    settingsHydrated: settingsHydratedRef,
     saveSettings: saveSettingsToStorage,
     activeTab,
     activeIntent,

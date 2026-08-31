@@ -10,7 +10,6 @@ import {
   AiMarkdownIntent,
   ConfusablesIntent,
   SentenceBreakdownIntent,
-  SettingsModal,
   preloadAiIntentChunks,
 } from './async-views';
 
@@ -25,16 +24,14 @@ const emit = defineEmits<{
 }>();
 
 const { activeContext, activeIntent, aiResult, isAiLoading, aiError, runIntent } = useAiAssistant();
-const { searchWord, speakTTS } = useDictionary();
+const { query: dictionaryQuery, searchWord, speakTTS } = useDictionary();
 const { settings } = useStorage();
 const queryInput = ref<string>('');
 const contextInput = ref<string>('');
 const copied = ref<boolean>(false);
-const showSettings = ref<boolean>(false);
 const contextError = ref<string>('');
 const isEditingContext = ref<boolean>(false);
 
-const hasApiKey = computed(() => Boolean(settings.value.aiApiKey?.trim()));
 const hasDistinctContext = computed(() => {
   const query = queryInput.value.trim().toLowerCase();
   const context = contextInput.value.trim().toLowerCase();
@@ -87,8 +84,9 @@ onMounted(() => {
   if (settings.value.enableAiPreload) {
     void preloadAiIntentChunks(PRELOAD_ALL_INTENTS);
   }
-  const query = resolveQuery(props.initialQuery, props.initialContext);
-  const context = resolveContext(query, props.initialContext);
+  const fallbackQuery = props.initialQuery || dictionaryQuery.value;
+  const query = resolveQuery(fallbackQuery, props.initialContext);
+  const context = resolveContext(query, props.initialContext || activeContext.value);
   queryInput.value = query;
   contextInput.value = context;
   activeContext.value = context;
@@ -149,36 +147,6 @@ function copyResult(text?: string) {
 
 <template>
   <div class="p-3.5 space-y-3.5 font-sans">
-    <!-- Transparent Status Banner (Explicitly states AI connection mode) -->
-    <div
-      :class="[
-        'px-3 py-2 rounded-xl border text-xs flex items-center justify-between transition-all shadow-sm',
-        hasApiKey
-          ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-          : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
-      ]"
-    >
-      <div class="flex items-center gap-2">
-        <span class="text-sm">{{ hasApiKey ? '⚡' : '⚙️' }}</span>
-        <div>
-          <div class="font-bold text-[11px] leading-tight">
-            {{ hasApiKey ? `GEMINI AI CONNECTED (${settings.aiModel || 'gemini-2.5-flash'})` : 'CHẾ ĐỘ PHÂN TÍCH NGOẠI TUYẾN' }}
-          </div>
-          <div class="text-[10px] opacity-80">
-            {{ hasApiKey ? 'Dữ liệu phân tích trực tiếp từ mô hình Gemini AI thời gian thực.' : 'Dữ liệu trích xuất từ bộ phân tích ngữ pháp & mẫu học thuật nội bộ.' }}
-          </div>
-        </div>
-      </div>
-
-      <button
-        @click="showSettings = true"
-        class="px-2.5 py-1 rounded-lg bg-dark-surface hover:bg-dark-border hover:border-slate-600 text-slate-200 border border-dark-border text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs flex-shrink-0 cursor-pointer ml-2 active:scale-95"
-      >
-        <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 0121 9z"/></svg>
-        <span>{{ hasApiKey ? 'Đổi Key' : 'Nhập Gemini Key' }}</span>
-      </button>
-    </div>
-
     <!-- AI Intent Buttons Toolbar (Main AI + specialized follow-ups) -->
     <AiIntentToolbar
       :activeIntent="activeIntent"
@@ -283,9 +251,6 @@ function copyResult(text?: string) {
         <span class="text-teal-400 text-sm">✨</span>
         <h2 class="text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
           <span>{{ intentTitleMap[aiResult.type as AiIntentId] || 'AI ANALYSIS' }}</span>
-          <span :class="['text-[9px] px-1.5 py-0.2 rounded font-bold border', hasApiKey ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20']">
-            {{ hasApiKey ? '⚡ REALTIME GEMINI' : '⚙️ OFFLINE ENGINE' }}
-          </span>
         </h2>
       </div>
 
@@ -333,10 +298,5 @@ function copyResult(text?: string) {
       @select-word="handleTokenSelect"
     />
 
-    <!-- Settings Modal -->
-    <SettingsModal
-      :show="showSettings"
-      @close="showSettings = false"
-    />
   </div>
 </template>

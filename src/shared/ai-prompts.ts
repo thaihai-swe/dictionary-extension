@@ -13,7 +13,47 @@ export const AI_INTENTS = [
   'rephrase',
 ] as const;
 
-export const LEXICAL_PROFILE_INTENTS = ['default', 'grammar', 'phrase_explorer', 'collocations'] as const;
+export type LexicalExtraId =
+  | 'wordFamily'
+  | 'usageNotes'
+  | 'wordFormation'
+  | 'learnerMistakes'
+  | 'collocations';
+
+export const ALL_LEXICAL_EXTRAS: readonly LexicalExtraId[] = [
+  'wordFamily',
+  'usageNotes',
+  'wordFormation',
+  'learnerMistakes',
+  'collocations',
+];
+
+const LEXICAL_EXTRAS_BY_INTENT: Record<AiIntentId, readonly LexicalExtraId[]> = {
+  default: [],
+  grammar: ['learnerMistakes'],
+  collocations: ['collocations'],
+  explain_in_context: [],
+  sentence_breakdown: [],
+  confusables: [],
+  rephrase: [],
+  phrase_fallback: [],
+};
+
+const LEXICAL_EXTRA_SCHEMA: Record<LexicalExtraId, string> = {
+  wordFamily: '"wordFamily":{"noun":["..."],"verb":["..."],"adjective":["..."],"adverb":["..."],"inflections":["..."],"derivatives":["..."]}',
+  usageNotes: '"usageWarnings":["..."],"confusablePairs":[{"word":"...","distinction":"..."}]',
+  wordFormation: '"wordFormation":{"prefixes":["..."],"suffixes":["..."],"explanation":"..."}',
+  learnerMistakes: '"learnerMistakes":[{"mistake":"...","correction":"...","example":"..."}]',
+  collocations: '"collocations":{"verbs":["..."],"nouns":["..."],"prepositions":["..."],"adjectives":["..."],"patterns":["..."]}',
+};
+
+const LEXICAL_EXTRA_LABELS: Record<LexicalExtraId, string> = {
+  wordFamily: 'word-family forms and derivatives',
+  usageNotes: 'usage warnings and confusable pairs',
+  wordFormation: 'word-formation notes',
+  learnerMistakes: 'learner mistakes',
+  collocations: 'collocations',
+};
 
 export const PRELOAD_FOLLOW_UPS: AiIntentId[] = [
   'explain_in_context',
@@ -35,9 +75,12 @@ export function canonicalAiIntent(intent: string | undefined): AiIntentId {
   return 'default';
 }
 
+export function lexicalExtrasForIntent(intent?: string): readonly LexicalExtraId[] {
+  return LEXICAL_EXTRAS_BY_INTENT[canonicalAiIntent(intent)];
+}
+
 export function shouldRequestLexicalProfile(intent: string, enabled?: boolean): boolean {
-  const canonical = canonicalAiIntent(intent);
-  return enabled !== false && (LEXICAL_PROFILE_INTENTS as readonly string[]).includes(canonical === 'collocations' ? 'collocations' : canonical);
+  return enabled !== false && lexicalExtrasForIntent(intent).length > 0;
 }
 
 export const DEFAULT_AI_PROMPT_TEMPLATE = `Act as an expert lexicographer and language educator. Provide a focused, educational breakdown of "{{str}}".
@@ -79,19 +122,18 @@ Surrounding context:
 
 Keep the answer compact and scannable. Do not add a separate translation section or repeat the plain summary.
 Use only Markdown headings at level 3 (###), bullets, and short paragraphs. Do not use HTML or code fences. Do not repeat headings.
+Do not rephrase the entire context sentence; whole-sentence rewrites belong to Rephrase.
+
 ### Meaning in Context
 Explain what "{{str}}" means specifically in this surrounding sentence, including its contextual translation into {{targetLang}}.
 
 ### Direct Substitutions
 Provide 2-3 natural synonyms or phrases that could directly replace "{{str}}" in this specific sentence without altering grammatical structure, each with a brief {{targetLang}} gloss.
 
-### Nuance & Connotation
-Explain in 1-2 sentences what tone, emphasis, or subtle nuance is lost if replaced by a plain synonym.
+### Nuance Lost
+Explain in 1-2 sentences what tone, emphasis, or subtle nuance is lost if replaced by a plain synonym.`;
 
-### Natural Paraphrases
-Provide 2 natural ways to rephrase the entire context sentence with brief glosses in {{targetLang}}.`;
-
-export const DEFAULT_AI_GRAMMAR_PROMPT_TEMPLATE = `Analyze the grammatical structure, syntactic slots, register, and tone of the selected text for a language learner.
+export const DEFAULT_AI_GRAMMAR_PROMPT_TEMPLATE = `Analyze the grammatical structure and syntactic slots of the selected text for a language learner.
 Selected text: "{{str}}"
 Target language: {{targetLang}}
 Optional context:
@@ -102,14 +144,12 @@ Optional context:
 Formatting instructions:
 - Use clear markdown subheadings at level 3 (###) for each distinct section.
 - Do not use HTML, code fences, or duplicate section headings.
-- Do not include a separate Translation or Summary section.
+- Do not include a separate Translation, Summary, or Formality & Tone section.
+- Do not add Word Family, Related Forms, Derived Forms, Word Formation, Usage Warnings, Confusables, Common Learner Mistakes, Collocations, or Natural Collocations headings; reliable data for those categories belongs in the structured lexical profile.
 
 Include these sections:
 ### Syntactic Breakdown
-Identify the part of speech, grammatical slot / syntactic role in the sentence (e.g. subject complement, transitive verb head, modifier), and dependency relations.
-
-### Formality & Tone
-Explain nuance, formality, and tone in 1-2 sentences.
+Identify the part of speech, grammatical slot / syntactic role in the sentence (e.g. subject complement, transitive verb head, modifier), and dependency relations. If formality or register changes the slot, mention it in one clause here. Do not add a separate heading for formality.
 
 ### Pattern Rules
 List 1-2 governing syntactic rules or clause patterns for this structure.
@@ -174,8 +214,7 @@ Use this exact shape:
   "sentence": "the sentence being analyzed",
   "translation": "translation into the target language",
   "parts": [{"text": "exact text", "role": "subject|verb phrase|object|modifier|clause|other", "explanation": "short explanation"}],
-  "phrases": [{"text": "exact phrase from the sentence", "type": "phrasal_verb|idiom|collocation|fixed_expression", "meaning": "learner-friendly meaning", "role": "grammatical function", "example": "short example"}],
-  "learnerNotes": ["short useful note"]
+  "phrases": [{"text": "exact phrase from the sentence", "type": "phrasal_verb|idiom|collocation|fixed_expression", "meaning": "learner-friendly meaning", "role": "grammatical function", "example": "short example"}]
 }
 
 Rules:
@@ -183,6 +222,7 @@ Rules:
 - Identify the selected query when it appears in the sentence.
 - Include only phrases that appear exactly or nearly exactly in the supplied sentence.
 - Return an empty phrases array when no phrasal verb, idiom, collocation, or fixed expression is present.
+- Do not return learner mistakes, usage notes, or extra commentary; Grammar owns those.
 - Keep each explanation concise and suitable for a language learner.`;
 
 export const DEFAULT_AI_PHRASE_EXPLORER_PROMPT_TEMPLATE = `Explore the phrase, idiom, phrasal verb, collocation, or expression "{{str}}" for a language learner.
@@ -197,13 +237,10 @@ Do not invent context. If the expression is not idiomatic, explain its prepositi
 Do not add Word Family, Related Forms, Derived Forms, Word Formation, Usage Warnings, Confusables, Common Learner Mistakes, Collocations, or Natural Collocations headings; reliable data for those categories belongs in the structured lexical profile.
 
 ### Core Meaning
-Give the natural meaning and translation into {{targetLang}} first, then explain any literal meaning, image, or word partnerships.
+Give the natural meaning and translation into {{targetLang}} first, then explain any literal meaning, image, or word partnerships. If register changes whether a learner should use the expression, add one line here. Do not add a separate heading for register.
 
 ### Grammar & Patterns
 Show the grammatical pattern, separability for phrasal verbs, required preposition combinations (e.g. depend + on, fond + of), and common variations.
-
-### Register and Nuance
-Explain tone, formality, connotation, and when a learner should or should not use it.
 
 ### Natural Examples
 Give 2-3 realistic example sentences in context. For each example use exactly this shape:
@@ -251,6 +288,7 @@ export interface PromptVariables {
   word_count: number;
   targetLang: string;
   enableLexicalProfile?: boolean;
+  lexicalExtras?: readonly LexicalExtraId[];
 }
 
 export function applyTemplate(template: string, variables: PromptVariables): string {
@@ -281,14 +319,17 @@ export function appendInputContract(prompt: string, variables: PromptVariables):
     '</target-language>',
   ];
 
-  if (variables.enableLexicalProfile) {
+  const extras: readonly LexicalExtraId[] = variables.lexicalExtras
+    ?? (variables.enableLexicalProfile ? ALL_LEXICAL_EXTRAS : []);
+  if (extras.length) {
+    const labels = extras.map((extra) => LEXICAL_EXTRA_LABELS[extra]).join(', ');
     parts.push(
       '',
       'If reliable lexical-profile data is available, append exactly one optional block after the Markdown:',
       '<lexical-profile>',
-      '{"wordFamily":{"noun":["..."],"verb":["..."],"adjective":["..."],"adverb":["..."],"inflections":["..."],"derivatives":["..."]},"usageWarnings":["..."],"confusablePairs":[{"word":"...","distinction":"..."}],"wordFormation":{"prefixes":["..."],"suffixes":["..."],"explanation":"..."},"learnerMistakes":[{"mistake":"...","correction":"...","example":"..."}],"collocations":{"verbs":["..."],"nouns":["..."],"prepositions":["..."],"adjectives":["..."],"patterns":["..."]}}',
+      `{${extras.map((extra) => LEXICAL_EXTRA_SCHEMA[extra]).join(',')}}`,
       '</lexical-profile>',
-      'Return word-family forms, derivatives, word-formation notes, usage warnings, confusable pairs, learner mistakes, and collocations only in this block.',
+      `Return ${labels} only in this block. Do not include other lexical-profile categories.`,
       'Use empty arrays when a category has no reliable data. Do not include unsupported guesses.',
     );
   }

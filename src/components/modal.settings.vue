@@ -1,18 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted } from 'vue';
-import { parsePublicSettingsImport, serializePublicSettings, useStorage } from '../composables/composable.storage';
+import { canAccessSecretSettings, parsePublicSettingsImport, serializePublicSettings, useStorage, whenSettingsReady } from '../composables/composable.storage';
+import { SECRET_SETTING_KEYS } from '../shared/settings-export';
 import { requestProviderValidation } from '../shared/runtime-client';
 import { DEFAULT_AI_PROMPTS } from '../shared/ai-prompts';
 import { KNOWN_LANGUAGE_MAPPINGS } from '../shared/languages';
 import { AppSettings } from '../types';
-
-const props = defineProps<{
-  show: boolean;
-}>();
-
-const emit = defineEmits<{
-  (e: 'close'): void;
-}>();
 
 type SettingsTab = 'general' | 'appearance' | 'sources' | 'ai';
 
@@ -20,12 +13,14 @@ const activeTab = ref<SettingsTab>('general');
 const { settings, saveSettings } = useStorage();
 
 const localSettings = ref({ ...settings.value });
+const formHydrated = ref(false);
 const isSavedNotice = ref(false);
 const availableVoices = ref<SpeechSynthesisVoice[]>([]);
 const pausedSitesInput = ref<string>('');
 const isManualModelInput = ref(false);
 const connectionStatus = ref<Record<string, string>>({});
 const connectionBusy = ref<Record<string, boolean>>({});
+const canEditApiKey = canAccessSecretSettings();
 
 const promptEditors: Array<{ key: keyof AppSettings; label: string }> = [
   { key: 'aiPromptTemplate', label: 'Main AI prompt' },
@@ -65,19 +60,39 @@ onMounted(() => {
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     window.speechSynthesis.onvoiceschanged = loadVoices;
   }
+  void syncLocalFromStore();
 });
 
-watch(() => props.show, (newVal) => {
-  if (newVal) {
-    localSettings.value = { ...settings.value };
-    pausedSitesInput.value = Array.isArray(localSettings.value.pausedHostnames)
-      ? localSettings.value.pausedHostnames.join('\n')
-      : '';
-    isManualModelInput.value = Boolean(
-      localSettings.value.aiModel && !presetModels.includes(localSettings.value.aiModel)
-    );
+function applyStoreToLocal() {
+  const pendingSecrets: Partial<AppSettings> = {};
+  for (const key of SECRET_SETTING_KEYS) {
+    if (String(localSettings.value[key] || '').trim()) {
+      pendingSecrets[key] = localSettings.value[key];
+    }
   }
-});
+  localSettings.value = { ...settings.value, ...pendingSecrets };
+  pausedSitesInput.value = Array.isArray(localSettings.value.pausedHostnames)
+    ? localSettings.value.pausedHostnames.join('\n')
+    : '';
+  isManualModelInput.value = Boolean(
+    localSettings.value.aiModel && !presetModels.includes(localSettings.value.aiModel)
+  );
+  formHydrated.value = true;
+}
+
+async function syncLocalFromStore() {
+  await whenSettingsReady();
+  applyStoreToLocal();
+}
+
+watch(settings, (next) => {
+  if (!formHydrated.value) return;
+  for (const key of SECRET_SETTING_KEYS) {
+    if (!String(localSettings.value[key] || '').trim() && String(next[key] || '').trim()) {
+      localSettings.value[key] = next[key];
+    }
+  }
+}, { deep: true });
 
 function toggleManualModelMode() {
   isManualModelInput.value = !isManualModelInput.value;
@@ -86,7 +101,23 @@ function toggleManualModelMode() {
   }
 }
 
-function handleSave() {
+function preserveStoredSecrets() {
+  if (!canEditApiKey) return;
+  for (const key of SECRET_SETTING_KEYS) {
+    if (!String(localSettings.value[key] || '').trim() && String(settings.value[key] || '').trim()) {
+      localSettings.value[key] = settings.value[key];
+    }
+  }
+}
+
+async function resetForm() {
+  formHydrated.value = false;
+  await syncLocalFromStore();
+}
+
+async function handleSave() {
+  await whenSettingsReady();
+  if (!formHydrated.value) preserveStoredSecrets();
   const parsedHostnames = pausedSitesInput.value
     .split('\n')
     .map(s => s.trim().toLowerCase())
@@ -98,12 +129,16 @@ function handleSave() {
     localSettings.value.aiModel = 'gemini-2.5-flash';
   }
 
-  saveSettings(localSettings.value);
+  const payload: Partial<AppSettings> = { ...localSettings.value };
+  for (const key of SECRET_SETTING_KEYS) {
+    if (!canEditApiKey || !String(payload[key] ?? '').trim()) delete payload[key];
+  }
+  delete payload.hasAiApiKey;
+  await saveSettings(payload);
   isSavedNotice.value = true;
   setTimeout(() => {
     isSavedNotice.value = false;
-    emit('close');
-  }, 700);
+  }, 1600);
 }
 
 function exportSettings() {
@@ -212,24 +247,13 @@ async function testTranslationConnection() {
 </script>
 
 <template>
-  <div
-    v-if="show"
-    class="fixed inset-0 z-[2147483647] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 pointer-events-auto select-none"
-    @click.self="emit('close')"
-  >
-    <div class="w-full max-w-lg bg-dark-surface border border-dark-border rounded-2xl p-5 shadow-2xl space-y-4 text-slate-100 text-xs flex flex-col max-h-[90vh]">
-      <!-- Header with Title & Close Button -->
+  <div class="min-h-screen bg-[#0f172a] text-slate-100 p-4 sm:p-6 flex items-start justify-center">
+    <div class="w-full max-w-lg bg-dark-surface border border-dark-border rounded-2xl p-5 shadow-2xl space-y-4 text-xs flex flex-col my-4">
       <div class="flex items-center justify-between border-b border-dark-border pb-3 flex-shrink-0">
         <h3 class="font-bold text-sm text-slate-100 flex items-center gap-2">
           <span>⚙️</span>
-          <span>Extension Settings</span>
+          <span>Dictionary Settings</span>
         </h3>
-        <button
-          @click="emit('close')"
-          class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-dark-muted transition-colors cursor-pointer"
-        >
-          ✕
-        </button>
       </div>
 
       <!-- 4-Tab Navigation Bar -->
@@ -664,7 +688,7 @@ async function testTranslationConnection() {
               class="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 transition-all font-mono"
             />
             <p class="text-[10px] text-slate-400 leading-normal">
-              Your API Key is encrypted and stored locally in browser `chrome.storage.sync`.
+              Stored only on this device in `chrome.storage.local`. It is not synced and is never exported. Leave blank to keep the current key.
             </p>
           </div>
 
@@ -781,10 +805,11 @@ async function testTranslationConnection() {
 
         <div class="flex items-center gap-2">
           <button
-            @click="emit('close')"
+            type="button"
+            @click="resetForm"
             class="px-4 py-2 rounded-xl bg-dark-muted hover:bg-dark-border text-slate-300 text-xs font-bold transition-colors cursor-pointer"
           >
-            Cancel
+            Reset
           </button>
 
           <button

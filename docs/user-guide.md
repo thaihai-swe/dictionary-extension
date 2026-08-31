@@ -81,12 +81,9 @@ Dictionary lookups execute in two synchronized phases:
    - New definitions, additional example sentences, missing synonyms/antonyms, and phonetic transcriptions are merged dynamically.
    - Contributing provider badges appear in the title row and section metadata.
 
-### Smart Lemmatization & Phrasal Fallback
+### Exact Selection Lookups
 
-If an exact query is not found in dictionary databases (for example, inflected verbs like `went`, irregular plurals like `children`, or comparative adjectives like `better`):
-1. The extension automatically generates English root lemma candidates (e.g. `went` → `go`).
-2. If single-word lemmatization fails on multi-word expressions (e.g. `taking care of` or `looked up`), it canonicalizes phrasal verbs to their base dictionary forms (e.g. `take care of`, `look up`).
-3. When a fallback succeeds, the popup displays a helpful root notice: `Showing definitions for root: <stem>`.
+Dictionary lookups use the selected text as-is. Inflected forms (`went`, `running`, `children`) are not rewritten to a root lemma. If that exact query has no definition, the popup shows not-found (plus translation if enabled). Multi-word queries with no dictionary hit can still use **AI Phrase Fallback** when that setting is on.
 
 ### Translation Services
 
@@ -171,9 +168,9 @@ Switch to the **AI** tab for deep generative explanations powered by Google Gemi
 | Action | Intent | Purpose & Output Structure | Context Requirement |
 |---|---|---|---|
 | **Main AI Explanation** | `default` | Oxford Learner-style definition, numbered **Senses & Meanings** cards, sense-aware translation glosses, usage notes, bilingual examples, and collapsible etymology. | Optional |
-| **Context Explain** | `explain_in_context` | In-sentence meaning, direct substitutions that keep the same syntax, nuance/connotation loss notes, and natural paraphrases. | **Required** |
-| **Grammar & Nuance** | `grammar` | Syntactic slot / role analysis, formality and tone, pattern rules, and short examples. | **Required** |
-| **Phrase & Collocations** | `phrase_explorer` | Deconstructs idioms, phrasal verbs, prepositional dependencies, and collocation patterns with natural example sentences. | Optional |
+| **Context Explain** | `explain_in_context` | In-sentence meaning, direct substitutions that keep the same syntax, and nuance-lost notes. Whole-sentence rewrites belong to Rephrase. | **Required** |
+| **Grammar & Nuance** | `grammar` | Syntactic slot / role analysis, pattern rules, short pattern examples, and a Learner Mistakes card. | **Required** |
+| **Phrase & Collocations** | `phrase_explorer` | Idiom / phrasal meaning, preposition patterns, a Collocations card, and natural example sentences. | Optional |
 | **Sentence Breakdown** | `sentence_breakdown` | Structural JSON analysis decomposing clauses, grammatical roles, and phrase idioms with one-click interactive lookup chips. | Full sentence query or context sentence |
 | **Compare Confusables** | `compare_confusables` | Side-by-side distinction, comparison matrix, collocation divergence, and minimal-pair sentences. Shown as a follow-up when the query looks like `affect vs effect`. | Optional |
 | **Rephrase** | `rephrase` | Three stylistic rewrite styles (Simplified, Academic & Formal, Native Idiom) with explanations in your target language. | Optional |

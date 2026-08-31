@@ -21,6 +21,7 @@ const emit = defineEmits<{
     <AiLexicalExtras
       :query="result.query"
       :profile="result.lexicalProfile"
+      :intent="result.type"
       @select-word="emit('select-word', $event)"
     />
   </div>

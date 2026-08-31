@@ -1,5 +1,6 @@
-import { extractSurroundingContext as extractPageContext } from '../../shared/page-context';
+import { extractSelectionContext } from '../../shared/page-context';
 import { isExtensionContextInvalidated } from '../../shared/messages';
+import { createRequestId, startDictionaryLookup } from '../../shared/dictionary-lookup-client';
 
 type BootSettings = {
   theme: string;
@@ -133,7 +134,10 @@ async function startBootstrap() {
   let isMaximized = false;
   let selectedText = '';
   let contextSentence = '';
+  let lookupRequestId = '';
+  let lastOpenedText = '';
   let selectionRange: Range | null = null;
+  let selectionRaf = 0;
   let customWidth: number | null = null;
   let customHeight: number | null = null;
   let popupX = 0;
@@ -154,6 +158,7 @@ async function startBootstrap() {
 
   await loadBootSettings();
   applyTheme();
+  scheduleIdleOverlayPrefetch();
 
   function isDarkMode() {
     if (settings.theme === 'system') {
@@ -204,12 +209,30 @@ async function startBootstrap() {
     }
   }
 
-  function extractSurroundingContext(selectedStr: string): string {
-    return extractPageContext(
+  function extractOpenContext(selectedStr: string): string {
+    return extractSelectionContext(
       selectedStr,
       settings.disablePageContextExtraction,
       selectionRange,
     ).context || '';
+  }
+
+  function isSkippableSelection(text: string): boolean {
+    return /^[A-Za-z]$/.test(text);
+  }
+
+  function scheduleIdleOverlayPrefetch() {
+    const prefetch = () => {
+      void loadOverlayModule().catch(() => undefined);
+    };
+    const idle = (globalThis as typeof globalThis & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+    }).requestIdleCallback;
+    if (typeof idle === 'function') {
+      idle(prefetch, { timeout: 2500 });
+      return;
+    }
+    setTimeout(prefetch, 1000);
   }
 
   function loadOverlayModule() {
@@ -233,6 +256,7 @@ async function startBootstrap() {
     return {
       selectedText,
       contextSentence,
+      lookupRequestId: lookupRequestId || undefined,
       isMaximized,
       isDragging,
       isResizing,
@@ -241,17 +265,32 @@ async function startBootstrap() {
     };
   }
 
+  function destroyOverlay() {
+    overlayApi?.unmount();
+    overlayApi = null;
+  }
+
   async function openPopup(x: number, y: number, text: string, context?: string) {
     if (isHostnamePaused()) return;
+    const cleanText = String(text || '').trim();
+    if (!cleanText) return;
     triggerBtn.style.display = 'none';
-    selectedText = text;
-    contextSentence = context || extractSurroundingContext(text);
+    selectedText = cleanText;
+    lastOpenedText = cleanText;
+    contextSentence = String(context || '').trim();
+    lookupRequestId = createRequestId('dict');
     positionPopup(x, y);
     showPopup = true;
     isMaximized = false;
     popupLayer.classList.remove('maximized');
     popupLayer.style.display = 'block';
     backdrop.style.display = 'none';
+
+    void startDictionaryLookup({
+      text: cleanText,
+      context: contextSentence || undefined,
+      requestId: lookupRequestId,
+    }).catch(() => undefined);
 
     let mod: OverlayModule;
     try {
@@ -274,16 +313,21 @@ async function startBootstrap() {
     } else {
       overlayApi.update(overlayProps());
     }
+
+    if (!contextSentence) {
+      contextSentence = extractOpenContext(cleanText);
+      if (contextSentence && showPopup) overlayApi.update(overlayProps());
+    }
   }
 
   function closePopup() {
     showPopup = false;
     isMaximized = false;
+    lookupRequestId = '';
     triggerBtn.style.display = 'none';
     popupLayer.style.display = 'none';
     backdrop.style.display = 'none';
-    overlayApi?.unmount();
-    overlayApi = null;
+    popupLayer.classList.remove('maximized');
   }
 
   function toggleMaximize() {
@@ -365,7 +409,7 @@ async function startBootstrap() {
     }
     const selection = window.getSelection();
     const text = selection?.toString().trim();
-    if (!text) {
+    if (!text || isSkippableSelection(text)) {
       triggerBtn.style.display = 'none';
       return;
     }
@@ -374,8 +418,7 @@ async function startBootstrap() {
 
     snapshotSelection(selection);
     selectedText = text;
-    contextSentence = extractSurroundingContext(text);
-    void loadOverlayModule();
+    void loadOverlayModule().catch(() => undefined);
 
     const iconSize = 38;
     const margin = 10;
@@ -402,7 +445,14 @@ async function startBootstrap() {
     triggerY = Math.max(margin, Math.min(y, window.innerHeight - iconSize - margin));
 
     if (mode === 'direct') {
-      void openPopup(triggerX, triggerY, text, contextSentence);
+      if (text.length > 80) {
+        triggerBtn.style.left = `${triggerX}px`;
+        triggerBtn.style.top = `${triggerY}px`;
+        triggerBtn.style.display = showPopup ? 'none' : 'flex';
+        return;
+      }
+      if (showPopup && lastOpenedText === text) return;
+      void openPopup(triggerX, triggerY, text);
       return;
     }
 
@@ -414,7 +464,7 @@ async function startBootstrap() {
   triggerBtn.addEventListener('click', (event) => {
     event.preventDefault();
     event.stopPropagation();
-    if (selectedText) void openPopup(triggerX, triggerY, selectedText, contextSentence);
+    if (selectedText) void openPopup(triggerX, triggerY, selectedText);
   });
   backdrop.addEventListener('click', () => {
     if (isMaximized) toggleMaximize();
@@ -423,7 +473,11 @@ async function startBootstrap() {
   window.addEventListener('mouseup', (event) => {
     if (host.contains(event.target as Node) || shadow.contains(event.target as Node)) return;
     snapshotSelection(window.getSelection());
-    setTimeout(() => updateSelectionTrigger(event), 10);
+    if (selectionRaf) cancelAnimationFrame(selectionRaf);
+    selectionRaf = requestAnimationFrame(() => {
+      selectionRaf = 0;
+      updateSelectionTrigger(event);
+    });
   });
 
   window.addEventListener('keydown', (event) => {
@@ -460,6 +514,11 @@ async function startBootstrap() {
     if (!text) return;
     snapshotSelection(selection);
     void openPopup(window.innerWidth / 2 - 220, 60, text, payload.context);
+  });
+
+  window.addEventListener('pagehide', () => {
+    closePopup();
+    destroyOverlay();
   });
 
   chrome.storage?.onChanged?.addListener((changes, area) => {
