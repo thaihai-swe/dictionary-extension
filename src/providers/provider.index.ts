@@ -9,15 +9,17 @@ import {
   parseLexicalProfile,
   splitPhraseExplanation,
 } from '../shared/query-utils';
-import { cloneDictionaryEntry, isThinDictionaryEntry, mergeDictionaryEntries, mergeMeanings, mergeSourceBadges } from '../shared/enrichment';
+import { cloneDictionaryEntry, mergeDictionaryEntries, mergeMeanings, mergeSourceBadges } from '../shared/enrichment';
 import { fetchAiAnalysis } from './provider.gemini-ai';
+import { fetchDatamuse } from './provider.datamuse';
 import { fetchFreeDictionary } from './provider.free-dictionary';
 import { fetchGoogleTranslate, lookupGoogleTranslation } from './provider.google-translate';
 import { fetchLibreTranslate, lookupLibreTranslation } from './provider.libre-translate';
-import { fetchMerriamWebster } from './provider.merriam-webster';
+import { lookupMyMemoryTranslation } from './provider.mymemory';
+import { fetchRhymeBrain } from './provider.rhymebrain';
+import { fetchUrbanDictionary } from './provider.urban-dictionary';
+import { fetchWikipediaSummary } from './provider.wikipedia';
 import { fetchWiktionary } from './provider.wiktionary';
-import { fetchWordnik } from './provider.wordnik';
-import { fetchWordsApi } from './provider.words-api';
 
 const ENRICHMENT_CONCURRENCY = 2;
 const ENRICHMENT_TTL_MS = 10 * 60 * 1000;
@@ -79,21 +81,26 @@ function writeCombinedResultCache(key: string, result: DictionaryEntry) {
   }
 }
 
-function isProviderConfigured(providerId: string, settings?: AppSettings): boolean {
-  if (providerId === 'merriam_webster') return Boolean(settings?.dictionaryApiKey?.trim());
-  if (providerId === 'wordnik') return Boolean(settings?.wordnikApiKey?.trim());
-  if (providerId === 'words_api') return Boolean(settings?.wordsApiKey?.trim());
-  return true;
-}
-
 function resolvePrimaryProviderId(provider: string, settings?: AppSettings): string {
-  const requested = provider || settings?.dictionaryProvider || 'free_dictionary';
-  if (isProviderConfigured(requested, settings)) return requested;
-  return DICTIONARY_FALLBACK_ORDER.find((id) => isProviderConfigured(id, settings)) || requested;
+  return provider || settings?.dictionaryProvider || 'free_dictionary';
 }
 
 function hasUsableDefinitions(entry?: DictionaryEntry | null): boolean {
   return Boolean(entry?.meanings?.some((meaning) => meaning.definitions?.some((item) => item.definition?.trim())));
+}
+
+function hasEnrichmentPayload(entry?: DictionaryEntry | null): boolean {
+  if (!entry) return false;
+  return Boolean(
+    hasUsableDefinitions(entry)
+    || entry.phonetics?.some((item) => item.phonetic || item.text || item.audioUrl || item.audio)
+    || entry.pronunciations?.some((item) => item.phonetic || item.text || item.audioUrl || item.audio)
+    || entry.synonyms?.length
+    || entry.antonyms?.length
+    || entry.examples?.length
+    || entry.syllables
+    || entry.lexicalProfile
+  );
 }
 
 function normalizeDictionaryResult(result: DictionaryEntry, settings?: AppSettings, originalText?: string): DictionaryEntry {
@@ -126,14 +133,16 @@ async function lookupSingleProvider(
       return fetchGoogleTranslate(query, targetLang, signal);
     case 'wiktionary':
       return fetchWiktionary(query, targetLang, signal);
-    case 'merriam_webster':
-      return fetchMerriamWebster(query, targetLang, signal, settings?.dictionaryApiKey);
-    case 'wordnik':
-      return fetchWordnik(query, targetLang, signal, settings?.wordnikApiKey);
-    case 'words_api':
-      return fetchWordsApi(query, targetLang, signal, settings?.wordsApiKey);
     case 'libre_translate':
       return fetchLibreTranslate(query, targetLang, signal);
+    case 'datamuse':
+      return fetchDatamuse(query, targetLang, signal);
+    case 'urban_dictionary':
+      return fetchUrbanDictionary(query, targetLang, signal);
+    case 'wikipedia':
+      return fetchWikipediaSummary(query, targetLang, signal);
+    case 'rhymebrain':
+      return fetchRhymeBrain(query, targetLang, signal);
     case 'gemini_ai': {
       const aiRes = await fetchAiAnalysis('default', query, targetLang, settings?.aiApiKey, settings?.aiModel, signal, undefined, settings);
       return {
@@ -157,13 +166,24 @@ export async function lookupTranslationResult(
 ): Promise<TranslationResult | null> {
   if (settings && settings.enableTranslate === false) return null;
   const targetLang = settings?.translateTargetLanguage || 'Vietnamese';
-  try {
+  const lookupPrimary = async (): Promise<TranslationResult | null> => {
     if (settings?.translateProvider === 'libretranslate') {
-      return await lookupLibreTranslation(text, targetLang, signal, settings.libreTranslateBaseUrl, settings.libreTranslateApiKey);
+      return lookupLibreTranslation(text, targetLang, signal, settings.libreTranslateBaseUrl, settings.libreTranslateApiKey);
     }
-    return await lookupGoogleTranslation(text, targetLang, signal);
+    if (settings?.translateProvider === 'mymemory') {
+      return lookupMyMemoryTranslation(text, targetLang, signal);
+    }
+    return lookupGoogleTranslation(text, targetLang, signal);
+  };
+  try {
+    return await lookupPrimary();
   } catch {
-    return null;
+    if (settings?.translateProvider === 'mymemory') return null;
+    try {
+      return await lookupMyMemoryTranslation(text, targetLang, signal);
+    } catch {
+      return null;
+    }
   }
 }
 
@@ -202,7 +222,6 @@ export async function fetchDictionaryResult(
 
   for (const attempt of attempts) {
     if (signal?.aborted) throw new DOMException('The user aborted a request.', 'AbortError');
-    if (!isProviderConfigured(attempt.providerId, settingsWithKeys)) continue;
     try {
       const result = await lookupSingleProvider(attempt.providerId, attempt.query, targetLang, signal, settingsWithKeys);
       const normalized = normalizeDictionaryResult(result, settingsWithKeys, cleanWord);
@@ -333,9 +352,7 @@ export async function runDictionaryEnrichment(
     return;
   }
 
-  const secondaryProviders = DICTIONARY_FALLBACK_ORDER.filter(
-    (id) => id !== primaryProviderId && isProviderConfigured(id, settings),
-  );
+  const secondaryProviders = DICTIONARY_FALLBACK_ORDER.filter((id) => id !== primaryProviderId);
   const collected: DictionaryEntry[] = [];
 
   for (let index = 0; index < secondaryProviders.length; index += ENRICHMENT_CONCURRENCY) {
@@ -346,9 +363,9 @@ export async function runDictionaryEnrichment(
     );
     const batchResults: DictionaryEntry[] = [];
     for (const item of settled) {
-      if (item.status === 'fulfilled' && item.value?.meanings?.length) {
-        batchResults.push(normalizeDictionaryResult(item.value, settings, word));
-      }
+      if (item.status !== 'fulfilled' || !item.value) continue;
+      const normalized = normalizeDictionaryResult(item.value, settings, word);
+      if (hasEnrichmentPayload(normalized)) batchResults.push(normalized);
     }
     if (batchResults.length) {
       collected.push(...batchResults);
@@ -399,8 +416,9 @@ export async function fetchCombinedDictionaryResult(
     );
 
   const dictionary = await dictionaryPromise;
+  const primaryProviderId = dictionary?.providerId || provider;
   const canEnrich = settings.enableDictionary !== false
-    && DICTIONARY_FALLBACK_ORDER.some((id) => id !== provider && isProviderConfigured(id, settings));
+    && DICTIONARY_FALLBACK_ORDER.some((id) => id !== primaryProviderId);
 
   if (!dictionary && translationPromise && !translationState.outcome) {
     await translationPromise;
@@ -458,7 +476,7 @@ export async function fetchCombinedDictionaryResult(
     })
     : Promise.resolve();
 
-  const shouldEnrichSecondaries = settings.enableDictionary !== false && isThinDictionaryEntry(latest);
+  const shouldEnrichSecondaries = canEnrich;
   const enrichmentTask = shouldEnrichSecondaries
     ? runDictionaryEnrichment(cleanWord, latest, settings, (updated) => {
       applyLiveUpdate({ ...updated, enriched: true }, 3);
@@ -513,16 +531,6 @@ export async function validateDictionaryProvider(
   settings: AppSettings,
 ): Promise<ProviderValidationResult> {
   const id = providerId || 'free_dictionary';
-  if (id === 'merriam_webster' && !String(settings?.dictionaryApiKey || '').trim()) {
-    return { ok: false, providerId: id, error: 'Merriam-Webster API key is missing.' };
-  }
-  if (id === 'wordnik' && !String(settings?.wordnikApiKey || '').trim()) {
-    return { ok: false, providerId: id, error: 'Wordnik API key is missing.' };
-  }
-  if (id === 'words_api' && !String(settings?.wordsApiKey || '').trim()) {
-    return { ok: false, providerId: id, error: 'WordsAPI key is missing.' };
-  }
-
   const startTime = Date.now();
   try {
     await lookupSingleProvider(id, 'hello', settings.translateTargetLanguage || 'Vietnamese', undefined, settings);

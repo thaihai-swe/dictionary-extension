@@ -68,21 +68,24 @@ type SectionKind =
 
 # Providers Specification
 
-This document provides the technical specification for all external service integrations across **Dictionary** in Vue 3 and TypeScript.
+This document provides the technical specification for all external service integrations across **Dictionary** in React 18 and TypeScript.
 
 ---
 
 ## 1. Dictionary & Translation Providers
 
-The dictionary provider facade (`src/providers/provider.index.ts`) routes requests across 6 integrated adapters:
+The dictionary provider facade (`src/providers/provider.index.ts`) routes requests across definition, lexical-enrichment, and translation adapters. All dictionary backends are keyless. Remaining sources always run in Phase B enrichment after the primary result paints.
 
 | Provider ID | Provider Module | Authentication | Description |
 |---|---|---|---|
 | `free_dictionary` | `provider.free-dictionary.ts` | None (`api.dictionaryapi.dev`) | Definitions, examples, synonyms/antonyms, US/UK audio MP3s, and phonetic transcriptions. |
-| `google_translate` | `provider.google-translate.ts` | None (`translate.googleapis.com`) | Instant Google Translate fallback & multi-language definitions. |
 | `wiktionary` | `provider.wiktionary.ts` | None (`en.wiktionary.org`) | Multi-sense English definitions, examples, and etymological glosses. |
-| `merriam_webster` | `provider.merriam-webster.ts` | `dictionaryApiKey` (`dictionaryapi.com`) | Official collegiate definitions, short examples, and audio recordings. |
-| `wordnik` | `provider.wordnik.ts` | `wordnikApiKey` (`api.wordnik.com`) | Multi-source definitions, corpus examples, and related words. |
+| `datamuse` | `provider.datamuse.ts` | None (`api.datamuse.com`) | WordNet-style definitions, synonyms, antonyms, and collocations. |
+| `rhymebrain` | `provider.rhymebrain.ts` | None (`rhymebrain.com`) | IPA transcription and pronunciation. Enrichment-only. |
+| `wikipedia` | `provider.wikipedia.ts` | None (`en.wikipedia.org`) | Encyclopedic summary for terms, names, and concepts. |
+| `urban_dictionary` | `provider.urban-dictionary.ts` | None (`api.urbandictionary.com`) | Ranked slang/idiom definitions (top thumbs-up). |
+| `google_translate` | `provider.google-translate.ts` | None (`translate.googleapis.com`) | Instant Google Translate fallback & multi-language definitions. |
+| `mymemory` | `provider.mymemory.ts` | None (`api.mymemory.translated.net`) | Keyless translation provider and automatic fallback if Google/Libre fail. |
 | `libre_translate` | `provider.libre-translate.ts` | `libreTranslateApiKey` (`libretranslate.com`) | Privacy-focused translation service with custom base URL. |
 
 ---

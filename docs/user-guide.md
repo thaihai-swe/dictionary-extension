@@ -7,7 +7,7 @@
 The user interface is powered by the **Calm Learning Studio** design system:
 - **Editorial Typography:** Clear, distraction-free serif typography for definitions and explanations, or bundled **Atkinson Hyperlegible** in **Learner Font** mode to improve character disambiguation for ESL learners.
 - **Adaptive Appearance:** Native support for System, Light, and Dark themes with WCAG 2.1 AA compliant contrast ratios.
-- **Transparent Attribution:** Multi-provider source badges clearly indicate which dictionary, translation, or AI services contributed to your result.
+- **Calm Header:** The Dictionary tab shows the headword plus UK/US pronunciation and practice controls—no CEFR, frequency, syllable, or source-chip clutter.
 - **Persistent Geometry:** In-page popup dimensions can be resized from the bottom-right corner and are automatically saved.
 
 ---
@@ -48,7 +48,7 @@ The **Dictionary** tab delivers a comprehensive, multi-source learning view comb
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────┐
-│  D  evaluate                             [Free Dictionary] [Wiktionary]│
+│  D  evaluate                                                           │
 │     /ɪˈvæl.ju.eɪt/  (US) 🔊 Listen (US)  🔊 Listen (UK)  🎙️ Practice    │
 ├────────────────────────────────────────────────────────────────────────┤
 │  ▼ Translation · Vietnamese                                            │
@@ -73,13 +73,13 @@ The **Dictionary** tab delivers a comprehensive, multi-source learning view comb
 Dictionary lookups execute in two synchronized phases:
 
 1. **Phase 1 — Fast Primary Lookup (Sub-second):**
-   - The primary dictionary provider (default: **Free Dictionary API**) returns first. Inflected forms retry that same provider (`running` → `run`) before slower backends.
+   - The primary dictionary provider (default: **Free Dictionary API**) returns first. Lookups use the selected text as-is.
    - Translation starts in parallel and appears on first paint when it is already ready; otherwise it fills in a moment later.
-   - Initial definitions, examples, and phonetic audio appear immediately.
+   - Initial definitions, examples, and phonetic audio appear immediately under a clean headword header.
 2. **Phase 2 — Asynchronous Lazy Enrichment (Non-blocking):**
-   - Secondary configured providers (**Wiktionary**, **Merriam-Webster**, **Wordnik**, **WordsAPI**) are queried lazily in concurrent batches of 2.
+   - Remaining keyless providers (**Wiktionary**, **Datamuse**, **Wikipedia**, **Urban Dictionary**, **RhymeBrain**) always run in concurrent batches of 2.
    - New definitions, additional example sentences, missing synonyms/antonyms, and phonetic transcriptions are merged dynamically.
-   - Contributing provider badges appear in the title row and section metadata.
+   - Extra lexical cards (collocations, word family) mount on the next animation frame so they do not block first paint.
 
 ### Exact Selection Lookups
 
@@ -170,9 +170,9 @@ Switch to the **AI** tab for deep generative explanations powered by Google Gemi
 | **Main AI Explanation** | `default` | Oxford Learner-style definition, numbered **Senses & Meanings** cards, sense-aware translation glosses, usage notes, bilingual examples, and collapsible etymology. | Optional |
 | **Context Explain** | `explain_in_context` | In-sentence meaning, direct substitutions that keep the same syntax, and nuance-lost notes. Whole-sentence rewrites belong to Rephrase. | **Required** |
 | **Grammar & Nuance** | `grammar` | Syntactic slot / role analysis, pattern rules, short pattern examples, and a Learner Mistakes card. | **Required** |
-| **Phrase & Collocations** | `phrase_explorer` | Idiom / phrasal meaning, preposition patterns, a Collocations card, and natural example sentences. | Optional |
+| **Phrase & Collocations** | `collocations` | Idiom / phrasal meaning, preposition patterns, a Collocations card, and natural example sentences. | Optional |
 | **Sentence Breakdown** | `sentence_breakdown` | Structural JSON analysis decomposing clauses, grammatical roles, and phrase idioms with one-click interactive lookup chips. | Full sentence query or context sentence |
-| **Compare Confusables** | `compare_confusables` | Side-by-side distinction, comparison matrix, collocation divergence, and minimal-pair sentences. Shown as a follow-up when the query looks like `affect vs effect`. | Optional |
+| **Compare Confusables** | `confusables` | Side-by-side distinction, comparison matrix, collocation divergence, and minimal-pair sentences. | Optional |
 | **Rephrase** | `rephrase` | Three stylistic rewrite styles (Simplified, Academic & Formal, Native Idiom) with explanations in your target language. | Optional |
 
 ### Result Actions

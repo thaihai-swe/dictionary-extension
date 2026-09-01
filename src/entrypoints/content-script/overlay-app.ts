@@ -1,5 +1,6 @@
-import { createApp, h, reactive } from 'vue';
-import Overlay from './overlay.in-page.vue';
+import React from 'react';
+import { createRoot, Root } from 'react-dom/client';
+import Overlay from './overlay.in-page';
 
 interface OverlayProps {
   selectedText?: string;
@@ -36,33 +37,45 @@ export function mountOverlay(
 ) {
   ensureOverlayStyles(shadow);
 
-  const state = reactive({ ...props });
-  const app = createApp({
-    setup() {
-      return () => h(Overlay, {
-        selectedText: state.selectedText,
-        contextSentence: state.contextSentence,
-        lookupRequestId: state.lookupRequestId,
-        isMaximized: state.isMaximized,
-        isDragging: state.isDragging,
-        isResizing: state.isResizing,
-        width: state.width,
-        height: state.height,
-        onClose: handlers.onClose,
-        onToggleMaximize: handlers.onToggleMaximize,
-        onStartDrag: handlers.onStartDrag,
-        onStartResize: handlers.onStartResize,
-      });
-    },
-  });
-  app.mount(container);
+  let root: Root | null = createRoot(container);
+  let currentProps = { ...props };
+
+  function render(nextProps: OverlayProps) {
+    if (!root) return;
+    root.render(
+      React.createElement(
+        React.StrictMode,
+        null,
+        React.createElement(Overlay, {
+          selectedText: nextProps.selectedText,
+          contextSentence: nextProps.contextSentence,
+          lookupRequestId: nextProps.lookupRequestId,
+          isMaximized: nextProps.isMaximized,
+          isDragging: nextProps.isDragging,
+          isResizing: nextProps.isResizing,
+          width: nextProps.width,
+          height: nextProps.height,
+          onClose: handlers.onClose,
+          onToggleMaximize: handlers.onToggleMaximize,
+          onStartDrag: handlers.onStartDrag,
+          onStartResize: handlers.onStartResize,
+        }),
+      ),
+    );
+  }
+
+  render(currentProps);
 
   return {
     update(next: OverlayProps) {
-      Object.assign(state, next);
+      currentProps = { ...currentProps, ...next };
+      render(currentProps);
     },
     unmount() {
-      app.unmount();
+      if (root) {
+        root.unmount();
+        root = null;
+      }
       container.innerHTML = '';
     },
   };

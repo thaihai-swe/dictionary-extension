@@ -3,10 +3,10 @@
 ## 1. Architectural Philosophy & Environment
 
 **Dictionary** is engineered with a modern, high-performance web extension stack:
-- **Runtime Stack:** Vue 3 (Composition API), TypeScript 5, Vite 5, Tailwind CSS, Chrome Manifest V3.
+- **Runtime Stack:** React 18, TypeScript 5, Vite 5, Tailwind CSS, Chrome Manifest V3.
 - **Module Architecture:** Organized under `src/entrypoints/` (`background/`, `content-script/`, `toolbar-popup/`).
 - **Isolation:** Content script overlay is mounted inside Shadow DOM (`#dictionary-extension-root`) with encapsulated Tailwind CSS, preventing style leaks into or out of host pages.
-- **Type Safety:** Full TypeScript interfaces defined in `src/types/index.ts` checked with `yarn typecheck` (`vue-tsc --noEmit`).
+- **Type Safety:** Full TypeScript interfaces defined in `src/types/index.ts` checked with `yarn typecheck` (`tsc --noEmit`).
 
 ---
 
@@ -97,10 +97,9 @@ Run this comprehensive verification protocol before submitting code changes:
 3. Rapid query switching:
    - Query `apple`, then immediately type `orange` before `apple` finishes enrichment.
    - Confirm `apple` enrichment updates never overwrite `orange` (stale-response guard via `requestId`).
-4. Skip unconfigured providers:
-   - Set the primary dictionary to Merriam-Webster, Wordnik, or WordsAPI with an empty key.
-   - Confirm lookups succeed via Free Dictionary and Wiktionary without network errors in the DevTools console.
-   - A transient 5xx/timeout from a free provider should fall through to the next free provider. An invalid API key (401/403) still stops the chain.
+4. Free keyless provider pipeline:
+   - Confirm lookups succeed and enrich across Free Dictionary, Wiktionary, Datamuse, Wikipedia, Urban Dictionary, and RhymeBrain without requiring API keys.
+   - A transient 5xx/timeout from an upstream provider falls through gracefully without failing the overall result.
 
 ---
 

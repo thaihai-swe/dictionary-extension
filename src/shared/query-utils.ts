@@ -97,9 +97,10 @@ export interface DictionaryLookupAttempt {
 const FALLBACK_ORDER = [
   'free_dictionary',
   'wiktionary',
-  'merriam_webster',
-  'wordnik',
-  'words_api',
+  'datamuse',
+  'rhymebrain',
+  'wikipedia',
+  'urban_dictionary',
 ];
 
 export const DICTIONARY_FALLBACK_ORDER = FALLBACK_ORDER;
@@ -388,10 +389,7 @@ export function parseLexicalProfile(value: unknown): LexicalProfile | null {
   const collocations = normalizeCollocations(row.collocations || row.collocations_list);
   if (collocations) hasData = true;
 
-  const frequencyPill = String(row.frequencyPill || row.frequency || '').trim() || undefined;
-  const cefr = String(row.cefr || '').trim() as LexicalProfile['cefr'];
-
-  if (!hasData && !frequencyPill && !cefr) return null;
+  if (!hasData) return null;
 
   return {
     wordFamily: Object.keys(wordFamily).length ? wordFamily : undefined,
@@ -401,8 +399,6 @@ export function parseLexicalProfile(value: unknown): LexicalProfile | null {
     learnerMistakes: learnerMistakes.length ? learnerMistakes : undefined,
     wordFormation: wordFormation || undefined,
     collocations: collocations || undefined,
-    frequencyPill,
-    cefr: cefr || undefined,
   };
 }
 
@@ -471,8 +467,6 @@ export function mergeLexicalProfiles(baseProfile?: unknown, nextProfile?: unknow
       ...(base.collocations || {}),
       ...(next.collocations || {}),
     }) || undefined,
-    frequencyPill: base.frequencyPill || next.frequencyPill,
-    cefr: base.cefr || next.cefr,
   };
 }
 

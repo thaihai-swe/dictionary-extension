@@ -29,9 +29,6 @@ To guarantee that private credentials can never leak across browser sync channel
 │                   chrome.storage.local (Isolated Secrets)              │
 ├────────────────────────────────────────────────────────────────────────┤
 │ • aiApiKey (Gemini / OpenAI API Key)                                   │
-│ • dictionaryApiKey (Merriam-Webster Collegiate Key)                    │
-│ • wordnikApiKey (Wordnik Developer Key)                                │
-│ • wordsApiKey (WordsAPI RapidAPI Key)                                  │
 │ • libreTranslateApiKey (LibreTranslate Private Key)                    │
 │ ➔ NEVER synced to the cloud. Stored strictly on this physical machine. │
 │ ➔ ISOLATED TO BACKGROUND SERVICE WORKER ONLY.                          │
@@ -81,9 +78,7 @@ The keyboard command **Look up the selected text** (`lookup-selection`, suggeste
 | Setting Key | Type | Storage | Default | Description |
 |---|---|---|---|---|
 | `enableDictionary` | `boolean` | `sync` | `true` | Displays structured dictionary definitions in the Dictionary tab. |
-| `dictionaryProvider` | `string` | `sync` | `"free_dictionary"` | Primary dictionary backend: `"free_dictionary"`, `"google_translate"`, `"wiktionary"`, `"merriam_webster"`, `"wordnik"`, or `"libre_translate"`. |
-| `dictionaryApiKey` | `string` | `local` | `""` | Merriam-Webster Collegiate API key. |
-| `wordnikApiKey` | `string` | `local` | `""` | Wordnik API key. |
+| `dictionaryProvider` | `string` | `sync` | `"free_dictionary"` | Primary dictionary backend: `"free_dictionary"`, `"wiktionary"`, `"datamuse"`, `"wikipedia"`, `"urban_dictionary"`, or `"google_translate"`. |
 | `enableTranslate` | `boolean` | `sync` | `true` | Shows translation card alongside dictionary definitions in the Dictionary tab. |
 | `translateProvider` | `string` | `sync` | `"google"` | Translation service: `"google"` (Google Translate) or `"libretranslate"`. |
 | `translateTargetLanguage`| `string`| `sync` | `"Vietnamese"` | Target language display name (e.g. `Vietnamese`, `English`, `Japanese`, `Chinese`, `Korean`, `French`, `German`, `Spanish`). |

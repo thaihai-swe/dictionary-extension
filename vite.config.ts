@@ -1,5 +1,5 @@
 import { defineConfig, build as viteBuild, Plugin } from 'vite';
-import vue from '@vitejs/plugin-vue';
+import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 import { copyFileSync, existsSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 
@@ -9,7 +9,7 @@ function buildExtensionScriptsPlugin(): Plugin {
     async closeBundle() {
       await viteBuild({
         configFile: false,
-        plugins: [vue()],
+        plugins: [react()],
         define: {
           'process.env.NODE_ENV': JSON.stringify('production'),
         },
@@ -36,7 +36,7 @@ function buildExtensionScriptsPlugin(): Plugin {
 
       await viteBuild({
         configFile: false,
-        plugins: [vue()],
+        plugins: [react()],
         define: {
           'process.env.NODE_ENV': JSON.stringify('production'),
         },
@@ -58,7 +58,7 @@ function buildExtensionScriptsPlugin(): Plugin {
 
       await viteBuild({
         configFile: false,
-        plugins: [vue()],
+        plugins: [react()],
         define: {
           'process.env.NODE_ENV': JSON.stringify('production'),
         },
@@ -71,7 +71,7 @@ function buildExtensionScriptsPlugin(): Plugin {
           emptyOutDir: false,
           cssCodeSplit: true,
           lib: {
-            entry: resolve(__dirname, 'src/entrypoints/content-script/overlay-app.ts'),
+            entry: resolve(__dirname, 'src/entrypoints/content-script/overlay-app.tsx'),
             name: 'DictionaryOverlay',
             formats: ['es'],
             fileName: () => 'overlay.js',
@@ -118,7 +118,7 @@ function buildExtensionScriptsPlugin(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [vue(), buildExtensionScriptsPlugin()],
+  plugins: [react(), buildExtensionScriptsPlugin()],
   define: {
     'process.env.NODE_ENV': JSON.stringify('production'),
   },

@@ -14,7 +14,8 @@ Welcome to the comprehensive documentation for **Dictionary**, a lightweight, ze
 
 ### 2. Architecture & Technical Specifications
 - [**Architecture Overview**](architecture.md) — Core architectural blueprints, decoupled execution layers, progressive lazy enrichment lifecycle, tab-scoped cancellation, and storage security boundaries.
-- [**Providers Specification**](providers.md) — Normalized provider contracts, API integration models, fallback sequences, and schema definitions for Dictionary (5 providers), Translation (2 providers), AI generation (Gemini native & OpenAI-compatible), and Pronunciation.
+- [**Lookup Data Flow**](lookup-data-flow.md) — Step-by-step parallel concurrency model, request lifecycle, message routing, and caching behavior between the Dictionary and AI Assistant tabs.
+- [**Providers Specification**](providers.md) — Normalized provider contracts, API integration models, fallback sequences, and schema definitions for Dictionary (6 keyless backends), Translation (Google, MyMemory, LibreTranslate), AI generation (Gemini native & OpenAI-compatible), and Pronunciation.
 - [**Context & Sentence Extraction**](context-extraction.md) — Deep dive into dual-mode context retrieval: Mode 1 exact DOM Range offset slicing vs. Mode 2 multi-factor ranked page candidate scanning.
 
 ### 3. Engineering & Contribution
@@ -42,9 +43,9 @@ Welcome to the comprehensive documentation for **Dictionary**, a lightweight, ze
                     ▼                                ▼
 ┌────────────────────────────────────────┐ ┌─────────────────────────────┐
 │      Phase 1: Fast Primary Lookup      │ │    AI Multi-Intent Engine   │
-│  - Free Dictionary / MW / Wiktionary   │ │  - Gemini native / OpenAI-cb │
+│  - Free Dictionary / Wiktionary        │ │  - Gemini native / OpenAI-cb │
 │  - Parallel Neural Translation         │ │  - Context / Grammar / Cards │
-│  - Smart Lemmatization & Phrasal Stem  │ │  - Structured Lexical Block │
+│  - Exact selected query                │ │  - Structured Lexical Block │
 │  - Immediate UI render (sub-second)    │ └──────────────┬──────────────┘
 └───────────────────┬────────────────────┘                │
                     │                                     │
@@ -64,7 +65,7 @@ Welcome to the comprehensive documentation for **Dictionary**, a lightweight, ze
 ┌────────────────────────────────────────────────────────────────────────┐
 │                     Shared Calm Learning Studio UI                     │
 │  • Editorial / Learner typography (Atkinson Hyperlegible)              │
-│  • Source attribution badges (multi-provider transparency)             │
+│  • Clean headword header + UK/US pronunciation                         │
 │  • Pronunciation player & Speech Practice evaluator (Levenshtein)      │
 │  • Interactive Lexical Profile (Word family chips & Collocation cards) │
 └────────────────────────────────────────────────────────────────────────┘
@@ -76,7 +77,7 @@ Welcome to the comprehensive documentation for **Dictionary**, a lightweight, ze
 
 | Feature Domain | Capabilities & Specifications | Documentation Guide |
 |---|---|---|
-| **Multi-Source Dictionary** | 5 integrated backends (`free_dictionary`, `wiktionary`, `merriam_webster`, `wordnik`, `words_api`) with progressive fallback. Lookups use the selected text as-is. | [Providers](providers.md), [User Guide](user-guide.md) |
+| **Multi-Source Dictionary** | Keyless backends (`free_dictionary`, `wiktionary`, `datamuse`, `wikipedia`, `urban_dictionary`, plus RhymeBrain enrichment) with progressive fallback. Lookups use the selected text as-is. | [Providers](providers.md), [User Guide](user-guide.md) |
 | **Lazy Enrichment** | Non-blocking secondary query batches (`concurrency: 2`), cumulative definition merging, IPA phonetic backfilling, and 2-level caching (Memory + Session storage). | [Architecture](architecture.md), [Providers](providers.md) |
 | **Neural Translation** | Parallel translation with Google Translate or self-hosted LibreTranslate; dynamic dropdown with custom language definitions. | [Settings](settings.md), [Providers](providers.md) |
 | **Pronunciation & Practice** | High-quality dictionary MP3s + Web Speech fallback, adjustable speed (0.5x–1.5x), animated visual equalizer, and microphone Speech Practice Evaluator with Levenshtein scoring. | [User Guide](user-guide.md), [Providers](providers.md) |

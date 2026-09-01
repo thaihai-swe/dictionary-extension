@@ -60,7 +60,7 @@ Users get immediate clarity in under a second, with the power to explore grammat
 
 ### Pillar 1: Progressive Multi-Source Dictionary & Neural Translation
 Rather than relying on a single fallible API, Dictionary orchestrates up to 5 authoritative dictionary backends:
-1. **Primary Provider First:** Free Dictionary API (default), Wiktionary REST API, Merriam-Webster Collegiate, Wordnik, or WordsAPI (RapidAPI).
+1. **Primary Provider First:** Free Dictionary API (default), Wiktionary REST API, Datamuse, Wikipedia, or Urban Dictionary.
 2. **Smart Lemmatization & Phrasal Fallback:** Automatically stems inflected verbs (`went` → `go`), irregular plurals (`children` → `child`), comparative adjectives (`better` → `good`), and multi-word phrasal expressions (`taking care of` → `take care of`).
 3. **Phase 2 Lazy Enrichment:** Secondary providers query in background batches (`concurrency: 2`), backfilling missing phonetic IPA, extra example sentences, and synonyms without slowing down initial display.
 4. **Parallel Neural Translation:** Delivers instant translations via Google Translate or self-hosted LibreTranslate in parallel with dictionary results.
@@ -127,7 +127,7 @@ Meaning depends entirely on context. Dictionary's AI tab provides 5 dedicated ca
 
 Dictionary is engineered with a strict local-first privacy boundary:
 
-1. **Isolated Secret Vault:** API keys (Gemini, OpenAI, Merriam-Webster, Wordnik, WordsAPI, LibreTranslate) are stored strictly inside `chrome.storage.local`. They are never synced to Google accounts and never exposed to webpage content scripts.
+1. **Isolated Secret Vault:** Optional API keys (Gemini, OpenAI, LibreTranslate) are stored strictly inside `chrome.storage.local`. They are never synced to Google accounts and never exposed to webpage content scripts.
 2. **Explicit Context Transmission:** Surrounding webpage sentences are extracted only as a transient local suggestion. Context is never transmitted to remote AI servers during standard lookups—only when you explicitly click a contextual action button.
 3. **No Telemetry or Tracking:** Zero analytics tracking, zero telemetry beacons, and zero third-party tracking scripts.
 4. **Transient Cache:** Lookup enrichment caching is strictly bounded (TTL: 10 minutes, max 20 entries) in session memory and cleared upon browser restart.

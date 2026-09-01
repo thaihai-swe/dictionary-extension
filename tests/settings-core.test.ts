@@ -47,12 +47,14 @@ describe('stripSecretRecord', () => {
     const stripped = stripSecretRecord({
       theme: 'dark',
       aiApiKey: 'AIzaSy123',
-      dictionaryApiKey: 'secret',
+      libreTranslateApiKey: 'secret',
       hasAiApiKey: true,
     });
     assert.equal(stripped.theme, 'dark');
     assert.equal(stripped.hasAiApiKey, true);
     assert.equal(stripped.aiApiKey, undefined);
-    assert.equal(stripped.dictionaryApiKey, undefined);
+    assert.equal(stripped.libreTranslateApiKey, undefined);
   });
 });
+
+

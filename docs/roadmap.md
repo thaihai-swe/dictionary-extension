@@ -7,8 +7,8 @@ This document tracks shipped capabilities, near-term product work, and longer-te
 ## Recently Shipped
 
 ### Lookup Engine
-- Integrated dictionary backends: `free_dictionary`, `google_translate`, `wiktionary`, `merriam_webster`, `wordnik`, `libre_translate`
-- Vue 3 + TypeScript architecture with Vite 5 bundler under `src/entrypoints/`
+- Integrated keyless dictionary backends: `free_dictionary`, `wiktionary`, `datamuse`, `rhymebrain`, `wikipedia`, `urban_dictionary`, `google_translate`
+- React 18 + TypeScript architecture with Vite 5 bundler under `src/entrypoints/`
 - Parallel neural translation with Google Translate and LibreTranslate
 - Offline Rule-Based Grammar Analysis Engine fallback when no Gemini API key is configured
 

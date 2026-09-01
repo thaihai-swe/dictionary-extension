@@ -1,4 +1,5 @@
-import { ref, watch, Ref } from 'vue';
+import { useEffect } from 'react';
+import { signal, useSignal } from '../ui/signal';
 import { TabId, AiIntentId, AppSettings } from '../types';
 import {
   DEFAULT_SETTINGS,
@@ -30,9 +31,6 @@ const CACHE_INVALIDATION_KEYS = new Set([
   'translateTargetLanguage',
   'translateProvider',
   'libreTranslateBaseUrl',
-  'dictionaryApiKey',
-  'wordnikApiKey',
-  'wordsApiKey',
   'libreTranslateApiKey',
   'aiApiKey',
   'hasAiApiKey',
@@ -70,8 +68,46 @@ const STORAGE_KEYS = {
   ACTIVE_INTENT: 'dict_last_intent_v2',
 };
 
-const settingsRef: Ref<AppSettings> = ref<AppSettings>({ ...DEFAULT_SETTINGS });
-const settingsHydratedRef = ref(false);
+export function readSessionKey(key: string): string | null {
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      const v = sessionStorage.getItem(key);
+      if (v) return v;
+    }
+    if (typeof localStorage !== 'undefined') {
+      return localStorage.getItem(key);
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function writeSessionKey(key: string, value: string): void {
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem(key, value);
+    }
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(key, value);
+    }
+  } catch (e) {
+    console.warn('Storage write failed:', e);
+  }
+}
+
+const settingsRef = signal<AppSettings>({ ...DEFAULT_SETTINGS });
+const settingsHydratedRef = signal<boolean>(false);
+const activeTabRef = signal<TabId>((readSessionKey(STORAGE_KEYS.ACTIVE_TAB) as TabId) || 'dictionary');
+const activeIntentRef = signal<AiIntentId>((readSessionKey(STORAGE_KEYS.ACTIVE_INTENT) as AiIntentId) || 'default');
+
+activeTabRef.subscribe(() => {
+  writeSessionKey(STORAGE_KEYS.ACTIVE_TAB, activeTabRef.value);
+});
+activeIntentRef.subscribe(() => {
+  writeSessionKey(STORAGE_KEYS.ACTIVE_INTENT, activeIntentRef.value);
+});
+
 let initialized = false;
 let settingsWriteEpoch = 0;
 let resolveSettingsReady: (() => void) | null = null;
@@ -159,11 +195,12 @@ export async function saveSettingsToStorage(partial: Partial<AppSettings>): Prom
   } else {
     delete writable.hasAiApiKey;
   }
-  Object.assign(settingsRef.value, writable);
+  const nextSettings = { ...settingsRef.value, ...writable };
   if (trustedSecrets) {
-    Object.assign(settingsRef.value, secretWrites);
+    Object.assign(nextSettings, secretWrites);
   }
-  normalizeSettingsArrayFields(settingsRef.value);
+  normalizeSettingsArrayFields(nextSettings);
+  settingsRef.value = nextSettings;
 
   for (const [key, val] of Object.entries(writable)) {
     if (SECRET_KEYS.has(key)) continue;
@@ -188,79 +225,76 @@ export async function saveSettingsToStorage(partial: Partial<AppSettings>): Prom
   }
 }
 
+export function initStorage() {
+  if (initialized) return;
+  initialized = true;
+  const loadEpoch = settingsWriteEpoch;
+  loadSettingsFromStorage()
+    .then((s) => {
+      if (settingsWriteEpoch !== loadEpoch) return;
+      settingsRef.value = s;
+    })
+    .catch((error) => {
+      console.warn('Settings load failed:', error);
+    })
+    .finally(() => {
+      markSettingsReady();
+    });
+
+  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      const allowSecrets = canAccessSecretSettings();
+      const nextSettings = { ...settingsRef.value };
+      for (const [key, change] of Object.entries(changes)) {
+        if (SECRET_KEYS.has(key) && (!allowSecrets || areaName !== 'local')) continue;
+        if (key in nextSettings) {
+          (nextSettings as any)[key] = change.newValue ?? DEFAULT_SETTINGS[key as keyof AppSettings];
+        }
+      }
+      if (allowSecrets) {
+        nextSettings.hasAiApiKey = hasConfiguredAiApiKey(nextSettings);
+      } else if ('hasAiApiKey' in changes) {
+        nextSettings.hasAiApiKey = Boolean(changes.hasAiApiKey.newValue);
+      }
+      normalizeSettingsArrayFields(nextSettings);
+      settingsRef.value = nextSettings;
+      if (shouldInvalidateLookupCache(Object.keys(changes))) {
+        void invalidateLookupCaches();
+      }
+    });
+  }
+}
+
 export function useStorage() {
-  if (!initialized) {
-    initialized = true;
-    const loadEpoch = settingsWriteEpoch;
-    loadSettingsFromStorage()
-      .then((s) => {
-        if (settingsWriteEpoch !== loadEpoch) return;
-        settingsRef.value = s;
-      })
-      .catch((error) => {
-        console.warn('Settings load failed:', error);
-      })
-      .finally(() => {
-        markSettingsReady();
-      });
+  useEffect(() => {
+    initStorage();
+  }, []);
 
-    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
-      chrome.storage.onChanged.addListener((changes, areaName) => {
-        const allowSecrets = canAccessSecretSettings();
-        for (const [key, change] of Object.entries(changes)) {
-          if (SECRET_KEYS.has(key) && (!allowSecrets || areaName !== 'local')) continue;
-          if (key in settingsRef.value) {
-            (settingsRef.value as any)[key] = change.newValue ?? DEFAULT_SETTINGS[key as keyof AppSettings];
-          }
-        }
-        if (allowSecrets) {
-          settingsRef.value.hasAiApiKey = hasConfiguredAiApiKey(settingsRef.value);
-        } else if ('hasAiApiKey' in changes) {
-          settingsRef.value.hasAiApiKey = Boolean(changes.hasAiApiKey.newValue);
-        }
-        normalizeSettingsArrayFields(settingsRef.value);
-        if (shouldInvalidateLookupCache(Object.keys(changes))) {
-          void invalidateLookupCaches();
-        }
-      });
-    }
-  }
+  return {
+    settings: useSignal(settingsRef),
+    settingsHydrated: useSignal(settingsHydratedRef),
+    saveSettings: saveSettingsToStorage,
+    activeTab: useSignal(activeTabRef),
+    activeIntent: useSignal(activeIntentRef),
+    setActiveTab: (tab: TabId) => {
+      activeTabRef.value = tab;
+    },
+    setActiveIntent: (intent: AiIntentId) => {
+      activeIntentRef.value = intent;
+    },
+    readSessionKey,
+    writeSessionKey,
+  };
+}
 
-  const activeTab: Ref<TabId> = ref((readSessionKey(STORAGE_KEYS.ACTIVE_TAB) as TabId) || 'dictionary');
-  const activeIntent: Ref<AiIntentId> = ref((readSessionKey(STORAGE_KEYS.ACTIVE_INTENT) as AiIntentId) || 'default');
-
-  function readSessionKey(key: string): string | null {
-    try {
-      return sessionStorage.getItem(key) || localStorage.getItem(key);
-    } catch {
-      return null;
-    }
-  }
-
-  function writeSessionKey(key: string, value: string): void {
-    try {
-      sessionStorage.setItem(key, value);
-      localStorage.setItem(key, value);
-    } catch (e) {
-      console.warn('Storage write failed:', e);
-    }
-  }
-
-  watch(activeTab, (newTab) => {
-    writeSessionKey(STORAGE_KEYS.ACTIVE_TAB, newTab);
-  });
-
-  watch(activeIntent, (newIntent) => {
-    writeSessionKey(STORAGE_KEYS.ACTIVE_INTENT, newIntent);
-  });
-
+export const settingsStore = settingsRef;
+export const activeTabStore = activeTabRef;
+export const activeIntentStore = activeIntentRef;
+export function getStorageStore() {
   return {
     settings: settingsRef,
     settingsHydrated: settingsHydratedRef,
-    saveSettings: saveSettingsToStorage,
-    activeTab,
-    activeIntent,
-    readSessionKey,
-    writeSessionKey,
+    activeTab: activeTabRef,
+    activeIntent: activeIntentRef,
   };
 }

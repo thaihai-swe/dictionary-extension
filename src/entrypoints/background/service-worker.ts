@@ -228,7 +228,7 @@ async function handleAiLookup(payload: AiLookupPayload, sender: chrome.runtime.M
 
 function mergeValidationSettings(stored: AppSettings, incoming?: Partial<AppSettings>): AppSettings {
   const sanitized: Record<string, unknown> = { ...(incoming || {}) };
-  for (const key of ['aiApiKey', 'dictionaryApiKey', 'wordnikApiKey', 'wordsApiKey', 'libreTranslateApiKey']) {
+  for (const key of ['aiApiKey', 'libreTranslateApiKey']) {
     if (!String(sanitized[key] || '').trim()) delete sanitized[key];
   }
   return normalizeSettings({ ...stored, ...sanitized });
@@ -345,7 +345,6 @@ chrome.runtime.onInstalled.addListener(() => {
     migrateSettingsSchema(),
     loadFullSettings(),
     Promise.resolve(initializeContextMenu()),
-    loadDictionaryLookupModule(),
   ]).catch(() => undefined);
 });
 
@@ -353,7 +352,6 @@ chrome.runtime.onStartup?.addListener(() => {
   void migrateSettingsSchema().catch(() => undefined);
   void loadFullSettings().catch(() => undefined);
   initializeContextMenu();
-  void loadDictionaryLookupModule();
 });
 
 chrome.storage?.onChanged?.addListener((changes, area) => {

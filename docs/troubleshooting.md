@@ -52,19 +52,14 @@ This guide provides actionable solutions for common issues across extension relo
 
 ### Symptom: No definitions found for an inflected word (e.g. `went`, `taking care of`).
 - **Cause:** Lookups use the selected text exactly. Inflected or phrasal forms are not rewritten to a root (`went` is not retried as `go`).
-- If an obscure idiom has no dictionary definitions across all 5 providers, Dictionary mode invokes **AI Phrase Fallback** when both AI and **Use AI when a phrase has no dictionary definition** are enabled.
-- A primary provider with no API key is skipped. Transient 5xx/timeout from a free provider continues to the next free provider. An invalid key still fails that lookup.
+- If an obscure idiom has no dictionary definitions across all keyless providers, Dictionary mode invokes **AI Phrase Fallback** when both AI and **Use AI when a phrase has no dictionary definition** are enabled.
+- Transient 5xx/timeout from a free provider continues to the next free provider. Dictionary HTTP runs in the background service worker (inspect that worker's Network tab, not the page).
 
-### Symptom: Key-backed providers (Merriam-Webster, Wordnik, WordsAPI) don't enrich results.
-- **Check 1 — API Key Configuration:**
-  - **Merriam-Webster:** Requires a free Collegiate API key from [dictionaryapi.com](https://dictionaryapi.com/register).
-  - **Wordnik:** Requires a free developer key from [developer.wordnik.com](https://developer.wordnik.com/).
-  - **WordsAPI:** Requires a RapidAPI key from [wordsapi.com](https://www.wordsapi.com/).
-- **Check 2 — Enrichment Diagnostics:** In Settings, click **Test Merriam-Webster**, **Test Wordnik**, or **Test WordsAPI** to verify credentials and check quota status.
-- **Check 3 — Graceful Degradation:** When API keys are missing or rate limits occur, enrichment silently skips those providers without breaking the displayed Free Dictionary or Wiktionary results.
+### Symptom: Secondary providers don't enrich results.
+- **Check 1 — Network Connectivity:** All dictionary providers (`free_dictionary`, `wiktionary`, `datamuse`, `rhymebrain`, `wikipedia`, `urban_dictionary`) are keyless and require open network access.
+- **Check 2 — Enrichment Diagnostics:** In Settings, click the test buttons under **Test dictionary connection** to verify reachability and latency.
+- **Check 3 — Graceful Degradation:** When an upstream endpoint is temporarily unavailable or returns 5xx/timeout, enrichment silently skips that provider without breaking the displayed Free Dictionary or Wiktionary results.
 
-### Symptom: A source badge appears, but no new definitions were added.
-- **Explanation:** `sourceBadges` tracks every provider that returned valid data. If provider definitions duplicate existing entries, the duplicate text is suppressed to keep the card scannable, while the badge accurately credits the provider for verifying the word.
 
 ---
 

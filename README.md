@@ -1,6 +1,6 @@
 # Dictionary
 
-A modern Chrome extension (Manifest V3) for translation, multi-source dictionary lookup, pronunciation, and AI explanations built with **Vite 5**, **Vue 3**, **TypeScript 5**, and **Tailwind CSS**.
+A modern Chrome extension (Manifest V3) for translation, multi-source dictionary lookup, pronunciation, and AI explanations built with **Vite 5**, **React 18**, **TypeScript 5**, and **Tailwind CSS**.
 
 Features include interactive dictionary cards, Lexical Profile, global Stop Voice audio controls, editable contextual explanations, Grammar Nuance analysis, and phrase/idiom fallback.
 
@@ -48,10 +48,10 @@ yarn build
 
 - `src/entrypoints/` — Chrome Extension entry points:
   - `background/` — Background Service Worker (`service-worker.ts`)
-  - `content-script/` — In-page selection listener & floating overlay UI (`app.content-script.vue`, `overlay.in-page.vue`, `index.ts`)
-  - `toolbar-popup/` — Extension action toolbar popup (`app.toolbar-popup.vue`, `main.ts`)
-- `src/components/` — Vue 3 shared UI components, cards, and modals
-- `src/composables/` — Reactive Vue composables (dictionary, AI, storage & audio/voice management)
+  - `content-script/` — In-page selection listener & floating overlay UI (`app.content-script.tsx`, `overlay.in-page.tsx`, `index.tsx`, `overlay-app.tsx`, `bootstrap.ts`)
+  - `toolbar-popup/` — Extension action toolbar popup (`app.toolbar-popup.tsx`, `main.tsx`)
+- `src/components/` — React 18 shared UI components, cards, and modals
+- `src/composables/` — Custom hooks and reactive external stores (dictionary, AI, storage & audio/voice management)
 - `src/providers/` — Multi-source dictionary & Gemini AI providers
 - `src/types/` — TypeScript interfaces and schemas
 - `docs/` — Canonical project documentation

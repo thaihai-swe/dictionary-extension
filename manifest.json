@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Dictionary & AI Learning Assistant",
   "version": "2.0.0",
-  "description": "Modern dictionary & AI language learning workbench built with Vite, Vue 3, TypeScript & Tailwind CSS.",
+  "description": "Modern dictionary & AI language learning workbench built with Vite, React 18, TypeScript & Tailwind CSS.",
   "icons": {
     "16": "icons/icon-16.png",
     "32": "icons/icon-32.png",
@@ -45,13 +45,14 @@
     "https://api.dictionaryapi.dev/*",
     "https://translate.googleapis.com/*",
     "https://clients5.google.com/*",
-    "https://www.dictionaryapi.com/*",
-    "https://media.merriam-webster.com/*",
     "https://en.wiktionary.org/*",
-    "https://api.wordnik.com/*",
-    "https://wordsapiv1.p.rapidapi.com/*",
     "https://generativelanguage.googleapis.com/*",
-    "https://libretranslate.com/*"
+    "https://libretranslate.com/*",
+    "https://api.datamuse.com/*",
+    "https://api.urbandictionary.com/*",
+    "https://en.wikipedia.org/*",
+    "https://rhymebrain.com/*",
+    "https://api.mymemory.translated.net/*"
   ],
   "commands": {
     "lookup-selection": {

@@ -1,5 +1,5 @@
-import { ref } from 'vue';
-import { useStorage, whenSettingsReady } from './composable.storage';
+import { signal, useSignal } from '../ui/signal';
+import { settingsStore, whenSettingsReady } from './composable.storage';
 import { cancelAiPreload } from './composable.ai-assistant';
 import {
   cancelDictionaryLookup,
@@ -7,17 +7,18 @@ import {
   startDictionaryLookup,
   subscribeLookupUpdates,
 } from '../shared/dictionary-lookup-client';
+import { createPersistedLruCache } from '../shared/lookup-cache';
 import { AppSettings, DictionaryEntry, PracticeResult } from '../types';
 
-const query = ref<string>('');
-const result = ref<DictionaryEntry | null>(null);
-const isLoading = ref<boolean>(false);
-const error = ref<string | null>(null);
-const practiceResult = ref<PracticeResult | null>(null);
-const isPracticing = ref<boolean>(false);
+const queryRef = signal<string>('');
+const resultRef = signal<DictionaryEntry | null>(null);
+const isLoadingRef = signal<boolean>(false);
+const errorRef = signal<string | null>(null);
+const practiceResultRef = signal<PracticeResult | null>(null);
+const isPracticingRef = signal<boolean>(false);
 
-export const isAudioPlaying = ref<boolean>(false);
-export const playingKey = ref<string | null>(null);
+export const isAudioPlayingRef = signal<boolean>(false);
+export const playingKeyRef = signal<string | null>(null);
 
 let activeDictRequestId: string | null = null;
 let currentAudioElement: HTMLAudioElement | null = null;
@@ -27,72 +28,19 @@ let lookupGeneration = 0;
 let playGeneration = 0;
 const practiceResults = new Map<string, PracticeResult>();
 
-const MAX_DICT_CACHE_SIZE = 100;
-const DICT_CACHE_TTL_MS = 10 * 60 * 1000;
-const DICT_SESSION_CACHE_KEY = 'dict_lookup_cache_v1';
+const MAX_DICT_CACHE_SIZE = 200;
+const DICT_CACHE_TTL_MS = 48 * 60 * 60 * 1000; // 48 hours
+const DICT_STORAGE_KEY = 'dict_lookup_cache_v2';
 
-interface DictCacheEntry {
-  value: DictionaryEntry;
-  createdAt: number;
-}
+const dictCache = createPersistedLruCache<DictionaryEntry>({
+  maxSize: MAX_DICT_CACHE_SIZE,
+  ttlMs: DICT_CACHE_TTL_MS,
+  storageKey: DICT_STORAGE_KEY,
+  persistDelayMs: 300,
+});
 
-const dictCacheMap = new Map<string, DictCacheEntry>();
 const dictPendingMap = new Map<string, Promise<DictionaryEntry>>();
 const dictPendingRequestIds = new Map<string, string>();
-let dictSessionHydrated = false;
-
-function canUseSessionCache(): boolean {
-  try {
-    return typeof chrome !== 'undefined'
-      && typeof chrome.storage?.session?.get === 'function'
-      && typeof window !== 'undefined'
-      && window.location?.protocol === 'chrome-extension:';
-  } catch {
-    return false;
-  }
-}
-
-function pruneDictCache() {
-  const now = Date.now();
-  for (const [key, entry] of dictCacheMap.entries()) {
-    if (now - entry.createdAt > DICT_CACHE_TTL_MS) dictCacheMap.delete(key);
-  }
-  while (dictCacheMap.size > MAX_DICT_CACHE_SIZE) {
-    const oldestKey = dictCacheMap.keys().next().value;
-    if (!oldestKey) break;
-    dictCacheMap.delete(oldestKey);
-  }
-}
-
-function persistDictCache() {
-  if (!canUseSessionCache()) return;
-  pruneDictCache();
-  const snapshot: Record<string, DictCacheEntry> = {};
-  for (const [key, entry] of dictCacheMap.entries()) snapshot[key] = entry;
-  void Promise.resolve(chrome.storage.session.set({ [DICT_SESSION_CACHE_KEY]: snapshot })).catch(() => undefined);
-}
-
-function hydrateDictCacheFromSession() {
-  if (dictSessionHydrated || !canUseSessionCache()) {
-    dictSessionHydrated = true;
-    return;
-  }
-  dictSessionHydrated = true;
-  void Promise.resolve(chrome.storage.session.get(DICT_SESSION_CACHE_KEY))
-    .then((stored) => {
-      const snapshot = (stored as Record<string, Record<string, DictCacheEntry> | undefined>)?.[DICT_SESSION_CACHE_KEY];
-      if (!snapshot || typeof snapshot !== 'object') return;
-      const now = Date.now();
-      for (const [key, entry] of Object.entries(snapshot)) {
-        if (!entry?.value || now - entry.createdAt > DICT_CACHE_TTL_MS) continue;
-        if (!dictCacheMap.has(key)) dictCacheMap.set(key, entry);
-      }
-      pruneDictCache();
-    })
-    .catch(() => undefined);
-}
-
-hydrateDictCacheFromSession();
 
 function getDictCacheKey(word: string, settings: AppSettings, provider: string, lang: string): string {
   return JSON.stringify({
@@ -105,25 +53,6 @@ function getDictCacheKey(word: string, settings: AppSettings, provider: string, 
     enableLexicalProfile: settings.enableLexicalProfile !== false,
     translateProvider: settings.translateProvider || '',
   });
-}
-
-function readDictCache(key: string): DictionaryEntry | undefined {
-  const entry = dictCacheMap.get(key);
-  if (!entry) return undefined;
-  if (Date.now() - entry.createdAt > DICT_CACHE_TTL_MS) {
-    dictCacheMap.delete(key);
-    return undefined;
-  }
-  dictCacheMap.delete(key);
-  dictCacheMap.set(key, entry);
-  return entry.value;
-}
-
-function writeDictCache(key: string, value: DictionaryEntry) {
-  dictCacheMap.delete(key);
-  dictCacheMap.set(key, { value, createdAt: Date.now() });
-  pruneDictCache();
-  persistDictCache();
 }
 
 function practiceKey(text: string, language = 'en-US'): string {
@@ -146,13 +75,16 @@ function levenshteinDistance(a: string, b: string): number {
   if (left === right) return 0;
   if (!left.length) return right.length;
   if (!right.length) return left.length;
-  const rows = left.length + 1;
-  const cols = right.length + 1;
-  const matrix = Array.from({ length: rows }, () => Array(cols).fill(0));
-  for (let i = 0; i < rows; i += 1) matrix[i][0] = i;
-  for (let j = 0; j < cols; j += 1) matrix[0][j] = j;
-  for (let i = 1; i < rows; i += 1) {
-    for (let j = 1; j < cols; j += 1) {
+
+  const matrix: number[][] = [];
+  for (let i = 0; i <= left.length; i += 1) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= right.length; j += 1) {
+    matrix[0][j] = j;
+  }
+  for (let i = 1; i <= left.length; i += 1) {
+    for (let j = 1; j <= right.length; j += 1) {
       const cost = left[i - 1] === right[j - 1] ? 0 : 1;
       matrix[i][j] = Math.min(
         matrix[i - 1][j] + 1,
@@ -229,9 +161,9 @@ export function supportsSpeechPractice(): boolean {
 
 export function stopAllAudio() {
   playGeneration += 1;
-  isAudioPlaying.value = false;
-  isPracticing.value = false;
-  playingKey.value = null;
+  isAudioPlayingRef.value = false;
+  isPracticingRef.value = false;
+  playingKeyRef.value = null;
   if (speechStartTimer) {
     clearTimeout(speechStartTimer);
     speechStartTimer = null;
@@ -255,386 +187,436 @@ export function stopAllAudio() {
 }
 
 export function clearDictionaryCache() {
-  dictCacheMap.clear();
+  dictCache.clear();
   dictPendingMap.clear();
   dictPendingRequestIds.clear();
-  if (canUseSessionCache()) {
-    void Promise.resolve(chrome.storage.session.remove(DICT_SESSION_CACHE_KEY)).catch(() => undefined);
-  }
 }
+
+let dictPreloadGeneration = 0;
+let aiPreloadTimer: ReturnType<typeof setTimeout> | null = null;
+const AI_PRELOAD_DEBOUNCE_MS = 300;
 
 export function abortActiveDictRequest() {
   stopAllAudio();
   lookupGeneration += 1;
+  dictPreloadGeneration += 1;
+  if (aiPreloadTimer) {
+    clearTimeout(aiPreloadTimer);
+    aiPreloadTimer = null;
+  }
   if (activeDictRequestId) {
     cancelDictionaryLookup(activeDictRequestId);
     activeDictRequestId = null;
   }
   dictPendingMap.clear();
   dictPendingRequestIds.clear();
-  isLoading.value = false;
+  isLoadingRef.value = false;
 }
 
-let dictPreloadGeneration = 0;
-
 function maybePreloadAi(text: string, targetLang: string, context?: string, generation = dictPreloadGeneration) {
-  void (async () => {
-    await whenSettingsReady();
-    if (generation !== dictPreloadGeneration) return;
-    const { useAiAssistant } = await import('./composable.ai-assistant');
-    if (generation !== dictPreloadGeneration) return;
-    await useAiAssistant().preloadIntents(text, context, targetLang);
-  })();
+  if (aiPreloadTimer) {
+    clearTimeout(aiPreloadTimer);
+    aiPreloadTimer = null;
+  }
+  aiPreloadTimer = setTimeout(() => {
+    aiPreloadTimer = null;
+    void (async () => {
+      await whenSettingsReady();
+      if (generation !== dictPreloadGeneration) return;
+      const { getAiAssistantStore } = await import('./composable.ai-assistant');
+      if (generation !== dictPreloadGeneration) return;
+      await getAiAssistantStore().preloadIntents(text, context, targetLang);
+    })();
+  }, AI_PRELOAD_DEBOUNCE_MS);
+}
+
+function playAudioClip(url: string, rate = 1): Promise<boolean> {
+  return new Promise((resolve) => {
+    const clip = new Audio(url);
+    currentAudioElement = clip;
+    clip.playbackRate = Number.isFinite(rate) && rate > 0 ? rate : 1;
+    let settled = false;
+    const finish = (ok: boolean) => {
+      if (settled) return;
+      settled = true;
+      if (currentAudioElement === clip) currentAudioElement = null;
+      resolve(ok);
+    };
+    clip.addEventListener('ended', () => finish(true), { once: true });
+    clip.addEventListener('error', () => finish(false), { once: true });
+    clip.play().catch(() => finish(false));
+  });
+}
+
+export function speakTTS(text: string, accent: 'uk' | 'us' = 'us', key?: string) {
+  if (speechStartTimer) {
+    clearTimeout(speechStartTimer);
+    speechStartTimer = null;
+  }
+  if (currentAudioElement) {
+    try {
+      currentAudioElement.pause();
+      currentAudioElement.currentTime = 0;
+    } catch {
+      // Ignore audio pause error
+    }
+    currentAudioElement = null;
+  }
+  if (!text || typeof window === 'undefined' || !('speechSynthesis' in window)) {
+    isAudioPlayingRef.value = false;
+    playingKeyRef.value = null;
+    return;
+  }
+
+  const playKey = key || playingKeyRef.value || (accent === 'uk' ? 'en-GB' : 'en-US');
+  playingKeyRef.value = playKey;
+  isAudioPlayingRef.value = true;
+
+  if (typeof window.speechSynthesis.cancel === 'function') {
+    window.speechSynthesis.cancel();
+  }
+
+  const settings = settingsStore.value;
+  speechStartTimer = setTimeout(() => {
+    speechStartTimer = null;
+    try {
+      if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = accent === 'uk' ? 'en-GB' : 'en-US';
+      utterance.rate = settings.pronunciationRate || 0.95;
+      if (settings.pronunciationVoiceURI) {
+        const voices = window.speechSynthesis.getVoices();
+        const match = voices.find((v) => v.voiceURI === settings.pronunciationVoiceURI);
+        if (match) utterance.voice = match;
+      }
+      utterance.onstart = () => {
+        isAudioPlayingRef.value = true;
+        playingKeyRef.value = playKey;
+      };
+      utterance.onend = () => {
+        if (playingKeyRef.value === playKey) {
+          playingKeyRef.value = null;
+          isAudioPlayingRef.value = false;
+        }
+      };
+      utterance.onerror = () => {
+        if (playingKeyRef.value === playKey) {
+          playingKeyRef.value = null;
+          isAudioPlayingRef.value = false;
+        }
+      };
+      window.speechSynthesis.speak(utterance);
+      if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+    } catch {
+      playingKeyRef.value = null;
+      isAudioPlayingRef.value = false;
+    }
+  }, 60);
+}
+
+export async function playAudio(
+  audioUrl?: string,
+  fallbackWord?: string,
+  accent: 'uk' | 'us' = 'us',
+  language = accent === 'uk' ? 'en-GB' : 'en-US',
+  key = language,
+) {
+  stopAllAudio();
+  const generation = ++playGeneration;
+  const text = String(fallbackWord || queryRef.value || '').trim();
+  playingKeyRef.value = key;
+  isAudioPlayingRef.value = true;
+
+  const isCurrent = () => generation === playGeneration;
+
+  const finish = () => {
+    if (!isCurrent()) return;
+    if (playingKeyRef.value === key) {
+      playingKeyRef.value = null;
+      isAudioPlayingRef.value = false;
+    }
+  };
+
+  const cleanAudioUrl = String(audioUrl || '').trim();
+  if (cleanAudioUrl) {
+    const played = await playAudioClip(cleanAudioUrl);
+    if (!isCurrent()) return;
+    if (played) {
+      finish();
+      return;
+    }
+  }
+
+  const googleTtsUrl = getFreeTtsUrl(text, language);
+  if (googleTtsUrl && typeof navigator !== 'undefined' && navigator.onLine !== false) {
+    const playedGoogle = await playAudioClip(googleTtsUrl);
+    if (!isCurrent()) return;
+    if (playedGoogle) {
+      finish();
+      return;
+    }
+  }
+
+  if (!isCurrent()) return;
+  speakTTS(text, accent, key);
+}
+
+export function playPronunciation(options: { text?: string; audioUrl?: string; language?: string; key?: string }) {
+  const language = options.language || 'en-US';
+  const accent = language.toLowerCase().includes('gb') ? 'uk' : 'us';
+  const key = options.key || language;
+  void playAudio(options.audioUrl, options.text, accent, language, key);
+}
+
+export function startSpeechPractice(text = queryRef.value, language = 'en-US') {
+  stopAllAudio();
+  type RecognitionLike = {
+    lang: string;
+    interimResults: boolean;
+    maxAlternatives: number;
+    continuous?: boolean;
+    onresult: ((event: { results?: ArrayLike<ArrayLike<{ transcript?: string }>> }) => void) | null;
+    onerror: ((event: { error?: string }) => void) | null;
+    onend: (() => void) | null;
+    start: () => void;
+    stop: () => void;
+    abort?: () => void;
+  };
+  const SpeechRecognitionCtor = (window as Window & {
+    SpeechRecognition?: new () => RecognitionLike;
+    webkitSpeechRecognition?: new () => RecognitionLike;
+  }).SpeechRecognition || (window as Window & { webkitSpeechRecognition?: new () => RecognitionLike }).webkitSpeechRecognition;
+  if (!SpeechRecognitionCtor) {
+    practiceResultRef.value = { score: 0, grade: 'retry', gradeLabel: 'Practice needs Chrome speech recognition.' };
+    return;
+  }
+  const recognition = new SpeechRecognitionCtor();
+  recognition.lang = language;
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+  recognition.continuous = false;
+  isPracticingRef.value = true;
+  playingKeyRef.value = 'practice';
+  recognition.onresult = (event) => {
+    const spoken = event.results?.[0]?.[0]?.transcript || '';
+    const scored = scorePractice(text, spoken);
+    practiceResultRef.value = scored;
+    practiceResults.set(practiceKey(text, language), scored);
+    isPracticingRef.value = false;
+    playingKeyRef.value = null;
+    activeRecognition = null;
+  };
+  recognition.onerror = (event) => {
+    const message = recognitionErrorMessage(String(event?.error || ''));
+    isPracticingRef.value = false;
+    playingKeyRef.value = null;
+    activeRecognition = null;
+    if (message) {
+      practiceResultRef.value = { score: 0, grade: 'retry', gradeLabel: message };
+    }
+  };
+  recognition.onend = () => {
+    isPracticingRef.value = false;
+    if (playingKeyRef.value === 'practice') playingKeyRef.value = null;
+    activeRecognition = null;
+  };
+  activeRecognition = recognition;
+  try {
+    recognition.start();
+  } catch {
+    isPracticingRef.value = false;
+    playingKeyRef.value = null;
+    activeRecognition = null;
+    practiceResultRef.value = { score: 0, grade: 'retry', gradeLabel: 'Unable to start speech recognition.' };
+  }
+}
+
+export async function searchWord(
+  wordToSearch: string,
+  providerName?: string,
+  targetLang?: string,
+  context?: string,
+  attachedRequestId?: string,
+) {
+  if (!wordToSearch || !wordToSearch.trim()) return;
+
+  stopAllAudio();
+  dictPreloadGeneration += 1;
+  const preloadGeneration = dictPreloadGeneration;
+  cancelAiPreload();
+
+  const cleanWord = wordToSearch.trim();
+  const settings = settingsStore.value;
+  const provider = providerName || settings.dictionaryProvider || 'free_dictionary';
+  const lang = targetLang || settings.translateTargetLanguage || 'Vietnamese';
+  maybePreloadAi(cleanWord, lang, context, preloadGeneration);
+  const lookupSettings = {
+    ...settings,
+    dictionaryProvider: provider as typeof settings.dictionaryProvider,
+    translateTargetLanguage: lang,
+  };
+  const cacheKey = getDictCacheKey(cleanWord, lookupSettings, provider, lang);
+  const pending = dictPendingMap.get(cacheKey);
+  const reusedRequestId = attachedRequestId || (pending ? dictPendingRequestIds.get(cacheKey) : undefined);
+
+  if (!pending && !attachedRequestId && activeDictRequestId) {
+    cancelDictionaryLookup(activeDictRequestId);
+    activeDictRequestId = null;
+  }
+
+  const generation = ++lookupGeneration;
+  const requestId = reusedRequestId || createRequestId('dict');
+  activeDictRequestId = requestId;
+
+  queryRef.value = cleanWord;
+  errorRef.value = null;
+  practiceResultRef.value = practiceResults.get(practiceKey(cleanWord)) || null;
+
+  const cached = dictCache.read(cacheKey);
+  resultRef.value = cached || null;
+  isLoadingRef.value = !cached;
+  if (cached?.enriched && !attachedRequestId) return;
+
+  let enrichmentTimeout: ReturnType<typeof setTimeout> | null = null;
+  let pendingUpdate: DictionaryEntry | null = null;
+  let updateFrame = 0;
+  const flushUpdate = () => {
+    updateFrame = 0;
+    if (!pendingUpdate) return;
+    const enriched = pendingUpdate;
+    pendingUpdate = null;
+    if ((resultRef.value?.revision || 0) > (enriched.revision || 0)) return;
+    resultRef.value = enriched;
+    isLoadingRef.value = false;
+    dictCache.write(cacheKey, enriched);
+    if (enriched.enriched) {
+      if (enrichmentTimeout) clearTimeout(enrichmentTimeout);
+      unsubscribe();
+    }
+  };
+  const unsubscribe = subscribeLookupUpdates((payload) => {
+    if (generation !== lookupGeneration) return;
+    if (payload.requestId !== requestId || payload.source !== 'dictionary') return;
+    const enriched = payload.result as DictionaryEntry;
+    if ((resultRef.value?.revision || 0) > (enriched.revision || 0)) return;
+    pendingUpdate = enriched;
+    if (typeof requestAnimationFrame === 'function') {
+      if (!updateFrame) updateFrame = requestAnimationFrame(flushUpdate);
+    } else {
+      flushUpdate();
+    }
+  });
+
+  const request = pending || startDictionaryLookup({
+    text: cleanWord,
+    context,
+    ...(attachedRequestId ? {} : { provider, targetLang: lang }),
+    requestId,
+  });
+  if (!pending) {
+    dictPendingMap.set(cacheKey, request);
+    dictPendingRequestIds.set(cacheKey, requestId);
+  }
+
+  try {
+    const data = await request;
+    if (generation !== lookupGeneration) return;
+    if ((resultRef.value?.revision || 0) < (data.revision || 0) || !resultRef.value) {
+      resultRef.value = data;
+      dictCache.write(cacheKey, data);
+    } else if (!cached) {
+      dictCache.write(cacheKey, resultRef.value);
+    }
+  } catch (err: unknown) {
+    if (err instanceof Error && (/abort/i.test(err.message) || err.name === 'AbortError')) {
+      return;
+    }
+    if (generation !== lookupGeneration) return;
+    const message = err instanceof Error ? err.message : 'Không tìm thấy dữ liệu từ điển.';
+    errorRef.value = /Extension context invalidated|runtime is unavailable/i.test(message)
+      ? 'Extension was reloaded. Refresh this page and try again.'
+      : message;
+    resultRef.value = null;
+  } finally {
+    if (generation === lookupGeneration) {
+      dictPendingMap.delete(cacheKey);
+      dictPendingRequestIds.delete(cacheKey);
+      isLoadingRef.value = false;
+      if (activeDictRequestId === requestId) activeDictRequestId = null;
+    }
+  }
+
+  enrichmentTimeout = setTimeout(() => {
+    if (generation === lookupGeneration) unsubscribe();
+  }, 20000);
+}
+
+export function useDictionaryResult() {
+  const result = useSignal(resultRef);
+  const isLoading = useSignal(isLoadingRef);
+  const error = useSignal(errorRef);
+  return { result, isLoading, error };
+}
+
+export function useDictionaryAudio() {
+  const isAudioPlaying = useSignal(isAudioPlayingRef);
+  const playingKey = useSignal(playingKeyRef);
+  return {
+    isAudioPlaying,
+    playingKey,
+    playAudio,
+    playPronunciation,
+    speakTTS,
+    stopAllAudio,
+  };
+}
+
+export function useDictionaryPractice() {
+  const practiceResult = useSignal(practiceResultRef);
+  const isPracticing = useSignal(isPracticingRef);
+  return {
+    practiceResult,
+    isPracticing,
+    startSpeechPractice,
+    supportsSpeechPractice: supportsSpeechPractice(),
+  };
+}
+
+export function useDictionaryQuery() {
+  return useSignal(queryRef);
 }
 
 export function useDictionary() {
-  const { settings } = useStorage();
-
-  async function searchWord(
-    wordToSearch: string,
-    providerName?: string,
-    targetLang?: string,
-    context?: string,
-    attachedRequestId?: string,
-  ) {
-    if (!wordToSearch || !wordToSearch.trim()) return;
-
-    stopAllAudio();
-    dictPreloadGeneration += 1;
-    const preloadGeneration = dictPreloadGeneration;
-    cancelAiPreload();
-
-    const cleanWord = wordToSearch.trim();
-    const provider = providerName || settings.value.dictionaryProvider || 'free_dictionary';
-    const lang = targetLang || settings.value.translateTargetLanguage || 'Vietnamese';
-    const lookupSettings = {
-      ...settings.value,
-      dictionaryProvider: provider as typeof settings.value.dictionaryProvider,
-      translateTargetLanguage: lang,
-    };
-    const cacheKey = getDictCacheKey(cleanWord, lookupSettings, provider, lang);
-    const pending = dictPendingMap.get(cacheKey);
-    const reusedRequestId = attachedRequestId || (pending ? dictPendingRequestIds.get(cacheKey) : undefined);
-
-    if (!pending && !attachedRequestId && activeDictRequestId) {
-      cancelDictionaryLookup(activeDictRequestId);
-      activeDictRequestId = null;
-    }
-
-    const generation = ++lookupGeneration;
-    const requestId = reusedRequestId || createRequestId('dict');
-    activeDictRequestId = requestId;
-
-    query.value = cleanWord;
-    error.value = null;
-    practiceResult.value = practiceResults.get(practiceKey(cleanWord)) || null;
-
-    const cached = readDictCache(cacheKey);
-    result.value = cached || null;
-    isLoading.value = !cached;
-    let didPreload = false;
-    const preload = () => {
-      if (didPreload) return;
-      didPreload = true;
-      maybePreloadAi(cleanWord, lang, context, preloadGeneration);
-    };
-    if (cached) {
-      preload();
-      if (cached.enriched && !attachedRequestId) return;
-    }
-
-    let enrichmentTimeout: ReturnType<typeof setTimeout> | null = null;
-    let pendingUpdate: DictionaryEntry | null = null;
-    let updateFrame = 0;
-    const flushUpdate = () => {
-      updateFrame = 0;
-      if (!pendingUpdate) return;
-      const enriched = pendingUpdate;
-      pendingUpdate = null;
-      if ((result.value?.revision || 0) > (enriched.revision || 0)) return;
-      result.value = enriched;
-      isLoading.value = false;
-      writeDictCache(cacheKey, enriched);
-      if (enriched.enriched) {
-        if (enrichmentTimeout) clearTimeout(enrichmentTimeout);
-        unsubscribe();
-      }
-    };
-    const unsubscribe = subscribeLookupUpdates((payload) => {
-      if (generation !== lookupGeneration) return;
-      if (payload.requestId !== requestId || payload.source !== 'dictionary') return;
-      const enriched = payload.result as DictionaryEntry;
-      if ((result.value?.revision || 0) > (enriched.revision || 0)) return;
-      pendingUpdate = enriched;
-      if (typeof requestAnimationFrame === 'function') {
-        if (!updateFrame) updateFrame = requestAnimationFrame(flushUpdate);
-      } else {
-        flushUpdate();
-      }
-    });
-
-    const request = pending || startDictionaryLookup({
-      text: cleanWord,
-      context,
-      ...(attachedRequestId ? {} : { provider, targetLang: lang }),
-      requestId,
-    });
-    if (!pending) {
-      dictPendingMap.set(cacheKey, request);
-      dictPendingRequestIds.set(cacheKey, requestId);
-    }
-
-    try {
-      const data = await request;
-      if (generation !== lookupGeneration) return;
-      if ((result.value?.revision || 0) < (data.revision || 0) || !result.value) {
-        result.value = data;
-        writeDictCache(cacheKey, data);
-      } else if (!cached) {
-        writeDictCache(cacheKey, result.value);
-      }
-      preload();
-    } catch (err: unknown) {
-      if (err instanceof Error && (/abort/i.test(err.message) || err.name === 'AbortError')) {
-        return;
-      }
-      if (generation !== lookupGeneration) return;
-      const message = err instanceof Error ? err.message : 'Không tìm thấy dữ liệu từ điển.';
-      error.value = /Extension context invalidated|runtime is unavailable/i.test(message)
-        ? 'Extension was reloaded. Refresh this page and try again.'
-        : message;
-      result.value = null;
-    } finally {
-      if (generation === lookupGeneration) {
-        dictPendingMap.delete(cacheKey);
-        dictPendingRequestIds.delete(cacheKey);
-        isLoading.value = false;
-        if (activeDictRequestId === requestId) activeDictRequestId = null;
-      }
-    }
-
-    enrichmentTimeout = setTimeout(() => {
-      if (generation === lookupGeneration) unsubscribe();
-    }, 20000);
-  }
-
-  function playPronunciation(options: { text?: string; audioUrl?: string; language?: string; key?: string }) {
-    const language = options.language || 'en-US';
-    const accent = language.toLowerCase().includes('gb') ? 'uk' : 'us';
-    const key = options.key || language;
-    void playAudio(options.audioUrl, options.text, accent, language, key);
-  }
-
-  function startSpeechPractice(text = query.value, language = 'en-US') {
-    stopAllAudio();
-    type RecognitionLike = {
-      lang: string;
-      interimResults: boolean;
-      maxAlternatives: number;
-      continuous?: boolean;
-      onresult: ((event: { results?: ArrayLike<ArrayLike<{ transcript?: string }>> }) => void) | null;
-      onerror: ((event: { error?: string }) => void) | null;
-      onend: (() => void) | null;
-      start: () => void;
-      stop: () => void;
-      abort?: () => void;
-    };
-    const SpeechRecognitionCtor = (window as Window & {
-      SpeechRecognition?: new () => RecognitionLike;
-      webkitSpeechRecognition?: new () => RecognitionLike;
-    }).SpeechRecognition || (window as Window & { webkitSpeechRecognition?: new () => RecognitionLike }).webkitSpeechRecognition;
-    if (!SpeechRecognitionCtor) {
-      practiceResult.value = { score: 0, grade: 'retry', gradeLabel: 'Practice needs Chrome speech recognition.' };
-      return;
-    }
-    const recognition = new SpeechRecognitionCtor();
-    recognition.lang = language;
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    recognition.continuous = false;
-    isPracticing.value = true;
-    playingKey.value = 'practice';
-    recognition.onresult = (event) => {
-      const spoken = event.results?.[0]?.[0]?.transcript || '';
-      const scored = scorePractice(text, spoken);
-      practiceResult.value = scored;
-      practiceResults.set(practiceKey(text, language), scored);
-      isPracticing.value = false;
-      playingKey.value = null;
-      activeRecognition = null;
-    };
-    recognition.onerror = (event) => {
-      const message = recognitionErrorMessage(String(event?.error || ''));
-      isPracticing.value = false;
-      playingKey.value = null;
-      activeRecognition = null;
-      if (message) {
-        practiceResult.value = { score: 0, grade: 'retry', gradeLabel: message };
-      }
-    };
-    recognition.onend = () => {
-      isPracticing.value = false;
-      if (playingKey.value === 'practice') playingKey.value = null;
-      activeRecognition = null;
-    };
-    activeRecognition = recognition;
-    try {
-      recognition.start();
-    } catch {
-      isPracticing.value = false;
-      playingKey.value = null;
-      activeRecognition = null;
-      practiceResult.value = { score: 0, grade: 'retry', gradeLabel: 'Unable to start speech recognition.' };
-    }
-  }
-
-  function playAudioClip(url: string, rate = 1): Promise<boolean> {
-    return new Promise((resolve) => {
-      const clip = new Audio(url);
-      currentAudioElement = clip;
-      clip.playbackRate = Number.isFinite(rate) && rate > 0 ? rate : 1;
-      let settled = false;
-      const finish = (ok: boolean) => {
-        if (settled) return;
-        settled = true;
-        if (currentAudioElement === clip) currentAudioElement = null;
-        resolve(ok);
-      };
-      clip.addEventListener('ended', () => finish(true), { once: true });
-      clip.addEventListener('error', () => finish(false), { once: true });
-      clip.play().catch(() => finish(false));
-    });
-  }
-
-  async function playAudio(
-    audioUrl?: string,
-    fallbackWord?: string,
-    accent: 'uk' | 'us' = 'us',
-    language = accent === 'uk' ? 'en-GB' : 'en-US',
-    key = language,
-  ) {
-    stopAllAudio();
-    const generation = ++playGeneration;
-    const text = String(fallbackWord || query.value || '').trim();
-    playingKey.value = key;
-    isAudioPlaying.value = true;
-
-    const isCurrent = () => generation === playGeneration;
-
-    const finish = () => {
-      if (!isCurrent()) return;
-      if (playingKey.value === key) {
-        playingKey.value = null;
-        isAudioPlaying.value = false;
-      }
-    };
-
-    const cleanAudioUrl = String(audioUrl || '').trim();
-    if (cleanAudioUrl) {
-      const played = await playAudioClip(cleanAudioUrl);
-      if (!isCurrent()) return;
-      if (played) {
-        finish();
-        return;
-      }
-    }
-
-    const googleTtsUrl = getFreeTtsUrl(text, language);
-    if (googleTtsUrl && typeof navigator !== 'undefined' && navigator.onLine !== false) {
-      const playedGoogle = await playAudioClip(googleTtsUrl);
-      if (!isCurrent()) return;
-      if (playedGoogle) {
-        finish();
-        return;
-      }
-    }
-
-    if (!isCurrent()) return;
-    speakTTS(text, accent, key);
-  }
-
-  function speakTTS(text: string, accent: 'uk' | 'us' = 'us', key?: string) {
-    if (speechStartTimer) {
-      clearTimeout(speechStartTimer);
-      speechStartTimer = null;
-    }
-    if (currentAudioElement) {
-      try {
-        currentAudioElement.pause();
-        currentAudioElement.currentTime = 0;
-      } catch {
-        // Ignore audio pause error
-      }
-      currentAudioElement = null;
-    }
-    if (!text || typeof window === 'undefined' || !('speechSynthesis' in window)) {
-      isAudioPlaying.value = false;
-      playingKey.value = null;
-      return;
-    }
-
-    const playKey = key || playingKey.value || (accent === 'uk' ? 'en-GB' : 'en-US');
-    playingKey.value = playKey;
-    isAudioPlaying.value = true;
-
-    if (typeof window.speechSynthesis.cancel === 'function') {
-      window.speechSynthesis.cancel();
-    }
-
-    speechStartTimer = setTimeout(() => {
-      speechStartTimer = null;
-      try {
-        if (window.speechSynthesis.paused) window.speechSynthesis.resume();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = accent === 'uk' ? 'en-GB' : 'en-US';
-        utterance.rate = settings.value.pronunciationRate || 0.95;
-        if (settings.value.pronunciationVoiceURI) {
-          const voices = window.speechSynthesis.getVoices();
-          const match = voices.find((v) => v.voiceURI === settings.value.pronunciationVoiceURI);
-          if (match) utterance.voice = match;
-        }
-        utterance.onstart = () => {
-          isAudioPlaying.value = true;
-          playingKey.value = playKey;
-        };
-        utterance.onend = () => {
-          if (playingKey.value === playKey) {
-            playingKey.value = null;
-            isAudioPlaying.value = false;
-          }
-        };
-        utterance.onerror = () => {
-          if (playingKey.value === playKey) {
-            playingKey.value = null;
-            isAudioPlaying.value = false;
-          }
-        };
-        window.speechSynthesis.speak(utterance);
-        if (window.speechSynthesis.paused) window.speechSynthesis.resume();
-      } catch {
-        playingKey.value = null;
-        isAudioPlaying.value = false;
-      }
-    }, 60);
-  }
-
   return {
-    query,
-    result,
-    isLoading,
-    error,
-    isAudioPlaying,
-    playingKey,
+    query: useSignal(queryRef),
+    result: useSignal(resultRef),
+    isLoading: useSignal(isLoadingRef),
+    error: useSignal(errorRef),
+    isAudioPlaying: useSignal(isAudioPlayingRef),
+    playingKey: useSignal(playingKeyRef),
     searchWord,
     playAudio,
     playPronunciation,
     speakTTS,
     startSpeechPractice,
-    practiceResult,
-    isPracticing,
+    practiceResult: useSignal(practiceResultRef),
+    isPracticing: useSignal(isPracticingRef),
     supportsSpeechPractice: supportsSpeechPractice(),
     stopAllAudio,
     abortActiveDictRequest,
     clearDictionaryCache,
+  };
+}
+
+export function getDictionaryStore() {
+  return {
+    query: queryRef,
+    result: resultRef,
+    isLoading: isLoadingRef,
+    error: errorRef,
+    practiceResult: practiceResultRef,
+    isPracticing: isPracticingRef,
+    isAudioPlaying: isAudioPlayingRef,
+    playingKey: playingKeyRef,
   };
 }

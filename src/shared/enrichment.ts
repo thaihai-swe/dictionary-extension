@@ -6,6 +6,7 @@ import type {
   SourceBadge,
   TranslationResult,
 } from '../types';
+import { mergeLexicalProfiles } from './query-utils';
 
 export const MAX_DEFINITIONS_PER_POS = 8;
 export const MAX_MEANINGS = 6;
@@ -43,6 +44,11 @@ const POS_ALIASES: Record<string, string> = {
   det: 'determiner',
   determiner: 'determiner',
   article: 'article',
+  slang: 'slang',
+  idiom: 'slang',
+  'slang idiom': 'slang',
+  encyclopedia: 'encyclopedia',
+  encyclopedic: 'encyclopedia',
 };
 
 export function normalizeComparableText(str: string): string {
@@ -289,7 +295,7 @@ export function mergeDictionaryEntries(base: DictionaryEntry, incoming: Dictiona
     examples: mergeAttributed(base.examples, incoming.examples),
     synonyms: mergeAttributed(base.synonyms, incoming.synonyms),
     antonyms: mergeAttributed(base.antonyms, incoming.antonyms),
-    lexicalProfile: incoming.lexicalProfile || base.lexicalProfile,
+    lexicalProfile: mergeLexicalProfiles(base.lexicalProfile, incoming.lexicalProfile),
     sourceBadges: mergeSourceBadges(base.sourceBadges, incoming.sourceBadges),
     subtitle: base.subtitle || incoming.subtitle,
     translation,

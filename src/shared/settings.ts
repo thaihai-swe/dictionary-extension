@@ -33,9 +33,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   libreTranslateBaseUrl: 'https://libretranslate.com',
   libreTranslateApiKey: '',
   dictionaryProvider: 'free_dictionary',
-  dictionaryApiKey: '',
-  wordnikApiKey: '',
-  wordsApiKey: '',
   popupWidth: 620,
   popupHeight: 720,
   enableTranslate: true,
@@ -52,14 +49,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   aiApiKey: '',
   hasAiApiKey: false,
   aiModel: 'gemini-2.5-flash',
-  aiPromptTemplate: '',
-  aiDefaultPromptTemplate: '',
-  aiContextPromptTemplate: '',
-  aiGrammarPromptTemplate: '',
-  aiSentencePromptTemplate: '',
-  aiPhraseExplorerPromptTemplate: '',
-  aiComparePromptTemplate: '',
-  aiRephrasePromptTemplate: '',
+  ...DEFAULT_AI_PROMPTS,
 };
 
 export const PUBLIC_SETTING_KEYS = (Object.keys(DEFAULT_SETTINGS) as Array<keyof AppSettings>)
@@ -123,8 +113,15 @@ export function normalizeSettings(input?: Partial<AppSettings> | Record<string, 
   merged.disablePageContextExtraction = Boolean(merged.disablePageContextExtraction);
   merged.hasAiApiKey = hasConfiguredAiApiKey(merged);
 
+  const removedDictionaryIds = new Set(['merriam_webster', 'wordnik', 'words_api', 'conceptnet']);
+  if (removedDictionaryIds.has(String(merged.dictionaryProvider || ''))) {
+    merged.dictionaryProvider = DEFAULT_SETTINGS.dictionaryProvider;
+  }
+
   if (!String(merged.aiModel || '').trim()) merged.aiModel = DEFAULT_SETTINGS.aiModel;
-  if (!String(merged.aiPromptTemplate || '').trim()) merged.aiPromptTemplate = DEFAULT_SETTINGS.aiPromptTemplate;
+  for (const key of Object.keys(DEFAULT_AI_PROMPTS) as Array<keyof typeof DEFAULT_AI_PROMPTS>) {
+    if (!String(merged[key] || '').trim()) merged[key] = DEFAULT_AI_PROMPTS[key];
+  }
 
   return merged;
 }
@@ -201,6 +198,8 @@ export async function loadFullSettings(): Promise<AppSettings> {
   if (straySyncSecrets.length) {
     await chrome.storage.sync.remove(straySyncSecrets);
   }
+  const legacyDictionaryKeys = ['dictionaryApiKey', 'wordnikApiKey', 'wordsApiKey'];
+  await chrome.storage.local.remove(legacyDictionaryKeys).catch(() => {});
   const latestLocal = await chrome.storage.local.get(['aiApiKey', 'hasAiApiKey']);
   const hasAiApiKey = Boolean(String((latestLocal.aiApiKey ?? merged.aiApiKey) ?? '').trim());
   merged.aiApiKey = latestLocal.aiApiKey ?? merged.aiApiKey;

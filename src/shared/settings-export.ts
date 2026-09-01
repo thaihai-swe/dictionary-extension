@@ -2,9 +2,6 @@ export const SETTINGS_SCHEMA_VERSION = 12;
 
 export const SECRET_SETTING_KEYS = [
   'aiApiKey',
-  'dictionaryApiKey',
-  'wordnikApiKey',
-  'wordsApiKey',
   'libreTranslateApiKey',
 ] as const;
 

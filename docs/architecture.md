@@ -2,25 +2,25 @@
 
 ## Overview
 
-**Dictionary** is a modern Chrome Manifest V3 extension engineered with **Vite 5**, **Vue 3**, **TypeScript 5**, and **Tailwind CSS**.
+**Dictionary** is a modern Chrome Manifest V3 extension engineered with **Vite 5**, **React 18**, **TypeScript 5**, and **Tailwind CSS**.
 
 The runtime architecture is organized into clean, decoupled layers following modern Chrome Extension entrypoint standards:
 
-1. **Toolbar Popup Entrypoint** (`src/entrypoints/toolbar-popup/`) — Standalone browser action UI (`app.toolbar-popup.vue`, `main.ts`) for manual search, mode switching, editable context, 6 contextual AI intents, global audio controls, and settings.
-2. **Content Script & In-Page Overlay** (`src/entrypoints/content-script/`) — Injected Shadow DOM overlay system (`app.content-script.vue`, `overlay.in-page.vue`, `index.ts`) handling text selection, floating trigger icon, exact context extraction, collision-safe viewport positioning, dragging & resizing, and result rendering.
+1. **Toolbar Popup Entrypoint** (`src/entrypoints/toolbar-popup/`) — Standalone browser action UI (`app.toolbar-popup.tsx`, `main.tsx`) for manual search, mode switching, editable context, 6 contextual AI intents, global audio controls, and settings.
+2. **Content Script & In-Page Overlay** (`src/entrypoints/content-script/`) — Injected Shadow DOM overlay system (`bootstrap.ts`, `overlay-app.tsx`, `overlay.in-page.tsx`) handling text selection, floating trigger icon, exact context extraction, collision-safe viewport positioning, dragging & resizing, and result rendering.
 3. **Background Service Worker Entrypoint** (`src/entrypoints/background/service-worker.ts`) — Central background service worker handling context menu actions, CORS-bypassing fetch proxies (`FETCH_PROXY`), network cancellation, and keyboard shortcut commands.
-4. **Vue Composables Layer** (`src/composables/`) — Reactive state management engines:
+4. **React Stores & Hooks** (`src/composables/`) — External-store state engines subscribed via `useSyncExternalStore`:
    - `composable.dictionary.ts`: Handles caching, dictionary lookups, audio playback & reactive `isAudioPlaying` state with global `stopAllAudio()`.
    - `composable.ai-assistant.ts`: Handles Gemini AI prompts, intent pipelines, and offline grammar engines.
    - `composable.storage.ts`: Reactive chrome.storage settings sync and history management.
-5. **Provider Adapters** (`src/providers/`) — Vendor adapters for 5 dictionary providers (`free_dictionary`, `wiktionary`, `merriam_webster`, `wordnik`, `google_translate`), Google Translate, and Gemini AI.
-6. **UI Component System** (`src/components/`) — Modular Vue 3 components: `AppHeader` (with Global Stop Voice button), `SenseMatrixCard`, `WordFamilyCard`, `UsageNotesCard`, `WordFormationCard`, `LearnerMistakesCard`, `CollocationsCard`, `SentenceBreakdownCard`, `MarkdownRenderer`, `TokenizedContext`, and Modals.
+5. **Provider Adapters** (`src/providers/`) — Keyless vendor adapters for dictionary providers (`free_dictionary`, `wiktionary`, `datamuse`, `wikipedia`, `urban_dictionary`, `rhymebrain`), translation (`google_translate`, `mymemory`, `libre_translate`), and Gemini AI.
+6. **UI Component System** (`src/components/`) — Modular React 18 components: `AppHeader` (with Global Stop Voice button), `SenseMatrixCard`, `WordFamilyCard`, `UsageNotesCard`, `WordFormationCard`, `LearnerMistakesCard`, `CollocationsCard`, `SentenceBreakdownCard`, `MarkdownRenderer`, `TokenizedContext`, and Modals.
 
 ---
 
 ## Runtime Flow & Lifecycle
 
-The extension uses a two-phase progressive response lifecycle for dictionary lookups, and an asynchronous abortable pipeline for AI requests.
+The extension uses a two-phase progressive response lifecycle for dictionary lookups, and an asynchronous abortable pipeline for AI requests. Dictionary and AI run in parallel with no data dependency; see [Lookup Data Flow](lookup-data-flow.md) for the selection-to-tab sequence.
 
 ```text
 User selects text on webpage OR types query in toolbar popup
@@ -59,9 +59,9 @@ User selects text on webpage OR types query in toolbar popup
                ▼
 ┌──────────────────────────────┐
 │   Popup Initial Rendering    │
+│  - Render headword + UK/US   │
 │  - Render definitions & IPA  │
 │  - Render translation card   │
-│  - Show initial source badge │
 │  - Expose audio & practice   │
 └──────────────┬───────────────┘
                │
@@ -71,8 +71,8 @@ User selects text on webpage OR types query in toolbar popup
 │                                                              │
 │  1. Attach late translation via LOOKUP_UPDATE (revision: 1)  │
 │  2. If phrase-like & no defs: run AI Phrase Fallback         │
-│  3. Secondary providers only if Phase 1 entry is thin        │
-│     (no defs, no IPA, or no examples; concurrency: 2)        │
+│  3. Always-enrich remaining keyless providers (batch N=2)    │
+│     Wiktionary, Datamuse, RhymeBrain, Wikipedia, Urban Dict  │
 │  4. Merge definitions, examples, syns/ants, IPA, & profile   │
 │  5. Update SW combined-result memory cache                   │
 │  6. UI coalesces LOOKUP_UPDATE onto requestAnimationFrame    │
@@ -84,7 +84,6 @@ User selects text on webpage OR types query in toolbar popup
 │  - Check requestId + revision│
 │  - Re-render without jump    │
 │  - Backfill phonetic IPA     │
-│  - Append all source badges  │
 │  - Preserve practice score   │
 └──────────────────────────────┘
 ```
@@ -95,16 +94,16 @@ User selects text on webpage OR types query in toolbar popup
 
 ### Phase 1: Initial Fast Lookup
 
-1. **Facade Dispatch:** The background worker calls `lookupDictionary(text, settings)` via `src/providers/dictionary.js`.
+1. **Facade Dispatch:** The background worker calls `fetchCombinedDictionaryResult(text, settings)` via `src/providers/provider.index.ts`.
 2. **Primary Provider Selection:** The configured `dictionaryProvider` (`free_dictionary` by default) is attempted first.
-3. **Provider Fallback Chain:** Unconfigured key-backed providers are skipped. `NotFoundError` and transient network/5xx/429/timeout continue to the next provider. The fallback chain evaluates in order:
+3. **Provider Fallback Chain:** All remaining dictionary backends are keyless. `NotFoundError` and transient network/5xx/429/timeout continue to the next provider. The fallback chain evaluates in order:
    ```text
-   free_dictionary ➔ wiktionary ➔ merriam_webster ➔ wordnik ➔ words_api
+   free_dictionary ➔ wiktionary ➔ datamuse ➔ rhymebrain ➔ wikipedia ➔ urban_dictionary
    ```
    *(The primary provider is prioritized at the front of this sequence.)*
 4. **Primary Exact Query:** The primary provider looks up the selected text as-is. Inflections and phrases are not rewritten to a root lemma.
-5. **Secondary Exact Query:** If the primary still has no hit, remaining configured providers try the same exact query. Unconfigured key-backed providers are skipped. `NotFoundError` and transient network/5xx/429/timeout continue to the next provider.
-6. **Operational Failure Gate:** Auth failures (missing/invalid key, HTTP 401/403) abort the fallback chain. Transient network, timeout, 429, and 5xx errors continue to the next configured provider. Dictionary HTTP timeouts are 6s (translation 8s).
+5. **Secondary Exact Query:** If the primary still has no hit, remaining keyless providers try the same exact query. `NotFoundError` and transient network/5xx/429/timeout continue to the next provider.
+6. **Operational Failure Gate:** Transient network, timeout, 429, and 5xx errors continue to the next provider. Dictionary HTTP timeouts are 6s (translation 8s).
 7. **Non-Blocking Translation:** When `enableTranslate` is active, translation starts in parallel. If it finishes before the dictionary result, it is included in the first paint. Otherwise the dictionary result is returned immediately and translation is merged later via `LOOKUP_UPDATE` (`revision: 1`).
 8. **Initial Delivery:** The dictionary result is returned immediately to the UI with `enriched: false` and `revision: 0` for first paint. Settings are cached in the service worker until `chrome.storage` changes.
 
@@ -114,8 +113,8 @@ After the initial result is dispatched to the popup, the background service work
 
 1. **Late Translation Merge:** If translation was still in flight at first paint, it is merged via `LOOKUP_UPDATE` (`revision: 1`) before phrase fallback or dictionary enrichment.
 2. **AI Phrase Fallback (Multi-word Lookups):** After a ~300ms delay when translation was already included (so a dismissed card can cancel), if the query is phrase-like, lacks usable definitions, and both `enableAI` and `enablePhraseFallback` are on, `lookupAiProvider(text, settings, { intent: "phrase_fallback" })` runs first. Upon completion, the phrase explanation is merged and broadcast via `LOOKUP_UPDATE` before secondary dictionary enrichment.
-3. **Thin-entry gate:** Secondary dictionary providers run only when Phase 1 is thin (no usable definitions, no IPA/phonetic text, or no example sentences). Fat Free Dictionary hits skip Wiktionary and other secondaries.
-4. **Secondary Provider Filtering:** When enrichment runs, key-backed providers (`merriam_webster`, `wordnik`, `words_api`) lacking API keys in `chrome.storage.local` are skipped upfront without network overhead.
+3. **Always-enrich:** Secondary keyless providers always run after Phase 1, even when the primary entry already has definitions. There is no thin-entry gate.
+4. **Secondary Provider Filtering:** Remaining keyless providers (Datamuse, Wiktionary, Wikipedia, Urban Dictionary, RhymeBrain) participate in progressive enrichment without requiring API keys.
 5. **Bounded Concurrency:** Remaining unqueried providers are fetched in concurrent batches of 2 (`ENRICHMENT_CONCURRENCY = 2`).
 6. **Resilient Failure Handling:** Secondary `NotFoundError` results and operational errors are caught and logged silently without disrupting the displayed primary result.
 7. **Cumulative Merge Engine (`mergeDictionaryEntries`):**
@@ -164,18 +163,38 @@ Check L2 Session Storage (chrome.storage.session with "enrich_" prefix)
 
 ## AI Multi-Intent Pipeline & Structured Output
 
-The AI subsystem (`src/providers/ai-provider.js`) provides generative explanations, grammatical analysis, and sentence decomposition through specialized intents:
+The AI subsystem (`src/composables/composable.ai-assistant.ts` and `src/providers/provider.gemini-ai.ts`) provides generative explanations, grammatical analysis, sentence decomposition, and comparative nuance through specialized intents:
 
 | Intent | Action / Role | Prompt Template Setting | Output Format | Lexical Profile Requested |
 |---|---|---|---|---|
-| `default` | Main AI tab explanation | `aiPromptTemplate` | Semantic Markdown plus parsed sense cards | No |
-| `explain_in_context` | Context Explain | `aiContextPromptTemplate` | Meaning in context, substitutions, nuance-lost Markdown | No |
-| `grammar` | Grammar & Nuance | `aiGrammarPromptTemplate` | Syntax, pattern rules, and short examples | Learner mistakes only |
-| `phrase_explorer` | Phrase & Collocations | `aiPhraseExplorerPromptTemplate` | Core meaning, grammar patterns, and examples | Collocations only |
+| `default` | Main AI tab explanation | `aiPromptTemplate` | Semantic Markdown | No |
+| `explain_in_context` | Context Explain | `aiContextPromptTemplate` | Meaning in context & substitutions | No |
+| `grammar` | Grammar & Nuance | `aiGrammarPromptTemplate` | Syntax rules, nuance, and examples | Learner mistakes only |
+| `collocations` | Phrase & Collocations | `aiPhraseExplorerPromptTemplate` | Core meaning, grammar patterns, examples | Collocations only |
 | `sentence_breakdown` | Sentence Breakdown | `aiSentencePromptTemplate` | Structured JSON (`data` object) | No |
 | `phrase_fallback` | Automatic phrase fallback | Built-in fallback template | Concise Markdown explanation | No |
-| `compare_confusables` | Compare Confusables | `aiComparePromptTemplate` | Distinction, matrix, minimal pairs | No |
+| `confusables` | Compare Confusables | `aiComparePromptTemplate` | Distinction, comparison matrix, minimal pairs | No |
 | `rephrase` | Rephrase action | `aiRephrasePromptTemplate` | Three stylistic rewrites | No |
+
+### AI Concurrency & Preload Architecture
+
+1. **Speculative 300ms Debounced Preload:**
+   - When text is selected, `maybePreloadAi()` waits 300ms, then `preloadIntents()` fetches the `default` intent first.
+   - After that settles, `preloadFollowUpIntents()` warms the remaining intents in the background.
+   - Rapid selection changes or overlay dismissal clear the timer (`cancelAiPreload()`), so no LLM tokens are spent on discarded words.
+2. **Intent Hover/Focus Prefetching:**
+   - In `AiIntentToolbar`, hovering over or focusing any secondary intent button also triggers `preloadSpecificIntent()` so a click is usually a cache hit.
+3. **In-Flight Request Deduplication (`aiPendingMap`):**
+   - If a background preload is already in flight when the user switches to the AI tab, the UI attaches to the running promise (`aiPendingMap.get(cacheKey)`), preventing redundant API requests.
+4. **Persistent 24-Hour LRU Cache (`chrome.storage.local`):**
+   - Up to 100 AI responses are cached locally with a **24-hour TTL** (`ai_lookup_cache_v2`).
+   - Keys are hashed compound representations of `intent`, `text`, `targetLang`, `context`, `model`, `baseUrl`, and `enableLexicalProfile`.
+5. **Keep-Alive UI Mounting & Lazy Code Splitting:**
+   - The `<AiAssistantView />` chunk is loaded lazily on first tab visit (`aiVisited` state).
+   - Once mounted, switching between Dictionary and AI tabs keeps the component mounted with `display: none`, preserving scroll positions, active intents, and rendered syntax trees.
+6. **Tab-Scoped Abort & Context Invalidation:**
+   - Each AI lookup creates a unique `requestId` and registers an `AbortController`.
+   - Selecting a new word aborts all in-flight AI requests via `abortAllAiRequests()`.
 
 ### AI Request Pipeline
 
@@ -190,7 +209,7 @@ The AI subsystem (`src/providers/ai-provider.js`) provides generative explanatio
    - Parsed via `extractJsonObject` and validated with `normalizeSentenceBreakdown`. Emits interactive phrase chips that allow direct nested lookups.
 4. **Parse-Time AI Section Normalization:**
    - Markdown output is cleaned of accidental code fences and normalized to `###` headings.
-   - `splitMarkdownIntoSections()` assigns authoritative semantic section `kind` values (`context`, `definitions`, `grammar`, `examples`, `structures`, `summary`, `lexical`, etc.) derived from built-in outlines in `src/shared/ai-prompts.js`.
+   - `splitMarkdownIntoSections()` assigns authoritative semantic section `kind` values (`context`, `definitions`, `grammar`, `examples`, `structures`, `summary`, `lexical`, etc.) derived from built-in outlines in `src/shared/ai-prompts.ts`.
    - Leftover overlapping sections (e.g. redundant translation sections) are pruned or merged.
    - For long results (>= 4 sections), secondary deep-dive sections are wrapped in collapsible native `<details>` disclosures while core explanations stay expanded.
 
@@ -215,7 +234,7 @@ When `enableLexicalProfile` is enabled (default `true`), dictionary and AI looku
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-1. **Provider-First Extraction:** Parts of speech, derivations, inflections, and usage notes returned by primary and secondary dictionary adapters (e.g. WordsAPI, Wordnik, Wiktionary) are automatically extracted during normalization.
+1. **Provider-First Extraction:** Parts of speech, derivations, inflections, and usage notes returned by primary and secondary dictionary adapters (e.g. Datamuse, Wiktionary) are automatically extracted during normalization.
 2. **AI Structured Block Extraction:** Prompts for `grammar` and `phrase_explorer` request a **subset** `<lexical-profile>` JSON block (learner mistakes and collocations respectively). Main AI does not request extras. The AI provider extracts and strips this block from the visible Markdown using `parseLexicalProfileFromResponse()` and parses it with `parseLexicalProfile()`.
 3. **Deep Profile Merging:** `mergeLexicalProfiles` combines provider-extracted data with AI-generated profiles, enforcing strict deduplication and category bounds:
    - `MAX_LEXICAL_ITEMS = 12`
@@ -321,8 +340,7 @@ The extension implements strict data boundaries to guarantee that API credential
 ┌────────────────────────────────────────────────────────────────────────┐
 │                   chrome.storage.local (Private Secrets)               │
 ├────────────────────────────────────────────────────────────────────────┤
-│ aiApiKey, dictionaryApiKey, wordnikApiKey, wordsApiKey,                │
-│ libreTranslateApiKey.                                                  │
+│ aiApiKey, libreTranslateApiKey.                                        │
 │ -> ISOLATED STRICTLY TO BACKGROUND SERVICE WORKER.                     │
 │ -> Never queried by getUiSettings(). Never sent to content scripts.    │
 └────────────────────────────────────────────────────────────────────────┘

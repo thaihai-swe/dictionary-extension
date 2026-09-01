@@ -1,5 +1,6 @@
-import { createApp } from 'vue';
-import ContentScriptApp from './app.content-script.vue';
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import ContentScriptApp from './app.content-script';
 import styleText from '@/assets/main.css?inline';
 
 (function initContentScript() {
@@ -19,5 +20,12 @@ import styleText from '@/assets/main.css?inline';
   appMount.id = 'app';
   shadow.appendChild(appMount);
 
-  createApp(ContentScriptApp).mount(appMount);
+  const root = createRoot(appMount);
+  root.render(
+    React.createElement(
+      React.StrictMode,
+      null,
+      React.createElement(ContentScriptApp, null),
+    ),
+  );
 })();

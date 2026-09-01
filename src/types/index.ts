@@ -104,8 +104,6 @@ export interface WordFormation {
 }
 
 export interface LexicalProfile {
-  cefr?: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
-  frequencyPill?: string;
   register?: string;
   wordFamily?: WordFamily;
   usageNotes?: string;
@@ -188,8 +186,16 @@ export type SelectionTriggerMode = 'off' | 'icon' | 'direct';
 export type PostSelectionModifier = 'shift' | 'alt' | 'ctrl';
 export type AppTheme = 'system' | 'light' | 'dark';
 export type AppFontFamily = 'editorial' | 'learner';
-export type TranslationProviderId = 'google' | 'libretranslate';
-export type DictionaryProviderId = 'free_dictionary' | 'google_translate' | 'wiktionary' | 'merriam_webster' | 'wordnik' | 'words_api' | 'gemini_ai';
+export type TranslationProviderId = 'google' | 'libretranslate' | 'mymemory';
+export type DictionaryProviderId =
+  | 'free_dictionary'
+  | 'google_translate'
+  | 'wiktionary'
+  | 'datamuse'
+  | 'urban_dictionary'
+  | 'wikipedia'
+  | 'rhymebrain'
+  | 'gemini_ai';
 
 export interface AppSettings {
   theme: AppTheme;
@@ -204,9 +210,6 @@ export interface AppSettings {
   libreTranslateBaseUrl: string;
   libreTranslateApiKey: string;
   dictionaryProvider: DictionaryProviderId;
-  dictionaryApiKey: string;
-  wordnikApiKey: string;
-  wordsApiKey: string;
   popupWidth: number;
   popupHeight: number;
   enableTranslate: boolean;
