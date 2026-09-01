@@ -20,6 +20,12 @@ import {
   type ProviderValidationResult,
   type ValidateProviderPayload,
 } from '../../shared/messages';
+import { fetchAiAnalysis, validateAiProvider } from '../../providers/provider.gemini-ai';
+import {
+  fetchCombinedDictionaryResult,
+  validateDictionaryProvider,
+  validateTranslationProvider,
+} from '../../providers/provider.index';
 import { loadFullSettings, migrateSettingsSchema, normalizeSettings } from '../../shared/settings';
 import { canonicalAiIntent } from '../../shared/ai-prompts';
 
@@ -34,14 +40,6 @@ const inflightDictionaryLookups = new Map<string, Promise<DictionaryEntry & { re
 let cachedSettings: AppSettings | null = null;
 let cachedSettingsAt = 0;
 let cachedSettingsPromise: Promise<AppSettings> | null = null;
-let dictionaryLookupModulePromise: Promise<typeof import('../../providers/provider.index')> | null = null;
-
-function loadDictionaryLookupModule() {
-  if (!dictionaryLookupModulePromise) {
-    dictionaryLookupModulePromise = import('../../providers/provider.index');
-  }
-  return dictionaryLookupModulePromise;
-}
 
 function getRequestKey(tabId: number | undefined, scope: string, requestId: string): string {
   return `${Number.isInteger(tabId) ? tabId : 'popup'}:${scope}:${requestId}`;
@@ -171,7 +169,6 @@ async function handleDictionaryLookup(payload: LookupTextPayload, sender: chrome
     const controller = registerController(tabId, scope, requestId);
 
     try {
-      const { fetchCombinedDictionaryResult } = await loadDictionaryLookupModule();
       const result = await fetchCombinedDictionaryResult(
         text,
         lookupSettings,
@@ -213,7 +210,6 @@ async function handleAiLookup(payload: AiLookupPayload, sender: chrome.runtime.M
   const controller = registerController(tabId, scope, requestId);
 
   try {
-    const { fetchAiAnalysis } = await import('../../providers/provider.gemini-ai');
     const result = await fetchAiAnalysis(
       intent as AiIntentId,
       text,
@@ -244,15 +240,12 @@ async function handleValidateProvider(payload: ValidateProviderPayload = { kind:
   const kind = payload.kind || 'dictionary';
 
   if (kind === 'dictionary') {
-    const { validateDictionaryProvider } = await loadDictionaryLookupModule();
     return validateDictionaryProvider(payload.providerId || settings.dictionaryProvider, settings);
   }
   if (kind === 'translation') {
-    const { validateTranslationProvider } = await loadDictionaryLookupModule();
     return validateTranslationProvider(settings);
   }
   if (kind === 'ai') {
-    const { validateAiProvider } = await import('../../providers/provider.gemini-ai');
     return validateAiProvider(settings);
   }
   return { ok: false, error: `Unknown validation kind: ${kind}` };
@@ -284,32 +277,54 @@ async function openLookupOnTab(tab: chrome.tabs.Tab | undefined, payload: OpenLo
   return true;
 }
 
-const TOOLBAR_WINDOW_WIDTH = 1100;
-const TOOLBAR_WINDOW_HEIGHT = 800;
 const TOOLBAR_WINDOW_ID_KEY = 'toolbarWindowId';
 let toolbarWindowId: number | null = null;
+
+async function getSharedPopupSize() {
+  const settings = await getCachedSettings();
+  return {
+    width: Math.max(360, Math.min(1000, Number(settings.popupWidth) || 620)),
+    height: Math.max(380, Math.min(900, Number(settings.popupHeight) || 720)),
+  };
+}
+
+async function applyToolbarWindowSize(windowId: number, focused = false) {
+  const size = await getSharedPopupSize();
+  try {
+    await chrome.windows.update(windowId, {
+      ...size,
+      ...(focused ? { focused: true } : {}),
+    });
+  } catch {
+    // Chrome clamps oversized windows to the display max; ignore if the window is gone.
+  }
+}
 
 async function openToolbarWindow() {
   const stored = await chrome.storage.session?.get(TOOLBAR_WINDOW_ID_KEY).catch(() => ({} as Record<string, unknown>));
   const existingId = Number(stored?.[TOOLBAR_WINDOW_ID_KEY] || toolbarWindowId || 0) || null;
   if (existingId) {
     try {
-      await chrome.windows.update(existingId, { focused: true });
+      await applyToolbarWindowSize(existingId, true);
       toolbarWindowId = existingId;
       return;
     } catch {
       toolbarWindowId = null;
     }
   }
+
+  const size = await getSharedPopupSize();
   const win = await chrome.windows.create({
     url: chrome.runtime.getURL('index.html'),
     type: 'popup',
-    width: TOOLBAR_WINDOW_WIDTH,
-    height: TOOLBAR_WINDOW_HEIGHT,
+    width: size.width,
+    height: size.height,
     focused: true,
   });
   toolbarWindowId = win?.id ?? null;
   if (toolbarWindowId != null) {
+    // macOS often ignores create() size; update() applies settings or Chrome's display max.
+    await applyToolbarWindowSize(toolbarWindowId);
     await chrome.storage.session?.set({ [TOOLBAR_WINDOW_ID_KEY]: toolbarWindowId }).catch(() => undefined);
   }
 }
@@ -341,8 +356,12 @@ chrome.runtime.onStartup?.addListener(() => {
   void loadDictionaryLookupModule();
 });
 
-chrome.storage?.onChanged?.addListener((_changes, area) => {
-  if (area === 'sync' || area === 'local') invalidateSettingsCache();
+chrome.storage?.onChanged?.addListener((changes, area) => {
+  if (area !== 'sync' && area !== 'local') return;
+  invalidateSettingsCache();
+  if (area === 'sync' && toolbarWindowId && (changes.popupWidth || changes.popupHeight)) {
+    void applyToolbarWindowSize(toolbarWindowId);
+  }
 });
 
 chrome.windows?.onRemoved?.addListener((removedId) => {

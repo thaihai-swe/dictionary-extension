@@ -1,11 +1,4 @@
 import { AppSettings, DictionaryEntry, PhraseExplanationSection, TranslationResult } from '../types';
-import { fetchFreeDictionary } from './provider.free-dictionary';
-import { fetchGoogleTranslate, lookupGoogleTranslation } from './provider.google-translate';
-import { fetchWiktionary } from './provider.wiktionary';
-import { fetchMerriamWebster } from './provider.merriam-webster';
-import { fetchWordnik } from './provider.wordnik';
-import { fetchLibreTranslate, lookupLibreTranslation } from './provider.libre-translate';
-import { fetchWordsApi } from './provider.words-api';
 import { NotFoundError, isFatalDictionaryError } from './errors';
 import {
   DICTIONARY_FALLBACK_ORDER,
@@ -17,6 +10,14 @@ import {
   splitPhraseExplanation,
 } from '../shared/query-utils';
 import { cloneDictionaryEntry, isThinDictionaryEntry, mergeDictionaryEntries, mergeMeanings, mergeSourceBadges } from '../shared/enrichment';
+import { fetchAiAnalysis } from './provider.gemini-ai';
+import { fetchFreeDictionary } from './provider.free-dictionary';
+import { fetchGoogleTranslate, lookupGoogleTranslation } from './provider.google-translate';
+import { fetchLibreTranslate, lookupLibreTranslation } from './provider.libre-translate';
+import { fetchMerriamWebster } from './provider.merriam-webster';
+import { fetchWiktionary } from './provider.wiktionary';
+import { fetchWordnik } from './provider.wordnik';
+import { fetchWordsApi } from './provider.words-api';
 
 const ENRICHMENT_CONCURRENCY = 2;
 const ENRICHMENT_TTL_MS = 10 * 60 * 1000;
@@ -134,7 +135,6 @@ async function lookupSingleProvider(
     case 'libre_translate':
       return fetchLibreTranslate(query, targetLang, signal);
     case 'gemini_ai': {
-      const { fetchAiAnalysis } = await import('./provider.gemini-ai');
       const aiRes = await fetchAiAnalysis('default', query, targetLang, settings?.aiApiKey, settings?.aiModel, signal, undefined, settings);
       return {
         word: query,
@@ -286,7 +286,6 @@ async function lookupPhraseFallback(
   signal?: AbortSignal,
 ): Promise<PhraseExplanationSection[] | null> {
   if (!settings.enableAI || settings.enablePhraseFallback === false) return null;
-  const { fetchAiAnalysis } = await import('./provider.gemini-ai');
   const result = await fetchAiAnalysis(
     'phrase_fallback',
     text,

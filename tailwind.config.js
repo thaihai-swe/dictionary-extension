@@ -31,9 +31,9 @@ export default {
       },
       fontFamily: {
         sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
-        heading: ['"Lexend"', '"Plus Jakarta Sans"', 'sans-serif'],
-        serif: ['"Newsreader"', 'Georgia', 'serif'],
-        mono: ['"JetBrains Mono"', 'Consolas', 'monospace'],
+        heading: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        serif: ['Georgia', '"Times New Roman"', 'serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
       }
     },
   },

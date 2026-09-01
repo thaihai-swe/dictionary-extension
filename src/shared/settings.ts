@@ -1,3 +1,4 @@
+import { DEFAULT_AI_PROMPTS, getLegacyDefaultPromptUpdates } from './ai-prompts';
 import type { AppSettings } from '../types';
 import {
   SECRET_KEYS,
@@ -60,6 +61,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
   aiComparePromptTemplate: '',
   aiRephrasePromptTemplate: '',
 };
+
+export const PUBLIC_SETTING_KEYS = (Object.keys(DEFAULT_SETTINGS) as Array<keyof AppSettings>)
+  .filter((key) => !SECRET_KEYS.has(key));
+
+const SYNC_SETTING_KEYS = [...PUBLIC_SETTING_KEYS, SETTINGS_SCHEMA_VERSION_KEY, ...SECRET_SETTING_KEYS];
 
 export function normalizePausedHostnames(value: unknown): string[] {
   const raw = Array.isArray(value) ? value : String(value || '').split(/[\n,]/);
@@ -172,12 +178,11 @@ export function looksLikeLegacyMainInstall(syncData?: Record<string, unknown>): 
 }
 
 export async function loadFullSettings(): Promise<AppSettings> {
-  const { DEFAULT_AI_PROMPTS } = await import('./ai-prompts');
   if (typeof chrome === 'undefined' || !chrome.storage) {
     return normalizeSettings({ ...DEFAULT_SETTINGS, ...DEFAULT_AI_PROMPTS });
   }
   const [syncData, localData] = await Promise.all([
-    chrome.storage.sync.get(null),
+    chrome.storage.sync.get(SYNC_SETTING_KEYS),
     chrome.storage.local.get([...SECRET_SETTING_KEYS, 'hasAiApiKey']),
   ]);
   const merged = mergeStoredSettings(syncData || {}, localData || {});
@@ -217,7 +222,7 @@ export async function loadPublicSettings(): Promise<AppSettings> {
     return normalizeSettings(stripSecretSettings(DEFAULT_SETTINGS));
   }
   const [syncData, localFlags] = await Promise.all([
-    chrome.storage.sync.get(null),
+    chrome.storage.sync.get(PUBLIC_SETTING_KEYS as unknown as string[]),
     chrome.storage.local.get(['hasAiApiKey']),
   ]);
   return normalizeSettings(mergePublicSettings(syncData || {}, localFlags || {}));
@@ -272,7 +277,6 @@ export async function migrateSettingsSchema(): Promise<{ migrated: boolean; vers
   };
 
   if (currentVersion > 0 && currentVersion < 9) {
-    const { getLegacyDefaultPromptUpdates } = await import('./ai-prompts');
     Object.assign(updates, getLegacyDefaultPromptUpdates(syncData));
   }
 

@@ -158,7 +158,6 @@ async function startBootstrap() {
 
   await loadBootSettings();
   applyTheme();
-  scheduleIdleOverlayPrefetch();
 
   function isDarkMode() {
     if (settings.theme === 'system') {
@@ -222,17 +221,19 @@ async function startBootstrap() {
   }
 
   function scheduleIdleOverlayPrefetch() {
+    if (isHostnamePaused() || (settings.selectionTriggerMode as string) === 'off') return;
     const prefetch = () => {
+      if (isHostnamePaused() || (settings.selectionTriggerMode as string) === 'off') return;
       void loadOverlayModule().catch(() => undefined);
     };
     const idle = (globalThis as typeof globalThis & {
       requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
     }).requestIdleCallback;
     if (typeof idle === 'function') {
-      idle(prefetch, { timeout: 2500 });
+      idle(prefetch, { timeout: 3500 });
       return;
     }
-    setTimeout(prefetch, 1000);
+    setTimeout(prefetch, 2000);
   }
 
   function loadOverlayModule() {
@@ -253,6 +254,7 @@ async function startBootstrap() {
   }
 
   function overlayProps() {
+    const { width, height } = popupSize();
     return {
       selectedText,
       contextSentence,
@@ -260,8 +262,8 @@ async function startBootstrap() {
       isMaximized,
       isDragging,
       isResizing,
-      width: customWidth || undefined,
-      height: customHeight || undefined,
+      width,
+      height,
     };
   }
 
@@ -376,8 +378,9 @@ async function startBootstrap() {
     isResizing = true;
     resizeStartX = e.clientX;
     resizeStartY = e.clientY;
-    initialWidth = customWidth || settings.popupWidth || 480;
-    initialHeight = customHeight || settings.popupHeight || 580;
+    const size = popupSize();
+    initialWidth = size.width;
+    initialHeight = size.height;
     overlayApi?.update(overlayProps());
     window.addEventListener('mousemove', handleResizeMove);
     window.addEventListener('mouseup', handleResizeEnd);
@@ -527,7 +530,19 @@ async function startBootstrap() {
       if (key in settings) (settings as Record<string, unknown>)[key] = change.newValue;
     }
     settings.pausedHostnames = normalizeHostnames(settings.pausedHostnames);
+    settings.popupWidth = Number(settings.popupWidth) || BOOT_DEFAULTS.popupWidth;
+    settings.popupHeight = Number(settings.popupHeight) || BOOT_DEFAULTS.popupHeight;
     applyTheme();
+    if ('popupWidth' in changes || 'popupHeight' in changes) {
+      if (!isResizing) {
+        customWidth = null;
+        customHeight = null;
+      }
+      if (showPopup && !isMaximized) overlayApi?.update(overlayProps());
+    }
+    if (!isHostnamePaused() && settings.selectionTriggerMode !== 'off') {
+      scheduleIdleOverlayPrefetch();
+    }
   });
 
   async function loadBootSettings() {

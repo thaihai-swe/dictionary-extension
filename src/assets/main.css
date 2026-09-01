@@ -12,6 +12,22 @@
   color-scheme: dark;
 }
 
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/plus-jakarta-sans-latin-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 500 800;
+  font-display: swap;
+  src: url("/fonts/plus-jakarta-sans-latin-700.woff2") format("woff2");
+}
+
 /* Light Theme Tokens - Clean Slate Palette */
 .light-theme {
   --bg-paper: #f8fafc;

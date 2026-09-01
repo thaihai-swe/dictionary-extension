@@ -1,6 +1,5 @@
 import { createApp, h, reactive } from 'vue';
 import Overlay from './overlay.in-page.vue';
-import overlayCss from '@/assets/main.css?inline';
 
 interface OverlayProps {
   selectedText?: string;
@@ -20,18 +19,22 @@ interface OverlayHandlers {
   onStartResize: (event: MouseEvent) => void;
 }
 
+function ensureOverlayStyles(shadow: ShadowRoot) {
+  if (shadow.querySelector('[data-dict-overlay-css]')) return;
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.dataset.dictOverlayCss = 'true';
+  link.href = chrome.runtime.getURL('overlay.css');
+  shadow.appendChild(link);
+}
+
 export function mountOverlay(
   shadow: ShadowRoot,
   container: HTMLElement,
   props: OverlayProps,
   handlers: OverlayHandlers,
 ) {
-  if (!shadow.querySelector('style[data-dict-overlay]')) {
-    const style = document.createElement('style');
-    style.dataset.dictOverlay = 'true';
-    style.textContent = overlayCss;
-    shadow.appendChild(style);
-  }
+  ensureOverlayStyles(shadow);
 
   const state = reactive({ ...props });
   const app = createApp({
