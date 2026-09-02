@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useAiAssistant } from '../composables/composable.ai-assistant';
-import { searchWord, speakTTS, stopAllAudio, useDictionaryQuery } from '../composables/composable.dictionary';
+import { searchWord, stopAllAudio, useDictionaryQuery } from '../composables/composable.dictionary';
 import { useStorage } from '../composables/composable.storage';
 import { AiIntentId, TabId } from '../types';
 import AiIntentToolbar from './component.ai-intent-toolbar';
@@ -149,11 +149,6 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
     onSwitchTab?.('dictionary');
   }
 
-  function speakText(text?: string) {
-    if (!text) return;
-    speakTTS(text);
-  }
-
   function copyResult(text?: string) {
     if (!text) return;
     navigator.clipboard.writeText(text).then(() => {
@@ -257,16 +252,6 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
                 </p>
               </div>
               <div className="flex items-center gap-1.5 flex-shrink-0">
-                {contextInput.trim() ? (
-                  <button
-                    type="button"
-                    onClick={() => speakText(contextInput)}
-                    title="Read context aloud"
-                    className="text-xs px-2.5 py-1 rounded-lg bg-dark-surface hover:bg-dark-border text-slate-300 hover:text-white border border-dark-border transition-colors flex items-center gap-1.5 cursor-pointer font-semibold"
-                  >
-                    <span>🔊 Listen</span>
-                  </button>
-                ) : null}
                 <button
                   type="button"
                   onClick={() => setIsEditingContext(!showContextEditor)}
@@ -299,7 +284,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
         )}
       </div>
 
-      {/* AI Header Row with Listen & Copy Buttons */}
+      {/* AI Header Row with Copy Button */}
       {aiResult ? (
         <div className="flex items-center justify-between pt-1">
           <div className="flex items-center gap-2">
@@ -310,15 +295,6 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
           </div>
 
           <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => speakText(aiResult.summary)}
-              title="Read aloud"
-              className="px-2.5 py-1 rounded-lg bg-dark-surface hover:bg-dark-border text-slate-300 hover:text-white border border-dark-border text-[11px] font-semibold transition-colors flex items-center gap-1 shadow-sm cursor-pointer"
-            >
-              <span>🔊 Listen</span>
-            </button>
-
             <button
               type="button"
               onClick={() => copyResult(aiResult.summary)}
