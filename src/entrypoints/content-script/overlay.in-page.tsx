@@ -38,10 +38,6 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
   lookupRequestId,
   targetLang,
   isMaximized,
-  isDragging,
-  isResizing,
-  width,
-  height,
   onClose,
   onToggleMaximize,
   onStartDrag,
@@ -170,22 +166,11 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
   return (
     <div
       className={cx(
-        'bg-dark-paper border border-slate-700/80 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col select-none text-slate-100 text-sm ring-1 ring-white/10 relative inpage-popup-card',
-        isDragging || isResizing ? 'transition-none' : 'transition-all duration-200 ease-out',
+        'bg-dark-paper border border-slate-700/80 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col select-none text-slate-100 text-sm ring-1 ring-white/10 relative inpage-popup-card w-full h-full',
         !isDarkMode ? 'light-theme' : '',
         settings.fontFamily === 'editorial' ? 'font-serif' : 'font-sans',
-        isMaximized ? 'w-full max-w-5xl h-full max-h-[90vh]' : '',
+        isMaximized ? 'max-w-5xl max-h-[90vh]' : '',
       )}
-      style={
-        isMaximized
-          ? undefined
-          : {
-              width: `${width || settings.popupWidth || 480}px`,
-              height: `${height || settings.popupHeight || 580}px`,
-              maxWidth: '96vw',
-              maxHeight: '92vh',
-            }
-      }
       onClick={(e) => e.stopPropagation()}
     >
       {/* Draggable Header Handle Container with Close Button */}

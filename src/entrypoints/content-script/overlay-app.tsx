@@ -1,4 +1,3 @@
-import React from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import Overlay from './overlay.in-page';
 
@@ -43,22 +42,16 @@ export function mountOverlay(
   function render(nextProps: OverlayProps) {
     if (!root) return;
     root.render(
-      <React.StrictMode>
-        <Overlay
-          selectedText={nextProps.selectedText}
-          contextSentence={nextProps.contextSentence}
-          lookupRequestId={nextProps.lookupRequestId}
-          isMaximized={nextProps.isMaximized}
-          isDragging={nextProps.isDragging}
-          isResizing={nextProps.isResizing}
-          width={nextProps.width}
-          height={nextProps.height}
-          onClose={handlers.onClose}
-          onToggleMaximize={handlers.onToggleMaximize}
-          onStartDrag={handlers.onStartDrag}
-          onStartResize={handlers.onStartResize}
-        />
-      </React.StrictMode>,
+      <Overlay
+        selectedText={nextProps.selectedText}
+        contextSentence={nextProps.contextSentence}
+        lookupRequestId={nextProps.lookupRequestId}
+        isMaximized={nextProps.isMaximized}
+        onClose={handlers.onClose}
+        onToggleMaximize={handlers.onToggleMaximize}
+        onStartDrag={handlers.onStartDrag}
+        onStartResize={handlers.onStartResize}
+      />,
     );
   }
 

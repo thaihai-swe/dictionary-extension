@@ -80,6 +80,11 @@ function buildExtensionScriptsPlugin(): Plugin {
             output: {
               inlineDynamicImports: false,
               chunkFileNames: 'overlay-[name]-[hash].js',
+              manualChunks(id) {
+                if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+                  return 'react-core';
+                }
+              },
               assetFileNames: (assetInfo) => {
                 if (assetInfo.name && assetInfo.name.endsWith('.css')) {
                   return 'overlay.css';

@@ -69,8 +69,17 @@ function getAiCacheKey(
   });
 }
 
+let intentStatusRaf = 0;
 function bumpIntentStatus() {
-  intentStatusEpochRef.value += 1;
+  if (intentStatusRaf) return;
+  const schedule =
+    typeof requestAnimationFrame === 'function'
+      ? requestAnimationFrame
+      : (cb: FrameRequestCallback) => setTimeout(cb, 16) as unknown as number;
+  intentStatusRaf = schedule(() => {
+    intentStatusRaf = 0;
+    intentStatusEpochRef.value += 1;
+  });
 }
 
 function normalizeLookupInput(text: string, context?: string, targetLang?: string) {
@@ -218,11 +227,34 @@ async function requestAnalysis(
 }
 
 function preloadFollowUpIntents(text: string, context: string, lang: string) {
+  const token = preloadToken;
+  const queryKey = makePreloadKey(text, context, lang);
   void preloadIntentChunks(PRELOAD_FOLLOW_UPS);
-  for (const intent of PRELOAD_FOLLOW_UPS) {
-    if (intent === 'explain_in_context' && !context) continue;
-    void requestAnalysis(intent, text, lang, context).catch(() => undefined);
-  }
+  const queue = PRELOAD_FOLLOW_UPS.filter(
+    (intent) => !(intent === 'explain_in_context' && !context),
+  );
+
+  const runNext = (index: number) => {
+    if (token !== preloadToken) return;
+    if (activeLookupKey && activeLookupKey !== queryKey && activePreloadKey !== queryKey) return;
+    const intent = queue[index];
+    if (!intent) return;
+    void requestAnalysis(intent, text, lang, context)
+      .catch(() => undefined)
+      .finally(() => {
+        if (token !== preloadToken) return;
+        const idle = (globalThis as typeof globalThis & {
+          requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+        }).requestIdleCallback;
+        if (typeof idle === 'function') {
+          idle(() => runNext(index + 1), { timeout: 600 });
+          return;
+        }
+        setTimeout(() => runNext(index + 1), 250);
+      });
+  };
+
+  runNext(0);
 }
 
 async function runIntent(intentId: AiIntentId, text: string, targetLang?: string, context?: string) {
@@ -345,9 +377,7 @@ async function preloadIntents(text: string, context?: string, targetLang?: strin
   } catch {
     // Main AI preload can fail silently; Dictionary tab stays usable.
   }
-
   if (token !== preloadToken) return;
-  void preloadFollowUpIntents(cleanText, cleanContext, lang);
 }
 
 export function getAiAssistantStore() {

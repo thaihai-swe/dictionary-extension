@@ -72,6 +72,10 @@ const TRIGGER_CSS = `
   z-index: 2147483647;
   pointer-events: auto;
 }
+.dictionary-popup-layer > div {
+  width: 100%;
+  height: 100%;
+}
 .dictionary-popup-layer.maximized {
   inset: 1.25rem;
   display: flex;
@@ -155,6 +159,10 @@ async function startBootstrap() {
   let resizeStartY = 0;
   let initialWidth = 0;
   let initialHeight = 0;
+  let dragRaf = 0;
+  let resizeRaf = 0;
+  let pendingPointerX = 0;
+  let pendingPointerY = 0;
 
   await loadBootSettings();
   applyTheme();
@@ -183,6 +191,13 @@ async function startBootstrap() {
     };
   }
 
+  function applyPopupSize(width: number, height: number) {
+    customWidth = width;
+    customHeight = height;
+    popupLayer.style.width = `${width}px`;
+    popupLayer.style.height = `${height}px`;
+  }
+
   function positionPopup(x: number, y: number) {
     const { width, height } = popupSize();
     const vw = window.innerWidth;
@@ -196,6 +211,8 @@ async function startBootstrap() {
     popupY = top;
     popupLayer.style.left = `${left}px`;
     popupLayer.style.top = `${top}px`;
+    popupLayer.style.width = `${width}px`;
+    popupLayer.style.height = `${height}px`;
   }
 
   function snapshotSelection(selection: Selection | null) {
@@ -217,23 +234,10 @@ async function startBootstrap() {
   }
 
   function isSkippableSelection(text: string): boolean {
-    return /^[A-Za-z]$/.test(text);
-  }
-
-  function scheduleIdleOverlayPrefetch() {
-    if (isHostnamePaused() || (settings.selectionTriggerMode as string) === 'off') return;
-    const prefetch = () => {
-      if (isHostnamePaused() || (settings.selectionTriggerMode as string) === 'off') return;
-      void loadOverlayModule().catch(() => undefined);
-    };
-    const idle = (globalThis as typeof globalThis & {
-      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
-    }).requestIdleCallback;
-    if (typeof idle === 'function') {
-      idle(prefetch, { timeout: 3500 });
-      return;
-    }
-    setTimeout(prefetch, 2000);
+    if (text.length < 2) return true;
+    // Skip if selection is numbers or symbols only
+    if (!/[A-Za-z\u00C0-\u024F\u1E00-\u1EFF]/.test(text)) return true;
+    return false;
   }
 
   function loadOverlayModule() {
@@ -254,16 +258,11 @@ async function startBootstrap() {
   }
 
   function overlayProps() {
-    const { width, height } = popupSize();
     return {
       selectedText,
       contextSentence,
       lookupRequestId: lookupRequestId || undefined,
       isMaximized,
-      isDragging,
-      isResizing,
-      width,
-      height,
     };
   }
 
@@ -348,27 +347,38 @@ async function startBootstrap() {
     dragStartY = e.clientY;
     popupStartX = popupX;
     popupStartY = popupY;
-    overlayApi?.update(overlayProps());
-    window.addEventListener('mousemove', handleDragMove);
+    popupLayer.style.willChange = 'left, top';
+    window.addEventListener('mousemove', handleDragMove, { passive: true });
     window.addEventListener('mouseup', handleDragEnd);
   }
 
   function handleDragMove(e: MouseEvent) {
     if (!isDragging) return;
-    const { width, height } = popupSize();
-    let newX = popupStartX + (e.clientX - dragStartX);
-    let newY = popupStartY + (e.clientY - dragStartY);
-    newX = Math.max(8, Math.min(newX, window.innerWidth - width - 8));
-    newY = Math.max(8, Math.min(newY, window.innerHeight - height - 8));
-    popupX = newX;
-    popupY = newY;
-    popupLayer.style.left = `${newX}px`;
-    popupLayer.style.top = `${newY}px`;
+    pendingPointerX = e.clientX;
+    pendingPointerY = e.clientY;
+    if (dragRaf) return;
+    dragRaf = requestAnimationFrame(() => {
+      dragRaf = 0;
+      if (!isDragging) return;
+      const { width, height } = popupSize();
+      let newX = popupStartX + (pendingPointerX - dragStartX);
+      let newY = popupStartY + (pendingPointerY - dragStartY);
+      newX = Math.max(8, Math.min(newX, window.innerWidth - width - 8));
+      newY = Math.max(8, Math.min(newY, window.innerHeight - height - 8));
+      popupX = newX;
+      popupY = newY;
+      popupLayer.style.left = `${newX}px`;
+      popupLayer.style.top = `${newY}px`;
+    });
   }
 
   function handleDragEnd() {
     isDragging = false;
-    overlayApi?.update(overlayProps());
+    if (dragRaf) {
+      cancelAnimationFrame(dragRaf);
+      dragRaf = 0;
+    }
+    popupLayer.style.willChange = 'auto';
     window.removeEventListener('mousemove', handleDragMove);
     window.removeEventListener('mouseup', handleDragEnd);
   }
@@ -381,26 +391,37 @@ async function startBootstrap() {
     const size = popupSize();
     initialWidth = size.width;
     initialHeight = size.height;
-    overlayApi?.update(overlayProps());
-    window.addEventListener('mousemove', handleResizeMove);
+    popupLayer.style.willChange = 'width, height';
+    window.addEventListener('mousemove', handleResizeMove, { passive: true });
     window.addEventListener('mouseup', handleResizeEnd);
   }
 
   function handleResizeMove(e: MouseEvent) {
     if (!isResizing) return;
-    customWidth = Math.max(360, Math.min(window.innerWidth - popupX - 16, initialWidth + (e.clientX - resizeStartX)));
-    customHeight = Math.max(380, Math.min(window.innerHeight - popupY - 16, initialHeight + (e.clientY - resizeStartY)));
-    overlayApi?.update(overlayProps());
+    pendingPointerX = e.clientX;
+    pendingPointerY = e.clientY;
+    if (resizeRaf) return;
+    resizeRaf = requestAnimationFrame(() => {
+      resizeRaf = 0;
+      if (!isResizing) return;
+      const nextW = Math.max(360, Math.min(window.innerWidth - popupX - 16, initialWidth + (pendingPointerX - resizeStartX)));
+      const nextH = Math.max(380, Math.min(window.innerHeight - popupY - 16, initialHeight + (pendingPointerY - resizeStartY)));
+      applyPopupSize(nextW, nextH);
+    });
   }
 
   function handleResizeEnd() {
+    if (resizeRaf) {
+      cancelAnimationFrame(resizeRaf);
+      resizeRaf = 0;
+    }
     if (isResizing && customWidth && customHeight) {
       settings.popupWidth = customWidth;
       settings.popupHeight = customHeight;
       void chrome.storage?.sync?.set({ popupWidth: customWidth, popupHeight: customHeight });
     }
     isResizing = false;
-    overlayApi?.update(overlayProps());
+    popupLayer.style.willChange = 'auto';
     window.removeEventListener('mousemove', handleResizeMove);
     window.removeEventListener('mouseup', handleResizeEnd);
   }
@@ -421,7 +442,6 @@ async function startBootstrap() {
 
     snapshotSelection(selection);
     selectedText = text;
-    void loadOverlayModule().catch(() => undefined);
 
     const iconSize = 38;
     const margin = 10;
@@ -538,10 +558,10 @@ async function startBootstrap() {
         customWidth = null;
         customHeight = null;
       }
-      if (showPopup && !isMaximized) overlayApi?.update(overlayProps());
-    }
-    if (!isHostnamePaused() && settings.selectionTriggerMode !== 'off') {
-      scheduleIdleOverlayPrefetch();
+      if (showPopup && !isMaximized) {
+        const { width, height } = popupSize();
+        applyPopupSize(width, height);
+      }
     }
   });
 

@@ -1,6 +1,5 @@
 import { signal, useSignal } from '../ui/signal';
 import { settingsStore, whenSettingsReady } from './composable.storage';
-import { cancelAiPreload } from './composable.ai-assistant';
 import {
   cancelDictionaryLookup,
   createRequestId,
@@ -194,7 +193,7 @@ export function clearDictionaryCache() {
 
 let dictPreloadGeneration = 0;
 let aiPreloadTimer: ReturnType<typeof setTimeout> | null = null;
-const AI_PRELOAD_DEBOUNCE_MS = 300;
+const AI_PRELOAD_DEBOUNCE_MS = 600;
 
 export function abortActiveDictRequest() {
   stopAllAudio();
@@ -443,7 +442,9 @@ export async function searchWord(
   stopAllAudio();
   dictPreloadGeneration += 1;
   const preloadGeneration = dictPreloadGeneration;
-  cancelAiPreload();
+  void import('./composable.ai-assistant')
+    .then(({ cancelAiPreload }) => cancelAiPreload())
+    .catch(() => undefined);
 
   const cleanWord = wordToSearch.trim();
   const settings = settingsStore.value;
