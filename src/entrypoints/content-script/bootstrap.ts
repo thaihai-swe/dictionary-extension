@@ -278,7 +278,7 @@ async function startBootstrap() {
     triggerBtn.style.display = 'none';
     selectedText = cleanText;
     lastOpenedText = cleanText;
-    contextSentence = String(context || '').trim();
+    contextSentence = String(context || '').trim() || extractOpenContext(cleanText);
     lookupRequestId = createRequestId('dict');
     positionPopup(x, y);
     showPopup = true;
@@ -313,11 +313,6 @@ async function startBootstrap() {
       });
     } else {
       overlayApi.update(overlayProps());
-    }
-
-    if (!contextSentence) {
-      contextSentence = extractOpenContext(cleanText);
-      if (contextSentence && showPopup) overlayApi.update(overlayProps());
     }
   }
 
@@ -442,6 +437,7 @@ async function startBootstrap() {
 
     snapshotSelection(selection);
     selectedText = text;
+    void loadOverlayModule().catch(() => undefined);
 
     const iconSize = 38;
     const margin = 10;
