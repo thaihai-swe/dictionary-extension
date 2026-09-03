@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-This guide provides actionable solutions for common issues across extension reloads, network providers, pronunciation practice, context extraction, and browser security boundaries.
+This guide provides actionable solutions for common issues across extension reloads, network providers, pronunciation practice, context extraction, audio cancellation, and browser security boundaries.
 
 ---
 
@@ -22,28 +22,27 @@ This guide provides actionable solutions for common issues across extension relo
 - **Check 2 — Trigger Mode Setting:** Open Settings (click the ⚙️ Settings button in the header) and verify **Text selection & double-click lookup behavior** is set to `Floating lookup icon` or `Open popup immediately on selection` (not `Off`).
 - **Check 3 — Post-Selection Modifier Key:** If using the hotkey trigger, confirm you tap the configured key (`Shift`, `Alt`, or `Ctrl`) once immediately *after* highlighting the text.
 - **Check 4 — Viewport Positioning & Screen Edges:** If text is at the extreme edge of the screen, the positioning engine flips the card. Ensure browser zoom or high-DPI scaling is not hiding the card off-screen.
-- **Check 5 — Paused site:** The toolbar **Pause site** button or Settings → paused hostnames turns off in-page icons on that host. Toolbar search, Alt+L, and the context menu still work.
+- **Check 5 — Paused site:** The toolbar **Pause site** button or Settings → paused hostnames turns off in-page icons on that host. Toolbar search and the context menu still work.
 - **Check 6 — Iframes:** Content scripts load in the top frame. A same-origin iframe injects on first selection. Cross-origin iframes cannot be read; use the toolbar or context menu.
-- **Check 7 — Keyboard command:** Highlight text and press Alt+L (rebind in `chrome://extensions/shortcuts`).
+- **Check 7 — Keyboard command:** Highlight text and press your configured shortcut (`chrome://extensions/shortcuts`).
 
 ---
 
-## 3. AI Requests & Context Errors
+## 3. AI Requests, Models & Context Errors
 
 ### Symptom: AI generation fails with error toasts or missing field alerts.
-- **Check 1 — Required Settings:** Verify in Settings that **Enable AI provider** is checked (fresh installs default this off), and all three core fields are populated:
+- **Check 1 — Required Settings:** Verify in Settings that **Enable AI provider** is checked, and all three core fields are populated:
   - **AI API base URL:** e.g. `https://generativelanguage.googleapis.com/v1beta/openai/` or your custom endpoint.
-  - **AI API key:** `sk-...` or Google Gemini API key.
-  - **AI model name:** e.g. `gemini-3.5-flash-lite`, `gpt-4o-mini`, `deepseek-chat`, or `llama3`.
+  - **AI API key:** Your Google Gemini API key.
+  - **AI model name:** Default and recommended is `gemini-3.5-flash-lite`.
 - **Check 2 — Test Connection Action:** In Settings, click **Test AI connection** to run a non-destructive latency and authentication check.
-- **Check 3 — Gemini Native vs. OpenAI-Compatible:**
-  - If using Google Gemini via `generativelanguage.googleapis.com`, the extension automatically uses the native Gemini REST protocol with query key authentication.
-  - If using OpenAI, Groq, Ollama, or OpenRouter, the extension calls `/chat/completions` with `Bearer <key>` headers.
+- **Check 3 — Older Gemini Models in Local Cache:**
+  - If you previously tested older models (e.g. `gemini-2.5-flash` or `gemini-1.5-pro`) and the UI still references them, open Settings → AI tab, select `gemini-3.5-flash-lite` from the dropdown, and click **Save settings**.
 - **Check 4 — Host Permission Prompts:** If using custom self-hosted base URLs (e.g. `http://localhost:11434` or custom domain proxies), ensure you accepted the browser's dynamic origin permission prompt when saving settings.
 
-### Symptom: Inline alert: `"Please enter or paste the sentence containing this word."`
-- **Cause:** **Context Explain** and **Grammar & Nuance** strictly require sentence context to provide meaningful analysis.
-- **Fix:** If automatic sentence extraction was disabled or found no sentence on the active page, paste the sentence directly into the editable Context textarea before clicking the action.
+### Symptom: Context Explain or Grammar & Nuance buttons are disabled.
+- **Cause:** **Context Explain** and **Grammar & Nuance** strictly require sentence context.
+- **Fix:** Highlight the text in a sentence or paste the sentence directly into the editable Context textarea in the AI tab.
 - *Note: Sentence Breakdown accepts a full-sentence query without needing extra text in the Context box.*
 
 ---
@@ -60,29 +59,32 @@ This guide provides actionable solutions for common issues across extension relo
 - **Check 2 — Enrichment Diagnostics:** In Settings, click the test buttons under **Test dictionary connection** to verify reachability and latency.
 - **Check 3 — Graceful Degradation:** When an upstream endpoint is temporarily unavailable or returns 5xx/timeout, enrichment silently skips that provider without breaking the displayed Free Dictionary or Wiktionary results.
 
-
 ---
 
-## 5. Neural Translation & LibreTranslate
+## 5. Neural Translation & Providers
 
 ### Symptom: Translation card shows an error or fails to load.
 - **Google Translate:** Operates out of the box without keys. Check network connectivity if requests fail.
 - **LibreTranslate:**
   - If using the public server (`https://libretranslate.com`), requests may hit rate limits during peak hours.
   - If using a self-hosted instance, verify your **LibreTranslate base URL** (e.g. `https://translate.example.com`) and ensure any required API key is entered.
-  - In Settings, click **Test LibreTranslate** to inspect connection latency and HTTP response status.
+- **MyMemory Fallback:** When Google or LibreTranslate fails, MyMemory activates automatically as a keyless secondary fallback.
 
 ---
 
-## 6. Pronunciation & Speech Practice
+## 6. Pronunciation, Speech Practice & Audio Cancellation
+
+### Symptom: Audio keeps playing or won't stop.
+- **Fix 1 — Global Stop Voice Button:** Click the red **Stop Voice** button (`⏹️ STOP VOICE` / `🔇`) in `AppHeader`. It pulses while any audio element or speech synthesis utterance is active.
+- **Fix 2 — Escape Key:** Press `Esc` anywhere in the popup to cancel speech synthesis immediately.
 
 ### Symptom: Audio button plays browser speech instead of real human voice.
 - **Explanation:** Pronunciation uses this keyless chain: `api.dictionaryapi.dev` MP3 first (when the lookup provided one) → Google Translate TTS (`translate.googleapis.com`, no API key) → browser `window.speechSynthesis`. A 502 from the dictionary CDN does not block the later fallbacks.
 - **Speech Voice Selection:** Open Settings → **Preferred speech voice** to choose your favorite installed operating system voice.
 - **Speed Adjustment:** Set **Pronunciation speed** (clamped between `0.5x` and `1.5x`).
 
-### Symptom: Practice button (`🎙️ Practice`) is missing or fails with an error.
-- **Check 1 — Browser Support:** The Speech Practice Evaluator requires the Web Speech Recognition API (`webkitSpeechRecognition`), natively available in Chrome. Other Chromium derivatives without speech binaries will display an explanatory note.
+### Symptom: Practice button (`🎙️ Practice`) fails with an error.
+- **Check 1 — Browser Support:** The Speech Practice Evaluator requires the Web Speech Recognition API (`webkitSpeechRecognition`), natively available in Chrome.
 - **Check 2 — Microphone Permissions:** Ensure microphone permissions are granted for the active tab (check the camera/mic icon in Chrome's address bar).
 - **Check 3 — Ambient Noise:** If the recording times out without hearing speech, click **Practice** again and speak clearly when the animated pulse ring displays `Listening…`.
 
@@ -101,8 +103,7 @@ This guide provides actionable solutions for common issues across extension relo
 ## 8. Settings Import, Export, and Prompt Reset
 
 ### Symptom: Custom AI prompts are producing unexpected output.
-- **Reset Individual Prompt:** In Settings, click **Restore default** below any prompt textarea to restore that single template to factory specifications, then click **Save settings**.
-- **Reset All Prompts:** Click **Reset AI prompts** in the bottom action bar to restore all 5 templates (Main AI, Context, Grammar, Phrase Explorer, Sentence Breakdown), then click **Save settings**.
+- **Reset Individual Prompt:** In Settings → Prompts tab, click **Restore default** below any prompt textarea to restore that single template, then click **Save**.
 - **Export / Import:**
-  - **Export settings:** Downloads a clean JSON file containing all public appearance and prompt preferences. API keys are strictly excluded.
+  - **Export settings:** Downloads a clean JSON file containing all public appearance and prompt preferences (`version: 12`). API keys are strictly excluded.
   - **Import settings:** Uploads a settings JSON file. API keys in storage remain untouched.

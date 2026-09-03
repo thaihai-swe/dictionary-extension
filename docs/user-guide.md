@@ -7,7 +7,7 @@
 The user interface is powered by the **Calm Learning Studio** design system:
 - **Editorial Typography:** Clear, distraction-free serif typography for definitions and explanations, or bundled **Atkinson Hyperlegible** in **Learner Font** mode to improve character disambiguation for ESL learners.
 - **Adaptive Appearance:** Native support for System, Light, and Dark themes with WCAG 2.1 AA compliant contrast ratios.
-- **Calm Header:** The Dictionary tab shows the headword plus UK/US pronunciation and practice controls—no CEFR, frequency, syllable, or source-chip clutter.
+- **Calm Header:** The Dictionary tab shows the headword plus UK/US pronunciation, speech practice controls, and a prominent red **Stop Voice** button (`⏹️ STOP VOICE` / `🔇`) to cancel audio or speech synthesis at any moment.
 - **Persistent Geometry:** In-page popup dimensions can be resized from the bottom-right corner and are automatically saved.
 
 ---
@@ -19,7 +19,7 @@ The user interface is powered by the **Calm Learning Studio** design system:
 1. Click the **Dictionary** icon in the Chrome toolbar (or pin it for one-click access).
 2. Type any word, idiom, phrasal verb, or complete sentence into the search input.
 3. Press `Enter` or click **Search**.
-4. Use the **Dictionary** tab for structured definitions and translations, or switch to the **AI** tab for contextual explanations and grammatical analysis.
+4. Use the **Dictionary** tab for structured definitions and translations, or switch to the **AI** tab for contextual explanations, grammatical breakdowns, or comparisons.
 5. Click the **Gear icon** in the top-right header to access extension settings at any time.
 
 *Tip: The toolbar popup remembers whether you were on the Dictionary or AI tab for your active browsing session.*
@@ -79,17 +79,18 @@ Dictionary lookups execute in two synchronized phases:
 2. **Phase 2 — Asynchronous Lazy Enrichment (Non-blocking):**
    - Remaining keyless providers (**Wiktionary**, **Datamuse**, **Wikipedia**, **Urban Dictionary**, **RhymeBrain**) always run in concurrent batches of 2.
    - New definitions, additional example sentences, missing synonyms/antonyms, and phonetic transcriptions are merged dynamically.
-   - Extra lexical cards (collocations, word family) mount on the next animation frame so they do not block first paint.
+   - Extra lexical cards (collocations, word family, common learner mistakes) mount on subsequent animation frames so they do not block first paint.
 
 ### Exact Selection Lookups
 
-Dictionary lookups use the selected text as-is. Inflected forms (`went`, `running`, `children`) are not rewritten to a root lemma. If that exact query has no definition, the popup shows not-found (plus translation if enabled). Multi-word queries with no dictionary hit can still use **AI Phrase Fallback** when that setting is on.
+Dictionary lookups use the selected text as-is. Inflected forms (`went`, `running`, `children`) are not rewritten to a root lemma. If that exact query has no definition, the popup shows not-found (plus translation if enabled). Multi-word queries with no dictionary hit can still use **AI Phrase Fallback** when enabled in Settings.
 
 ### Translation Services
 
 Translation runs alongside dictionary lookups:
 - **Google Translate (Default):** Built-in neural translation supporting dozens of target languages without API keys.
 - **LibreTranslate:** Connect to the public LibreTranslate service or your self-hosted private instance for privacy-focused translation.
+- **MyMemory:** Keyless backup translation service that activates automatically if other providers fail.
 - **Custom Target Languages:** Add any language display names in Settings (e.g. `Spanish`, `French`, `German`, `Japanese`, `Vietnamese`) to populate the quick-select dropdown.
 
 ---
@@ -99,12 +100,12 @@ Translation runs alongside dictionary lookups:
 Pronunciation tools are integrated directly into the result header:
 
 ### Audio Playback & Global Voice Control
-1. **Remote Audio:** Prefers high-fidelity MP3/WAV recordings from native dictionary databases (US and UK variants).
-2. **Web Speech Synthesis Fallback:** If dictionary audio is unavailable, falls back to the browser's built-in speech synthesis engine.
-3. **Global Stop Voice Button:** The top header bar features a global audio stop button (`⏹️ Stop Voice` / `🔇`). When audio or TTS is actively playing, the button glows with a red pulsing indicator—allowing you to instantly pause or cancel any speech playback with a single click from anywhere. Pressing `Esc` also cancels active voice audio.
-4. **Speed Control:** Customize speech rate in Settings (clamped from `0.5x` to `1.5x`).
-5. **Voice Selection:** Choose your preferred operating system voice in Settings for speech synthesis fallback.
-6. **Equalizer Wave:** An animated 3-bar equalizer visually confirms active playback.
+1. **Remote Audio:** Prefers high-fidelity MP3 recordings from native dictionary databases (US and UK variants).
+2. **Google Translate TTS Fallback:** If dictionary MP3s are absent, attempts web-audio pronunciation.
+3. **Web Speech Synthesis Fallback:** If offline or network audio fails, seamlessly uses your browser's local SpeechSynthesis engine.
+4. **Global Stop Voice Button:** The top header bar features a global audio stop button (`⏹️ Stop Voice` / `🔇`). When audio or TTS is actively playing, the button glows with a red pulsing indicator—allowing you to instantly cancel any speech playback with a single click. Pressing `Esc` also cancels active voice audio.
+5. **Speed Control:** Customize speech rate in Settings (clamped from `0.5x` to `1.5x`).
+6. **Voice Selection:** Choose your preferred operating system voice in Settings for speech synthesis fallback.
 
 ### Speech Practice Evaluator
 Click the **Practice** button (`🎙️ Practice`) next to pronunciation controls to test and refine your spoken English:
@@ -134,7 +135,7 @@ When **Lexical Profile** is enabled in Settings (default), lookups assemble an o
 
 ## 5. The AI Tab & Specialized Actions
 
-Switch to the **AI** tab for deep generative explanations powered by Google Gemini (native REST API) or any OpenAI-compatible endpoint (Ollama, Groq, OpenRouter, OpenAI, LocalAI).
+Switch to the **AI** tab for deep generative explanations powered by Google Gemini (`gemini-3.5-flash-lite`) or any OpenAI-compatible endpoint (Ollama, Groq, OpenRouter, OpenAI, LocalAI).
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -144,7 +145,7 @@ Switch to the **AI** tab for deep generative explanations powered by Google Gemi
 │  ┌──────────────────────────────────────────────────────────────────┐  │
 │  │ Scientists are currently evaluating evidence of ancient life.    │  │
 │  └──────────────────────────────────────────────────────────────────┘  │
-│  [Context Explain] [Grammar & Nuance] [Phrase & Colloc] [Sentence]    │
+│  [Main AI] [Context Explain] [Grammar] [Phrase] [Breakdown] [Compare]  │
 ├────────────────────────────────────────────────────────────────────────┤
 │  ▼ evaluate [ɪˈvæl.ju.eɪt] verb                                        │
 │    To form an opinion of the amount, value, or quality of something.   │
@@ -165,21 +166,23 @@ Switch to the **AI** tab for deep generative explanations powered by Google Gemi
 
 ### Specialized AI Actions
 
+The AI toolbar provides 7 interactive actions, each equipped with live status indicator dots (Emerald = ready in cache, Amber Pulse = loading, Rose = not yet requested):
+
 | Action | Intent | Purpose & Output Structure | Context Requirement |
 |---|---|---|---|
-| **Main AI Explanation** | `default` | Oxford Learner-style definition, numbered **Senses & Meanings** cards, sense-aware translation glosses, usage notes, bilingual examples, and collapsible etymology. | Optional |
-| **Context Explain** | `explain_in_context` | In-sentence meaning, direct substitutions that keep the same syntax, and nuance-lost notes. Whole-sentence rewrites belong to Rephrase. | **Required** |
+| **Main AI** | `default` | Oxford Learner-style definition, numbered **Senses & Meanings** cards, sense-aware translation glosses, usage notes, bilingual examples, and collapsible etymology. | Optional |
+| **Context Explain** | `explain_in_context` | In-sentence meaning, direct substitutions that keep the same syntax, and nuance-lost notes. | **Required** |
 | **Grammar & Nuance** | `grammar` | Syntactic slot / role analysis, pattern rules, short pattern examples, and a Learner Mistakes card. | **Required** |
 | **Phrase & Collocations** | `collocations` | Idiom / phrasal meaning, preposition patterns, a Collocations card, and natural example sentences. | Optional |
 | **Sentence Breakdown** | `sentence_breakdown` | Structural JSON analysis decomposing clauses, grammatical roles, and phrase idioms with one-click interactive lookup chips. | Full sentence query or context sentence |
 | **Compare Confusables** | `confusables` | Side-by-side distinction, comparison matrix, collocation divergence, and minimal-pair sentences. | Optional |
 | **Rephrase** | `rephrase` | Three stylistic rewrite styles (Simplified, Academic & Formal, Native Idiom) with explanations in your target language. | Optional |
 
-### Result Actions
+### Interactive Tokens & Live Status
 
-- **Interactive context tokens:** Words in the **Context used** sentence are clickable and open a nested dictionary lookup.
-- **Listen:** Every example sentence has its own Listen control.
-- **Preload progress:** When AI preload is enabled, a status indicator dot on each AI action button reflects its background preload state (Active, Ready, Loading, Error).
+- **Interactive context tokens:** Words in the **Context used** sentence are clickable chips that trigger nested lookups.
+- **Listen controls:** Pronunciation controls are available to hear the target word.
+- **Live Preload Indicators:** Status indicator dots on each toolbar button show real-time cache readiness. Hovering or focusing on any button triggers background prefetching.
 
 ---
 
@@ -194,7 +197,7 @@ Contextual AI actions rely on exact sentence extraction rather than sending broa
 
 ### Privacy Safeguards
 - **Zero Background Transmission:** Context is never sent to any AI endpoint during standard dictionary lookups.
-- **Explicit Activation:** Context is transmitted only when you click a contextual action button (**Context Explain**, **Grammar & Nuance**, or **Sentence Breakdown**).
+- **Explicit Activation:** Context is transmitted only when you run AI actions.
 - **Session-Only Memory:** Context is held transiently in browser session memory and is never saved to disk or synchronized across devices.
 - **Opt-Out Setting:** Enable **Exclude page context for AI lookups** in Settings to disable automatic page sentence scanning completely.
 - **Context Used Verification:** Whenever an AI response uses context, a blockquoted **Context used** header confirms the exact text submitted.
@@ -205,7 +208,7 @@ Contextual AI actions rely on exact sentence extraction rather than sending broa
 
 - **Scriptable HTML5 PDFs:** Online and local PDFs rendered with HTML5 text layers (e.g. PDF.js, Chrome PDF text layer) support exact sentence extraction and floating selection triggers.
 - **Local Files (`file://`):** To enable lookups on local HTML or PDF files, open `chrome://extensions`, open Dictionary details, and enable **Allow access to file URLs**.
-- **Reader Mode & Iframes:** Full multi-frame coordination (`all_frames: true`) ensures lookups inside reader containers or nested iframes extract sentences accurately without duplicate popups.
+- **Reader Mode & Iframes:** Full multi-frame coordination ensures lookups inside reader containers or nested iframes extract sentences accurately without duplicate popups.
 - **Browser-Restricted Pages:** Chrome security policy strictly blocks extension injection on `chrome://` URLs, the Chrome Web Store, and internal browser PDF reader chrome. On these pages, use the toolbar popup for manual lookups and paste your context sentence directly.
 
 ---
@@ -213,7 +216,7 @@ Contextual AI actions rely on exact sentence extraction rather than sending broa
 ## 8. Keyboard Navigation & Accessibility
 
 - **Keyboard Trapping:** In-page and toolbar popups support smooth `Tab` / `Shift+Tab` cycling through interactive elements.
-- **Quick Dismissal:** Press `Escape` to close the in-page popup and return focus cleanly to the webpage.
+- **Quick Dismissal:** Press `Escape` to close the in-page popup and return focus cleanly to the webpage. Pressing `Escape` also cancels any active audio speech.
 - **ARIA Standards:** Popup shells implement semantic `role="tablist"`, `aria-selected`, `aria-live="polite"`, and `aria-busy="true"` attributes for screen reader compatibility.
 - **Reduced Motion:** If your operating system has reduced motion enabled, all entrance, exit, and wave animations are suppressed.
-- **Resizable Card:** Drag the resize handle at the bottom right to adjust the width (320px–1000px) and height (360px–1000px); your preferred dimensions are saved automatically.
+- **Resizable Card:** Drag the resize handle at the bottom right to adjust the width (360px–1000px) and height (380px–900px); your preferred dimensions are saved automatically.

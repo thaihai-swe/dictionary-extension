@@ -6,15 +6,15 @@
 
 The runtime architecture is organized into clean, decoupled layers following modern Chrome Extension entrypoint standards:
 
-1. **Toolbar Popup Entrypoint** (`src/entrypoints/toolbar-popup/`) — Standalone browser action UI (`app.toolbar-popup.tsx`, `main.tsx`) for manual search, mode switching, editable context, 6 contextual AI intents, global audio controls, and settings.
+1. **Toolbar Popup Entrypoint** (`src/entrypoints/toolbar-popup/`) — Standalone browser action UI (`app.toolbar-popup.tsx`, `main.tsx`) for manual search, mode switching, editable context, 7 contextual AI intents, global audio controls, and settings.
 2. **Content Script & In-Page Overlay** (`src/entrypoints/content-script/`) — Injected Shadow DOM overlay system (`bootstrap.ts`, `overlay-app.tsx`, `overlay.in-page.tsx`) handling text selection, floating trigger icon, exact context extraction, collision-safe viewport positioning, dragging & resizing, and result rendering.
-3. **Background Service Worker Entrypoint** (`src/entrypoints/background/service-worker.ts`) — Central background service worker handling context menu actions, CORS-bypassing fetch proxies (`FETCH_PROXY`), network cancellation, and keyboard shortcut commands.
-4. **React Stores & Hooks** (`src/composables/`) — External-store state engines subscribed via `useSyncExternalStore`:
-   - `composable.dictionary.ts`: Handles caching, dictionary lookups, audio playback & reactive `isAudioPlaying` state with global `stopAllAudio()`.
-   - `composable.ai-assistant.ts`: Handles Gemini AI prompts, intent pipelines, and offline grammar engines.
-   - `composable.storage.ts`: Reactive chrome.storage settings sync and history management.
-5. **Provider Adapters** (`src/providers/`) — Keyless vendor adapters for dictionary providers (`free_dictionary`, `wiktionary`, `datamuse`, `wikipedia`, `urban_dictionary`, `rhymebrain`), translation (`google_translate`, `mymemory`, `libre_translate`), and Gemini AI.
-6. **UI Component System** (`src/components/`) — Modular React 18 components: `AppHeader` (with Global Stop Voice button), `SenseMatrixCard`, `WordFamilyCard`, `UsageNotesCard`, `WordFormationCard`, `LearnerMistakesCard`, `CollocationsCard`, `SentenceBreakdownCard`, `MarkdownRenderer`, `TokenizedContext`, and Modals.
+3. **Background Service Worker Entrypoint** (`src/entrypoints/background/service-worker.ts`) — Central background service worker handling context menu actions, CORS-bypassing fetch proxies (`FETCH_PROXY`), dictionary and AI lookup dispatch, network cancellation, and keyboard shortcut commands.
+4. **React Stores & Hooks** (`src/composables/`) — External-store state engines subscribed via `useSyncExternalStore` using lightweight reactive signals (`src/ui/signal.ts`):
+   - `composable.dictionary.ts`: Handles caching, dictionary lookups, audio playback & reactive `isAudioPlayingRef` state with global `stopAllAudio()`.
+   - `composable.ai-assistant.ts`: Handles Gemini AI prompts, 7 intent pipelines, hover prefetching, and offline grammar engine.
+   - `composable.storage.ts`: Reactive `chrome.storage` settings synchronization and lookup history management.
+5. **Provider Adapters** (`src/providers/`) — Keyless vendor adapters for dictionary providers (`free_dictionary`, `wiktionary`, `datamuse`, `wikipedia`, `urban_dictionary`, `rhymebrain`), translation (`google_translate`, `mymemory`, `libre_translate`), and Gemini AI (`gemini-3.5-flash-lite`).
+6. **UI Component System** (`src/components/`) — Modular React 18 components: `AppHeader` (with Global Stop Voice button), `SenseMatrixCard`, `WordFamilyCard`, `UsageNotesCard`, `WordFormationCard`, `LearnerMistakesCard`, `CollocationsCard`, `SentenceBreakdownCard`, `MarkdownRenderer`, `TokenizedContext`, and Settings Modals.
 
 ---
 
@@ -163,7 +163,7 @@ Check L2 Session Storage (chrome.storage.session with "enrich_" prefix)
 
 ## AI Multi-Intent Pipeline & Structured Output
 
-The AI subsystem (`src/composables/composable.ai-assistant.ts` and `src/providers/provider.gemini-ai.ts`) provides generative explanations, grammatical analysis, sentence decomposition, and comparative nuance through specialized intents:
+The AI subsystem (`src/composables/composable.ai-assistant.ts` and `src/providers/provider.gemini-ai.ts`) provides generative explanations, grammatical analysis, sentence decomposition, and comparative nuance through 7 user-facing intents + 1 background phrase fallback:
 
 | Intent | Action / Role | Prompt Template Setting | Output Format | Lexical Profile Requested |
 |---|---|---|---|---|
@@ -172,20 +172,24 @@ The AI subsystem (`src/composables/composable.ai-assistant.ts` and `src/provider
 | `grammar` | Grammar & Nuance | `aiGrammarPromptTemplate` | Syntax rules, nuance, and examples | Learner mistakes only |
 | `collocations` | Phrase & Collocations | `aiPhraseExplorerPromptTemplate` | Core meaning, grammar patterns, examples | Collocations only |
 | `sentence_breakdown` | Sentence Breakdown | `aiSentencePromptTemplate` | Structured JSON (`data` object) | No |
-| `phrase_fallback` | Automatic phrase fallback | Built-in fallback template | Concise Markdown explanation | No |
 | `confusables` | Compare Confusables | `aiComparePromptTemplate` | Distinction, comparison matrix, minimal pairs | No |
 | `rephrase` | Rephrase action | `aiRephrasePromptTemplate` | Three stylistic rewrites | No |
+| `phrase_fallback` | Automatic phrase fallback | Built-in fallback template | Concise Markdown explanation | No |
 
 ### AI Concurrency & Preload Architecture
 
 1. **Speculative 300ms Debounced Preload:**
    - When text is selected, `maybePreloadAi()` waits 300ms, then `preloadIntents()` fetches the `default` intent first.
-   - After that settles, `preloadFollowUpIntents()` warms the remaining intents in the background.
+   - After that settles, `preloadFollowUpIntents()` warms the remaining intents (`explain_in_context`, `grammar`, `collocations`, `sentence_breakdown`, `confusables`, `rephrase`) sequentially via idle callbacks or 250ms timeouts.
    - Rapid selection changes or overlay dismissal clear the timer (`cancelAiPreload()`), so no LLM tokens are spent on discarded words.
-2. **Intent Hover/Focus Prefetching:**
-   - In `AiIntentToolbar`, hovering over or focusing any secondary intent button also triggers `preloadSpecificIntent()` so a click is usually a cache hit.
+2. **Intent Hover/Focus Prefetching & Live Status Indicators:**
+   - In `AiIntentToolbar`, hovering over or focusing any secondary intent button triggers `preloadSpecificIntent()`.
+   - Each intent button features a live status indicator dot:
+     - **Emerald (Ready):** Response is cached and displays instantly on click.
+     - **Amber Pulse (Loading):** Request is actively in-flight.
+     - **Rose (Not requested):** Intent has not yet been fetched.
 3. **In-Flight Request Deduplication (`aiPendingMap`):**
-   - If a background preload is already in flight when the user switches to the AI tab, the UI attaches to the running promise (`aiPendingMap.get(cacheKey)`), preventing redundant API requests.
+   - If a background preload is already in flight when the user switches to the AI tab or clicks an intent, the UI attaches to the running promise (`aiPendingMap.get(cacheKey)`), preventing duplicate API calls.
 4. **Persistent 24-Hour LRU Cache (`chrome.storage.local`):**
    - Up to 100 AI responses are cached locally with a **24-hour TTL** (`ai_lookup_cache_v2`).
    - Keys are hashed compound representations of `intent`, `text`, `targetLang`, `context`, `model`, `baseUrl`, and `enableLexicalProfile`.
@@ -194,12 +198,12 @@ The AI subsystem (`src/composables/composable.ai-assistant.ts` and `src/provider
    - Once mounted, switching between Dictionary and AI tabs keeps the component mounted with `display: none`, preserving scroll positions, active intents, and rendered syntax trees.
 6. **Tab-Scoped Abort & Context Invalidation:**
    - Each AI lookup creates a unique `requestId` and registers an `AbortController`.
-   - Selecting a new word aborts all in-flight AI requests via `abortAllAiRequests()`.
+   - Selecting a new word aborts in-flight AI requests via `abortAllAiRequests()`.
 
 ### AI Request Pipeline
 
 1. **Protocol Routing:**
-   - **Google Gemini Native:** Used when `aiBaseUrl` matches Google Gemini endpoints (`generativelanguage.googleapis.com`). Calls the REST `generateContent` endpoint directly with API key query authentication.
+   - **Google Gemini Native:** Used when `aiBaseUrl` matches Google Gemini endpoints (`generativelanguage.googleapis.com`). Calls the REST `generateContent` endpoint directly with `gemini-3.5-flash-lite` and API key query authentication.
    - **OpenAI-Compatible Chat API:** Used for all other custom/self-hosted endpoints (e.g. Ollama, OpenRouter, Groq, OpenAI, LocalAI) calling `/chat/completions` with `Bearer` header authentication.
 2. **Prompt Construction & Sandboxing:**
    - Evaluates template variables: `{{str}}` (query), `{{text}}` (full selection), `{{sentence}}` (context sentence or query), `{{word_count}}`, `{{targetLang}}`, and `{{context}}`.
@@ -235,7 +239,7 @@ When `enableLexicalProfile` is enabled (default `true`), dictionary and AI looku
 ```
 
 1. **Provider-First Extraction:** Parts of speech, derivations, inflections, and usage notes returned by primary and secondary dictionary adapters (e.g. Datamuse, Wiktionary) are automatically extracted during normalization.
-2. **AI Structured Block Extraction:** Prompts for `grammar` and `phrase_explorer` request a **subset** `<lexical-profile>` JSON block (learner mistakes and collocations respectively). Main AI does not request extras. The AI provider extracts and strips this block from the visible Markdown using `parseLexicalProfileFromResponse()` and parses it with `parseLexicalProfile()`.
+2. **AI Structured Block Extraction:** Prompts for `grammar` and `collocations` request a subset `<lexical-profile>` JSON block (learner mistakes and collocations respectively). Main AI does not request extras. The AI provider extracts and strips this block from visible Markdown using `parseLexicalProfileFromResponse()` and parses it with `parseLexicalProfile()`.
 3. **Deep Profile Merging:** `mergeLexicalProfiles` combines provider-extracted data with AI-generated profiles, enforcing strict deduplication and category bounds:
    - `MAX_LEXICAL_ITEMS = 12`
    - `MAX_DERIVATIVES = 12`
@@ -244,22 +248,27 @@ When `enableLexicalProfile` is enabled (default `true`), dictionary and AI looku
    - `MAX_LEARNER_MISTAKES = 6`
    - `MAX_FORMATION_ITEMS = 6`
    - `MAX_COLLOCATION_ITEMS_PER_GROUP = 10`
-4. **UI Presentation:** The shared renderer emits interactive Word Family chips (`data-lookup-query`) that trigger immediate sub-lookups on click, warning callout cards, dedicated Word Formation tags, Common Learner Mistakes cards, and categorized Collocation blocks.
+4. **UI Presentation:** The shared React components emit interactive Word Family chips that trigger immediate sub-lookups on click, warning callout cards, dedicated Word Formation tags, Common Learner Mistakes cards, and categorized Collocation blocks.
 
 ---
 
 ## Pronunciation & Speech Practice Engine
 
-Pronunciation handling (`src/ui/audio.js`, `src/providers/pronunciation.js`) coordinates multi-source playback and speech evaluation:
+Pronunciation handling (`src/composables/composable.dictionary.ts`) coordinates multi-source playback and speech evaluation:
 
-1. **Playback Hierarchy:**
-   - **Remote Audio:** Prefers high-quality dictionary MP3/WAV URLs returned by providers.
-   - **Speech Synthesis Fallback:** If remote audio is missing or fails, falls back to browser `window.speechSynthesis`.
+1. **Playback Hierarchy (`playAudio`):**
+   - **Remote Dictionary Audio:** Prefers high-quality dictionary MP3/WAV URLs returned by providers.
+   - **Google TTS Fallback:** If remote audio is missing or fails, attempts Google Translate audio synthesis (`getFreeTtsUrl`).
+   - **Speech Synthesis Fallback (`speakTTS`):** If network audio fails or user is offline, falls back to browser `window.speechSynthesis`.
    - **Rate & Voice Control:** Applies user-configured `pronunciationRate` (clamped `0.5`–`1.5`) and optional `pronunciationVoiceURI`.
-   - **Visual Wave Animation:** Three-bar animated equalizer wave animates strictly while audio is playing.
    - **Zero Caching Policy:** Audio blobs and audio metadata are never cached to prevent memory bloat.
-2. **Speech Practice Evaluator:**
-   - Uses browser `SpeechRecognition` / `webkitSpeechRecognition` to capture spoken learner attempts.
+2. **Global Voice Control & Cancellation:**
+   - **Reactive State:** `isAudioPlayingRef` signal tracks active audio playback.
+   - **Immediate Cancellation:** `stopAllAudio()` instantly halts `window.speechSynthesis` and pauses/destroys any playing `HTMLAudioElement`.
+   - **Header Stop Voice Button:** Prominent red button (`⏹️ STOP VOICE` / `🔇`) in `AppHeader` renders whenever audio or speech synthesis is active.
+   - **Keyboard Dismissal:** Pressing `Esc` halts all active speech immediately.
+3. **Speech Practice Evaluator (`startSpeechPractice`):**
+   - Uses browser `SpeechRecognition` / `webkitSpeechRecognition` to capture learner attempts.
    - Normalizes spoken text against the target query and calculates Levenshtein distance similarity.
    - Surfaces standardized grade badges:
      - `90–100`: **Excellent** (emerald badge)
@@ -267,60 +276,49 @@ Pronunciation handling (`src/ui/audio.js`, `src/providers/pronunciation.js`) coo
      - `50–69`: **Almost there** (amber badge)
      - `<50`: **Try again** (rose badge)
    - Emits an animated glowing pulse ring during microphone recording.
-   - Preserves active practice score across Phase 2 lazy enrichment re-renders via `audio.restorePracticeResult()`.
+   - Preserves active practice score across Phase 2 lazy enrichment re-renders via internal `practiceResults` cache map.
 
 ---
 
 ## Content Script & In-Page Overlay Architecture
 
-The in-page subsystem (`src/content/`) is organized into specialized modules:
+The in-page subsystem (`src/entrypoints/content-script/`) is organized into specialized React and TypeScript modules:
 
 ```text
-src/content/
-├── selection.js       # Exact DOM Range calculation & editable target filtering
-├── context.js         # Exact selection sentence & ranked page context extraction
-├── trigger.js         # Floating search icon lifecycle & edge-aware positioning
-├── popup-position.js  # VisualViewport collision detection, clamping & repositioning
-├── settings-bridge.js # Non-secret settings cache & chrome.storage.sync listener
-├── lookup-bridge.js   # Content lookup cache (TTL 10m) & LOOKUP_TEXT messaging
-├── state.js           # Shared state defaults & tab ordering
-├── icons.js           # Inline SVG icon assets (search, close, audio, practice)
-└── content.js         # Event orchestration, focus trapping, lifecycle & cleanup
+src/entrypoints/content-script/
+├── bootstrap.ts        # Entrypoint script; listens for selection & sets up Shadow DOM
+├── overlay-app.tsx     # Shadow DOM host wrapper & root CSS injection
+├── overlay.in-page.tsx # In-page popup container, positioning, drag/resize handlers
+└── ...
 ```
 
-Content scripts inject in the top frame (`all_frames: false`). Same-origin iframes are injected on selection via `INJECT_FRAME`. Cross-origin iframes cannot be read. `pausedHostnames` disables in-page selection triggers only; toolbar, context menu, and the `lookup-selection` command still work.
+Content scripts inject in the top frame (`all_frames: false`). Same-origin iframes are injected on selection via `INJECT_FRAME`. Cross-origin iframes cannot be read due to browser security restrictions. `pausedHostnames` disables in-page selection triggers only; toolbar popup, context menu, and the `lookup-selection` keyboard shortcut still work.
 
 ---
 
 ### Context Extraction Subsystem
 
-Contextual AI actions rely on dual-mode sentence extraction (`src/content/context.js`):
+Contextual AI actions rely on dual-mode sentence extraction (`src/shared/page-context.ts`):
 
 1. **Mode 1 — Exact Selection-Based Extraction (Confidence: `exact`):**
    - Obtains `window.getSelection().getRangeAt(0)`.
-   - Climbs to the enclosing block element (`p`, `li`, `blockquote`, `article`, etc.).
-   - Clones the range and measures character offset from block start:
-     ```js
-     const preRange = range.cloneRange();
-     preRange.selectNodeContents(block);
-     preRange.setEnd(range.startContainer, range.startOffset);
-     const offset = preRange.toString().length;
-     ```
-   - Scans backward and forward from `offset` for sentence delimiters (`.`, `!`, `?`, `。`, `！`, `？`).
+   - Climbs to enclosing block element (`p`, `li`, `blockquote`, `article`, etc.).
+   - Clones the range and measures character offset from block start.
+   - Scans backward and forward from offset for sentence delimiters (`.`, `!`, `?`, `。`, `！`, `？`), correctly handling abbreviations, decimals, and URLs.
    - Pinpoints the exact occurrence highlighted by the user, eliminating ambiguity in paragraphs with repeated words.
 2. **Mode 2 — Candidate Ranking & Page Search (Confidence: `suggested`):**
-   - For typed queries in the toolbar, searches the active page DOM for matching word boundaries (`\bquery\b`).
+   - For typed queries in the toolbar or lookup without selection, searches active page DOM for matching word boundaries.
    - Ranks sentence candidates by viewport visibility (`visible: true`), semantic parent (`<main>`, `<article>`), viewport distance, and document order.
    - Prefills the Context field as an editable, session-only suggestion.
 
 ### Positioning & Viewport Adaptation
 
-The positioning engine (`src/content/popup-position.js`) dynamically adapts to complex web layouts:
+The positioning engine in `src/entrypoints/content-script/overlay.in-page.tsx` dynamically adapts to complex web layouts:
 
-- **VisualViewport Awareness:** Accounts for browser zoom, mobile/pinch zoom, page scroll, and iframe offsets (`window.visualViewport`).
+- **VisualViewport Awareness:** Accounts for browser zoom, mobile/pinch zoom, page scroll, and viewport dimensions (`window.visualViewport`).
 - **Collision Boundary Flipping:** Automatically flips the popup above, below, left, or right of the selection to prevent viewport clipping.
-- **Fixed vs Absolute Coordination:** Dynamically switches between `fixed` and `absolute` positioning depending on document scrolling context and iframe constraints.
-- **Dynamic Max-Height Refinement:** `refinePopupMaxHeight()` recalculates usable vertical space on every render to ensure the card never overflows the viewport.
+- **Fixed vs Absolute Coordination:** Coordinates positioning relative to document scrolling context and window boundaries.
+- **Dynamic Resizing & Persistence:** Users can drag the bottom-right corner to resize cards between 360px–1000px width and 380px–900px height. Preferences are persisted automatically into settings (`popupWidth`, `popupHeight`).
 
 ---
 
@@ -340,27 +338,26 @@ The extension implements strict data boundaries to guarantee that API credential
 ┌────────────────────────────────────────────────────────────────────────┐
 │                   chrome.storage.local (Private Secrets)               │
 ├────────────────────────────────────────────────────────────────────────┤
-│ aiApiKey, libreTranslateApiKey.                                        │
-│ -> ISOLATED STRICTLY TO BACKGROUND SERVICE WORKER.                     │
-│ -> Never queried by getUiSettings(). Never sent to content scripts.    │
+│ aiApiKey, libreTranslateApiKey, hasAiApiKey (boolean flag).           │
+│ -> ISOLATED STRICTLY TO SERVICE WORKER AND SECURE OPTIONS MODAL.       │
+│ -> Content scripts and public exports NEVER see raw API keys.          │
 └────────────────────────────────────────────────────────────────────────┘
                                     │
 ┌────────────────────────────────────────────────────────────────────────┐
 │                  chrome.storage.session (Transient Data)               │
 ├────────────────────────────────────────────────────────────────────────┤
-│ dictionaryHelperLastTab (active tab per browser session),              │
-│ enrich_* (Phase 2 enrichment cache, TTL 10 minutes).                   │
+│ Active tab memory per browser session, enrich_* (Phase 2 cache).       │
 │ -> Cleared on browser restart or settings changes.                     │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Security Safeguards
 
-- **Zero-Leak UI Settings Loader (`getUiSettings`):** Toolbar popup and content scripts only invoke `getUiSettings()`, which queries `chrome.storage.sync` exclusively. API keys are physically excluded from UI memory spaces.
-- **Secret Migration (`migrateLegacySecretSettings`):** Automatically migrates legacy secret keys from `sync` to `local` and permanently purges them from `sync` storage.
-- **Schema Migrations (`migrateSettingsSchema` — Schema v8):** Upgrades default prompt templates safely while strictly preserving customized user prompts.
-- **Granular Host Permissions (`src/shared/permissions.js`):** Custom AI base URLs and self-hosted LibreTranslate instances trigger dynamic `chrome.permissions.request({ origins: [...] })` prompts from the options page.
-- **Sanitized Import/Export:** Settings export generates a public JSON document `{ version, exportedAt, settings }` omitting all secret keys. Settings import ignores secret keys if present.
+- **Zero-Leak UI Settings Loader (`loadPublicSettings`):** Toolbar popup and content scripts query public settings exclusively. API keys are physically excluded from unprivileged memory spaces.
+- **Local Secret Storage (`chrome.storage.local`):** Secret keys (`aiApiKey`, `libreTranslateApiKey`) are saved to local device storage, never synced to Google cloud accounts. A public boolean flag (`hasAiApiKey`) in sync storage indicates key presence without exposing the token.
+- **Schema Migrations (`migrateSettingsSchema` — Schema v12):** Automatically synchronizes `hasAiApiKey` flags and ensures prompt templates remain up-to-date while preserving user customizations.
+- **Granular Host Permissions:** Custom AI base URLs and self-hosted LibreTranslate instances trigger dynamic `chrome.permissions.request({ origins: [...] })` prompts from Settings.
+- **Sanitized Import/Export (`src/shared/settings-export.ts`):** Settings export generates a public JSON document omitting all secret keys (`SECRET_KEYS`). Settings import strictly ignores secret keys if present.
 
 ---
 
@@ -370,64 +367,17 @@ The extension implements strict data boundaries to guarantee that API credential
 
 | Message Type | Sender ➔ Receiver | Payload | Purpose |
 |---|---|---|---|
-| `LOOKUP_TEXT` | Popup / Content ➔ Background | `{ source, text, trigger, context, intent }` | Initiates primary dictionary or AI lookup. Returns initial result. |
-| `LOOKUP_UPDATE` | Background ➔ Popup / Content | `{ requestId, text, source, revision, result }` | Delivers Phase 2 lazy enrichment or asynchronous AI phrase fallback. |
-| `CANCEL_LOOKUP` | Popup / Content ➔ Background | *(None / tab-inferred)* | Cancels in-flight network requests for the sender tab upon card dismissal. |
-| `OPEN_LOOKUP_POPUP` | Background ➔ Content | `{ text, context, contextSource, contextConfidence }` | Directs content script to mount and display popup for context-menu queries. |
-| `VALIDATE_PROVIDER` | Options ➔ Background | `{ kind, providerId, settings }` | Performs non-destructive provider connectivity and latency test. |
-| `GET_PAGE_CONTEXT` | Toolbar / BG ➔ Content | `{ text }` | Requests extracted page sentence and confidence metadata for target text. |
+| `LOOKUP_TEXT` | Popup / Content ➔ Background | `LookupTextPayload` | Initiates primary dictionary or AI lookup. Returns initial result. |
+| `AI_LOOKUP` | Popup / Content ➔ Background | `AiLookupPayload` | Initiates dedicated AI intent lookup (`default`, `grammar`, etc.). |
+| `LOOKUP_UPDATE` | Background ➔ Popup / Content | `LookupUpdatePayload` | Delivers Phase 2 lazy enrichment or asynchronous AI phrase fallback. |
+| `CANCEL_LOOKUP` | Popup / Content ➔ Background | `CancelLookupPayload` | Cancels in-flight network requests for the sender scope/tab. |
+| `OPEN_LOOKUP_POPUP` | Background ➔ Content | `OpenLookupPopupPayload` | Directs content script to mount and display popup for context-menu queries. |
+| `VALIDATE_PROVIDER` | Settings ➔ Background | `ValidateProviderPayload` | Performs non-destructive provider connectivity and latency test. |
+| `FETCH_PROXY` | Popup / Content ➔ Background | `FetchProxyPayload` | Bypasses CORS restrictions for keyless dictionary and translation endpoints. |
+| `ABORT_FETCH_PROXY` | Popup / Content ➔ Background | `{ requestId }` | Halts in-flight fetch proxy request. |
 
-### Tab-Scoped Abort & Stale-Update Protection
+### Tab-Scoped Cancellation Architecture
 
-```text
-LOOKUP_TEXT / Card Dismissal
-             │
-             ▼
-Background: cancelRequestsForTab(tabId)
-  - Calls AbortController.abort() for active tab fetches
-  - Aborts in-flight Phase 1 dictionary/translation requests
-  - Aborts in-flight AI provider streams & Phase 2 lazy enrichment
-             │
-             ▼
-Background: registerController(tabId, requestId)
-  - Registers fresh AbortController with fetchWithTimeout / fetchWithRetry
-             │
-             ▼
-When LOOKUP_UPDATE arrives at UI:
-  1. Does message.requestId match popup.activeRequestId?
-     ├─ No  ──► Discard (response belongs to an abandoned query)
-     └─ Yes ──► Does message.text match current active input?
-                  ├─ No  ──► Discard (user typed a new query)
-                  └─ Yes ──► Apply enriched data and re-render
-```
-
-- Provider adapters pass the `AbortSignal` down to `fetchWithTimeout()` and `fetchWithRetry()`.
-- Network aborts (`AbortError`) settle silently without triggering error toasts.
-- `requestToken` counters in the content script and toolbar popup provide client-side synchronization against out-of-order responses.
-
----
-
-## Visual Design System & Shared UI Shell
-
-Both popup surfaces share a unified visual architecture called **"Calm Learning Studio"**:
-
-- **Design Tokens (`tokens.css`):** Three-tier token architecture (Primitives → Semantics → Surface tokens) controlling light, dark, and system themes.
-- **Typography:**
-  - **Editorial Display Font:** Warm serif styling for term headers, definitions, and AI explanations.
-  - **Learner Font Mode (`data-font="learner"`):** Locally bundled Atkinson Hyperlegible font across all controls, definitions, and examples to eliminate character ambiguity for ESL learners.
-  - **Monospace Font:** Clean tokenized code presentation.
-- **Shared Popup Shell (`src/ui/popup-shell.js`):** Generates consistent semantic markup across toolbar and in-page popups, enforcing dimension constraints (width: 320–1000px, height: 360–1000px).
-- **Interactive States & Skeletons:**
-  - `Renderer.renderSkeleton()` emits accessible multi-tier loading placeholders while maintaining `aria-busy="true"`.
-  - Exit transitions run a crisp 120ms animation on manual close while replacement by a new selection remains instant.
-  - Motion strictly honors `@media (prefers-reduced-motion: reduce)`.
-
----
-
-## System Constraints & Boundary Handling
-
-1. **Chrome Extension Reloads:** Existing web tabs maintain zombie content script instances until refreshed. Content scripts catch `isExtensionContextInvalidated` errors and display an inline **"Extension reloaded — Refresh this tab"** banner.
-2. **Restricted Browser Pages:** Chrome forbids content script injection on `chrome://`, Chrome Web Store, and internal PDF reader frames. The extension identifies these via `canInjectIntoUrl()` and displays an unobtrusive action badge notification (`!`) explaining the restriction.
-3. **Scriptable PDFs & Web Readers:** Scriptable PDF embeds and reader view containers with accessible DOM text layers are fully supported with exact sentence extraction.
-4. **Lightweight Markdown Boundary:** The renderer supports common Markdown constructs (headings 1–6, bold, italics, lists, blockquotes, code, horizontal rules) with XSS-safe escaping, avoiding heavyweight CommonMark dependencies.
-5. **No Build Step:** All modules use native ES module imports in the service worker/options/toolbar and structured global namespaces in classic content script injections. Code remains transparent and auditable directly from source.
+1. **Unique Request Registration:** Every lookup operation creates a unique request ID via `createRequestId()` and registers a corresponding `AbortController` in the background worker.
+2. **Context Invalidation:** When a user selects a new word, switches queries, or closes the popup, `cancelDictionaryLookup()` or `cancelAiLookup()` immediately signals the registered `AbortController`.
+3. **Network Abort:** The active `fetch` operation is aborted immediately at the browser networking layer, preventing obsolete HTTP responses from consuming bandwidth or overwriting current UI state.
