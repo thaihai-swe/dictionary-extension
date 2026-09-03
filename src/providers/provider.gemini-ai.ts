@@ -26,10 +26,7 @@ import {
 } from '../shared/query-utils';
 
 const GEMINI_MODELS = [
-  'gemini-2.5-flash',
   'gemini-3.5-flash-lite',
-  'gemini-1.5-flash',
-  'gemini-2.5-flash-lite',
 ];
 
 function resolveQueryAndContext(query: string, context?: string): { term: string; surrounding: string } {
@@ -324,7 +321,7 @@ export async function fetchAiAnalysis(
   const effectiveSettings = {
     ...(settings || {}),
     aiApiKey: apiKey,
-    aiModel: modelName || 'gemini-2.5-flash',
+    aiModel: modelName || 'gemini-3.5-flash-lite',
     aiBaseUrl: baseUrl,
     translateTargetLanguage: targetLang,
   } as AppSettings;

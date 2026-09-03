@@ -48,7 +48,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   aiBaseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/',
   aiApiKey: '',
   hasAiApiKey: false,
-  aiModel: 'gemini-2.5-flash',
+  aiModel: 'gemini-3.5-flash-lite',
   ...DEFAULT_AI_PROMPTS,
 };
 

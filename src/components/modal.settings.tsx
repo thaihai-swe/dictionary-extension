@@ -30,10 +30,7 @@ const promptEditors: Array<{ key: keyof AppSettings; label: string }> = [
 ];
 
 const presetModels = [
-  'gemini-2.5-flash',
   'gemini-3.5-flash-lite',
-  'gemini-1.5-flash',
-  'gemini-1.5-pro',
 ];
 
 export const SettingsModal: React.FC = () => {
@@ -119,7 +116,7 @@ export const SettingsModal: React.FC = () => {
     const nextManual = !isManualModelInput;
     setIsManualModelInput(nextManual);
     if (!nextManual && !presetModels.includes(localSettings.aiModel || '')) {
-      patchLocalSettings({ aiModel: 'gemini-2.5-flash' });
+      patchLocalSettings({ aiModel: 'gemini-3.5-flash-lite' });
     }
   }
 
@@ -152,7 +149,7 @@ export const SettingsModal: React.FC = () => {
     const payload: Partial<AppSettings> = {
       ...current,
       pausedHostnames: parsedHostnames,
-      aiModel: current.aiModel && current.aiModel.trim() ? current.aiModel : 'gemini-2.5-flash',
+      aiModel: current.aiModel && current.aiModel.trim() ? current.aiModel : 'gemini-3.5-flash-lite',
     };
 
     for (const key of SECRET_SETTING_KEYS) {

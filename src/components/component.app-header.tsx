@@ -75,7 +75,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             <option value="wikipedia">📰 Wikipedia</option>
             <option value="urban_dictionary">💬 Urban Dictionary</option>
             <option value="google_translate">🌐 Google Translate</option>
-            <option value="gemini_ai">✨ Gemini AI ({settings.aiModel || 'gemini-2.5-flash'})</option>
+            <option value="gemini_ai">✨ Gemini AI ({settings.aiModel || 'gemini-3.5-flash-lite'})</option>
           </select>
           <span className="absolute right-1.5 text-[9px] text-slate-400 pointer-events-none">▼</span>
         </div>

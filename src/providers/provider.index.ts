@@ -147,7 +147,7 @@ async function lookupSingleProvider(
       const aiRes = await fetchAiAnalysis('default', query, targetLang, settings?.aiApiKey, settings?.aiModel, signal, undefined, settings);
       return {
         word: query,
-        phonetic: `Gemini AI Engine (${settings?.aiModel || 'gemini-2.5-flash'})`,
+        phonetic: `Gemini AI Engine (${settings?.aiModel || 'gemini-3.5-flash-lite'})`,
         meanings: [{ partOfSpeech: 'AI Explanation', definitions: [{ definition: aiRes.summary || aiRes.translation || query }] }],
         providerId: 'gemini_ai',
         sourceBadges: [{ label: 'Gemini AI', kind: 'dictionary', providerId: 'gemini_ai' }],

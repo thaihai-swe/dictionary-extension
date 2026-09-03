@@ -96,7 +96,7 @@ The AI subsystem operates in dual modes:
 
 1. **Google Gemini AI API Mode (`generativelanguage.googleapis.com`):**
    - Activated when an API key is saved (`aiApiKey`).
-   - Uses models such as `gemini-2.5-flash` or custom models.
+   - Uses models such as `gemini-3.5-flash-lite` or custom models.
    - Encloses user text in structured prompts for the 6 AI intents.
 
 2. **Offline Rule-Based Grammar Analysis Engine:**

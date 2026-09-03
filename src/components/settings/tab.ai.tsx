@@ -118,21 +118,18 @@ export const TabAi: React.FC<TabAiProps> = ({
 
         {!isManualModelInput ? (
           <select
-            value={localSettings.aiModel || 'gemini-2.5-flash'}
+            value={localSettings.aiModel || 'gemini-3.5-flash-lite'}
             onChange={(e) => onChange({ aiModel: e.target.value })}
             className="w-full bg-dark-muted border border-dark-border text-slate-200 text-sm font-medium rounded-xl px-3 py-2 outline-none focus:border-teal-500 cursor-pointer"
           >
-            <option value="gemini-2.5-flash">⚡ gemini-2.5-flash (Recommended - Fast &amp; Smart)</option>
-            <option value="gemini-3.5-flash-lite">🚀 gemini-3.5-flash-lite (Maximum Speed)</option>
-            <option value="gemini-1.5-flash">✨ gemini-1.5-flash (Standard Baseline)</option>
-            <option value="gemini-1.5-pro">🧠 gemini-1.5-pro (Deep Analysis)</option>
+            <option value="gemini-3.5-flash-lite">⚡ gemini-3.5-flash-lite (Recommended - Fast &amp; Smart)</option>
           </select>
         ) : (
           <input
             value={localSettings.aiModel || ''}
             onChange={(e) => onChange({ aiModel: e.target.value })}
             type="text"
-            placeholder="Enter custom Gemini model ID (e.g. gemini-2.5-pro)..."
+            placeholder="Enter custom Gemini model ID (e.g. gemini-3.5-flash-lite)..."
             className="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 transition-all font-mono"
           />
         )}
