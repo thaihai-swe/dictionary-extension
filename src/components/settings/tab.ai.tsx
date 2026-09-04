@@ -1,6 +1,13 @@
 import React from 'react';
 import { AppSettings } from '../../types';
+import { cx } from '../../ui/cx';
 import { IconEdit, IconExternalLink, IconSparkles, IconSpinner } from '../icons';
+import {
+  DEFAULT_GEMINI_BASE_URL,
+  DEFAULT_GEMINI_MODEL,
+  DEFAULT_OPENAI_BASE_URL,
+  isOpenAiStandard,
+} from '../../shared/settings';
 
 interface TabAiProps {
   localSettings: AppSettings;
@@ -27,6 +34,8 @@ export const TabAi: React.FC<TabAiProps> = ({
   onRestorePrompt,
   onRestoreAllPrompts,
 }) => {
+  const isOpenAi = isOpenAiStandard(localSettings);
+
   return (
     <div className="space-y-4 font-sans text-xs">
       {/* Enable AI Assistant */}
@@ -34,10 +43,10 @@ export const TabAi: React.FC<TabAiProps> = ({
         <label className="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-muted transition-colors">
           <div>
             <span className="font-bold text-content block text-xs">
-              Enable Gemini AI Assistant &amp; Smart Analysis
+              Enable AI Assistant &amp; Smart Analysis
             </span>
             <span className="text-[11px] text-content-muted block">
-              Enables contextual analysis, grammar nuance, breakdown, and confusable comparison
+              Contextual analysis, grammar nuance, breakdown, and confusable comparison
             </span>
           </div>
           <input
@@ -89,82 +98,162 @@ export const TabAi: React.FC<TabAiProps> = ({
         </label>
       </div>
 
-      {/* Gemini API Key */}
+      {/* Provider Selector: Gemini vs OpenAI Standard */}
       <div className="space-y-2 pt-3 border-t border-border/60">
+        <label className="font-bold text-content-secondary uppercase tracking-wider text-[11px] block">
+          AI Provider Engine
+        </label>
+        <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-xl border border-border">
+          <button
+            type="button"
+            onClick={() => {
+              onChange({
+                aiProvider: 'gemini',
+                aiModel: DEFAULT_GEMINI_MODEL,
+                aiBaseUrl: DEFAULT_GEMINI_BASE_URL,
+              });
+            }}
+            className={cx(
+              'py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer',
+              !isOpenAi
+                ? 'bg-surface text-teal-700 dark:text-gold-200 border border-border shadow-xs'
+                : 'text-content-muted hover:text-content',
+            )}
+          >
+            <span>Google Gemini</span>
+            <span className="text-[10px] opacity-75 font-normal">(Default)</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onChange({
+                aiProvider: 'openai',
+                aiModel: '',
+                aiBaseUrl: DEFAULT_OPENAI_BASE_URL,
+              });
+            }}
+            className={cx(
+              'py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer',
+              isOpenAi
+                ? 'bg-surface text-teal-700 dark:text-gold-200 border border-border shadow-xs'
+                : 'text-content-muted hover:text-content',
+            )}
+          >
+            <span>OpenAI Standard</span>
+            <span className="text-[10px] opacity-75 font-normal">(Ollama, etc.)</span>
+          </button>
+        </div>
+      </div>
+
+      {/* OpenAI Standard Base URL */}
+      {isOpenAi && (
+        <div className="space-y-2 pt-2 border-t border-border/60">
+          <div className="flex items-center justify-between">
+            <label className="font-bold text-content-secondary uppercase tracking-wider text-[11px]">
+              API Base URL (OpenAI Standard)
+            </label>
+            <span className="text-[10px] text-content-muted">
+              POST /chat/completions
+            </span>
+          </div>
+          <input
+            value={localSettings.aiBaseUrl || DEFAULT_OPENAI_BASE_URL}
+            onChange={(e) => onChange({ aiBaseUrl: e.target.value })}
+            type="text"
+            placeholder={DEFAULT_OPENAI_BASE_URL}
+            className="w-full bg-muted border border-border rounded-xl px-3 py-2 text-xs text-content placeholder:text-content-muted outline-none focus:border-teal-500 font-mono shadow-xs"
+          />
+          <div className="flex flex-wrap gap-1.5 pt-0.5">
+            {[
+              [DEFAULT_OPENAI_BASE_URL, 'Default (localhost:20128)'],
+              ['http://localhost:11434/v1', 'Ollama (localhost:11434)'],
+              ['https://api.openai.com/v1', 'ChatGPT (OpenAI)'],
+            ].map(([url, label]) => (
+              <button
+                key={url}
+                type="button"
+                onClick={() => onChange({ aiBaseUrl: url })}
+                className="text-[10px] px-2 py-0.5 rounded-md bg-muted hover:bg-elevated border border-border text-content-secondary hover:text-teal-600 dark:hover:text-teal-300 font-mono cursor-pointer transition-colors"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* API Key */}
+      <div className="space-y-2 pt-2 border-t border-border/60">
         <div className="flex items-center justify-between">
           <label className="font-bold text-content-secondary uppercase tracking-wider text-[11px]">
-            Google Gemini API Key
+            {isOpenAi ? 'API Key (Optional for Local / Ollama)' : 'Google Gemini API Key'}
           </label>
-          <a
-            href="https://aistudio.google.com/app/apikey"
-            target="_blank"
-            rel="noreferrer"
-            className="text-xs text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1 font-semibold"
-          >
-            <span>Get Free Key</span>
-            <IconExternalLink className="w-3 h-3" />
-          </a>
+          {!isOpenAi && (
+            <a
+              href="https://aistudio.google.com/app/apikey"
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1 font-semibold"
+            >
+              <span>Get Free Key</span>
+              <IconExternalLink className="w-3 h-3" />
+            </a>
+          )}
         </div>
 
         <input
           value={localSettings.aiApiKey || ''}
           onChange={(e) => onChange({ aiApiKey: e.target.value })}
           type="password"
-          placeholder="Paste Gemini API Key (AIzaSy...)"
+          placeholder={isOpenAi ? 'sk-... (leave blank for local Ollama / proxy)' : 'Paste Gemini API Key (AIzaSy...)'}
           className="w-full bg-muted border border-border rounded-xl px-3 py-2.5 text-xs text-content placeholder:text-content-muted outline-none focus:border-teal-500 font-mono shadow-xs"
         />
         <p className="text-[11px] text-content-muted">
-          Stored locally on this device via Chrome secure storage. Never exported in backups.
+          {isOpenAi
+            ? 'Stored locally on this device. Leave blank if your local OpenAI server or Ollama does not require an API key.'
+            : 'Stored locally on this device via Chrome secure storage. Never exported in backups.'}
         </p>
       </div>
 
       {/* Model Selection */}
-      <div className="space-y-2 pt-3 border-t border-border/60">
+      <div className="space-y-2 pt-2 border-t border-border/60">
         <div className="flex items-center justify-between">
           <label className="font-bold text-content-secondary uppercase tracking-wider text-[11px]">
-            Gemini Model
+            {isOpenAi ? 'OpenAI Model' : 'Gemini Model'}
           </label>
-          <button
-            type="button"
-            onClick={onToggleManualModel}
-            className="text-[11px] px-2.5 py-1 rounded-lg bg-muted hover:bg-elevated text-teal-600 dark:text-teal-300 font-semibold border border-border cursor-pointer transition-colors"
-          >
-            {isManualModelInput ? 'Select Presets' : 'Custom Model ID'}
-          </button>
+          {!isOpenAi && (
+            <button
+              type="button"
+              onClick={onToggleManualModel}
+              className="text-[11px] px-2.5 py-1 rounded-lg bg-muted hover:bg-elevated text-teal-600 dark:text-teal-300 font-semibold border border-border cursor-pointer transition-colors"
+            >
+              {isManualModelInput ? 'Select Presets' : 'Custom Model ID'}
+            </button>
+          )}
         </div>
 
-        {!isManualModelInput ? (
-          <select
-            value={localSettings.aiModel || 'gemini-3.5-flash-lite'}
-            onChange={(e) => onChange({ aiModel: e.target.value })}
-            className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-teal-500 cursor-pointer shadow-xs"
-          >
-            <option value="gemini-3.5-flash-lite" className="bg-surface text-content">gemini-3.5-flash-lite (Recommended · Ultra Fast &amp; Smart)</option>
-          </select>
-        ) : (
+        {isOpenAi || isManualModelInput ? (
           <input
             value={localSettings.aiModel || ''}
             onChange={(e) => onChange({ aiModel: e.target.value })}
             type="text"
-            placeholder="Enter custom Gemini model ID (e.g. gemini-3.5-flash-lite)..."
+            placeholder={isOpenAi ? 'Model name as required by your server' : 'Enter custom Gemini model ID (e.g. gemini-3.5-flash-lite)...'}
             className="w-full bg-muted border border-border rounded-xl px-3 py-2 text-xs text-content placeholder:text-content-muted outline-none focus:border-teal-500 font-mono shadow-xs"
           />
+        ) : (
+          <select
+            value={localSettings.aiModel || DEFAULT_GEMINI_MODEL}
+            onChange={(e) => onChange({ aiModel: e.target.value })}
+            className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-teal-500 cursor-pointer shadow-xs"
+          >
+            <option value={DEFAULT_GEMINI_MODEL} className="bg-surface text-content">{DEFAULT_GEMINI_MODEL} (Recommended · Ultra Fast &amp; Smart)</option>
+          </select>
         )}
       </div>
 
-      {/* Custom AI Base URL */}
-      <div className="space-y-2 pt-3 border-t border-border/60">
-        <label className="font-bold text-content-secondary block uppercase tracking-wider text-[11px]">
-          Custom AI Endpoint Base URL (Optional)
-        </label>
-        <input
-          value={localSettings.aiBaseUrl || ''}
-          onChange={(e) => onChange({ aiBaseUrl: e.target.value })}
-          type="text"
-          placeholder="https://generativelanguage.googleapis.com"
-          className="w-full bg-muted border border-border rounded-xl px-3 py-2 text-xs text-content placeholder:text-content-muted outline-none focus:border-teal-500 font-mono shadow-xs"
-        />
-        <div className="flex items-center gap-2 pt-1">
+      {/* Test Connection Button */}
+      <div className="pt-2 border-t border-border/60">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             className="px-3 py-1.5 rounded-lg bg-muted hover:bg-elevated border border-border text-xs font-semibold text-content-secondary hover:text-teal-600 dark:hover:text-teal-300 cursor-pointer shadow-xs flex items-center gap-1.5 active:scale-95"
@@ -172,7 +261,7 @@ export const TabAi: React.FC<TabAiProps> = ({
             onClick={onTestAi}
           >
             {connectionBusy.ai ? <IconSpinner className="w-3.5 h-3.5 text-teal-500 dark:text-teal-400" /> : <IconSparkles className="w-3.5 h-3.5 text-teal-500 dark:text-teal-400" />}
-            <span>Test AI Connection</span>
+            <span>Test {isOpenAi ? 'OpenAI' : 'Gemini'} Connection</span>
           </button>
           {connectionStatus.ai && (
             <span className="text-[11px] px-2 py-0.5 rounded-md bg-muted border border-border text-teal-600 dark:text-teal-300 font-mono">

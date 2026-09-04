@@ -19,9 +19,14 @@ interface SectionBlock {
   items: ExampleRenderItem[];
 }
 
+const IN_CONTEXT_BADGE =
+  '<span class="inline-flex items-center px-2 py-0.5 ml-1.5 rounded-full text-[10.5px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 uppercase tracking-wide font-mono select-none">Used in context</span>';
+
 function formatInlineMarkdown(text: string): string {
   if (!text) return '';
   return text
+    .replace(/\*\*(?:used in this context|in context)\*\*/gi, IN_CONTEXT_BADGE)
+    .replace(/\[(?:used in this context|in context)\]/gi, IN_CONTEXT_BADGE)
     .replace(/\*\*(.*?)\*\*/g, '<strong class="text-content font-bold">$1</strong>')
     .replace(/\*(.*?)\*/g, '<em class="text-teal-600 dark:text-teal-300 italic">$1</em>')
     .replace(/`(.*?)`/g, '<code class="px-1.5 py-0.5 rounded bg-muted border border-border text-teal-600 dark:text-teal-300 font-mono text-[12px]">$1</code>');

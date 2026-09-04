@@ -57,7 +57,7 @@ export function clearEnrichmentCache() {
 }
 
 function combinedResultCacheKey(word: string, settings: AppSettings): string {
-  return `${word.toLowerCase().trim()}|${settings.dictionaryProvider || 'free_dictionary'}|${String(settings.translateTargetLanguage || '').toLowerCase()}|${Boolean(settings.enableTranslate)}|${Boolean(settings.enableDictionary)}|${Boolean(settings.enablePhraseFallback)}|${settings.enableLexicalProfile !== false}`;
+  return `${word.toLowerCase().trim()}|${settings.dictionaryProvider || 'wiktionary'}|${String(settings.translateTargetLanguage || '').toLowerCase()}|${Boolean(settings.enableTranslate)}|${Boolean(settings.enableDictionary)}|${Boolean(settings.enablePhraseFallback)}|${settings.enableLexicalProfile !== false}`;
 }
 
 function combinedSessionStorageKey(key: string): string {
@@ -109,7 +109,7 @@ function writeCombinedResultCache(key: string, result: DictionaryEntry) {
 }
 
 function resolvePrimaryProviderId(provider: string, settings?: AppSettings): string {
-  return provider || settings?.dictionaryProvider || 'free_dictionary';
+  return provider || settings?.dictionaryProvider || 'wiktionary';
 }
 
 function hasUsableDefinitions(entry?: DictionaryEntry | null): boolean {
@@ -174,10 +174,10 @@ async function lookupSingleProvider(
       const aiRes = await fetchAiAnalysis('default', query, targetLang, settings?.aiApiKey, settings?.aiModel, signal, undefined, settings);
       return {
         word: query,
-        phonetic: `Gemini AI Engine (${settings?.aiModel || 'gemini-3.5-flash-lite'})`,
+        phonetic: `AI Assistant (${settings?.aiModel || 'default'})`,
         meanings: [{ partOfSpeech: 'AI Explanation', definitions: [{ definition: aiRes.summary || aiRes.translation || query }] }],
         providerId: 'gemini_ai',
-        sourceBadges: [{ label: 'Gemini AI', kind: 'dictionary', providerId: 'gemini_ai' }],
+        sourceBadges: [{ label: 'AI Assistant', kind: 'dictionary', providerId: 'gemini_ai' }],
       };
     }
     case 'free_dictionary':
@@ -353,7 +353,7 @@ export async function runDictionaryEnrichment(
   onEnrichUpdate: (enriched: DictionaryEntry) => void,
   signal?: AbortSignal,
 ) {
-  const primaryProviderId = baseResult.providerId || settings.dictionaryProvider || 'free_dictionary';
+  const primaryProviderId = baseResult.providerId || settings.dictionaryProvider || 'wiktionary';
   const queryTerm = word.trim();
   const targetLang = settings.translateTargetLanguage || 'Vietnamese';
   const cacheKey = enrichmentCacheKey(word, settings, primaryProviderId, queryTerm);
@@ -411,7 +411,7 @@ export async function fetchCombinedDictionaryResult(
   enrichSignal?: AbortSignal,
 ): Promise<DictionaryEntry> {
   const cleanWord = word.trim();
-  const provider = settings.dictionaryProvider || 'free_dictionary';
+  const provider = settings.dictionaryProvider || 'wiktionary';
   const targetLang = settings.translateTargetLanguage || 'Vietnamese';
   const combinedKey = combinedResultCacheKey(cleanWord, settings);
   const cachedCombined = await readSessionCombinedResult(combinedKey);
@@ -557,7 +557,7 @@ export async function validateDictionaryProvider(
   providerId: string,
   settings: AppSettings,
 ): Promise<ProviderValidationResult> {
-  const id = providerId || 'free_dictionary';
+  const id = providerId || 'wiktionary';
   const startTime = Date.now();
   try {
     await lookupSingleProvider(id, 'hello', settings.translateTargetLanguage || 'Vietnamese', undefined, settings);

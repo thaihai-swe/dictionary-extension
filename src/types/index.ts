@@ -13,6 +13,7 @@ export type AiIntentId =
 export interface SentenceStructureItem {
   text: string;
   role: string;
+  explanation?: string;
 }
 
 export interface AiPhraseItem {
@@ -27,6 +28,19 @@ export interface AiComparisonRow {
   dimension: string;
   left: string;
   right: string;
+}
+
+export interface AiMinimalPair {
+  sentenceA: string;
+  sentenceB: string;
+  explanation?: string;
+}
+
+export interface RephraseStyleItem {
+  style: 'simplified' | 'formal' | 'idiomatic' | string;
+  label: string;
+  text: string;
+  note?: string;
 }
 
 export interface Phonetic {
@@ -121,7 +135,9 @@ export interface AiResult {
     rows?: AiComparisonRow[];
     leftTerm?: string;
     rightTerm?: string;
+    minimalPairs?: AiMinimalPair[];
   };
+  rephraseStyles?: RephraseStyleItem[];
 }
 
 export interface SourceBadge {
@@ -180,6 +196,7 @@ export type SelectionTriggerMode = 'off' | 'icon' | 'direct';
 export type PostSelectionModifier = 'shift' | 'alt' | 'ctrl';
 export type AppTheme = 'system' | 'light' | 'dark';
 export type AppFontFamily = 'editorial' | 'learner';
+export type AiProviderId = 'gemini' | 'openai';
 export type TranslationProviderId = 'google' | 'libretranslate' | 'mymemory';
 export type DictionaryProviderId =
   | 'free_dictionary'
@@ -216,6 +233,7 @@ export interface AppSettings {
   pausedHostnames: string[];
   pronunciationRate: number;
   pronunciationVoiceURI: string;
+  aiProvider: AiProviderId;
   aiBaseUrl: string;
   aiApiKey: string;
   hasAiApiKey: boolean;

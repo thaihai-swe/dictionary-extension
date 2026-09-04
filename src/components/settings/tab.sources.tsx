@@ -131,14 +131,14 @@ export const TabSources: React.FC<TabSourcesProps> = ({
           Default Dictionary Provider
         </label>
         <select
-          value={localSettings.dictionaryProvider || 'free_dictionary'}
+          value={localSettings.dictionaryProvider || 'wiktionary'}
           onChange={(e) =>
             onChange({ dictionaryProvider: e.target.value as AppSettings['dictionaryProvider'] })
           }
           className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-teal-500 cursor-pointer shadow-xs"
         >
-          <option value="free_dictionary" className="bg-surface text-content">Free Dictionary API (Google Baseline)</option>
-          <option value="wiktionary" className="bg-surface text-content">Wiktionary Open API</option>
+          <option value="wiktionary" className="bg-surface text-content">Wiktionary Open API (Default)</option>
+          <option value="free_dictionary" className="bg-surface text-content">Free Dictionary API</option>
           <option value="datamuse" className="bg-surface text-content">Datamuse (Keyless collocations)</option>
           <option value="wikipedia" className="bg-surface text-content">Wikipedia Summary</option>
           <option value="urban_dictionary" className="bg-surface text-content">Urban Dictionary (Slang &amp; Idioms)</option>
@@ -154,8 +154,8 @@ export const TabSources: React.FC<TabSourcesProps> = ({
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {(
             [
-              ['free_dictionary', 'Free Dictionary'],
               ['wiktionary', 'Wiktionary'],
+              ['free_dictionary', 'Free Dictionary'],
               ['datamuse', 'Datamuse'],
               ['wikipedia', 'Wikipedia'],
               ['urban_dictionary', 'Urban Dictionary'],

@@ -69,19 +69,19 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         {/* Dictionary Provider Selector — Styled like demo .popup-provider-badge */}
         <div className="relative flex items-center">
           <select
-            value={settings.dictionaryProvider || 'free_dictionary'}
+            value={settings.dictionaryProvider || 'wiktionary'}
             onChange={handleProviderChange}
             aria-label="Select Dictionary Provider"
             className="h-[27px] bg-teal-500/10 hover:bg-teal-500/15 border border-teal-500/25 text-teal-800 dark:text-gold-200 dark:bg-gold-300/10 dark:border-gold-300/25 text-[11px] font-bold rounded-md pl-2 pr-5 outline-none cursor-pointer appearance-none transition-all"
             title="Select Dictionary Provider"
           >
-            <option value="free_dictionary" className="bg-surface text-content">FreeDict</option>
             <option value="wiktionary" className="bg-surface text-content">Wiktionary</option>
+            <option value="free_dictionary" className="bg-surface text-content">FreeDict</option>
             <option value="datamuse" className="bg-surface text-content">Datamuse</option>
             <option value="wikipedia" className="bg-surface text-content">Wikipedia</option>
             <option value="urban_dictionary" className="bg-surface text-content">UrbanDict</option>
             <option value="google_translate" className="bg-surface text-content">Translate</option>
-            <option value="gemini_ai" className="bg-surface text-content">Gemini AI</option>
+            <option value="gemini_ai" className="bg-surface text-content">AI Assistant</option>
           </select>
           <IconChevronDown className="w-3 h-3 text-teal-700 dark:text-gold-200 pointer-events-none absolute right-1.5" />
         </div>

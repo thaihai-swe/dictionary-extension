@@ -437,7 +437,7 @@ export async function searchWord(
 
   const cleanWord = wordToSearch.trim();
   const settings = settingsStore.value;
-  const provider = providerName || settings.dictionaryProvider || 'free_dictionary';
+  const provider = providerName || settings.dictionaryProvider || 'wiktionary';
   const lang = targetLang || settings.translateTargetLanguage || 'Vietnamese';
   maybePreloadAi(cleanWord, lang, context, preloadGeneration);
   const lookupSettings = {

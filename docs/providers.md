@@ -106,14 +106,17 @@ The dictionary provider facade (`src/providers/provider.index.ts`) routes reques
 
 ## 3. Generative AI Provider & Offline Engine (`src/providers/provider.gemini-ai.ts`)
 
-The AI subsystem operates in dual modes:
+The AI subsystem operates in two user-selectable providers (`aiProvider`):
 
-1. **Google Gemini AI API Mode (`generativelanguage.googleapis.com`):**
-   - Activated when an API key is saved (`aiApiKey`).
-   - Uses `gemini-3.5-flash-lite` (the single curated, high-performance Gemini model across the application) or OpenAI-compatible custom models.
-   - Encloses user text in structured prompts for the 7 AI intents.
-2. **Offline Rule-Based Grammar Analysis Engine:**
-   - Activated automatically when no API key is configured (`hasAiApiKey` is `false`).
+1. **Google Gemini (`aiProvider: 'gemini'`):**
+   - Default. Uses native REST `models/{model}:generateContent`.
+   - Requires `aiApiKey`. Default model is `gemini-3.5-flash-lite`.
+2. **OpenAI Standard (`aiProvider: 'openai'`):**
+   - POSTs to `{aiBaseUrl}/chat/completions` with `stream: false`.
+   - Default base URL is `http://localhost:20128/v1`. Model is user-entered (no preset). API key is optional for local Ollama / LM Studio / proxy.
+   - Response parser accepts a JSON completion, or SSE `chat.completion.chunk` bodies if a local server streams anyway.
+3. **Offline Rule-Based Grammar Analysis Engine:**
+   - Activated when Gemini has no API key, or OpenAI Standard has no model entered.
    - Analyzes clauses, part-of-speech structure, and grammar patterns locally on your device without sending any network requests.
 
 ### The 7 User-Facing AI Intents & 1 Background Intent (`src/types/index.ts`)
@@ -158,13 +161,13 @@ Primary lookup uses the configured `dictionaryProvider` (`free_dictionary` by de
 free_dictionary ➔ wiktionary ➔ datamuse ➔ rhymebrain ➔ wikipedia ➔ urban_dictionary
 ```
 
-`NotFoundError` and transient network/5xx/429/timeout continue to the next provider. Dictionary HTTP timeout is 30s.
+`NotFoundError` and transient network/5xx/429/timeout continue to the next provider. Dictionary HTTP timeout is 60s.
 
 ### Translation fallback
-`lookupTranslationResult()` tries the configured `translateProvider` first (`google`, `libretranslate`, or `mymemory`). If the primary is Google or LibreTranslate and it fails, MyMemory is attempted automatically. Translation HTTP timeout is 30s.
+`lookupTranslationResult()` tries the configured `translateProvider` first (`google`, `libretranslate`, or `mymemory`). If the primary is Google or LibreTranslate and it fails, MyMemory is attempted automatically. Translation HTTP timeout is 60s.
 
 ### AI protocol routing
-- **Native Gemini REST:** When `aiBaseUrl` includes `generativelanguage.googleapis.com` (or is empty), `fetchAiAnalysis` calls `models/{model}:generateContent` with `gemini-3.5-flash-lite`.
-- **OpenAI-compatible:** Any other base URL is treated as `/chat/completions` with `Bearer` authentication (Ollama, OpenRouter, Groq, OpenAI, LocalAI).
+- **Native Gemini REST:** When `aiProvider` is `gemini`, `fetchAiAnalysis` calls `models/{model}:generateContent` with `gemini-3.5-flash-lite`.
+- **OpenAI Standard:** When `aiProvider` is `openai`, POSTs to `{aiBaseUrl}/chat/completions` with `stream: false`. Authorization `Bearer` is sent only when a key is present. Default base URL is `http://localhost:20128/v1`. Model is user-entered.
 - Transient Gemini 429/500/503 errors retry once with backoff before failing.
-- When no API key is configured, the offline rule-based grammar engine returns a local `AiResult` instead of calling the network.
+- When Gemini has no API key, or OpenAI Standard has no model, the offline rule-based grammar engine returns a local `AiResult` instead of calling the network.

@@ -1,14 +1,10 @@
-import { signal, useSignal } from '../ui/signal';
 import { TabId } from '../types';
 import { stopAllAudio, abortActiveDictRequest } from './composable.dictionary';
 import { abortAiRuntimeIfLoaded } from './runtime-hooks';
 import { useStorage } from './composable.storage';
 
-const sessionTermRef = signal<string>('');
-
 export function useLookupSession() {
   const { settings, saveSettings, setActiveTab } = useStorage();
-  const term = useSignal(sessionTermRef);
 
   function abortAllLookups() {
     stopAllAudio();
@@ -27,7 +23,6 @@ export function useLookupSession() {
   }
 
   return {
-    term,
     abortAllLookups,
     switchTab,
   };

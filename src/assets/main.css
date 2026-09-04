@@ -132,11 +132,6 @@ html.light {
 }
 
 /* Editorial Typography Helpers */
-.font-display-headword {
-  font-family: Georgia, "Times New Roman", serif;
-  font-feature-settings: "liga" 1, "kern" 1;
-}
-
 .dark .font-heading,
 [data-theme="dark"] .font-heading,
 .dark .font-serif,
@@ -167,92 +162,6 @@ html.light {
 }
 .btn-control-icon:active {
   transform: scale(0.94);
-}
-
-.btn-action-primary {
-  height: 32px;
-  padding-left: 13px;
-  padding-right: 13px;
-  border-radius: 7px;
-  background-color: var(--color-primary);
-  color: #111111;
-  font-size: 13px;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  border: 1px solid transparent;
-  transition: all 160ms ease;
-  cursor: pointer;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
-}
-.btn-action-primary:hover {
-  background-color: var(--color-primary-hover);
-}
-.btn-action-primary:active {
-  transform: scale(0.96);
-}
-.btn-action-primary:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.light .btn-action-primary,
-.light-theme .btn-action-primary,
-[data-theme="light"] .btn-action-primary {
-  color: #ffffff;
-}
-
-.btn-action-secondary {
-  height: 28px;
-  padding-left: 10px;
-  padding-right: 10px;
-  border-radius: 7px;
-  background-color: var(--bg-surface);
-  color: var(--text-secondary);
-  border: 1px solid var(--border-color);
-  font-size: 12px;
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  transition: all 160ms ease;
-  cursor: pointer;
-}
-.btn-action-secondary:hover {
-  background-color: var(--bg-elevated);
-  color: var(--text-primary);
-  border-color: var(--hairline-gold);
-}
-.btn-action-secondary:active {
-  transform: scale(0.96);
-}
-
-.btn-chip-tag {
-  height: 26px;
-  padding-left: 9px;
-  padding-right: 9px;
-  border-radius: 6px;
-  background-color: var(--bg-elevated);
-  color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
-  font-size: 12px;
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 160ms ease;
-  cursor: pointer;
-}
-.btn-chip-tag:hover {
-  background-color: var(--color-primary-light);
-  color: var(--color-primary);
-  border-color: var(--hairline-gold);
-}
-.btn-chip-tag:active {
-  transform: scale(0.96);
 }
 
 /* Editorial Related Words (Synonyms & Antonyms) */
@@ -305,29 +214,6 @@ html.light {
 .dark ::-webkit-scrollbar-thumb:hover,
 [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
   background: rgba(212, 175, 55, 0.38);
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-/* Subtle scroll masks */
-.scroll-mask-left {
-  background: linear-gradient(to right, var(--bg-paper) 0%, var(--bg-paper) 65%, transparent 100%);
-}
-
-.scroll-mask-right {
-  background: linear-gradient(to left, var(--bg-paper) 0%, var(--bg-paper) 65%, transparent 100%);
-}
-
-/* Subtle focus indicators for accessibility */
-.interactive-focus:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
 }
 
 /* Part of Speech Badges */

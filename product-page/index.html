@@ -188,9 +188,10 @@
                 <div class="interactive-stage">
                     <div class="interactive-controls" role="group" aria-label="Choose a preview scenario">
                         <button type="button" class="preset-btn active" data-query="resilience" data-tab="dictionary"><span class="preset-tag">Word</span><strong>resilience</strong></button>
-                        <button type="button" class="preset-btn" data-query="spill the beans" data-tab="ai" data-intent="phrase_explorer"><span class="preset-tag">Idiom</span><strong>spill the beans</strong></button>
+                        <button type="button" class="preset-btn" data-query="resilience" data-tab="ai" data-intent="default"><span class="preset-tag">Main AI</span><strong>senses in context</strong></button>
+                        <button type="button" class="preset-btn" data-query="spill the beans" data-tab="ai" data-intent="collocations"><span class="preset-tag">Idiom</span><strong>spill the beans</strong></button>
                         <button type="button" class="preset-btn" data-query="The algorithm adapts dynamically to high traffic." data-tab="ai" data-intent="sentence_breakdown"><span class="preset-tag">Sentence</span><strong>The algorithm adapts…</strong></button>
-                        <button type="button" class="preset-btn" data-query="affect vs effect" data-tab="ai" data-intent="compare_confusables"><span class="preset-tag">Compare</span><strong>affect vs effect</strong></button>
+                        <button type="button" class="preset-btn" data-query="affect vs effect" data-tab="ai" data-intent="confusables"><span class="preset-tag">Compare</span><strong>affect vs effect</strong></button>
                         <button type="button" class="preset-btn" data-query="resilience" data-tab="ai" data-intent="rephrase"><span class="preset-tag">Rephrase</span><strong>three rewrite styles</strong></button>
                     </div>
 
@@ -216,11 +217,12 @@
                             <label class="sr-only" for="demo-context-input">Demo sentence context</label>
                             <textarea class="context-textarea" id="demo-context-input" rows="2">Their resilience under pressure allowed the engineering team to ship on time.</textarea>
                             <div class="context-action-buttons">
-                                <button type="button" class="context-action-btn active" data-intent="explain_in_context"><span class="context-action-btn-label">Context Explain</span><span class="demo-progress-dot is-active" aria-hidden="true"></span></button>
+                                <button type="button" class="context-action-btn active" data-intent="default"><span class="context-action-btn-label">Main AI</span><span class="demo-progress-dot is-active" aria-hidden="true"></span></button>
+                                <button type="button" class="context-action-btn" data-intent="explain_in_context"><span class="context-action-btn-label">Context Explain</span><span class="demo-progress-dot is-ready" aria-hidden="true"></span></button>
                                 <button type="button" class="context-action-btn" data-intent="grammar"><span class="context-action-btn-label">Grammar &amp; Nuance</span><span class="demo-progress-dot is-ready" aria-hidden="true"></span></button>
-                                <button type="button" class="context-action-btn" data-intent="phrase_explorer"><span class="context-action-btn-label">Phrase &amp; Collocations</span><span class="demo-progress-dot is-ready" aria-hidden="true"></span></button>
+                                <button type="button" class="context-action-btn" data-intent="collocations"><span class="context-action-btn-label">Phrase &amp; Collocations</span><span class="demo-progress-dot is-ready" aria-hidden="true"></span></button>
                                 <button type="button" class="context-action-btn" data-intent="sentence_breakdown"><span class="context-action-btn-label">Sentence Breakdown</span><span class="demo-progress-dot is-ready" aria-hidden="true"></span></button>
-                                <button type="button" class="context-action-btn" data-intent="compare_confusables"><span class="context-action-btn-label">Compare Confusables</span><span class="demo-progress-dot is-ready" aria-hidden="true"></span></button>
+                                <button type="button" class="context-action-btn" data-intent="confusables"><span class="context-action-btn-label">Compare Confusables</span><span class="demo-progress-dot is-ready" aria-hidden="true"></span></button>
                                 <button type="button" class="context-action-btn" data-intent="rephrase"><span class="context-action-btn-label">Rephrase</span><span class="demo-progress-dot is-ready" aria-hidden="true"></span></button>
                             </div>
                         </div>
@@ -243,8 +245,8 @@
                     <article class="benefit-card"><span class="benefit-index">B</span><h3>Translation in the same result</h3><p>See a target-language translation alongside the dictionary result instead of switching tools for every unfamiliar term.</p></article>
                     <article class="benefit-card"><span class="benefit-index">C</span><h3>Pronunciation and speech practice</h3><p>Play dictionary audio with speech-synthesis fallback, then speak the word back and get a color-coded accuracy grade.</p></article>
                     <article class="benefit-card"><span class="benefit-index">D</span><h3>Phrase-aware recovery</h3><p>For multi-word expressions, the lookup chain can try normalized lemma and phrase candidates and use an AI phrase explanation when structured results are incomplete.</p></article>
-                    <article class="benefit-card"><span class="benefit-index">E</span><h3>Context you can inspect and click</h3><p>Sentence context is an editable prefill, not hidden scraping. Words in <strong>Context used</strong> are clickable for nested lookups, and follow-up sections load with a visible progress strip.</p></article>
-                    <article class="benefit-card"><span class="benefit-index">F</span><h3>Seven named AI actions</h3><p>Dedicated actions cover senses in context, grammar slots, phrase patterns, sentence structure, confusable comparisons, and one Rephrase action that returns three rewrite styles—not a blank chat box.</p></article>
+                    <article class="benefit-card"><span class="benefit-index">E</span><h3>Context you can inspect and click</h3><p>Sentence context is an editable prefill, not hidden scraping. A <strong>Context used</strong> strip sits above contextual AI results, and words in that sentence are clickable for nested lookups.</p></article>
+                    <article class="benefit-card"><span class="benefit-index">F</span><h3>Seven named AI actions</h3><p>Each intent owns a unique result: Main AI senses with a Used in context badge, Grammar learner-mistake cards, Compare minimal pairs, and one Rephrase action with three rewrite styles—not a blank chat box.</p></article>
                 </div>
             </div>
         </section>
@@ -259,20 +261,20 @@
                 <div class="ai-action-grid">
                     <article class="ai-action-card">
                         <span class="ai-action-index">01</span>
-                        <h3>Main AI Explanation</h3>
-                        <p>Oxford-style definition, numbered sense cards, bilingual examples, and usage notes for the selected word or phrase.</p>
+                        <h3>Main AI</h3>
+                        <p>Oxford-style definition, numbered senses with a <strong>Used in context</strong> badge, bilingual examples, and word-family chips. No collocations or rewrites here.</p>
                         <span class="ai-action-meta">Optional context</span>
                     </article>
                     <article class="ai-action-card">
                         <span class="ai-action-index">02</span>
                         <h3>Context Explain</h3>
-                        <p>Pinpoints the sense that fits this sentence, with substitutions that keep the same syntax and notes on nuance you would lose.</p>
+                        <p>Meaning in this sentence, the word’s grammatical job, a one-line substitution test, and replacements that keep the same syntax.</p>
                         <span class="ai-action-meta">Requires sentence context</span>
                     </article>
                     <article class="ai-action-card">
                         <span class="ai-action-index">03</span>
                         <h3>Grammar &amp; Nuance</h3>
-                        <p>Shows the syntactic role, formality, tone, and the pattern the word or phrase is following in the surrounding sentence.</p>
+                        <p>Syntactic slot, pattern rules, short examples, and a Common Learner Mistakes card with Avoid / Prefer pairs.</p>
                         <span class="ai-action-meta">Requires sentence context</span>
                     </article>
                     <article class="ai-action-card">
@@ -284,7 +286,7 @@
                     <article class="ai-action-card">
                         <span class="ai-action-index">05</span>
                         <h3>Sentence Breakdown</h3>
-                        <p>Splits clauses, roles, and phrase chips so a long or technical sentence becomes inspectable one piece at a time.</p>
+                        <p>Splits the sentence into clauses with role badges and a short explanation under each piece, plus phrase chips when an idiom is present.</p>
                         <span class="ai-action-meta">Sentence query or context</span>
                     </article>
                     <article class="ai-action-card">
@@ -393,7 +395,7 @@
                             <p>Clone the repository or download the ZIP, then install and build:</p>
                             <pre class="install-code"><code>git clone https://github.com/thaihai-swe/dictionary-extension.git
 cd dictionary-extension
-yarn install &amp;&amp; yarn build</code></pre>
+npm install &amp;&amp; npm run build</code></pre>
                         </div>
                     </li>
                     <li class="install-step">
@@ -482,9 +484,9 @@ yarn install &amp;&amp; yarn build</code></pre>
                     </article>
                 </div>
                 <div class="code-showcase mt-xl">
-                    <div class="code-header"><span class="code-title">Provider normalization keeps the interface consistent</span><span class="code-lang">JavaScript (ES modules)</span></div>
+                    <div class="code-header"><span class="code-title">Provider normalization keeps the interface consistent</span><span class="code-lang">TypeScript</span></div>
                     <pre class="code-block"><code><span class="token-comment">// Providers return one renderer-compatible result shape.</span>
-<span class="token-keyword">const</span> primaryId = settings.dictionaryProvider || <span class="token-string">"free_dictionary"</span>;
+<span class="token-keyword">const</span> primaryId = settings.dictionaryProvider || <span class="token-string">"wiktionary"</span>;
 <span class="token-keyword">const</span> adapter = DICTIONARY_PROVIDERS[primaryId];
 
 <span class="token-keyword">try</span> {
@@ -546,7 +548,7 @@ yarn install &amp;&amp; yarn build</code></pre>
                     </details>
                     <details class="faq-item">
                         <summary>Is there a Chrome Web Store listing?</summary>
-                        <p>Not yet. Install from GitHub with Chrome’s unpacked-extension workflow: clone the repository, run <code>yarn install &amp;&amp; yarn build</code>, enable Developer mode, and choose <strong>Load unpacked</strong> on the built <code>dist</code> folder.</p>
+                        <p>Not yet. Install from GitHub with Chrome’s unpacked-extension workflow: clone the repository, run <code>npm install &amp;&amp; npm run build</code>, enable Developer mode, and choose <strong>Load unpacked</strong> on the built <code>dist</code> folder.</p>
                     </details>
                 </div>
             </div>

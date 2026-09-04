@@ -19,14 +19,26 @@ import {
 } from '../shared/ai-prompts';
 import {
   normalizeComparisonData,
+  normalizeRephraseStyles,
   normalizeSentenceBreakdown,
   parseLexicalProfileFromResponse,
   stripLexicalProfileBlock,
   extractJsonObject,
 } from '../shared/query-utils';
+import {
+  errorMessageFromOpenAiBody,
+  extractOpenAiContent,
+} from '../shared/openai-response';
+import {
+  DEFAULT_GEMINI_MODEL,
+  DEFAULT_OPENAI_BASE_URL,
+  defaultAiBaseUrlFor,
+  defaultAiModelFor,
+  isOpenAiStandard,
+} from '../shared/settings.ts';
 
 const GEMINI_MODELS = [
-  'gemini-3.5-flash-lite',
+  DEFAULT_GEMINI_MODEL,
 ];
 
 function resolveQueryAndContext(query: string, context?: string): { term: string; surrounding: string } {
@@ -36,11 +48,6 @@ function resolveQueryAndContext(query: string, context?: string): { term: string
     term,
     surrounding: surrounding && surrounding.toLowerCase() !== term.toLowerCase() ? surrounding : '',
   };
-}
-
-function isGeminiBaseUrl(baseUrl?: string): boolean {
-  const normalized = String(baseUrl || '').toLowerCase();
-  return !normalized || normalized.includes('generativelanguage.googleapis.com');
 }
 
 function isTransientGeminiError(message: string, status?: number): boolean {
@@ -162,49 +169,57 @@ async function callGeminiApi(prompt: string, apiKey: string, preferredModel?: st
   throw new Error(lastErr);
 }
 
-function buildChatCompletionsUrl(baseUrl: string): string {
-  const normalized = String(baseUrl || '').trim().replace(/\/+$/, '');
+function buildChatCompletionsUrl(baseUrl?: string): string {
+  const normalized = String(baseUrl || DEFAULT_OPENAI_BASE_URL).trim().replace(/\/+$/, '');
   if (normalized.endsWith('/chat/completions')) return normalized;
   return `${normalized}/chat/completions`;
 }
 
 async function requestOpenAiCompatible(prompt: string, settings: AppSettings, signal?: AbortSignal): Promise<string> {
   const url = buildChatCompletionsUrl(settings.aiBaseUrl);
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json, text/event-stream',
+  };
+  const key = String(settings.aiApiKey || '').trim();
+  if (key) {
+    headers.Authorization = `Bearer ${key}`;
+  }
+  const body = {
+    model: settings.aiModel?.trim() || '',
+    messages: [{ role: 'user', content: prompt }],
+    temperature: 0.2,
+    stream: false,
+  };
   const res = await safeFetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${settings.aiApiKey}`,
-    },
-    body: JSON.stringify({
-      model: settings.aiModel || 'gpt-4o-mini',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.2,
-    }),
+    headers,
+    body: JSON.stringify(body),
     signal,
     timeoutMs: AI_FETCH_TIMEOUT_MS,
   });
-  const json = await res.json().catch(() => ({}));
+  const rawText = await res.text();
   if (!res.ok) {
-    throw new Error(json?.error?.message || `AI provider request failed (${res.status})`);
+    throw new Error(errorMessageFromOpenAiBody(rawText, res.status));
   }
-  const content = json.choices?.[0]?.message?.content;
-  if (!content) throw new Error('AI provider returned an empty response.');
-  return Array.isArray(content) ? content.map((part: { text?: string }) => part?.text || '').join('\n') : String(content);
+  const content = extractOpenAiContent(rawText);
+  if (!content.trim()) throw new Error('AI provider returned an empty response.');
+  return content;
 }
 
 export async function validateAiProvider(settings: AppSettings): Promise<{ ok: boolean; latencyMs?: number; error?: string; message?: string }> {
+  const isStandard = isOpenAiStandard(settings);
   const missing: string[] = [];
-  if (!settings?.aiApiKey) missing.push('API key');
-  if (!settings?.aiModel) missing.push('model');
+  if (!isStandard && !settings?.aiApiKey?.trim()) missing.push('API key');
+  if (!settings?.aiModel?.trim()) missing.push('model');
   if (missing.length) return { ok: false, error: `Missing AI setting: ${missing.join(', ')}.` };
 
   const startTime = Date.now();
   try {
     const prompt = 'Reply with exactly: ok';
-    const content = isGeminiBaseUrl(settings.aiBaseUrl)
-      ? await callGeminiApi(prompt, settings.aiApiKey, settings.aiModel)
-      : await requestOpenAiCompatible(prompt, settings);
+    const content = isStandard
+      ? await requestOpenAiCompatible(prompt, settings)
+      : await callGeminiApi(prompt, settings.aiApiKey, settings.aiModel);
     const latencyMs = Date.now() - startTime;
     if (!String(content || '').trim()) return { ok: false, latencyMs, error: 'AI provider returned an empty response.' };
     return { ok: true, latencyMs, message: `AI provider is connected (${latencyMs}ms).` };
@@ -223,7 +238,10 @@ function buildOfflineFallback(intentId: AiIntentId, term: string, trimmed: strin
     return {
       type: 'sentence_breakdown',
       query: trimmed,
-      summary: `### Clause & Structure Breakdown\nEnter a Gemini API key in Settings for a real syntactic parse.\n\n### Translation & Context\n${translation}`,
+      summary: `### Clause & Structure Breakdown\nConfigure an AI endpoint in Settings for a real syntactic parse.\n\n### Translation & Context\n${translation}`,
+      structure: [
+        { text: trimmed, role: 'Full clause', explanation: 'Complete query or context sentence' },
+      ],
       translation,
     };
   }
@@ -231,7 +249,7 @@ function buildOfflineFallback(intentId: AiIntentId, term: string, trimmed: strin
     return {
       type: intentId,
       query: term,
-      summary: `**${term}** *word*\n\n${translation}\n\n### Senses & Meanings\n1. *(word)* Concise definition — ${translation}\n\n### Translation & Meaning\n**${term}** — ${translation}\n\n### Usage Note\nRegister and nuance depend on the surrounding sentence.\n\n### Example Sentences\n> "${trimmed}"\n\n### Deep Understanding\nEnter a Gemini API key in Settings for Oxford-style senses, bilingual glosses, usage notes, and etymology.`,
+      summary: `**${term}** *word*\n\n${translation}\n\n### Senses & Meanings\n1. *(word)* Concise definition — ${translation}\n\n### Translation & Meaning\n**${term}** — ${translation}\n\n### Usage Note\nRegister and nuance depend on the surrounding sentence.\n\n### Example Sentences\n> "${trimmed}"\n\n### Deep Understanding\nConfigure an AI endpoint in Settings for Oxford-style senses, bilingual glosses, usage notes, and etymology.`,
       translation,
     };
   }
@@ -239,7 +257,7 @@ function buildOfflineFallback(intentId: AiIntentId, term: string, trimmed: strin
     return {
       type: intentId,
       query: term,
-      summary: `### Meaning in Context\nIn this sentence, **"${term}"** means **${translation}**.\n\n### Direct Substitutions\nEnter an API key for contextual synonyms.\n\n> "${trimmed}"`,
+      summary: `### Meaning in Context\nIn this sentence, **"${term}"** means **${translation}**.\n\n### Role & Quick Test\nEnter an API key to see the grammatical job of this word and a one-line substitution test.\n\n### Direct Substitutions\nEnter an API key for contextual synonyms.\n\n> "${trimmed}"`,
       translation,
     };
   }
@@ -265,14 +283,26 @@ function buildOfflineFallback(intentId: AiIntentId, term: string, trimmed: strin
       query: term,
       summary: `### Core Distinction\n• Term: "${term}"\n• Meaning: ${translation}\n\n> "${trimmed}"`,
       translation,
+      comparison: {
+        coreDistinction: `Enter an API key to compare "${term}" with its nearest confusable.`,
+        rows: [],
+      },
     };
   }
   if (intentId === 'rephrase') {
     return {
       type: intentId,
       query: term,
-      summary: `### Simplified Version\n> "${trimmed}"\n\n### Academic & Formal\nEnter a Gemini API key to rewrite in three styles (${targetLang}).`,
+      summary: `### Simplified Version\n> "${trimmed}"\n\n### Academic & Formal\nConfigure an AI endpoint to rewrite in three styles (${targetLang}).`,
       translation,
+      rephraseStyles: [
+        {
+          style: 'simplified',
+          label: 'Simplified',
+          text: trimmed,
+          note: `Enter an API key to rewrite this sentence in three styles (${targetLang}).`,
+        },
+      ],
     };
   }
   return {
@@ -310,24 +340,29 @@ export async function fetchAiAnalysis(
 
   if (signal?.aborted) throw new DOMException('The user aborted a request.', 'AbortError');
 
-  let apiKey = userApiKey?.trim() || settings?.aiApiKey?.trim() || '';
-  let modelName = userModelName?.trim() || settings?.aiModel?.trim();
-  let baseUrl = settings?.aiBaseUrl || '';
+  const apiKey = userApiKey?.trim() || settings?.aiApiKey?.trim() || '';
+  const isStandard = isOpenAiStandard(settings);
+  const provider = isStandard ? 'openai' : 'gemini';
+  const modelName = userModelName?.trim() || settings?.aiModel?.trim() || defaultAiModelFor(provider);
+  const baseUrl = settings?.aiBaseUrl?.trim() || defaultAiBaseUrlFor(provider);
 
   const effectiveSettings = {
     ...(settings || {}),
+    aiProvider: provider,
     aiApiKey: apiKey,
-    aiModel: modelName || 'gemini-3.5-flash-lite',
+    aiModel: modelName,
     aiBaseUrl: baseUrl,
     translateTargetLanguage: targetLang,
   } as AppSettings;
 
-  if (apiKey) {
+  const canAttemptNetwork = isStandard ? Boolean(modelName) : Boolean(apiKey);
+
+  if (canAttemptNetwork) {
     try {
       const prompt = buildPrompt(term, effectiveSettings, promptContext, canonical);
-      const raw = isGeminiBaseUrl(effectiveSettings.aiBaseUrl)
-        ? await callGeminiApi(prompt, apiKey, modelName || undefined, signal)
-        : await requestOpenAiCompatible(prompt, effectiveSettings, signal);
+      const raw = isStandard
+        ? await requestOpenAiCompatible(prompt, effectiveSettings, signal)
+        : await callGeminiApi(prompt, apiKey, modelName, signal);
       const lexicalProfile = parseLexicalProfileFromResponse(raw) || undefined;
       const content = stripLexicalProfileBlock(raw);
 
@@ -359,6 +394,18 @@ export async function fetchAiAnalysis(
           translation,
           lexicalProfile,
           comparison: comparison || undefined,
+        };
+      }
+
+      if (canonical === 'rephrase') {
+        const rephraseStyles = normalizeRephraseStyles(content);
+        return {
+          type: canonical,
+          query: term,
+          summary: content,
+          translation,
+          lexicalProfile,
+          rephraseStyles: rephraseStyles.length ? rephraseStyles : undefined,
         };
       }
 

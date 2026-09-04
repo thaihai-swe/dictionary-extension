@@ -20,6 +20,23 @@ export {
 };
 export const SETTINGS_SCHEMA_VERSION_KEY = 'dictionaryHelperSettingsSchemaVersion';
 
+export const DEFAULT_GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/openai';
+export const DEFAULT_OPENAI_BASE_URL = 'http://localhost:20128/v1';
+export const DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash-lite';
+export const DEFAULT_OPENAI_MODEL = '';
+
+export function isOpenAiStandard(settings?: Partial<AppSettings> | null): boolean {
+  return settings?.aiProvider === 'openai';
+}
+
+export function defaultAiModelFor(provider: AppSettings['aiProvider']): string {
+  return provider === 'openai' ? DEFAULT_OPENAI_MODEL : DEFAULT_GEMINI_MODEL;
+}
+
+export function defaultAiBaseUrlFor(provider: AppSettings['aiProvider']): string {
+  return provider === 'openai' ? DEFAULT_OPENAI_BASE_URL : DEFAULT_GEMINI_BASE_URL;
+}
+
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'dark',
   fontFamily: 'learner',
@@ -32,7 +49,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   translateProvider: 'google',
   libreTranslateBaseUrl: 'https://libretranslate.com',
   libreTranslateApiKey: '',
-  dictionaryProvider: 'free_dictionary',
+  dictionaryProvider: 'wiktionary',
   popupWidth: 620,
   popupHeight: 720,
   enableTranslate: true,
@@ -45,17 +62,18 @@ export const DEFAULT_SETTINGS: AppSettings = {
   pausedHostnames: [],
   pronunciationRate: 0.95,
   pronunciationVoiceURI: '',
-  aiBaseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+  aiProvider: 'gemini',
+  aiBaseUrl: DEFAULT_GEMINI_BASE_URL,
   aiApiKey: '',
   hasAiApiKey: false,
-  aiModel: 'gemini-3.5-flash-lite',
+  aiModel: DEFAULT_GEMINI_MODEL,
   ...DEFAULT_AI_PROMPTS,
 };
 
 export const PUBLIC_SETTING_KEYS = (Object.keys(DEFAULT_SETTINGS) as Array<keyof AppSettings>)
   .filter((key) => !SECRET_KEYS.has(key));
 
-const SYNC_SETTING_KEYS = [...PUBLIC_SETTING_KEYS, SETTINGS_SCHEMA_VERSION_KEY, ...SECRET_SETTING_KEYS];
+const SYNC_SETTING_KEYS = [...PUBLIC_SETTING_KEYS, SETTINGS_SCHEMA_VERSION_KEY];
 
 export function normalizePausedHostnames(value: unknown): string[] {
   const raw = Array.isArray(value) ? value : String(value || '').split(/[\n,]/);
@@ -79,9 +97,10 @@ function clampFloat(value: unknown, min: number, max: number, fallback: number):
 }
 
 export function normalizeSettings(input?: Partial<AppSettings> | Record<string, unknown>): AppSettings {
+  const source = input || {};
   const merged = {
     ...DEFAULT_SETTINGS,
-    ...(input || {}),
+    ...source,
   } as AppSettings;
 
   merged.pausedHostnames = normalizePausedHostnames(merged.pausedHostnames);
@@ -113,12 +132,19 @@ export function normalizeSettings(input?: Partial<AppSettings> | Record<string, 
   merged.disablePageContextExtraction = Boolean(merged.disablePageContextExtraction);
   merged.hasAiApiKey = hasConfiguredAiApiKey(merged);
 
+  const sourceSettings = source as Partial<AppSettings>;
+  const aiProv = String(merged.aiProvider || '').trim().toLowerCase();
+  merged.aiProvider = aiProv === 'openai' ? 'openai' : 'gemini';
+  merged.aiBaseUrl = String(sourceSettings.aiBaseUrl || '').trim().replace(/\/+$/, '') || defaultAiBaseUrlFor(merged.aiProvider);
+  if (!String(sourceSettings.aiModel || '').trim()) {
+    merged.aiModel = defaultAiModelFor(merged.aiProvider);
+  }
+
   const removedDictionaryIds = new Set(['merriam_webster', 'wordnik', 'words_api', 'conceptnet']);
   if (removedDictionaryIds.has(String(merged.dictionaryProvider || ''))) {
     merged.dictionaryProvider = DEFAULT_SETTINGS.dictionaryProvider;
   }
 
-  if (!String(merged.aiModel || '').trim()) merged.aiModel = DEFAULT_SETTINGS.aiModel;
   for (const key of Object.keys(DEFAULT_AI_PROMPTS) as Array<keyof typeof DEFAULT_AI_PROMPTS>) {
     if (!String(merged[key] || '').trim()) merged[key] = DEFAULT_AI_PROMPTS[key];
   }
@@ -179,7 +205,7 @@ export async function loadFullSettings(): Promise<AppSettings> {
     return normalizeSettings({ ...DEFAULT_SETTINGS, ...DEFAULT_AI_PROMPTS });
   }
   const [syncData, localData] = await Promise.all([
-    chrome.storage.sync.get(SYNC_SETTING_KEYS),
+    chrome.storage.sync.get([...SYNC_SETTING_KEYS, ...SECRET_SETTING_KEYS]),
     chrome.storage.local.get([...SECRET_SETTING_KEYS, 'hasAiApiKey']),
   ]);
   const merged = mergeStoredSettings(syncData || {}, localData || {});

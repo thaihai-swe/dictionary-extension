@@ -3,6 +3,8 @@ import { searchWord, stopAllAudio, useDictionaryQuery, useDictionaryResult } fro
 import { useStorage } from '../composables/composable.storage';
 import { IconClose } from './icons';
 import WordLookupResult from './view.word-lookup-result';
+import PresetChips from './component.preset-chips';
+import type { DemoPreset } from '../shared/presets';
 
 interface WordLookupViewProps {
   initialQuery?: string;
@@ -28,7 +30,7 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
   const searchInputElement = useRef<HTMLInputElement | null>(null);
 
   function getActiveProvider(): string {
-    return provider || settings.dictionaryProvider || 'free_dictionary';
+    return provider || settings.dictionaryProvider || 'wiktionary';
   }
 
   function getActiveLang(): string {
@@ -44,6 +46,10 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
 
   function handleSearch(wordToSearch?: string) {
     runLookup(wordToSearch || searchInput);
+  }
+
+  function handlePresetSelect(preset: DemoPreset) {
+    runLookup(preset.query);
   }
 
   function clearSearch() {
@@ -129,6 +135,8 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
           </div>
         ) : result ? (
           <WordLookupResult onSelectWord={handleSearch} />
+        ) : !searchInput.trim() && !query.trim() ? (
+          <PresetChips onSelect={handlePresetSelect} />
         ) : null}
       </div>
     </div>

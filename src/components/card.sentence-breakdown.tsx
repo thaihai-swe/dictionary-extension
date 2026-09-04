@@ -46,16 +46,23 @@ export const SentenceBreakdownCard: React.FC<SentenceBreakdownCardProps> = ({
             key={index}
             className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1.5 pl-3.5 py-2.5 pr-3 rounded-r-xl border-l-2 border-teal-500/70 bg-surface border border-border text-sm group hover:border-teal-500/40 transition-all shadow-xs"
           >
-            <div className="flex-1 min-w-[200px] text-content text-[14px] leading-relaxed flex items-center justify-between gap-2">
-              <span>{item.text}</span>
-              <button
-                type="button"
-                onClick={() => speakText(item.text)}
-                title="Read clause aloud"
-                className="opacity-0 group-hover:opacity-100 h-7 w-7 text-content-muted hover:text-teal-600 dark:hover:text-teal-300 transition-opacity cursor-pointer rounded-md hover:bg-muted flex items-center justify-center"
-              >
-                <IconSpeaker className="w-3.5 h-3.5" />
-              </button>
+            <div className="flex-1 min-w-[200px] space-y-0.5">
+              <div className="text-content text-[14px] leading-relaxed flex items-center justify-between gap-2">
+                <span className="font-medium text-content">{item.text}</span>
+                <button
+                  type="button"
+                  onClick={() => speakText(item.text)}
+                  title="Read clause aloud"
+                  className="opacity-0 group-hover:opacity-100 h-7 w-7 text-content-muted hover:text-teal-600 dark:hover:text-teal-300 transition-opacity cursor-pointer rounded-md hover:bg-muted flex items-center justify-center"
+                >
+                  <IconSpeaker className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              {item.explanation ? (
+                <p className="text-[12px] text-content-secondary leading-normal">
+                  {item.explanation}
+                </p>
+              ) : null}
             </div>
             <span className="ml-auto flex-shrink-0 px-2.5 py-0.5 rounded-full text-[11px] font-semibold text-teal-600 dark:text-teal-300 bg-teal-500/15 border border-teal-500/25 capitalize font-mono">
               {item.role}

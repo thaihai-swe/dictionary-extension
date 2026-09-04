@@ -24,23 +24,26 @@ Then open `http://127.0.0.1:4173`.
 
 ```bash
 # Install dependencies
-yarn install
+npm install
 
 # Run dev server
-yarn dev
+npm run dev
 
 # Run TypeScript typecheck
-yarn typecheck
+npm run typecheck
+
+# Run unit tests
+npm test
 
 # Build production distribution (/dist)
-yarn build
+npm run build
 ```
 
 ## Load Locally in Chrome
 
 1. Open `chrome://extensions`.
 2. Enable **Developer mode** (top-right).
-3. Click **Load unpacked** and select the built `dist/` directory (or the root directory).
+3. Click **Load unpacked** and select the built `dist/` directory.
 4. Reload the extension after build changes.
 5. Refresh open webpage tabs after reload so content scripts update.
 

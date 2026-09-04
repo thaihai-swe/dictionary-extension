@@ -29,7 +29,7 @@ export const ALL_LEXICAL_EXTRAS: readonly LexicalExtraId[] = [
 ];
 
 const LEXICAL_EXTRAS_BY_INTENT: Record<AiIntentId, readonly LexicalExtraId[]> = {
-  default: [],
+  default: ['wordFamily'],
   grammar: ['learnerMistakes'],
   collocations: ['collocations'],
   explain_in_context: [],
@@ -123,9 +123,14 @@ Surrounding context:
 Keep the answer compact and scannable. Do not add a separate translation section or repeat the plain summary.
 Use only Markdown headings at level 3 (###), bullets, and short paragraphs. Do not use HTML or code fences. Do not repeat headings.
 Do not rephrase the entire context sentence; whole-sentence rewrites belong to Rephrase.
+Do not decompose the whole sentence into clauses; that belongs to Sentence Breakdown.
+Do not list word-family forms, collocations, confusable pairs, or learner mistakes.
 
 ### Meaning in Context
 Explain what "{{str}}" means specifically in this surrounding sentence, including its contextual translation into {{targetLang}}.
+
+### Role & Quick Test
+State the exact grammatical job of "{{str}}" in this sentence in one short sentence. Then give a 1-line rule of thumb or substitution test a learner can use to verify the choice (for example: "If you can replace it with 'influence', use affect").
 
 ### Direct Substitutions
 Provide 2-3 natural synonyms or phrases that could directly replace "{{str}}" in this specific sentence without altering grammatical structure, each with a brief {{targetLang}} gloss.
@@ -145,6 +150,7 @@ Formatting instructions:
 - Use clear markdown subheadings at level 3 (###) for each distinct section.
 - Do not use HTML, code fences, or duplicate section headings.
 - Do not include a separate Translation, Summary, or Formality & Tone section.
+- Do not decompose the whole sentence into a clause table; that belongs to Sentence Breakdown.
 - Do not add Word Family, Related Forms, Derived Forms, Word Formation, Usage Warnings, Confusables, Common Learner Mistakes, Collocations, or Natural Collocations headings; reliable data for those categories belongs in the structured lexical profile.
 
 Include these sections:
@@ -167,6 +173,8 @@ Optional context:
 """
 
 Use level-3 Markdown headings (###), bullets, and short paragraphs. Do not use HTML or code fences.
+Do not rewrite the sentence in multiple styles; that belongs to Rephrase.
+Do not list word-family forms, learner mistakes, or a full dictionary definition.
 
 ### Core Distinction
 Give a 2-sentence rule of thumb explaining the fundamental difference in meaning, register, or grammatical class.
@@ -178,15 +186,17 @@ Compare the terms across 2-3 key dimensions (Function/Meaning, Typical Usage/Reg
 Show 2 distinct natural collocations or phrases for each term to illustrate correct usage.
 
 ### Minimal Pairs & Examples
-Provide 2 minimal-pair sentence comparisons demonstrating when to choose one over the other. For each pair use exactly this shape:
-> English sentence
-> {{targetLang}} translation`;
+Provide 2 minimal-pair sentence comparisons demonstrating when to choose one over the other. For each pair, give two contrasting English sentences as consecutive blockquotes, then a one-line explanation of the contrast:
+> English sentence using the first term
+> English sentence using the second term
+Then one short sentence explaining the difference.`;
 
 export const DEFAULT_AI_REPHRASE_PROMPT_TEMPLATE = `Rephrase the supplied text or sentence for an English language learner across three distinct stylistic targets.
 Original text: "{{sentence}}"
 Target language for explanations: {{targetLang}}
 
 Use only Markdown headings at level 3 (###) and blockquotes. Do not use HTML or code fences.
+Do not add a dictionary definition, grammar analysis, collocations, confusable comparison, or sentence breakdown. Only the three rewrite styles.
 
 ### Simplified Version
 > Rewritten sentence using Oxford 3000 / A2-B1 high-frequency vocabulary.
@@ -234,6 +244,7 @@ Optional context:
 
 Keep the answer concise, accurate, and practical. Use level-3 Markdown headings (###) and bullet lists. Do not use code fences or HTML.
 Do not invent context. If the expression is not idiomatic, explain its preposition patterns and literal usage.
+Do not rewrite the whole sentence in multiple styles; that belongs to Rephrase.
 Do not add Word Family, Related Forms, Derived Forms, Word Formation, Usage Warnings, Confusables, Common Learner Mistakes, Collocations, or Natural Collocations headings; reliable data for those categories belongs in the structured lexical profile.
 
 ### Core Meaning

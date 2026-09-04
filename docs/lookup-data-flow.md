@@ -41,8 +41,8 @@ User selects word in browser (or types in toolbar popup)
            │                                                             │
            ├─ MISS → chrome.runtime.sendMessage                          ├─ MISS → chrome.runtime.sendMessage
            │         type: LOOKUP_TEXT                                   │         type: AI_LOOKUP
-           │         timeout: 30,000ms                                   │         intent: default (Main AI) ONLY
-           │                                                             │         timeout: 30,000ms
+           │         timeout: 60,000ms                                   │         intent: default (Main AI) ONLY
+           │                                                             │         timeout: 60,000ms
            ▼                                                             ▼
 [5] service-worker.ts                                         [6] service-worker.ts
     handleDictionaryLookup()                                  handleAiLookup()
@@ -130,7 +130,7 @@ selection
 3. **Miss:** `LOOKUP_TEXT` message sent to `src/entrypoints/background/service-worker.ts` → `fetchCombinedDictionaryResult()`.
 4. **Phase A (Fast Primary Lookup):** Primary provider (default: Free Dictionary API) and neural translation run in parallel. First paint renders the serif headword, UK/US phonetic chips, audio playback buttons, and core definitions.
 5. **Phase B (Progressive Lazy Enrichment):** Background worker queries secondary keyless providers (`Datamuse`, `Wiktionary`, `Wikipedia`, `Urban Dictionary`, `RhymeBrain`) in concurrent batches of 2 (`ENRICHMENT_CONCURRENCY = 2`). `LOOKUP_UPDATE` messages are pushed with incrementing `revision` numbers. Extra cards (`CollocationsCard`, `WordFamilyCard`, `LearnerMistakesCard`, `WordFormationCard`) mount on subsequent animation frames without layout jump.
-6. **Timeouts:** All dictionary, translation, and proxy fetch calls enforce a uniform **30,000ms (30s)** timeout limit (`DICTIONARY_FETCH_TIMEOUT_MS = 30000`, `TRANSLATION_FETCH_TIMEOUT_MS = 30000`).
+6. **Timeouts:** All dictionary, translation, and proxy fetch calls enforce a uniform **60,000ms (60s)** timeout limit (`DICTIONARY_FETCH_TIMEOUT_MS = 60000`, `TRANSLATION_FETCH_TIMEOUT_MS = 60000`).
 
 > **Inspecting Network Requests:** Because dictionary and translation requests run in the background service worker to bypass webpage CORS boundaries, their HTTP requests appear in the **Background Service Worker's DevTools Network tab** (`chrome://extensions` → "service worker"), not the in-page DevTools.
 
@@ -145,7 +145,7 @@ selection
    - **Amber Pulse:** Currently fetching.
    - **Gray (Unrequested):** Not requested yet.
 7. **Cache:** Persistent LRU, 100 entries, 24h TTL (`ai_lookup_cache_v2` in `chrome.storage.local`).
-8. AI HTTP runs in the background service worker (`handleAiLookup` → `fetchAiAnalysis`) using `gemini-3.5-flash-lite` or custom endpoints with a **30,000ms (30s)** timeout.
+8. AI HTTP runs in the background service worker (`handleAiLookup` → `fetchAiAnalysis`) using `gemini-3.5-flash-lite` or custom endpoints with a **60,000ms (60s)** timeout.
 
 Preload is skipped when AI is disabled, preload is off, or no API key is configured (`shouldPreloadAi()`).
 
@@ -169,7 +169,7 @@ The AI view is loaded lazily on first visit (`aiVisited`), then stays mounted wi
 |---|---|---|
 | **Trigger** | Selection / `searchWord()` | 600ms debounce from `searchWord()` (Main AI only), then tab visit sequence |
 | **Runtime message** | `LOOKUP_TEXT`, then `LOOKUP_UPDATE` | `AI_LOOKUP` |
-| **Timeout limit** | **30,000ms (30s)** | **30,000ms (30s)** |
+| **Timeout limit** | **60,000ms (60s)** | **60,000ms (60s)** |
 | **Background handler** | `handleDictionaryLookup` | `handleAiLookup` |
 | **Abort scope** | Dictionary `AbortController` | Per-intent AI `AbortController` |
 | **Cache** | LRU 200 entries, 48h, `chrome.storage.local` (`dict_lookup_cache_v2`) | LRU 100 entries, 24h, `chrome.storage.local` (`ai_lookup_cache_v2`) |

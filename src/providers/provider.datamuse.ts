@@ -1,4 +1,4 @@
-import { safeFetch } from './provider.http';
+import { DICTIONARY_FETCH_TIMEOUT_MS, safeFetch } from './provider.http';
 import {
   AttributedItem,
   Collocations,
@@ -33,7 +33,7 @@ function posCodeToName(code: string): string {
 
 async function fetchDatamuseList(url: string, signal?: AbortSignal): Promise<string[]> {
   try {
-    const res = await safeFetch(url, { signal, timeoutMs: 30000 });
+    const res = await safeFetch(url, { signal, timeoutMs: DICTIONARY_FETCH_TIMEOUT_MS });
     if (!res.ok) return [];
     const list = await res.json();
     if (!Array.isArray(list)) return [];

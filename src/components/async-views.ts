@@ -8,20 +8,22 @@ export const WordFormationCard = lazy(() => import('./card.word-formation'));
 export const LearnerMistakesCard = lazy(() => import('./card.learner-mistakes'));
 export const CollocationsCard = lazy(() => import('./card.collocations'));
 
-export const loadAiMarkdownIntent = () => import('./intent.ai-markdown');
-export const loadSentenceBreakdownIntent = () => import('./intent.sentence-breakdown');
-export const loadConfusablesIntent = () => import('./intent.confusables');
+const loadAiMarkdownIntent = () => import('./intent.ai-markdown');
+const loadSentenceBreakdownIntent = () => import('./intent.sentence-breakdown');
+const loadConfusablesIntent = () => import('./intent.confusables');
+const loadRephraseIntent = () => import('./intent.rephrase');
 
 export const AiMarkdownIntent = lazy(loadAiMarkdownIntent);
 export const SentenceBreakdownIntent = lazy(loadSentenceBreakdownIntent);
 export const ConfusablesIntent = lazy(loadConfusablesIntent);
+export const RephraseIntent = lazy(loadRephraseIntent);
 
 const INTENT_CHUNK_LOADERS: Record<AiIntentId, () => Promise<unknown>> = {
   default: loadAiMarkdownIntent,
   explain_in_context: loadAiMarkdownIntent,
   grammar: loadAiMarkdownIntent,
   collocations: loadAiMarkdownIntent,
-  rephrase: loadAiMarkdownIntent,
+  rephrase: loadRephraseIntent,
   phrase_fallback: loadAiMarkdownIntent,
   sentence_breakdown: loadSentenceBreakdownIntent,
   confusables: loadConfusablesIntent,

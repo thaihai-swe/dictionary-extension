@@ -94,11 +94,12 @@ export const SettingsModal: React.FC = () => {
 
   useEffect(() => {
     loadVoices();
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.onvoiceschanged = loadVoices;
-    }
+    const synth = typeof window !== 'undefined' && 'speechSynthesis' in window ? window.speechSynthesis : null;
+    synth?.addEventListener('voiceschanged', loadVoices);
     void syncLocalFromStore();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      synth?.removeEventListener('voiceschanged', loadVoices);
+    };
   }, []);
 
   useEffect(() => {
@@ -301,7 +302,7 @@ export const SettingsModal: React.FC = () => {
               ['general', 'General', IconSettings],
               ['appearance', 'Appearance', IconSun],
               ['sources', 'Dictionaries & Sources', IconBook],
-              ['ai', 'Gemini AI Assistant', IconSparkles],
+              ['ai', 'AI Assistant', IconSparkles],
             ] as const
           ).map(([id, label, IconComponent]) => (
             <button

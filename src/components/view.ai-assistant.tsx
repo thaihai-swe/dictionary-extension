@@ -5,9 +5,12 @@ import { useStorage } from '../composables/composable.storage';
 import { AiIntentId, TabId } from '../types';
 import { IconClose, IconSearch } from './icons';
 import TokenizedContext from './component.tokenized-context';
+import PresetChips from './component.preset-chips';
+import type { DemoPreset } from '../shared/presets';
 import {
   AiMarkdownIntent,
   ConfusablesIntent,
+  RephraseIntent,
   SentenceBreakdownIntent,
 } from './async-views';
 import { cx } from '../ui/cx';
@@ -156,6 +159,13 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
   function handleIntentSelect(intentId: AiIntentId) {
     stopAllAudio();
     runCurrentIntent(intentId);
+  }
+
+  function handlePresetSelect(preset: DemoPreset) {
+    stopAllAudio();
+    setQueryInput(preset.query);
+    if (preset.context) setContextInput(preset.context);
+    runIntent(preset.intent || activeIntent, preset.query, targetLang, preset.context);
   }
 
   function handleTokenSelect(word: string) {
@@ -336,11 +346,27 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
               </button>
             </div>
 
+            {contextInput.trim() && (aiResult.type === 'explain_in_context' || aiResult.type === 'grammar') ? (
+              <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface border border-border text-[12.5px] shadow-xs">
+                <span className="font-bold text-content-muted text-[10.5px] uppercase tracking-wider flex-shrink-0 mt-0.5">
+                  Context used:
+                </span>
+                <TokenizedContext
+                  text={contextInput}
+                  query={resolvedQuery}
+                  onSelectToken={handleTokenSelect}
+                  className="p-0 border-0 bg-transparent text-[13px] inline"
+                />
+              </div>
+            ) : null}
+
             <Suspense fallback={<div className="p-3 text-[12.5px] text-content-muted">Loading analysis…</div>}>
               {aiResult.type === 'sentence_breakdown' ? (
                 <SentenceBreakdownIntent result={aiResult} targetLang={resultTargetLang} />
               ) : aiResult.type === 'confusables' ? (
                 <ConfusablesIntent result={aiResult} targetLang={resultTargetLang} />
+              ) : aiResult.type === 'rephrase' ? (
+                <RephraseIntent result={aiResult} targetLang={resultTargetLang} />
               ) : (
                 <AiMarkdownIntent
                   result={aiResult}
@@ -350,6 +376,8 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
               )}
             </Suspense>
           </div>
+        ) : !queryInput.trim() && !resolvedQuery ? (
+          <PresetChips onSelect={handlePresetSelect} />
         ) : null}
       </div>
     </div>

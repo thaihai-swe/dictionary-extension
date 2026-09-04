@@ -50,7 +50,7 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
   const { isDarkMode, toggleTheme } = useAppTheme(settings.theme, { saveSettings });
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [aiVisited, setAiVisited] = useState(activeTab === 'ai_assistant');
-  const [currentProvider, setCurrentProvider] = useState(settings.dictionaryProvider || 'free_dictionary');
+  const [currentProvider, setCurrentProvider] = useState(settings.dictionaryProvider || 'wiktionary');
   const [currentText, setCurrentText] = useState(selectedText || '');
   const [currentContext, setCurrentContext] = useState(
     isDistinctContext(selectedText || '', contextSentence) ? String(contextSentence || '').trim() : '',

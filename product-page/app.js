@@ -45,9 +45,15 @@
                 { number: "2", pos: "noun", definition: "The capacity of a system to keep working under pressure.", gloss: "độ bền / khả năng chịu tải", inContext: false }
             ],
             ai: {
+                default: {
+                    title: "Main AI Explanation",
+                    intro: "**resilience** /rɪˈzɪliəns/ *noun* — the ability to recover quickly from difficulty, change, or stress."
+                },
                 explain_in_context: {
                     title: "What “resilience” means here",
                     intro: "Here, resilience describes the team’s ability to stay effective and recover when pressure or setbacks appear.",
+                    role: "Uncountable noun used as the subject of the sentence.",
+                    quickTest: "If you can replace it with “the ability to recover,” you want resilience.",
                     points: [
                         "It is positive and often used for people, teams, systems, and communities.",
                         "“Under pressure” makes the meaning more specific: calm recovery in a difficult situation.",
@@ -59,8 +65,10 @@
                     intro: "“Resilience” is an uncountable noun used as the subject of the sentence.",
                     points: [
                         "Pattern: resilience + under + pressure / stress / adversity.",
-                        "It is more formal than “strength” and emphasizes recovery after difficulty.",
-                        "Common learner note: say “show resilience,” not usually “do resilience.”"
+                        "It is more formal than “strength” and emphasizes recovery after difficulty."
+                    ],
+                    learnerMistakes: [
+                        { avoid: "do resilience", prefer: "show resilience", example: "The team showed resilience after the outage." }
                     ]
                 },
                 phrase_explorer: {
@@ -126,7 +134,7 @@
         "spill the beans": {
             query: "spill the beans",
             tab: "ai",
-            intent: "phrase_explorer",
+            intent: "collocations",
             context: "He finally spilled the beans about the surprise launch.",
             dictionary: {
                 phonetic: "",
@@ -159,6 +167,10 @@
                 ]
             },
             ai: {
+                default: {
+                    title: "Main AI Explanation",
+                    intro: "**spill the beans** *idiom* — to reveal a secret, often earlier than intended."
+                },
                 explain_in_context: {
                     title: "What “spill the beans” means here",
                     intro: "The speaker revealed the secret launch before it was supposed to be announced.",
@@ -173,8 +185,10 @@
                     intro: "“Spill the beans” is a fixed idiom used like an ordinary verb phrase.",
                     points: [
                         "Common forms: spill the beans, spilled the beans, has spilled the beans.",
-                        "Use it when someone reveals information; it is not appropriate for very formal writing.",
-                        "Do not change “the beans” to a different noun—the phrase is fixed."
+                        "Use it when someone reveals information; it is not appropriate for very formal writing."
+                    ],
+                    learnerMistakes: [
+                        { avoid: "spill the secret beans", prefer: "spill the beans", example: "Don't spill the beans until everyone has arrived." }
                     ]
                 },
                 phrase_explorer: {
@@ -277,6 +291,10 @@
                 { number: "2", pos: "verb", definition: "Adjust a plan or method after new information.", gloss: "điều chỉnh", inContext: false }
             ],
             ai: {
+                default: {
+                    title: "Main AI Explanation",
+                    intro: "A complete technical sentence: the system automatically changes its behavior as demand increases."
+                },
                 explain_in_context: {
                     title: "Meaning in context",
                     intro: "The sentence says that the algorithm changes its behavior automatically when many users or requests arrive.",
@@ -293,6 +311,9 @@
                         "Subject: “The algorithm.”",
                         "Verb: “adapts”; the adverb “dynamically” explains how it adapts.",
                         "Pattern: adapt + to + noun."
+                    ],
+                    learnerMistakes: [
+                        { avoid: "adapt with high traffic", prefer: "adapt to high traffic", example: "The algorithm adapts to high traffic." }
                     ]
                 },
                 phrase_explorer: {
@@ -358,7 +379,7 @@
         "affect vs effect": {
             query: "affect vs effect",
             tab: "ai",
-            intent: "compare_confusables",
+            intent: "confusables",
             context: "The policy will affect housing costs, but the long-term effect is still unclear.",
             dictionary: {
                 phonetic: "/əˈfekt/ · /ɪˈfekt/",
@@ -393,6 +414,10 @@
                 ]
             },
             ai: {
+                default: {
+                    title: "Main AI Explanation",
+                    intro: "Affect is usually a verb meaning to influence. Effect is usually a noun meaning a result."
+                },
                 explain_in_context: {
                     title: "What each word does in this sentence",
                     intro: "The policy is the cause (affect, verb). The later result is still unknown (effect, noun).",
@@ -407,8 +432,10 @@
                     intro: "The pair is mostly a part-of-speech contrast, not a meaning overlap.",
                     points: [
                         "Affect: verb. Pattern: affect + object.",
-                        "Effect: noun. Pattern: the effect of X on Y / have an effect on.",
-                        "Do not write “the policy will effect housing costs” unless you mean “bring about,” which is rare."
+                        "Effect: noun. Pattern: the effect of X on Y / have an effect on."
+                    ],
+                    learnerMistakes: [
+                        { avoid: "the policy will effect housing costs", prefer: "the policy will affect housing costs", example: "The policy will affect housing costs." }
                     ]
                 },
                 phrase_explorer: {
@@ -482,7 +509,7 @@
     const state = {
         query: "resilience",
         tab: "dictionary",
-        intent: "explain_in_context",
+        intent: "default",
         practiceLabel: ""
     };
 
@@ -733,56 +760,104 @@
         }</div>`;
     }
 
+    function renderLearnerMistakes(mistakes) {
+        if (!Array.isArray(mistakes) || !mistakes.length) return "";
+        return `
+            <div class="demo-mistakes-block">
+                <h4 class="demo-mistakes-heading">Common Learner Mistakes</h4>
+                ${mistakes.map((m) => `
+                    <div class="demo-mistake-item">
+                        <p class="demo-mistake-avoid"><span class="demo-tag-avoid">Avoid</span> <s>${escapeHtml(m.avoid)}</s></p>
+                        <p class="demo-mistake-prefer"><span class="demo-tag-prefer">Prefer</span> <strong>${escapeHtml(m.prefer)}</strong></p>
+                        ${m.example ? `<p class="demo-mistake-example">“${escapeHtml(m.example)}”</p>` : ""}
+                    </div>
+                `).join("")}
+            </div>
+        `;
+    }
+
     function renderIntentBody(content) {
         if (content.styles) return renderRephraseCards(content.styles);
         if (content.phraseCards) return renderPhraseCards(content.phraseCards);
         if (content.rows && content.terms) {
             return `
-                ${content.distinction ? `<p class="demo-ai-copy">${escapeHtml(content.distinction)}</p>` : ""}
+                ${content.distinction ? `<div class="demo-core-distinction"><p><strong>Core distinction:</strong> ${escapeHtml(content.distinction)}</p></div>` : ""}
                 ${renderComparisonTable(content)}
                 ${renderMinimalPairs(content.pairs)}
             `;
         }
         if (content.rows) return renderBreakdownRows(content.rows);
-        return `<ul class="demo-list">${(content.points || []).map((point) => `<li>${escapeHtml(point)}</li>`).join("")}</ul>`;
+        return `
+            ${content.role ? `<div class="demo-role-box"><p><strong>Role:</strong> ${escapeHtml(content.role)}</p>${content.quickTest ? `<p><strong>Quick test:</strong> ${escapeHtml(content.quickTest)}</p>` : ""}</div>` : ""}
+            <ul class="demo-list">${(content.points || []).map((point) => `<li>${escapeHtml(point)}</li>`).join("")}</ul>
+            ${renderLearnerMistakes(content.learnerMistakes)}
+        `;
     }
 
     function renderAi(entry) {
-        const content = entry.ai[state.intent] || entry.ai.explain_in_context;
+        const intentKey = state.intent === "collocations" ? "collocations"
+            : state.intent === "confusables" ? "confusables"
+            : state.intent;
+        const aiEntry = entry.ai[intentKey]
+            || (intentKey === "collocations" ? entry.ai.phrase_explorer : null)
+            || (intentKey === "confusables" ? entry.ai.compare_confusables : null)
+            || entry.ai.default
+            || entry.ai.explain_in_context;
         const context = $("#demo-context-input")?.value.trim() || entry.context;
         const result = entry.dictionary;
-        const showSenses = Boolean(entry.senses) && state.intent === "explain_in_context";
+
+        if (state.intent === "default") {
+            const examples = (result.examples || [result.example]).slice(0, 2);
+            return `
+                <div class="demo-ai-shell">
+                    <div class="demo-card-heading">
+                        <h3 class="demo-ai-heading">Main AI Explanation</h3>
+                    </div>
+                    <p class="demo-ai-copy">${escapeHtml(result.definition)}</p>
+                    <div class="demo-translation-card">
+                        <strong>Target language gloss:</strong> ${escapeHtml(result.translation)}
+                    </div>
+                    ${entry.senses ? `
+                        <section class="demo-ai-analysis">
+                            <h4 class="demo-subheading">Senses in Context</h4>
+                            ${renderSenseMatrix(entry.senses)}
+                        </section>
+                    ` : ""}
+                    ${examples.length ? `
+                        <section class="demo-ai-analysis">
+                            <h4 class="demo-subheading">Bilingual Examples</h4>
+                            <ul class="demo-example-list">
+                                ${examples.map((ex) => `
+                                    <li class="demo-example-item">
+                                        <div class="demo-example-row">
+                                            <span class="demo-example-text">“${escapeHtml(ex)}”</span>
+                                            <button type="button" class="demo-section-action demo-example-listen" data-demo-listen aria-label="Play example">Listen</button>
+                                        </div>
+                                    </li>
+                                `).join("")}
+                            </ul>
+                        </section>
+                    ` : ""}
+                    ${renderWordFamily(result.wordFamily)}
+                </div>
+            `;
+        }
+
+        const isContextual = state.intent === "explain_in_context" || state.intent === "grammar";
 
         return `
-            <p class="demo-ai-kicker">Word explanation</p>
-            ${renderWordFamily(result.wordFamily)}
-            ${renderUsageNotes(result)}
-            <section class="demo-reference-entry">
+            <div class="demo-ai-shell">
                 <div class="demo-card-heading">
-                    <strong>${escapeHtml(entry.query)}</strong>
-                    <span>${escapeHtml(result.partOfSpeech || "Dictionary entry")}</span>
+                    <h3 class="demo-ai-heading">${escapeHtml(aiEntry.title || "AI Explanation")}</h3>
                 </div>
-                <p>${escapeHtml(result.definition)}</p>
-                <p><strong>Vietnamese translation:</strong> ${escapeHtml(result.translation)}</p>
-            </section>
-            ${showSenses ? `
-                <section class="demo-ai-analysis">
-                    <div class="demo-card-heading">
-                        <h3 class="demo-ai-heading">Senses &amp; meanings</h3>
-                    </div>
-                    ${renderSenseMatrix(entry.senses)}
-                </section>
-            ` : ""}
-            <section class="demo-ai-analysis">
-                <div class="demo-card-heading">
-                    <h3 class="demo-ai-heading">${escapeHtml(content.title)}</h3>
-                </div>
-                <p class="demo-context-used demo-tokenized-context"><strong>Context used:</strong> ${tokenizeContext(context, entry.query)}</p>
-                <p class="demo-ai-copy">${escapeHtml(content.intro)}</p>
-                ${renderIntentBody(content)}
-            </section>
-            ${renderStudyDetails(entry)}
-            <p class="demo-preview-note">Static portfolio preview — the extension sends contextual AI requests only after an explicit user action.</p>
+                ${isContextual && context ? `
+                    <p class="demo-context-used demo-tokenized-context">
+                        <strong>Context used:</strong> ${tokenizeContext(context, entry.query)}
+                    </p>
+                ` : ""}
+                <p class="demo-ai-copy">${escapeHtml(aiEntry.intro || "")}</p>
+                ${renderIntentBody(aiEntry)}
+            </div>
         `;
     }
 
@@ -880,7 +955,7 @@
             const sameIntent = (button.dataset.intent || "") === (intent || entry.intent || "");
             button.classList.toggle("active", sameQuery && sameTab && sameIntent);
         });
-        setIntent(intent || entry.intent || "explain_in_context");
+        setIntent(intent || entry.intent || "default");
         setTab(tab || entry.tab || "dictionary");
     }
 

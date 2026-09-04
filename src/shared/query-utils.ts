@@ -1,11 +1,13 @@
 import type {
   AiComparisonRow,
+  AiMinimalPair,
   AiPhraseItem,
   Collocations,
   ConfusablePair,
   LearnerMistake,
   LexicalProfile,
   PhraseExplanationSection,
+  RephraseStyleItem,
   SentenceStructureItem,
   WordFamily,
   WordFormation,
@@ -95,8 +97,8 @@ export interface DictionaryLookupAttempt {
 }
 
 const FALLBACK_ORDER = [
-  'free_dictionary',
   'wiktionary',
+  'free_dictionary',
   'datamuse',
   'rhymebrain',
   'wikipedia',
@@ -163,7 +165,7 @@ export function splitPhraseExplanation(markdown: string, source = 'AI · Phrase 
 }
 
 export function getDictionaryLookupAttempts(text: string, primaryId: string): DictionaryLookupAttempt[] {
-  const normalizedPrimary = FALLBACK_ORDER.includes(primaryId) ? primaryId : 'free_dictionary';
+  const normalizedPrimary = FALLBACK_ORDER.includes(primaryId) ? primaryId : 'wiktionary';
   const fallbackChain = [
     normalizedPrimary,
     ...FALLBACK_ORDER.filter((id) => id !== normalizedPrimary),
@@ -189,7 +191,7 @@ export function getDictionaryLookupAttempts(text: string, primaryId: string): Di
 }
 
 export function getPrimaryDictionaryLookupAttempts(text: string, primaryId: string): DictionaryLookupAttempt[] {
-  const normalizedPrimary = FALLBACK_ORDER.includes(primaryId) ? primaryId : 'free_dictionary';
+  const normalizedPrimary = FALLBACK_ORDER.includes(primaryId) ? primaryId : 'wiktionary';
   return getDictionaryLookupAttempts(text, primaryId)
     .filter((attempt) => attempt.providerId === normalizedPrimary)
     .slice(0, MAX_PRIMARY_DICTIONARY_ATTEMPTS);
@@ -495,7 +497,8 @@ export function normalizeSentenceBreakdown(
       const text = compactField(row.text);
       const role = compactField(row.role || row.label);
       if (!text || !role) return null;
-      return { text, role };
+      const explanation = compactField(row.explanation || row.description);
+      return explanation ? { text, role, explanation } : { text, role };
     })
     .filter((item): item is SentenceStructureItem => Boolean(item));
 
@@ -522,10 +525,43 @@ export function normalizeSentenceBreakdown(
   };
 }
 
+function normalizeMinimalPair(item: unknown): AiMinimalPair | null {
+  if (!item || typeof item !== 'object') return null;
+  const row = item as Record<string, unknown>;
+  const sentenceA = compactField(row.sentenceA || row.left || row.a);
+  const sentenceB = compactField(row.sentenceB || row.right || row.b);
+  if (!sentenceA || !sentenceB) return null;
+  const explanation = compactField(row.explanation || row.note);
+  return explanation ? { sentenceA, sentenceB, explanation } : { sentenceA, sentenceB };
+}
+
+function parseMinimalPairsFromMarkdown(content: string): AiMinimalPair[] {
+  const section = String(content || '').match(
+    /###\s*(?:Minimal Pairs(?:\s*&\s*Examples)?|Minimal Pair[s]?)[^\n]*\n+([\s\S]*?)(?=\n###|\s*$)/i,
+  );
+  if (!section?.[1]) return [];
+
+  const quotes = [...section[1].matchAll(/^>\s*(.+)$/gm)].map((match) => compactField(match[1]));
+  const pairs: AiMinimalPair[] = [];
+  for (let i = 0; i + 1 < quotes.length; i += 2) {
+    const sentenceA = quotes[i];
+    const sentenceB = quotes[i + 1];
+    if (!sentenceA || !sentenceB) continue;
+    pairs.push({ sentenceA, sentenceB });
+  }
+  return pairs;
+}
+
 export function normalizeComparisonData(
   content: string,
   options: { text?: string } = {},
-): { coreDistinction?: string; rows: AiComparisonRow[]; leftTerm?: string; rightTerm?: string } | null {
+): {
+  coreDistinction?: string;
+  rows: AiComparisonRow[];
+  leftTerm?: string;
+  rightTerm?: string;
+  minimalPairs?: AiMinimalPair[];
+} | null {
   const json = extractJsonObject(content);
   if (json && typeof json === 'object') {
     const source = json as Record<string, unknown>;
@@ -543,12 +579,21 @@ export function normalizeComparisonData(
         .filter((item): item is AiComparisonRow => Boolean(item))
       : [];
     const coreDistinction = compactField(source.coreDistinction || source.distinction);
-    if (rows.length || coreDistinction) {
+    const pairSource = Array.isArray(source.minimalPairs)
+      ? source.minimalPairs
+      : Array.isArray(source.pairs)
+        ? source.pairs
+        : [];
+    const minimalPairs = pairSource
+      .map(normalizeMinimalPair)
+      .filter((item): item is AiMinimalPair => Boolean(item));
+    if (rows.length || coreDistinction || minimalPairs.length) {
       return {
         coreDistinction: coreDistinction || undefined,
         rows,
         leftTerm: compactField(source.leftTerm || source.termA) || undefined,
         rightTerm: compactField(source.rightTerm || source.termB) || undefined,
+        minimalPairs: minimalPairs.length ? minimalPairs : undefined,
       };
     }
   }
@@ -556,8 +601,75 @@ export function normalizeComparisonData(
   const text = String(content || '');
   const distinctionMatch = text.match(/###\s*(?:Core Distinction|Distinction|Rule of Thumb)[^\n]*\n+([\s\S]*?)(?=\n###|\s*$)/i);
   const coreDistinction = compactField(distinctionMatch?.[1] || '');
-  if (!coreDistinction && !options.text) return null;
-  return coreDistinction ? { coreDistinction, rows: [] } : null;
+  const minimalPairs = parseMinimalPairsFromMarkdown(text);
+  if (!coreDistinction && !minimalPairs.length && !options.text) return null;
+  if (!coreDistinction && !minimalPairs.length) return null;
+  return {
+    coreDistinction: coreDistinction || undefined,
+    rows: [],
+    minimalPairs: minimalPairs.length ? minimalPairs : undefined,
+  };
+}
+
+const REPHRASE_STYLE_MAP: Array<{ style: RephraseStyleItem['style']; label: string; heading: RegExp }> = [
+  { style: 'simplified', label: 'Simplified', heading: /simplified/i },
+  { style: 'formal', label: 'Academic & Formal', heading: /academic|formal/i },
+  { style: 'idiomatic', label: 'Native Idiom', heading: /native|idiom/i },
+];
+
+function stripQuoteMarks(value: string): string {
+  return compactField(value).replace(/^["'“”]+|["'“”]+$/g, '');
+}
+
+function parseRephraseSection(section: string): { text: string; note?: string } | null {
+  const quotes = [...String(section || '').matchAll(/^>\s*(.+)$/gm)].map((match) => stripQuoteMarks(match[1]));
+  const text = quotes[0] || '';
+  if (!text) return null;
+  const note = compactField(
+    String(section || '')
+      .replace(/^>\s*.+$/gm, '')
+      .replace(/^#+\s*.+$/gm, ''),
+  );
+  return note ? { text, note } : { text };
+}
+
+export function normalizeRephraseStyles(content: string): RephraseStyleItem[] {
+  const json = extractJsonObject(content);
+  if (json && typeof json === 'object') {
+    const source = json as Record<string, unknown>;
+    const styles = Array.isArray(source.styles) ? source.styles : Array.isArray(source.rephraseStyles) ? source.rephraseStyles : [];
+    const parsed = styles
+      .map((item) => {
+        if (!item || typeof item !== 'object') return null;
+        const row = item as Record<string, unknown>;
+        const text = stripQuoteMarks(String(row.text || row.sentence || row.rewrite || ''));
+        if (!text) return null;
+        const rawStyle = compactField(row.style || row.label || row.id).toLowerCase();
+        const mapped = REPHRASE_STYLE_MAP.find((entry) => entry.heading.test(rawStyle)) || REPHRASE_STYLE_MAP[0];
+        const note = compactField(row.note || row.explanation);
+        return note
+          ? { style: mapped.style, label: compactField(row.label) || mapped.label, text, note }
+          : { style: mapped.style, label: compactField(row.label) || mapped.label, text };
+      })
+      .filter((item): item is RephraseStyleItem => Boolean(item));
+    if (parsed.length) return parsed;
+  }
+
+  const text = String(content || '');
+  const blocks = text.split(/(?=^###\s+)/m);
+  const styles: RephraseStyleItem[] = [];
+  const used = new Set<string>();
+  for (const block of blocks) {
+    const heading = compactField(block.match(/^###\s+(.+)$/m)?.[1] || '');
+    if (!heading) continue;
+    const mapped = REPHRASE_STYLE_MAP.find((entry) => entry.heading.test(heading));
+    if (!mapped || used.has(mapped.style)) continue;
+    const parsed = parseRephraseSection(block);
+    if (!parsed) continue;
+    used.add(mapped.style);
+    styles.push({ style: mapped.style, label: mapped.label, ...parsed });
+  }
+  return styles;
 }
 
 const LEXICAL_PROFILE_RE = /<lexical-profile>[\s\S]*?<\/lexical-profile>/gi;

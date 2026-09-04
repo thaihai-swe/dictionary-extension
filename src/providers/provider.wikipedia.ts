@@ -1,4 +1,4 @@
-import { safeFetch } from './provider.http';
+import { DICTIONARY_FETCH_TIMEOUT_MS, safeFetch } from './provider.http';
 import { DictionaryEntry } from '../types';
 import { normalizeDictionaryTerm } from '../shared/query-utils';
 import { NotFoundError, throwForHttpStatus } from './errors';
@@ -24,7 +24,7 @@ export async function fetchWikipediaSummary(
   const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(clean)}`;
   const res = await safeFetch(url, {
     signal,
-    timeoutMs: 30000,
+    timeoutMs: DICTIONARY_FETCH_TIMEOUT_MS,
     headers: {
       Accept: 'application/json',
       'Api-User-Agent': 'DictionaryExtension/2.0 (language-learning)',

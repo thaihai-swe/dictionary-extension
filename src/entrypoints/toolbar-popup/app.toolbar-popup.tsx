@@ -23,7 +23,7 @@ export const ToolbarPopupApp: React.FC = () => {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [aiVisited, setAiVisited] = useState(activeTab === 'ai_assistant');
   const [targetLang, setTargetLang] = useState(settings.translateTargetLanguage || 'Vietnamese');
-  const [currentProvider, setCurrentProvider] = useState(settings.dictionaryProvider || 'free_dictionary');
+  const [currentProvider, setCurrentProvider] = useState(settings.dictionaryProvider || 'wiktionary');
   const [isFullTab, setIsFullTab] = useState(false);
 
   useEffect(() => {
@@ -131,7 +131,7 @@ export const ToolbarPopupApp: React.FC = () => {
           <div style={{ display: activeTab === 'ai_assistant' ? undefined : 'none' }}>
             <Suspense fallback={<div className="p-4 text-[12.5px] text-content-muted">Loading AI assistant…</div>}>
               <AiAssistantView
-                initialQuery={query || session.term}
+                initialQuery={query}
                 targetLang={targetLang}
                 isVisible={activeTab === 'ai_assistant'}
                 onSwitchTab={handleTabChange}

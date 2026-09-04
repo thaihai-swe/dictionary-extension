@@ -30,7 +30,3 @@ export function signal<T>(initial: T): Signal<T> {
 export function useSignal<T>(source: Signal<T>): T {
   return useSyncExternalStore(source.subscribe, () => source.value, () => source.value);
 }
-
-export function patchObject<T extends object>(source: Signal<T>, partial: Partial<T>) {
-  source.value = { ...source.value, ...partial };
-}

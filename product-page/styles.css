@@ -884,6 +884,21 @@ a:hover { color: var(--blue-strong); }
 .demo-ai-heading { margin: 0; color: #23415d; font-size: 1.05rem; }
 .demo-context-used { margin: 9px 0 14px; padding: 8px 10px; color: #536d7e; border-left: 3px solid var(--blue-strong); background: #eef1fb; font-size: 0.77rem; font-style: italic; }
 .demo-ai-copy { margin: 8px 0 0; color: #38536a; font-size: 0.82rem; line-height: 1.6; }
+.demo-subheading { margin: 14px 0 8px; color: #23415d; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; font-family: var(--mono); }
+.demo-core-distinction { margin: 10px 0 12px; padding: 10px 12px; border: 1px solid rgba(8, 127, 110, 0.28); border-radius: 8px; background: rgba(8, 127, 110, 0.08); color: #075348; font-size: 0.8rem; line-height: 1.5; }
+.demo-role-box { margin: 10px 0 0; padding: 10px 12px; border: 1px solid #d8d4f0; border-radius: 8px; background: #f4f3fb; color: #3f378f; font-size: 0.79rem; line-height: 1.5; }
+.demo-role-box p { margin: 0; }
+.demo-role-box p + p { margin-top: 6px; }
+.demo-mistakes-block { margin-top: 14px; padding-top: 10px; border-top: 1px solid #e6e0cf; }
+.demo-mistakes-heading { margin: 0 0 8px; color: #7a4a00; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; font-family: var(--mono); }
+.demo-mistake-item { margin-top: 8px; padding: 8px 10px; border-left: 3px solid #d97706; background: #fef8f0; border-radius: 0 8px 8px 0; }
+.demo-mistake-avoid, .demo-mistake-prefer, .demo-mistake-example { margin: 0; font-size: 0.78rem; line-height: 1.45; }
+.demo-mistake-prefer { margin-top: 4px; }
+.demo-mistake-example { margin-top: 6px; color: #587082; font-style: italic; }
+.demo-tag-avoid, .demo-tag-prefer { display: inline-block; min-width: 52px; padding: 1px 6px; margin-right: 6px; border-radius: 999px; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; font-family: var(--mono); }
+.demo-tag-avoid { color: #9f1239; background: rgba(225, 29, 72, 0.12); }
+.demo-tag-prefer { color: #075348; background: rgba(8, 127, 110, 0.12); }
+.demo-translation-card { margin: 10px 0 0; padding: 8px 10px; border-radius: 7px; background: #f8fafc; color: #334155; font-size: 0.8rem; }
 .demo-list { display: grid; gap: 7px; padding: 0; margin: 11px 0 0; list-style: none; }
 .demo-list li { padding-left: 17px; color: #496278; font-size: 0.79rem; line-height: 1.5; position: relative; }
 .demo-list li::before { position: absolute; left: 2px; color: #1da97f; content: "•"; font-size: 1.1rem; line-height: 1; }

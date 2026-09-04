@@ -10,10 +10,10 @@ The runtime architecture is organized into clean, decoupled layers following mod
 2. **Content Script & In-Page Overlay** (`src/entrypoints/content-script/`) — Injected Shadow DOM overlay system (`bootstrap.ts`, `overlay-app.tsx`, `overlay.in-page.tsx`) handling text selection, floating trigger icon, exact context extraction, collision-safe viewport positioning, dragging & resizing, and result rendering.
 3. **Background Service Worker Entrypoint** (`src/entrypoints/background/service-worker.ts`) — Central background service worker handling context menu actions, CORS-bypassing fetch proxies (`FETCH_PROXY`), dictionary and AI lookup dispatch, network cancellation, and keyboard shortcut commands.
 4. **React Stores & Hooks** (`src/composables/`) — External-store state engines subscribed via `useSyncExternalStore` using lightweight reactive signals (`src/ui/signal.ts`):
-   - `composable.lookup-session.ts`: Unified session facade coordinating term, sentence context, dictionary lookup, AI intents, audio stop, and tab switching. Overlay close/unmount calls `abortAllLookups()`.
+   - `composable.lookup-session.ts`: Session facade for tab switching and `abortAllLookups()` (stops audio and in-flight dictionary/AI requests). Overlay close/unmount calls `abortAllLookups()`.
    - `composable.dictionary.ts`: Handles caching, dictionary lookups, audio playback & reactive `isAudioPlayingRef` state with global `stopAllAudio()`.
-   - `composable.ai-assistant.ts`: Handles Gemini AI prompts, 7 intent pipelines, Dictionary-tab Main AI preload, AI-tab visit sequencing, hover prefetching, and offline grammar engine.
-   - `composable.storage.ts`: Reactive `chrome.storage` settings synchronization and lookup history management.
+   - `composable.ai-assistant.ts`: Handles Gemini AI prompts, 7 intent pipelines, Dictionary-tab Main AI preload, AI-tab visit sequencing, and hover prefetching.
+   - `composable.storage.ts`: Reactive `chrome.storage` settings synchronization.
 5. **Provider Adapters** (`src/providers/`) — Keyless vendor adapters for dictionary providers (`free_dictionary`, `wiktionary`, `datamuse`, `wikipedia`, `urban_dictionary`, `rhymebrain`), translation (`google_translate`, `mymemory`, `libre_translate`), and Gemini AI (`gemini-3.5-flash-lite`).
 6. **UI Component System** (`src/components/`) — Modular React 18 components in the **Editorial Ink** system (warm paper light / obsidian velvet + champagne gold dark): `AppHeader` (quiet Stop Voice control), `RelatedWords` (inline synonym/antonym links), `SenseMatrixCard`, `WordFamilyCard`, `UsageNotesCard`, `WordFormationCard`, `LearnerMistakesCard`, `CollocationsCard`, `SentenceBreakdownCard`, `MarkdownRenderer`, `TokenizedContext`, and Settings Modals.
 
@@ -28,7 +28,7 @@ User selects text on webpage OR types query in toolbar popup
                         │
                         ▼
            Trigger Activation & Surface Prep
-  - In-Page: Floating icon, post-selection key, direct selection, dblclick, or context menu
+  - In-Page: Floating icon, post-selection key, direct selection, or context menu
   - Toolbar: Manual query entry or active tab selection lookup
   - Automatic Context: Range-only sentence extract after popup open (page scan is not on mouseup)
                         │
@@ -104,7 +104,7 @@ User selects text on webpage OR types query in toolbar popup
    *(The primary provider is prioritized at the front of this sequence.)*
 4. **Primary Exact Query:** The primary provider looks up the selected text as-is. Inflections and phrases are not rewritten to a root lemma.
 5. **Secondary Exact Query:** If the primary still has no hit, remaining keyless providers try the same exact query. `NotFoundError` and transient network/5xx/429/timeout continue to the next provider.
-6. **Operational Failure Gate:** Transient network, timeout, 429, and 5xx errors continue to the next provider. Dictionary, translation, AI, and fetch-proxy HTTP timeouts are uniformly **30s**.
+6. **Operational Failure Gate:** Transient network, timeout, 429, and 5xx errors continue to the next provider. Dictionary, translation, AI, and fetch-proxy HTTP timeouts are uniformly **60s**.
 7. **Non-Blocking Translation:** When `enableTranslate` is active, translation starts in parallel. If it finishes before the dictionary result, it is included in the first paint. Otherwise the dictionary result is returned immediately and translation is merged later via `LOOKUP_UPDATE` (`revision: 1`).
 8. **Initial Delivery:** The dictionary result is returned immediately to the UI with `enriched: false` and `revision: 0` for first paint. Settings are cached in the service worker until `chrome.storage` changes.
 
@@ -207,8 +207,8 @@ The AI subsystem (`src/composables/composable.ai-assistant.ts` and `src/provider
 ### AI Request Pipeline
 
 1. **Protocol Routing:**
-   - **Google Gemini Native:** Used when `aiBaseUrl` matches Google Gemini endpoints (`generativelanguage.googleapis.com`). Calls the REST `generateContent` endpoint directly with `gemini-3.5-flash-lite` and API key query authentication.
-   - **OpenAI-Compatible Chat API:** Used for all other custom/self-hosted endpoints (e.g. Ollama, OpenRouter, Groq, OpenAI, LocalAI) calling `/chat/completions` with `Bearer` header authentication.
+   - **Google Gemini Native:** Used when `aiProvider` is `gemini`. Calls REST `generateContent` with `gemini-3.5-flash-lite` and API key query authentication.
+   - **OpenAI Standard Chat API:** Used when `aiProvider` is `openai`. POSTs to `{aiBaseUrl}/chat/completions` with `stream: false`. Default base URL is `http://localhost:20128/v1`. Model is user-entered. `Bearer` is sent only when a key is present. Response parser accepts a JSON completion or SSE `chat.completion.chunk` if a local server streams anyway.
 2. **Prompt Construction & Sandboxing:**
    - Evaluates template variables: `{{str}}` (query), `{{text}}` (full selection), `{{sentence}}` (context sentence or query), `{{word_count}}`, `{{targetLang}}`, and `{{context}}`.
    - Appends a strict sandboxed input contract block (`<target>`, `<context>`, `<target-language>`) ensuring user selections cannot inject prompt override instructions.

@@ -5,6 +5,7 @@ import { registerAiRuntimeAbort } from './runtime-hooks';
 import { AiResult, AiIntentId, AppSettings } from '../types';
 import { canonicalAiIntent, PRELOAD_ALL_INTENTS, PRELOAD_FOLLOW_UPS } from '../shared/ai-prompts';
 import { hasConfiguredAiApiKey } from '../shared/settings-export';
+import { isOpenAiStandard } from '../shared/settings';
 import { cancelAiLookup, createRequestId, requestAiLookup } from '../shared/runtime-client';
 import { createPersistedLruCache } from '../shared/lookup-cache';
 
@@ -183,7 +184,10 @@ function makePreloadKey(text: string, context: string, lang: string): string {
 }
 
 function shouldPreloadAi(settings: AppSettings): boolean {
-  return Boolean(settings.enableAiPreload && settings.enableAI && hasConfiguredAiApiKey(settings));
+  const ready = isOpenAiStandard(settings)
+    ? Boolean(settings.aiModel?.trim())
+    : hasConfiguredAiApiKey(settings);
+  return Boolean(settings.enableAiPreload && settings.enableAI && ready);
 }
 
 async function requestAnalysis(
