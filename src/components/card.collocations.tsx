@@ -9,11 +9,11 @@ interface CollocationsCardProps {
 }
 
 const GROUPS: Array<{ key: keyof Collocations; label: string }> = [
-  { key: 'patterns', label: 'Patterns' },
   { key: 'verbs', label: 'Verbs' },
   { key: 'adjectives', label: 'Adjectives' },
   { key: 'nouns', label: 'Nouns' },
   { key: 'prepositions', label: 'Prepositions' },
+  { key: 'patterns', label: 'Patterns' },
 ];
 
 export const CollocationsCard: React.FC<CollocationsCardProps> = ({
@@ -31,7 +31,7 @@ export const CollocationsCard: React.FC<CollocationsCardProps> = ({
   if (!groups.length) return null;
 
   return (
-    <section className="pt-3 border-t border-border space-y-2.5 font-sans">
+    <section className="p-3.5 rounded-lg border border-border bg-teal-50/40 dark:bg-gold-300/5 space-y-2.5 font-sans">
       <div className="flex items-center gap-1.5 text-[11px] font-bold text-content-muted uppercase tracking-wider">
         <IconLink className="w-3.5 h-3.5 text-teal-600 dark:text-gold-200" />
         <span>Collocations</span>
@@ -39,25 +39,23 @@ export const CollocationsCard: React.FC<CollocationsCardProps> = ({
 
       <div className="space-y-2">
         {groups.map((group) => (
-          <div key={group.key} className="flex items-baseline gap-x-3 gap-y-1">
-            <span className="w-[92px] shrink-0 text-[11px] font-semibold text-content-muted">
-              {group.label}
+          <div key={group.key} className="grid grid-cols-[118px_minmax(0,1fr)] gap-2 items-start">
+            <span className="text-[11.5px] font-bold text-content-secondary pt-0.5">
+              {group.label}:
             </span>
-            <p className="min-w-0 flex-1 text-[13.5px] leading-relaxed text-content">
-              {group.items.map((item, index) => (
-                <React.Fragment key={item}>
-                  {index > 0 ? <span className="text-content-muted/50"> · </span> : null}
-                  <button
-                    type="button"
-                    onClick={() => onSelectWord?.(item)}
-                    title={word ? `Look up “${item}”` : `Look up ${item}`}
-                    className="related-word-link"
-                  >
-                    {item}
-                  </button>
-                </React.Fragment>
+            <div className="flex flex-wrap gap-1">
+              {group.items.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => onSelectWord?.(item)}
+                  title={word ? `Look up “${item}”` : `Look up ${item}`}
+                  className="h-[22px] px-2 rounded-full bg-teal-500/10 hover:bg-teal-500/18 border border-teal-500/25 text-teal-800 dark:text-gold-100 dark:bg-gold-300/10 dark:border-gold-300/25 dark:hover:bg-gold-300/18 text-[11.5px] font-semibold whitespace-nowrap cursor-pointer transition-colors"
+                >
+                  {item}
+                </button>
               ))}
-            </p>
+            </div>
           </div>
         ))}
       </div>

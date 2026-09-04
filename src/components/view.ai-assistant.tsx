@@ -1,9 +1,8 @@
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
-import { useAiAssistant } from '../composables/composable.ai-assistant';
+import React, { Suspense, useEffect, useState } from 'react';
+import { useAiAssistant, AI_INTENTS, AiIntentStatus } from '../composables/composable.ai-assistant';
 import { searchWord, stopAllAudio, useDictionaryQuery } from '../composables/composable.dictionary';
 import { useStorage } from '../composables/composable.storage';
 import { AiIntentId, TabId } from '../types';
-import AiIntentToolbar from './component.ai-intent-toolbar';
 import { IconClose, IconSearch } from './icons';
 import TokenizedContext from './component.tokenized-context';
 import {
@@ -11,6 +10,7 @@ import {
   ConfusablesIntent,
   SentenceBreakdownIntent,
 } from './async-views';
+import { cx } from '../ui/cx';
 
 interface AiAssistantViewProps {
   initialQuery?: string;
@@ -27,7 +27,7 @@ const intentTitleMap: Record<AiIntentId, string> = {
   collocations: 'Phrase & Collocations',
   sentence_breakdown: 'Sentence Breakdown',
   confusables: 'Compare Confusables',
-  rephrase: 'Rephrase & Styles',
+  rephrase: 'Rephrase',
   phrase_fallback: 'Phrase Explanation',
 };
 
@@ -74,14 +74,6 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
   const [contextError, setContextError] = useState('');
   const [isEditingContext, setIsEditingContext] = useState(false);
 
-  const hasDistinctContext = useMemo(() => {
-    const q = queryInput.trim().toLowerCase();
-    const c = contextInput.trim().toLowerCase();
-    return Boolean(c) && c !== q;
-  }, [queryInput, contextInput]);
-
-  const showContextEditor = isEditingContext || !contextInput.trim();
-  const showContextCard = showContextEditor || hasDistinctContext || Boolean(contextError);
   const resultTargetLang = targetLang || settings.translateTargetLanguage;
 
   function runCurrentIntent(intentId = activeIntent) {
@@ -102,7 +94,6 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
     const c = resolveContext(q, initialContext || activeContext);
     setQueryInput(q);
     setContextInput(c);
-    setIsEditingContext(!c);
     if (q) {
       const currentQ = q;
       const currentC = c;
@@ -125,7 +116,6 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
     const c = resolveContext(q, initialContext);
     setQueryInput(q);
     setContextInput(c);
-    setIsEditingContext(!c);
     if (activeIntent === 'explain_in_context' && !c) {
       setContextError('Please enter or paste the sentence containing this word.');
     } else {
@@ -135,7 +125,6 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialQuery, initialContext]);
 
-  // When user switches to the AI tab and it becomes visible, automatically sequence the remaining intents
   useEffect(() => {
     if (!isVisible) return;
     const q = resolveQuery(queryInput, contextInput);
@@ -173,163 +162,192 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
     });
   }
 
-  return (
-    <div className="px-4 py-3 space-y-3 font-sans">
-      {/* Segmented AI Intent Toolbar */}
-      <AiIntentToolbar
-        activeIntent={activeIntent}
-        isIntentDisabled={(intentId) => {
-          void intentStatusEpoch;
-          const q = resolveQuery(queryInput, contextInput);
-          if (!q) return true;
-          return isAiIntentDisabled(intentId, q, contextInput, targetLang);
-        }}
-        getIntentStatus={(intentId) => {
-          void intentStatusEpoch;
-          const q = resolveQuery(queryInput, contextInput);
-          if (!q) return 'unrequested';
-          return getAiIntentStatus(intentId, q, contextInput, targetLang);
-        }}
-        onSelectIntent={handleIntentSelect}
-        onPrefetchIntent={(intentId) => {
-          const q = resolveQuery(queryInput, contextInput);
-          if (!q) return;
-          void preloadSpecificIntent(intentId, q, contextInput, targetLang);
-        }}
+  function renderStatusDot(status: AiIntentStatus, isActive: boolean) {
+    return (
+      <span
+        className={cx(
+          'w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors',
+          isActive
+            ? 'bg-teal-700 dark:bg-gold-300'
+            : status === 'ready'
+              ? 'bg-teal-600 dark:bg-gold-400'
+              : status === 'loading'
+                ? 'bg-amber-500 animate-pulse'
+                : 'bg-content-muted/40',
+        )}
+        aria-hidden="true"
       />
+    );
+  }
 
-      {/* Query Search Bar */}
-      <div className="space-y-2">
-        <div className="relative flex items-center">
-          <span className="absolute left-3 text-content-muted pointer-events-none">
-            <IconSearch className="w-3.5 h-3.5" />
-          </span>
-          <input
-            value={queryInput}
-            onChange={(e) => setQueryInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleIntentSelect(activeIntent);
-            }}
-            type="text"
-            placeholder="Analyze word or complete sentence…"
-            className="w-full h-[38px] bg-surface border border-border rounded-lg pl-9 pr-24 text-[13px] text-content placeholder:text-content-muted outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/15 transition-all font-sans"
-          />
+  return (
+    <div className="p-4 space-y-3 font-sans">
+      {/* Search Input */}
+      <div className="relative flex items-center">
+        <span className="absolute left-3 text-content-muted pointer-events-none">
+          <IconSearch className="w-3.5 h-3.5" />
+        </span>
+        <input
+          value={queryInput}
+          onChange={(e) => setQueryInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleIntentSelect(activeIntent);
+          }}
+          type="text"
+          placeholder="Analyze word or complete sentence…"
+          className="w-full h-[38px] bg-surface border border-border rounded-lg pl-9 pr-24 text-[13px] text-content placeholder:text-content-muted outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/15 transition-all font-sans"
+        />
 
-          {queryInput ? (
-            <button
-              type="button"
-              onClick={() => {
-                setQueryInput('');
-                stopAllAudio();
-              }}
-              title="Clear search text"
-              className="absolute right-[4.75rem] text-content-muted hover:text-content p-1 cursor-pointer flex items-center justify-center"
-            >
-              <IconClose className="w-3.5 h-3.5" />
-            </button>
-          ) : null}
-
+        {queryInput ? (
           <button
             type="button"
-            onClick={() => handleIntentSelect(activeIntent)}
-            disabled={!queryInput || isAiLoading}
-            className="absolute right-1.5 h-7 px-3 rounded-md bg-teal-700 hover:bg-teal-600 dark:bg-gold-400 dark:hover:bg-gold-300 dark:text-neutral-950 active:scale-95 text-white text-[12px] font-semibold transition-all disabled:opacity-50 cursor-pointer"
+            onClick={() => {
+              setQueryInput('');
+              stopAllAudio();
+            }}
+            title="Clear search text"
+            className="absolute right-[4.75rem] text-content-muted hover:text-content p-1 cursor-pointer flex items-center justify-center"
           >
-            <span>{isAiLoading ? 'Analyzing…' : 'Analyze'}</span>
+            <IconClose className="w-3.5 h-3.5" />
+          </button>
+        ) : null}
+
+        <button
+          type="button"
+          onClick={() => handleIntentSelect(activeIntent)}
+          disabled={!queryInput || isAiLoading}
+          className="absolute right-1.5 h-7 px-3 rounded-md bg-teal-700 hover:bg-teal-600 dark:bg-gold-400 dark:hover:bg-gold-300 dark:text-neutral-950 active:scale-95 text-white text-[12px] font-semibold transition-all disabled:opacity-50 cursor-pointer"
+        >
+          <span>{isAiLoading ? 'Analyzing…' : 'Analyze'}</span>
+        </button>
+      </div>
+
+      {/* Context Strip */}
+      {!isEditingContext && !contextInput.trim() ? (
+        <div className="flex items-center justify-end px-0.5">
+          <button
+            type="button"
+            onClick={() => setIsEditingContext(true)}
+            className="text-[11.5px] text-teal-700 dark:text-teal-400 hover:underline font-medium cursor-pointer"
+          >
+            + Add context sentence
           </button>
         </div>
-
-        {/* Context Strip */}
-        {!showContextCard ? (
-          <div className="flex items-center justify-end px-0.5">
+      ) : (
+        <div className="rounded-lg border border-border bg-surface p-2.5 space-y-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[10.5px] font-bold uppercase tracking-wider text-content-muted">
+              Context Sentence
+            </span>
             <button
               type="button"
-              onClick={() => setIsEditingContext(true)}
-              className="text-[11.5px] text-teal-700 dark:text-teal-400 hover:underline font-medium cursor-pointer"
+              onClick={() => setIsEditingContext(!isEditingContext)}
+              className="text-[11px] font-medium text-content-secondary hover:text-content cursor-pointer"
             >
-              + Add context sentence
+              {isEditingContext || !contextInput.trim() ? 'Done' : 'Edit'}
             </button>
           </div>
-        ) : (
-          <div className="rounded-lg border border-border bg-surface p-2.5 space-y-1.5">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[10.5px] font-bold uppercase tracking-wider text-content-muted">
-                Context Sentence
-              </span>
+
+          {isEditingContext || !contextInput.trim() ? (
+            <textarea
+              value={contextInput}
+              onChange={(e) => setContextInput(e.target.value)}
+              onBlur={() => setIsEditingContext(!contextInput.trim())}
+              rows={2}
+              placeholder="Paste the sentence that contains this word..."
+              className="w-full bg-muted/50 border border-border rounded-md px-2.5 py-1.5 text-[12.5px] text-content placeholder:text-content-muted outline-none focus:border-teal-500 resize-y min-h-[44px]"
+            />
+          ) : (
+            <TokenizedContext
+              text={contextInput}
+              query={queryInput}
+              onSelectToken={handleTokenSelect}
+            />
+          )}
+
+          {contextError ? <p className="text-[11.5px] text-rose-600 dark:text-rose-400">{contextError}</p> : null}
+        </div>
+      )}
+
+      {/* Intent Action Chips with Status Indicators */}
+      <div className="flex flex-wrap gap-1.5 pt-0.5">
+        {AI_INTENTS.map((item) => {
+          void intentStatusEpoch;
+          const isActive = activeIntent === item.id;
+          const q = resolveQuery(queryInput, contextInput);
+          const isDisabled = !q || isAiIntentDisabled(item.id, q, contextInput, targetLang);
+          const status = q ? getAiIntentStatus(item.id, q, contextInput, targetLang) : 'unrequested';
+
+          return (
+            <button
+              key={item.id}
+              type="button"
+              disabled={isDisabled}
+              onClick={() => handleIntentSelect(item.id)}
+              onMouseEnter={() => {
+                if (item.id !== activeIntent && q) {
+                  void preloadSpecificIntent(item.id, q, contextInput, targetLang);
+                }
+              }}
+              className={cx(
+                'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border text-[11.5px] font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed',
+                isActive
+                  ? 'bg-teal-500/15 border-teal-500/40 text-teal-800 dark:text-gold-200 dark:bg-gold-300/15 dark:border-gold-300/40 font-semibold'
+                  : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
+              )}
+            >
+              {renderStatusDot(status, isActive)}
+              <span>{item.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Results */}
+      <div className="space-y-3 pt-1">
+        {isAiLoading ? (
+          <div className="p-4 rounded-xl border border-border bg-surface animate-pulse space-y-2.5">
+            <div className="h-3 bg-muted rounded w-1/4"></div>
+            <div className="h-12 bg-muted rounded w-full"></div>
+            <div className="h-12 bg-muted rounded w-full"></div>
+          </div>
+        ) : aiError ? (
+          <div className="p-3 rounded-lg bg-rose-500/8 border border-rose-500/25 text-[12.5px] text-rose-700 dark:text-rose-400">
+            {aiError}
+          </div>
+        ) : aiResult ? (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-1 border-b border-border">
+              <h3 className="text-[12px] font-semibold text-content uppercase tracking-wider font-mono">
+                {intentTitleMap[aiResult.type as AiIntentId] || 'AI Explanation'}
+              </h3>
+
               <button
                 type="button"
-                onClick={() => setIsEditingContext(!showContextEditor)}
-                className="text-[11px] font-medium text-content-secondary hover:text-content cursor-pointer"
+                onClick={() => copyResult(aiResult.summary)}
+                title="Copy response"
+                className="h-6 px-2 rounded bg-surface hover:bg-elevated text-content-secondary hover:text-content border border-border text-[11px] font-medium transition-colors cursor-pointer"
               >
-                {showContextEditor ? 'Done' : 'Edit'}
+                {copied ? '✓ Copied' : 'Copy'}
               </button>
             </div>
 
-            {showContextEditor ? (
-              <textarea
-                value={contextInput}
-                onChange={(e) => setContextInput(e.target.value)}
-                onBlur={() => setIsEditingContext(!contextInput.trim())}
-                rows={2}
-                placeholder="Paste the sentence that contains this word..."
-                className="w-full bg-muted/50 border border-border rounded-md px-2.5 py-1.5 text-[12.5px] text-content placeholder:text-content-muted outline-none focus:border-teal-500 resize-y min-h-[44px]"
-              />
-            ) : (
-              <TokenizedContext
-                text={contextInput}
-                query={queryInput}
-                onSelectToken={handleTokenSelect}
-              />
-            )}
-
-            {contextError ? <p className="text-[11.5px] text-rose-600 dark:text-rose-400">{contextError}</p> : null}
+            <Suspense fallback={<div className="p-3 text-[12.5px] text-content-muted">Loading analysis…</div>}>
+              {aiResult.type === 'sentence_breakdown' ? (
+                <SentenceBreakdownIntent result={aiResult} targetLang={resultTargetLang} />
+              ) : aiResult.type === 'confusables' ? (
+                <ConfusablesIntent result={aiResult} targetLang={resultTargetLang} />
+              ) : (
+                <AiMarkdownIntent
+                  result={aiResult}
+                  targetLang={resultTargetLang}
+                  onSelectWord={handleTokenSelect}
+                />
+              )}
+            </Suspense>
           </div>
-        )}
+        ) : null}
       </div>
-
-      {/* AI Header Strip */}
-      {aiResult ? (
-        <div className="flex items-center justify-between pt-0.5 border-b border-border pb-1.5">
-          <h3 className="text-[12px] font-semibold text-content uppercase tracking-wider font-mono">
-            {intentTitleMap[aiResult.type as AiIntentId] || 'AI Explanation'}
-          </h3>
-
-          <button
-            type="button"
-            onClick={() => copyResult(aiResult.summary)}
-            title="Copy response"
-            className="h-6 px-2 rounded bg-surface hover:bg-elevated text-content-secondary hover:text-content border border-border text-[11px] font-medium transition-colors cursor-pointer"
-          >
-            {copied ? '✓ Copied' : 'Copy'}
-          </button>
-        </div>
-      ) : null}
-
-      {isAiLoading ? (
-        <div className="p-4 rounded-xl border border-border bg-surface animate-pulse space-y-2.5">
-          <div className="h-3 bg-muted rounded w-1/4"></div>
-          <div className="h-12 bg-muted rounded w-full"></div>
-          <div className="h-12 bg-muted rounded w-full"></div>
-        </div>
-      ) : aiError ? (
-        <div className="p-3 rounded-lg bg-rose-500/8 border border-rose-500/25 text-[12.5px] text-rose-700 dark:text-rose-400">
-          {aiError}
-        </div>
-      ) : aiResult ? (
-        <Suspense fallback={<div className="p-3 text-[12.5px] text-content-muted">Loading analysis…</div>}>
-          {aiResult.type === 'sentence_breakdown' ? (
-            <SentenceBreakdownIntent result={aiResult} targetLang={resultTargetLang} />
-          ) : aiResult.type === 'confusables' ? (
-            <ConfusablesIntent result={aiResult} targetLang={resultTargetLang} />
-          ) : (
-            <AiMarkdownIntent
-              result={aiResult}
-              targetLang={resultTargetLang}
-              onSelectWord={handleTokenSelect}
-            />
-          )}
-        </Suspense>
-      ) : null}
     </div>
   );
 };

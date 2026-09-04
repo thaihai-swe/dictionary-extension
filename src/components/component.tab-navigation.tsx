@@ -25,22 +25,29 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
   }, [showAiTab, currentActive]);
 
   return (
-    <nav className="flex items-end gap-0 border-b border-border bg-paper px-3 transition-colors dark:bg-paper" role="tablist">
+    <nav
+      className="flex items-end gap-0 border-b border-border bg-surface px-3.5 transition-colors"
+      role="tablist"
+      aria-label="Lookup mode"
+    >
       <button
         type="button"
         role="tab"
         aria-selected={currentActive === 'dictionary'}
         onClick={() => selectTab('dictionary')}
         className={cx(
-          'relative h-9 flex items-center gap-1.5 px-3 text-[13px] font-medium transition-all duration-150 outline-none cursor-pointer border-b-2 -mb-px',
+          'relative h-10 px-3.5 flex items-center gap-1.5 text-[13px] font-bold transition-all duration-150 outline-none cursor-pointer',
           currentActive === 'dictionary'
-            ? 'text-teal-700 dark:text-gold-200 font-semibold border-teal-600 dark:border-gold-300'
-            : 'text-content-muted hover:text-content border-transparent',
+            ? 'text-teal-700 dark:text-gold-200'
+            : 'text-content-muted hover:text-content',
         )}
       >
         <IconBook className="w-3.5 h-3.5" />
         <span>Dictionary</span>
         <span className="hidden sm:inline-block text-[10px] opacity-50 font-mono ml-0.5">Alt+1</span>
+        {currentActive === 'dictionary' ? (
+          <span className="absolute left-3 right-3 bottom-0 h-0.5 bg-teal-600 dark:bg-gold-300 rounded-t" />
+        ) : null}
       </button>
 
       {showAiTab ? (
@@ -50,15 +57,18 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
           aria-selected={currentActive === 'ai_assistant'}
           onClick={() => selectTab('ai_assistant')}
           className={cx(
-            'relative h-9 flex items-center gap-1.5 px-3 text-[13px] font-medium transition-all duration-150 outline-none cursor-pointer border-b-2 -mb-px',
+            'relative h-10 px-3.5 flex items-center gap-1.5 text-[13px] font-bold transition-all duration-150 outline-none cursor-pointer',
             currentActive === 'ai_assistant'
-              ? 'text-teal-700 dark:text-gold-200 font-semibold border-teal-600 dark:border-gold-300'
-              : 'text-content-muted hover:text-content border-transparent',
+              ? 'text-teal-700 dark:text-gold-200'
+              : 'text-content-muted hover:text-content',
           )}
         >
           <IconSparkles className="w-3.5 h-3.5" />
           <span>AI Assistant</span>
           <span className="hidden sm:inline-block text-[10px] opacity-50 font-mono ml-0.5">Alt+2</span>
+          {currentActive === 'ai_assistant' ? (
+            <span className="absolute left-3 right-3 bottom-0 h-0.5 bg-teal-600 dark:bg-gold-300 rounded-t" />
+          ) : null}
         </button>
       ) : null}
     </nav>

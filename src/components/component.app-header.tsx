@@ -13,8 +13,6 @@ import {
   IconMinimize,
   IconMoon,
   IconSettings,
-  IconSpeaker,
-  IconStopCircle,
   IconSun,
 } from './icons';
 
@@ -55,29 +53,26 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   }
 
   return (
-    <header className="flex items-center justify-between px-3 py-1.5 bg-surface border-b border-border select-none relative z-30 transition-colors dark:border-[color:var(--hairline-gold)]">
+    <header className="flex items-center justify-between px-3 py-1.5 bg-surface border-b border-border select-none relative z-30 transition-colors">
       {/* Brand & Wordmark */}
       <div className="flex items-center gap-2">
         <div className="w-6 h-6 rounded-md bg-teal-500/10 border border-teal-500/20 dark:bg-gold-300/10 dark:border-gold-300/25 flex items-center justify-center text-teal-600 dark:text-gold-200 flex-shrink-0">
           <IconBook className="w-3.5 h-3.5 text-teal-600 dark:text-gold-200" />
         </div>
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-[13px] font-semibold text-content tracking-tight font-serif dark:text-[#f8f4ea]">
-            Dictionary
-          </span>
-          <span className="text-[10px] text-content-muted font-mono tracking-widest uppercase">Studio</span>
-        </div>
+        <span className="text-[13px] font-semibold text-content tracking-tight font-serif dark:text-[#f8f4ea]">
+          Dictionary
+        </span>
       </div>
 
       {/* Control Actions & Selectors */}
-      <div className="flex items-center gap-1">
-        {/* Dictionary Provider Selector */}
+      <div className="flex items-center gap-1.5 flex-wrap justify-end">
+        {/* Dictionary Provider Selector — Styled like demo .popup-provider-badge */}
         <div className="relative flex items-center">
           <select
             value={settings.dictionaryProvider || 'free_dictionary'}
             onChange={handleProviderChange}
             aria-label="Select Dictionary Provider"
-            className="h-[28px] bg-muted/70 hover:bg-elevated border border-border/80 text-content text-[11.5px] font-medium rounded-md pl-2 pr-5 outline-none focus:border-teal-500 cursor-pointer appearance-none transition-all shadow-2xs"
+            className="h-[27px] bg-teal-500/10 hover:bg-teal-500/15 border border-teal-500/25 text-teal-800 dark:text-gold-200 dark:bg-gold-300/10 dark:border-gold-300/25 text-[11px] font-bold rounded-md pl-2 pr-5 outline-none cursor-pointer appearance-none transition-all"
             title="Select Dictionary Provider"
           >
             <option value="free_dictionary" className="bg-surface text-content">FreeDict</option>
@@ -88,60 +83,60 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             <option value="google_translate" className="bg-surface text-content">Translate</option>
             <option value="gemini_ai" className="bg-surface text-content">Gemini AI</option>
           </select>
-          <IconChevronDown className="w-3 h-3 text-content-muted pointer-events-none absolute right-1.5" />
+          <IconChevronDown className="w-3 h-3 text-teal-700 dark:text-gold-200 pointer-events-none absolute right-1.5" />
         </div>
 
-        {/* Translation Target Language Selector */}
+        {/* Translation Target Language Selector — Styled like demo .popup-lang-badge */}
         <div className="relative flex items-center">
           <select
             value={settings.translateTargetLanguage || 'Vietnamese'}
             onChange={handleTargetLangChange}
             aria-label="Select Translation Target Language"
-            className="h-[28px] bg-muted/70 hover:bg-elevated border border-border/80 text-content text-[11.5px] font-medium rounded-md pl-2 pr-5 outline-none focus:border-teal-500 cursor-pointer appearance-none transition-all shadow-2xs"
+            className="h-[27px] bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-800 dark:text-indigo-200 dark:bg-indigo-950/60 dark:border-indigo-800/40 text-[11px] font-bold rounded-md pl-2 pr-5 outline-none cursor-pointer appearance-none transition-all"
             title="Select Translation Target Language"
           >
-            <option value="Vietnamese" className="bg-surface text-content">VI</option>
-            <option value="English" className="bg-surface text-content">EN</option>
-            <option value="Japanese" className="bg-surface text-content">JA</option>
-            <option value="Chinese" className="bg-surface text-content">ZH</option>
-            <option value="Korean" className="bg-surface text-content">KO</option>
-            <option value="French" className="bg-surface text-content">FR</option>
-            <option value="Spanish" className="bg-surface text-content">ES</option>
+            <option value="Vietnamese" className="bg-surface text-content">Vietnamese</option>
+            <option value="English" className="bg-surface text-content">English</option>
+            <option value="Japanese" className="bg-surface text-content">Japanese</option>
+            <option value="Chinese" className="bg-surface text-content">Chinese</option>
+            <option value="Korean" className="bg-surface text-content">Korean</option>
+            <option value="French" className="bg-surface text-content">French</option>
+            <option value="Spanish" className="bg-surface text-content">Spanish</option>
           </select>
-          <IconChevronDown className="w-3 h-3 text-content-muted pointer-events-none absolute right-1.5" />
+          <IconChevronDown className="w-3 h-3 text-indigo-700 dark:text-indigo-200 pointer-events-none absolute right-1.5" />
         </div>
 
-        <div className="w-[1px] h-3.5 bg-border mx-0.5" />
-
-        {/* Global Stop Voice Button */}
+        {/* Global Stop Voice Button — Matching demo .demo-stop-voice-btn */}
         <button
           type="button"
           onClick={() => stopAllAudio()}
           className={cx(
-            'h-[28px] px-2 rounded-md border text-[11px] font-semibold flex items-center gap-1 transition-all duration-140 cursor-pointer active:scale-95 shadow-2xs',
+            'h-[27px] px-2.5 rounded-md border text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs',
             isAudioPlaying
-              ? 'bg-rose-500/15 text-rose-600 dark:text-rose-300 border-rose-500/40 shadow-xs'
-              : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
+              ? 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/40 shadow-xs'
+              : 'bg-surface hover:bg-rose-50 hover:text-rose-800 hover:border-rose-200 text-content-secondary border-border',
           )}
-          title={isAudioPlaying ? 'Stop voice playback (Esc)' : 'Global stop audio'}
-          aria-label={isAudioPlaying ? 'Stop voice playback' : 'Global stop audio'}
+          title={isAudioPlaying ? 'Cancel voice playback (Esc)' : 'Global Stop Voice audio control'}
+          aria-label={isAudioPlaying ? 'Cancel voice playback' : 'Global Stop Voice audio control'}
+          aria-pressed={isAudioPlaying}
         >
-          {isAudioPlaying ? (
-            <>
-              <IconStopCircle className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400 animate-pulse" />
-              <span className="text-[10px] font-bold text-rose-600 dark:text-rose-300 uppercase">Stop</span>
-            </>
-          ) : (
-            <IconSpeaker className="w-3.5 h-3.5 text-content-muted" />
-          )}
+          <span
+            className={cx(
+              'w-2 h-2 rounded-full',
+              isAudioPlaying ? 'bg-rose-600 animate-pulse' : 'bg-content-muted/50',
+            )}
+          />
+          <span>{isAudioPlaying ? 'Stop (Esc)' : 'Stop Voice'}</span>
         </button>
+
+        <div className="w-[1px] h-3.5 bg-border mx-0.5" />
 
         {/* Shortcuts Modal Trigger */}
         <button
           type="button"
           onClick={onToggleShortcuts}
           className={cx(
-            'btn-control-icon !w-[28px] !h-[28px] !p-1',
+            'btn-control-icon !w-[27px] !h-[27px] !p-1',
             showShortcuts ? 'bg-teal-500/15 text-teal-600 dark:text-teal-300 border-teal-500/30' : '',
           )}
           title="Keyboard Shortcuts (Shift+Q)"
@@ -154,7 +149,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <button
           type="button"
           onClick={onToggleTheme}
-          className="btn-control-icon !w-[28px] !h-[28px] !p-1"
+          className="btn-control-icon !w-[27px] !h-[27px] !p-1"
           title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           aria-label={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
         >
@@ -165,12 +160,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           )}
         </button>
 
-        {/* Maximize / Pop-out */}
+        {/* Maximize / Restore */}
         {onToggleMaximize ? (
           <button
             type="button"
             onClick={onToggleMaximize}
-            className="btn-control-icon !w-[28px] !h-[28px] !p-1"
+            className="btn-control-icon !w-[27px] !h-[27px] !p-1"
             title={isMaximized ? 'Restore View' : 'Maximize Workbench View'}
             aria-label={isMaximized ? 'Restore View' : 'Maximize Workbench View'}
           >
@@ -186,7 +181,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <button
           type="button"
           onClick={() => openExtensionSettings()}
-          className="btn-control-icon !w-[28px] !h-[28px] !p-1"
+          className="btn-control-icon !w-[27px] !h-[27px] !p-1"
           title="Extension Settings"
           aria-label="Extension Settings"
         >

@@ -5,6 +5,7 @@ interface TokenizedContextProps {
   text: string;
   query?: string;
   onSelectToken?: (word: string) => void;
+  className?: string;
 }
 
 interface Token {
@@ -13,7 +14,7 @@ interface Token {
   isQuery: boolean;
 }
 
-export const TokenizedContext: React.FC<TokenizedContextProps> = ({ text, query, onSelectToken }) => {
+export const TokenizedContext: React.FC<TokenizedContextProps> = ({ text, query, onSelectToken, className }) => {
   const tokens = useMemo<Token[]>(() => {
     if (!text) return [];
     const rawTokens = text.split(/(\s+|[.,!?;:"'()\[\]{}]+)/);
@@ -27,7 +28,7 @@ export const TokenizedContext: React.FC<TokenizedContextProps> = ({ text, query,
   }, [text, query]);
 
   return (
-    <div className="p-3 rounded-lg border border-border bg-muted/60 text-[13px] leading-relaxed font-sans text-content">
+    <div className={cx('text-[13px] leading-relaxed font-sans text-content', className || 'p-3 rounded-lg border border-border bg-muted/60')}>
       {tokens.map((token, idx) =>
         token.isWord ? (
           <span

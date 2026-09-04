@@ -45,7 +45,6 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
   const { playingKey } = useDictionaryAudio();
   const { practiceResult, isPracticing, supportsSpeechPractice } = useDictionaryPractice();
   const [extrasReady, setExtrasReady] = useState(false);
-  const [copiedNotice, setCopiedNotice] = useState(false);
 
   useEffect(() => {
     setExtrasReady(false);
@@ -129,18 +128,6 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
     onSelectWord?.(wordToSearch);
   }
 
-  function copyWordDefinition() {
-    if (!result) return;
-    const def = result.meanings?.[0]?.definitions?.[0]?.definition || '';
-    const text = `${result.word} (${result.phonetic || ''}): ${def}`;
-    navigator.clipboard.writeText(text).then(() => {
-      setCopiedNotice(true);
-      setTimeout(() => {
-        setCopiedNotice(false);
-      }, 1800);
-    });
-  }
-
   const { filteredExamples, filteredSynonyms, filteredAntonyms } = useMemo(() => {
     if (!result) {
       return { filteredExamples: [], filteredSynonyms: [], filteredAntonyms: [] };
@@ -209,7 +196,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
 
   return (
     <div className="space-y-4">
-      {/* Headword Plate: Serif title, phonetics, audio triggers */}
+      {/* Headword Plate: Clean title, phonetics, audio triggers */}
       <div className="pb-3 border-b border-border space-y-2">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
@@ -313,21 +300,11 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
               ) : null}
             </div>
           </div>
-
-          <button
-            type="button"
-            onClick={copyWordDefinition}
-            title="Copy definition"
-            className="h-7 px-2 rounded-md bg-surface hover:bg-elevated text-content-secondary hover:text-content border border-border text-[11.5px] font-medium transition-colors cursor-pointer flex items-center gap-1 flex-shrink-0"
-          >
-            <span>{copiedNotice ? '✓ Copied' : 'Copy'}</span>
-          </button>
         </div>
       </div>
 
-      {/* Translation: Clean, inline text plate */}
       {result.translation?.translatedText ? (
-        <div className="p-3 rounded-lg border border-border bg-surface flex items-baseline justify-between gap-3">
+        <section className="p-3 rounded-lg border border-border bg-surface flex items-baseline justify-between gap-3">
           <div className="space-y-0.5">
             <span className="text-[10.5px] font-bold text-teal-700 dark:text-teal-400 uppercase tracking-wider">
               Translation
@@ -339,7 +316,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
           <span className="text-[10px] text-content-muted flex-shrink-0 font-mono">
             {result.translation.sourceBadges?.map((b) => b.label).join(' · ') || 'Google'}
           </span>
-        </div>
+        </section>
       ) : null}
 
       {/* Speech Practice Result Badge */}
@@ -382,65 +359,62 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
         </div>
       ) : null}
 
-      {/* Definitions & Senses */}
       {result.meanings?.length ? (
-        <SenseMatrixCard meanings={result.meanings} onSelectWord={handleSearch} />
-      ) : null}
-
-      {/* Additional Examples */}
-      {filteredExamples.length ? (
-        <section className="space-y-2 pt-3 mt-1 border-t border-border">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-[11px] font-bold text-content-muted uppercase tracking-wider">
-              <IconQuote className="w-3.5 h-3.5 text-teal-600 dark:text-gold-200" />
-              <span>Examples</span>
-            </div>
-            <span className="text-[10px] font-mono text-content-muted bg-muted/70 px-1.5 py-0.5 rounded">
-              {filteredExamples.length}
-            </span>
-          </div>
-          {filteredExamples.map((example, index) => {
-            const listenKey = `example-${index}`;
-            const isPlaying = playingKey === listenKey;
-            return (
-              <blockquote
-                key={`${example.text}-${index}`}
-                className="pl-3 py-2 pr-2 border-l-2 border-teal-500/50 dark:border-gold-300/40 bg-muted/30 rounded-r-md text-content-secondary italic text-[13.5px] leading-relaxed flex items-center justify-between gap-2"
-              >
-                <span className="not-italic text-content">“{example.text}”</span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    playPronunciation({
-                      text: example.text,
-                      language: 'en-US',
-                      key: listenKey,
-                    })
-                  }
-                  className={cx(
-                    'h-[24px] px-2 rounded border text-[11px] flex-shrink-0 flex items-center gap-1 cursor-pointer transition-colors',
-                    isPlaying
-                      ? 'bg-teal-500/20 text-teal-700 dark:text-gold-100 border-teal-500/40 dark:border-gold-300/40'
-                      : 'bg-surface text-content-secondary hover:text-content border-border',
-                  )}
-                  aria-pressed={isPlaying}
-                  title="Listen to example"
-                >
-                  <IconSpeaker className="w-3 h-3 text-teal-600 dark:text-gold-200" />
-                  <span>Listen</span>
-                </button>
-              </blockquote>
-            );
-          })}
+        <section className="p-3.5 rounded-lg border border-border bg-surface space-y-3">
+          <SenseMatrixCard meanings={result.meanings} onSelectWord={handleSearch} />
         </section>
       ) : null}
 
-      {/* Additional Synonyms & Antonyms */}
+      {filteredExamples.length ? (
+        <section className="p-3.5 rounded-lg border border-border bg-surface space-y-2.5">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-content-muted uppercase tracking-wider">
+            <IconQuote className="w-3.5 h-3.5 text-teal-600 dark:text-gold-200" />
+            <span>Examples</span>
+          </div>
+          <ul className="space-y-2">
+            {filteredExamples.map((example, index) => {
+              const listenKey = `example-${index}`;
+              const isPlaying = playingKey === listenKey;
+              return (
+                <li
+                  key={`${example.text}-${index}`}
+                  className="flex items-start justify-between gap-3 text-[13.5px] leading-relaxed text-content-secondary"
+                >
+                  <span className="flex-1 min-w-0">“{example.text}”</span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      playPronunciation({
+                        text: example.text,
+                        language: 'en-US',
+                        key: listenKey,
+                      })
+                    }
+                    className={cx(
+                      'h-6 px-2 rounded-full border text-[10.5px] font-semibold flex items-center gap-1 cursor-pointer transition-colors flex-shrink-0',
+                      isPlaying
+                        ? 'bg-teal-500/20 text-teal-700 dark:text-gold-100 border-teal-500/40'
+                        : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
+                    )}
+                    aria-pressed={isPlaying}
+                    title="Listen to example"
+                  >
+                    <IconSpeaker className="w-2.5 h-2.5" />
+                    <span>{isPlaying ? 'Playing…' : 'Listen'}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
+
+      {/* 5. Additional Synonyms & Antonyms */}
       {filteredSynonyms.length || filteredAntonyms.length ? (
-        <section className="rounded-lg border border-border bg-surface/60 p-3 space-y-2.5">
+        <section className="p-3 rounded-lg border border-border bg-surface/60 space-y-2">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-content-muted uppercase tracking-wider">
             <IconSparkles className="w-3.5 h-3.5 text-teal-600 dark:text-gold-200" />
-            <span>Related vocabulary</span>
+            <span>Related</span>
           </div>
           {filteredSynonyms.length ? (
             <RelatedWords
@@ -461,12 +435,12 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
         </section>
       ) : null}
 
-      {/* Phrase Fallback Explanation */}
+      {/* 6. Phrase Fallback Explanation */}
       {result.phraseExplanation?.length ? (
-        <div className="rounded-lg border border-border bg-surface p-3 space-y-2">
-          <div className="text-[11px] font-bold text-teal-700 dark:text-teal-300 uppercase tracking-wider">
+        <section className="p-3 rounded-lg border border-border bg-surface space-y-2">
+          <p className="text-[10px] font-bold uppercase tracking-wider font-mono text-teal-700 dark:text-teal-300">
             Phrase Explanation
-          </div>
+          </p>
           {result.phraseExplanation.map((section, index) => (
             <div key={index} className="space-y-1.5">
               {section.title && index > 0 ? (
@@ -484,15 +458,21 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
               ) : null}
             </div>
           ))}
-        </div>
+        </section>
       ) : null}
 
-      {/* Lexical Profile Cards */}
+      {/* 7. Structured Lexical Profile Cards (Lazy loaded) */}
       {extrasReady ? (
         <Suspense fallback={null}>
           <WordFamilyCard
             word={displayHeadword}
             family={result.lexicalProfile?.wordFamily}
+            onSelectWord={handleSearch}
+          />
+
+          <CollocationsCard
+            word={displayHeadword}
+            collocations={result.lexicalProfile?.collocations}
             onSelectWord={handleSearch}
           />
 
@@ -508,12 +488,6 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
           />
 
           <LearnerMistakesCard mistakes={result.lexicalProfile?.learnerMistakes} />
-
-          <CollocationsCard
-            word={displayHeadword}
-            collocations={result.lexicalProfile?.collocations}
-            onSelectWord={handleSearch}
-          />
         </Suspense>
       ) : null}
     </div>
