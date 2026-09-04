@@ -134,6 +134,7 @@ To prevent webpage text from injecting prompt-override instructions, the backgro
 <context>{{context}}</context>
 <target-language>{{targetLang}}</target-language>
 ```
+The same contract also restates the shared language policy: instructional explanations, definitions, grammar analyses, usage notes, and etymologies are written in English; `{{targetLang}}` is used only for translations, bilingual glosses, or when a section explicitly requests notes in that language (for example Rephrase).
 When `enableLexicalProfile` is active, prompts for Grammar and Collocations append instructions requesting a `<lexical-profile>` JSON block, which the runtime extracts, validates, and strips before rendering Markdown.
 
 ---

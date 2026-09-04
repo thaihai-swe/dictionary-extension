@@ -346,20 +346,6 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
               </button>
             </div>
 
-            {contextInput.trim() && (aiResult.type === 'explain_in_context' || aiResult.type === 'grammar') ? (
-              <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface border border-border text-[12.5px] shadow-xs">
-                <span className="font-bold text-content-muted text-[10.5px] uppercase tracking-wider flex-shrink-0 mt-0.5">
-                  Context used:
-                </span>
-                <TokenizedContext
-                  text={contextInput}
-                  query={resolvedQuery}
-                  onSelectToken={handleTokenSelect}
-                  className="p-0 border-0 bg-transparent text-[13px] inline"
-                />
-              </div>
-            ) : null}
-
             <Suspense fallback={<div className="p-3 text-[12.5px] text-content-muted">Loading analysis…</div>}>
               {aiResult.type === 'sentence_breakdown' ? (
                 <SentenceBreakdownIntent result={aiResult} targetLang={resultTargetLang} />
