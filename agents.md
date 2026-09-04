@@ -2,98 +2,96 @@
 
 ## 0. Priority Rules
 
-These rules override all other guidance in this file when they conflict.
+These override everything else in this file.
 
-- **No flattery, no filler:** Start with the answer, action, blocker, or decision.
-- **Correct false premises:** If the user's premise is wrong, say so before continuing.
-- **Never fabricate:** Do not invent file paths, test results, APIs, library functions, or repository behavior. Inspect the repository, run a check, or say what is unknown.
-- **Unknown stays unknown:** When information is unavailable, mark it explicitly as `[UNKNOWN]`. Do not replace missing evidence with a plausible guess.
-- **Ask only when needed:** Ask when ambiguity materially changes the result. Otherwise resolve it by inspecting the repository.
-- **Touch only the request:** Every changed line must support the user's request. No drive-by refactors, formatting churn, or unrelated cleanup.
-- **Fail loud:** Do not mark work complete if verification was skipped, failed, or partial. State exactly what was and was not verified.
-- **Preserve behavior:** Treat existing observable behavior as a contract unless the user explicitly asks to change it.
-- **Prefer small, reversible changes:** Match the existing architecture; do not introduce layers or abstractions without a demonstrated need.
+- **Direct:** Start with the answer, action, decision, or blocker. No flattery or filler.
+- **Correct false premises** before continuing.
+- **Never fabricate** file paths, commands, APIs, or repository behavior. Inspect the repo or mark it `[UNKNOWN]`.
+- **Ask only when needed:** Ask when ambiguity changes the result. Otherwise inspect the repository.
+- **Touch only the request.** No drive-by refactors, formatting churn, or unrelated cleanup.
+- **Preserve behavior** unless the user explicitly asks to change it.
+- **Fail loud.** Do not mark work complete if verification was skipped, failed, or partial.
+- **Smallest reversible change.** Match the existing architecture. No new layers without a demonstrated need.
 
-## 1. Boot Before You Build
+## 1. This Repository
 
-Before non-trivial work:
+Chrome Manifest V3 extension: Node `>= 22`, React 18, TypeScript 5, Vite 5, Tailwind CSS.
 
-1. Read the root `README.md` and `CONTRIBUTING.md` if they exist.
-2. Discover the real build, test, lint, format, and run commands from repository files and CI configuration. Never invent commands.
-3. Inspect nearby code, tests, configuration, and similar implementations before proposing a new pattern.
-4. For UI work, read `design.md` or `DESIGN.md` if it exists or is linked from the README.
-5. Read any more-specific instruction file that applies to the files you will change.
+| Area | Location |
+|---|---|
+| Service worker | `src/entrypoints/background/service-worker.ts` |
+| In-page overlay | `src/entrypoints/content-script/` (Shadow DOM `#dictionary-extension-root`) |
+| Toolbar popup | `src/entrypoints/toolbar-popup/` |
+| Options | `src/entrypoints/options/` |
+| State | `src/ui/signal.ts` + `useSyncExternalStore` — no Redux |
+| Theme | `src/ui/theme.ts` (`useAppTheme`) — Editorial Ink |
+| Docs | `docs/` (architecture, lookup flow, providers, development) |
 
-Use repository-specific guidance after these priority rules. When the repository does not provide a convention, choose the smallest safe option and state the assumption.
+**Storage (do not mix):**
 
-## 2. Operating Loop
+- `chrome.storage.sync` — public preferences only
+- `chrome.storage.local` — secrets (`aiApiKey`, `libreTranslateApiKey`) and LRU caches (`dict_lookup_cache_v2`, `ai_lookup_cache_v2`)
+- `chrome.storage.session` — transient SW caches (`enrich_*`, `comb_*`)
 
-For every task:
+API keys must never appear in sync storage, settings export JSON, or content-script memory.
 
-1. **Understand:** Identify the success condition in repository-specific terms.
-2. **Inspect:** Read relevant code, docs, tests, artifacts, and existing patterns.
-3. **Plan:** Choose the smallest safe change. State the intended outcome, constraints, and proof of success before editing non-trivial work.
-4. **Implement:** Change only what is required and match the local style.
-5. **Verify:** Run the strongest practical checks and read their output.
-6. **Report:** State what changed, what was verified, what was skipped or failed, and the next useful step.
+**Tests:** Node's native runner (`node --experimental-strip-types --test tests/*.test.ts`). Relative imports in code that tests load must use explicit `.ts` extensions (`allowImportingTsExtensions: true`).
 
-## 3. Change Discipline
+## 2. Commands
 
-- Implement the minimum code that solves the stated problem.
-- Do not add speculative features, configuration, dependencies, abstractions, or error handling.
-- Search for an existing equivalent before adding a helper, convention, or dependency.
-- Match existing indentation, naming, quotes, imports, file layout, and architecture.
-- Do not modify adjacent code, comments, formatting, or imports outside the task's scope.
-- Do not delete pre-existing dead code unless asked; mention it instead.
-- Clean up only artifacts created by your own change, such as unused imports or variables.
-- Fix root causes. Do not suppress errors merely to make a check pass.
+Do not invent scripts. Real ones:
 
-## 4. Verification Contract
+```bash
+npm test          # unit tests
+npm run typecheck # tsc --noEmit
+npm run build     # Vite production bundle → dist/
+npm run dev       # Vite HMR
+```
 
-Define success in verifiable terms before changing code. Use the strongest practical evidence:
+Load unpacked from `dist/` at `chrome://extensions`. Reload the extension and refresh host tabs after a rebuild.
 
-- Run focused tests for changed behavior.
-- Run type checks, linters, format checks, and builds when relevant and available.
-- For UI work, perform a visual check when the runtime provides a browser or UI driver.
-- For performance work, use a measurable before/after signal.
-- For bug fixes, reproduce the issue first when practical, then verify the fix.
+## 3. How to Work
 
-Read command output before claiming success. If a check fails, report it and fix the root cause when it is within scope. If a check is skipped, unavailable, or blocked, say so and explain why.
+1. Read the task and the code it touches. Trace the real flow.
+2. Climb this ladder before writing code:
+   1. Does this need to exist? (YAGNI)
+   2. Does it already exist here? Reuse it.
+   3. Does the platform / stdlib / an installed dependency already do it?
+   4. Can it be one line?
+   5. Only then: minimum code that works.
+3. Match local style (indentation, naming, imports, file layout). Clean up only artifacts you introduced.
+4. Fix the shared function once. Do not patch every caller.
+5. Do not delete pre-existing dead code unless asked; mention it.
+6. Do not add dependencies, abstractions, or features that were not requested.
+7. If you cut a real corner, mark it: `// ponytail: <ceiling> -> <upgrade path>`.
+8. Non-trivial logic leaves one runnable check (`tests/*.test.ts`). Trivial one-liners need none.
+9. Two failed attempts at the same issue: stop, report evidence, ask.
 
-## 5. Safety Boundaries
+**Not optional:** input validation at trust boundaries, no data-loss error swallowing, secret isolation, accessibility of UI you touch.
 
-Get explicit approval in the current conversation before actions that are hard to reverse or affect shared/external systems, including:
+## 4. Verify
 
-- Large-scale file deletion or filesystem wipes.
-- Production or shared-staging changes.
-- Printing, committing, logging, or transmitting secrets, tokens, keys, or private data.
-- Irreversible data migrations without a stated rollback plan.
-- Changes to authentication, authorization, billing, permissions, or public API contracts when the intended behavior is unclear.
+Define success before editing. Then run the strongest *relevant* checks and read their output:
 
-Local, reversible work may proceed. Do not bypass a permission boundary or hide a destructive action inside a script.
+- Logic / parsers / settings / enrichment → `npm test`
+- Types or public interfaces → `npm run typecheck`
+- Bundle, lazy imports, entrypoints → `npm run build`
+- UI → visual check in the popup or overlay when practical
+- Performance → a measurable before/after (bundle size or runtime)
 
-## 6. Communication
+Docs-only edits need no test/build. Skipped checks must be named.
 
-- Be direct and concise. Prefer short prose over excessive bullet lists.
-- Report concrete progress, blockers, and verification results.
-- For multi-step work, keep the state explicit: changed, verified, unverified, and next.
-- Do not celebrate ideas, scope creep, or unshipped work. Meaningful outcomes are shipped fixes, passing checks, solved blockers, or measurable improvements.
-- Final responses include a concise summary, files changed, verification results, and known gaps or risks. Include a next step only when useful.
+## 5. Safety
 
-## 7. When Stuck
+Get explicit approval in this conversation before:
 
-If two attempts to correct the same issue fail, stop. Summarize the evidence, attempted fixes, and remaining uncertainty, then ask whether to reset or change approach. Do not thrash or hide uncertainty.
+- Large-scale deletion
+- Printing, committing, or transmitting secrets / API keys
+- Irreversible migrations without a rollback plan
+- Auth, billing, permissions, or public API contract changes when intent is unclear
 
-## 8. Optional External Engineering Skills
+Local reversible work may proceed. Do not hide destructive actions inside scripts.
 
-CoreZero ships 11 lifecycle, harness, memory, ADR, and testing skills. Repository documentation, technical documentation, diagrams, and design-pattern workflows can be installed separately; see `EXTERNAL_SKILLS.md` for the external catalog and selected-install commands.
+## 6. Report
 
-External skills are optional. Do not treat them as CoreZero routes, pass their names to `python3 core-zero/scripts/core/cli.py context-load`, or make them a lifecycle gate unless the project explicitly adds an artifact requirement.
-
-## 9. Optional Runtime Capabilities
-
-Use these only when the runtime actually provides them:
-
-- **Delegated workers or subagents:** Use for broad repository searches, large-file or log analysis, isolated repetitive work, or independent review. Review their output; you own the final decision and merge quality.
-- **Browser or UI drivers:** Use for UI-facing validation when practical.
-- **Project skills, commands, or automations:** Follow repository-defined procedures when available. They do not override the Priority Rules.
+Changed files, what was verified, what was skipped or failed, known gaps. Next step only when useful.

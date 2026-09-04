@@ -187,7 +187,7 @@ The AI subsystem (`src/composables/composable.ai-assistant.ts` and `src/provider
    - When `<AiAssistantView />` becomes visible (`isVisible === true`), remaining intents (`explain_in_context`, `grammar`, `collocations`, `sentence_breakdown`, `confusables`, `rephrase`) queue sequentially via `requestIdleCallback` or 250ms timeouts.
    - Cached or already-pending intents are skipped.
 3. **Intent Hover/Focus Prefetching & Live Status Indicators:**
-   - In `AiIntentToolbar`, hovering over or focusing any secondary intent button triggers `preloadSpecificIntent()`.
+   - In the AI assistant view, hovering over or focusing any secondary intent button triggers `preloadSpecificIntent()`.
    - Each intent button features a live status indicator dot:
      - **Emerald (Ready):** Response is cached and displays instantly on click.
      - **Amber Pulse (Loading):** Request is actively in-flight.

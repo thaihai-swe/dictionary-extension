@@ -108,10 +108,6 @@ export function buildPrompt(
   return appendInputContract(applyTemplate(templateForIntent(canonical, settings), variables), variables);
 }
 
-export function abortGeminiApiRequest() {
-  // Abort is handled via AbortSignal on the in-flight fetch.
-}
-
 async function requestGeminiText(prompt: string, apiKey: string, model: string, signal?: AbortSignal): Promise<string> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
   const res = await safeFetch(url, {

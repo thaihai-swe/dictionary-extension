@@ -10,12 +10,6 @@ export type AiIntentId =
   | 'rephrase'
   | 'phrase_fallback';
 
-export interface AiIntent {
-  id: AiIntentId;
-  label: string;
-  icon: string;
-}
-
 export interface SentenceStructureItem {
   text: string;
   role: string;
@@ -235,5 +229,3 @@ export interface AppSettings {
   aiComparePromptTemplate: string;
   aiRephrasePromptTemplate: string;
 }
-
-export type ExtensionSettings = AppSettings;

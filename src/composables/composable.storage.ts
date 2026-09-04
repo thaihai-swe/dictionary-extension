@@ -295,13 +295,3 @@ export function useStorage() {
 }
 
 export const settingsStore = settingsRef;
-export const activeTabStore = activeTabRef;
-export const activeIntentStore = activeIntentRef;
-export function getStorageStore() {
-  return {
-    settings: settingsRef,
-    settingsHydrated: settingsHydratedRef,
-    activeTab: activeTabRef,
-    activeIntent: activeIntentRef,
-  };
-}

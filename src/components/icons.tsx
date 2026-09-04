@@ -194,37 +194,9 @@ export const IconAlertTriangle: React.FC<IconProps> = ({ className = 'w-4 h-4', 
   </svg>
 );
 
-export const IconScale: React.FC<IconProps> = ({ className = 'w-4 h-4', ...props }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true" {...props}>
-    <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
-    <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
-    <path d="M7 21h10" />
-    <path d="M12 3v18" />
-    <path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2" />
-  </svg>
-);
-
 export const IconPuzzle: React.FC<IconProps> = ({ className = 'w-4 h-4', ...props }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true" {...props}>
     <path d="M19.439 7.85c0-1.571-1.285-2.85-2.87-2.85a2.86 2.86 0 0 0-2.85 2.85v.715H9.72V7.85c0-1.571-1.285-2.85-2.87-2.85A2.86 2.86 0 0 0 4 7.85v3.565h.715c1.571 0 2.85 1.285 2.85 2.87a2.86 2.86 0 0 1-2.85 2.85H4v3.565c0 .79.645 1.435 1.435 1.435h3.565v-.715c0-1.571 1.285-2.85 2.87-2.85a2.86 2.86 0 0 1 2.85 2.85v.715h3.565c.79 0 1.435-.645 1.435-1.435V17.15h-.715a2.86 2.86 0 0 1-2.85-2.87 2.86 2.86 0 0 1 2.85-2.85h.715V7.85Z" />
-  </svg>
-);
-
-export const IconFileText: React.FC<IconProps> = ({ className = 'w-4 h-4', ...props }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true" {...props}>
-    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-    <polyline points="14 2 14 8 20 8" />
-    <line x1="16" x2="8" y1="13" y2="13" />
-    <line x1="16" x2="8" y1="17" y2="17" />
-    <line x1="10" x2="8" y1="9" y2="9" />
-  </svg>
-);
-
-export const IconLightbulb: React.FC<IconProps> = ({ className = 'w-4 h-4', ...props }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true" {...props}>
-    <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
-    <path d="M9 18h6" />
-    <path d="M10 22h4" />
   </svg>
 );
 

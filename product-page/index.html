@@ -390,8 +390,10 @@
                         <span class="install-num">1</span>
                         <div>
                             <h3>Get the source</h3>
-                            <p>Clone the repository or download the ZIP and open the <code>dictionary-extension</code> folder.</p>
-                            <pre class="install-code"><code>git clone https://github.com/thaihai-swe/dictionary-extension.git</code></pre>
+                            <p>Clone the repository or download the ZIP, then install and build:</p>
+                            <pre class="install-code"><code>git clone https://github.com/thaihai-swe/dictionary-extension.git
+cd dictionary-extension
+yarn install &amp;&amp; yarn build</code></pre>
                         </div>
                     </li>
                     <li class="install-step">
@@ -405,7 +407,7 @@
                         <span class="install-num">3</span>
                         <div>
                             <h3>Load unpacked</h3>
-                            <p>Click <strong>Load unpacked</strong> and select the cloned repository folder (the one containing <code>manifest.json</code>).</p>
+                            <p>Click <strong>Load unpacked</strong> and select the built <code>dist</code> folder (or the repository folder).</p>
                         </div>
                     </li>
                     <li class="install-step">
@@ -443,9 +445,9 @@
         <section class="section section-dark" id="engineering">
             <div class="container">
                 <div class="section-header">
-                    <p class="section-kicker">Open source · Manifest V3 · Schema v9</p>
+                    <p class="section-kicker">Open source · Chrome Extension</p>
                     <h2 class="section-title">A calm learning experience backed by deliberate extension architecture.</h2>
-                    <p class="section-lead">Plain HTML, CSS, and JavaScript. No framework and no build pipeline. Provider variance, prompt sandboxing, settings migrations, and service-worker constraints are handled in the open.</p>
+                    <p class="section-lead">Built with Vite, React, TypeScript, and Tailwind CSS. Provider variance, prompt sandboxing, settings migrations, and service-worker constraints are handled in the open.</p>
                 </div>
                 <div class="arch-diagram-card">
                     <div class="arch-header"><span class="arch-title">From selection to an attributable answer</span><span class="arch-tag">MV3 asynchronous coordination</span></div>
@@ -471,7 +473,7 @@
                     </article>
                     <article class="card card-tech">
                         <h3 class="tech-title"><span class="tech-tag">Maintainability</span>Simple, explicit boundaries</h3>
-                        <p class="card-text">Provider-specific parsing stays in adapters; shared rendering stays in the UI layer; the service worker coordinates messages and caching. The project uses plain HTML, CSS, and JavaScript by design.</p>
+                        <p class="card-text">Provider-specific parsing stays in adapters; shared rendering stays in the UI layer; the service worker coordinates messages and caching. The project uses a clean modular architecture by design.</p>
                         <ul class="tech-list">
                             <li>Normalized provider contracts keep the renderer provider-agnostic.</li>
                             <li>Storage validation and migrations keep settings durable across MV3 restarts.</li>
@@ -544,7 +546,7 @@
                     </details>
                     <details class="faq-item">
                         <summary>Is there a Chrome Web Store listing?</summary>
-                        <p>Not yet. Install from GitHub with Chrome’s unpacked-extension workflow: clone or download the repository, enable Developer mode, and choose <strong>Load unpacked</strong> on the folder that contains <code>manifest.json</code>.</p>
+                        <p>Not yet. Install from GitHub with Chrome’s unpacked-extension workflow: clone the repository, run <code>yarn install &amp;&amp; yarn build</code>, enable Developer mode, and choose <strong>Load unpacked</strong> on the built <code>dist</code> folder.</p>
                     </details>
                 </div>
             </div>

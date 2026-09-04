@@ -3,7 +3,7 @@ import { useStorage } from '../composables/composable.storage';
 import { isAudioPlayingRef, stopAllAudio } from '../composables/composable.dictionary';
 import { useSignal } from '../ui/signal';
 import { openExtensionSettings } from '../shared/runtime-client';
-import { ExtensionSettings } from '../types';
+import { AppSettings } from '../types';
 import { cx } from '../ui/cx';
 import {
   IconBook,
@@ -42,13 +42,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
   function handleProviderChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const val = e.target.value;
-    void saveSettings({ dictionaryProvider: val as ExtensionSettings['dictionaryProvider'] });
+    void saveSettings({ dictionaryProvider: val as AppSettings['dictionaryProvider'] });
     onUpdateProvider?.(val);
   }
 
   function handleTargetLangChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const val = e.target.value;
-    void saveSettings({ translateTargetLanguage: val as ExtensionSettings['translateTargetLanguage'] });
+    void saveSettings({ translateTargetLanguage: val as AppSettings['translateTargetLanguage'] });
     onUpdateTargetLang?.(val);
   }
 

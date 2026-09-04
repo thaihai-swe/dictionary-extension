@@ -1,5 +1,5 @@
 import { TRANSLATION_FETCH_TIMEOUT_MS, safeFetch } from './provider.http';
-import { DictionaryEntry, TranslationResult } from '../types';
+import { TranslationResult } from '../types';
 import { resolveLanguageCode } from '../shared/languages';
 
 function isGarbageTranslation(value: string): boolean {
@@ -51,26 +51,5 @@ export async function lookupMyMemoryTranslation(
     detectedLanguage: 'en',
     targetLanguage: target,
     sourceBadges: [{ label: 'MyMemory', kind: 'translation', providerId: 'mymemory' }],
-  };
-}
-
-export async function fetchMyMemory(
-  text: string,
-  targetLang = 'vi',
-  signal?: AbortSignal,
-): Promise<DictionaryEntry> {
-  const translation = await lookupMyMemoryTranslation(text, targetLang, signal);
-  const clean = text.trim();
-  return {
-    word: clean,
-    phonetics: [],
-    meanings: [{
-      partOfSpeech: 'phrase / translation',
-      definitions: [{ definition: translation.translatedText }],
-      source: 'MyMemory',
-    }],
-    translation,
-    sourceBadges: translation.sourceBadges,
-    providerId: 'mymemory',
   };
 }

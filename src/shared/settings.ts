@@ -1,4 +1,4 @@
-import { DEFAULT_AI_PROMPTS, getLegacyDefaultPromptUpdates } from './ai-prompts';
+import { DEFAULT_AI_PROMPTS, getLegacyDefaultPromptUpdates } from './ai-prompts.ts';
 import type { AppSettings } from '../types';
 import {
   SECRET_KEYS,
@@ -8,7 +8,7 @@ import {
   mergePublicSettings,
   mergeStoredSettings,
   stripSecretRecord,
-} from './settings-export';
+} from './settings-export.ts';
 
 export {
   SECRET_KEYS,

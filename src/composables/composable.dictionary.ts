@@ -575,38 +575,3 @@ export function useDictionaryPractice() {
 export function useDictionaryQuery() {
   return useSignal(queryRef);
 }
-
-export function useDictionary() {
-  return {
-    query: useSignal(queryRef),
-    result: useSignal(resultRef),
-    isLoading: useSignal(isLoadingRef),
-    error: useSignal(errorRef),
-    isAudioPlaying: useSignal(isAudioPlayingRef),
-    playingKey: useSignal(playingKeyRef),
-    searchWord,
-    playAudio,
-    playPronunciation,
-    speakTTS,
-    startSpeechPractice,
-    practiceResult: useSignal(practiceResultRef),
-    isPracticing: useSignal(isPracticingRef),
-    supportsSpeechPractice: supportsSpeechPractice(),
-    stopAllAudio,
-    abortActiveDictRequest,
-    clearDictionaryCache,
-  };
-}
-
-export function getDictionaryStore() {
-  return {
-    query: queryRef,
-    result: resultRef,
-    isLoading: isLoadingRef,
-    error: errorRef,
-    practiceResult: practiceResultRef,
-    isPracticing: isPracticingRef,
-    isAudioPlaying: isAudioPlayingRef,
-    playingKey: playingKeyRef,
-  };
-}

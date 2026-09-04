@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useAiAssistant, AI_INTENTS, AiIntentStatus } from '../composables/composable.ai-assistant';
 import { searchWord, stopAllAudio, useDictionaryQuery } from '../composables/composable.dictionary';
 import { useStorage } from '../composables/composable.storage';
@@ -75,6 +75,18 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
   const [isEditingContext, setIsEditingContext] = useState(false);
 
   const resultTargetLang = targetLang || settings.translateTargetLanguage;
+  const resolvedQuery = resolveQuery(queryInput, contextInput);
+  const intentChips = useMemo(
+    () => AI_INTENTS.map((item) => ({
+      ...item,
+      isActive: activeIntent === item.id,
+      isDisabled: !resolvedQuery || isAiIntentDisabled(item.id, resolvedQuery, contextInput, targetLang),
+      status: resolvedQuery
+        ? getAiIntentStatus(item.id, resolvedQuery, contextInput, targetLang)
+        : 'unrequested' as const,
+    })),
+    [activeIntent, contextInput, intentStatusEpoch, isAiIntentDisabled, getAiIntentStatus, resolvedQuery, targetLang],
+  );
 
   function runCurrentIntent(intentId = activeIntent) {
     const q = resolveQuery(queryInput, contextInput);
@@ -271,36 +283,28 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
 
       {/* Intent Action Chips with Status Indicators */}
       <div className="flex flex-wrap gap-1.5 pt-0.5">
-        {AI_INTENTS.map((item) => {
-          void intentStatusEpoch;
-          const isActive = activeIntent === item.id;
-          const q = resolveQuery(queryInput, contextInput);
-          const isDisabled = !q || isAiIntentDisabled(item.id, q, contextInput, targetLang);
-          const status = q ? getAiIntentStatus(item.id, q, contextInput, targetLang) : 'unrequested';
-
-          return (
-            <button
-              key={item.id}
-              type="button"
-              disabled={isDisabled}
-              onClick={() => handleIntentSelect(item.id)}
-              onMouseEnter={() => {
-                if (item.id !== activeIntent && q) {
-                  void preloadSpecificIntent(item.id, q, contextInput, targetLang);
-                }
-              }}
-              className={cx(
-                'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border text-[11.5px] font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed',
-                isActive
-                  ? 'bg-teal-500/15 border-teal-500/40 text-teal-800 dark:text-gold-200 dark:bg-gold-300/15 dark:border-gold-300/40 font-semibold'
-                  : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
-              )}
-            >
-              {renderStatusDot(status, isActive)}
-              <span>{item.label}</span>
-            </button>
-          );
-        })}
+        {intentChips.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            disabled={item.isDisabled}
+            onClick={() => handleIntentSelect(item.id)}
+            onMouseEnter={() => {
+              if (item.id !== activeIntent && resolvedQuery) {
+                void preloadSpecificIntent(item.id, resolvedQuery, contextInput, targetLang);
+              }
+            }}
+            className={cx(
+              'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border text-[11.5px] font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed',
+              item.isActive
+                ? 'bg-teal-500/15 border-teal-500/40 text-teal-800 dark:text-gold-200 dark:bg-gold-300/15 dark:border-gold-300/40 font-semibold'
+                : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
+            )}
+          >
+            {renderStatusDot(item.status, item.isActive)}
+            <span>{item.label}</span>
+          </button>
+        ))}
       </div>
 
       {/* Results */}

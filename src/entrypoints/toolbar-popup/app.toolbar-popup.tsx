@@ -2,8 +2,9 @@ import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { useStorage } from '../../composables/composable.storage';
 import { useLookupSession } from '../../composables/composable.lookup-session';
 import { useDictionaryQuery } from '../../composables/composable.dictionary';
-import { TabId, AppTheme } from '../../types';
+import { TabId } from '../../types';
 import { cx } from '../../ui/cx';
+import { useAppTheme } from '../../ui/theme';
 import AppHeader from '../../components/component.app-header';
 import TabNavigation from '../../components/component.tab-navigation';
 import WordLookupView from '../../components/view.word-lookup';
@@ -11,24 +12,18 @@ import WordLookupView from '../../components/view.word-lookup';
 const AiAssistantView = lazy(() => import('../../components/view.ai-assistant'));
 const ShortcutsModal = lazy(() => import('../../components/modal.shortcuts'));
 
-function resolveIsDark(theme: AppTheme): boolean {
-  if (theme === 'dark') return true;
-  if (theme === 'light') return false;
-  if (typeof window !== 'undefined' && window.matchMedia) {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  }
-  return true;
-}
-
 export const ToolbarPopupApp: React.FC = () => {
   const { activeTab, settings, saveSettings } = useStorage();
   const session = useLookupSession();
   const query = useDictionaryQuery();
+  const { isDarkMode, toggleTheme } = useAppTheme(settings.theme, {
+    syncDocument: true,
+    saveSettings,
+  });
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [aiVisited, setAiVisited] = useState(activeTab === 'ai_assistant');
   const [targetLang, setTargetLang] = useState(settings.translateTargetLanguage || 'Vietnamese');
   const [currentProvider, setCurrentProvider] = useState(settings.dictionaryProvider || 'free_dictionary');
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => resolveIsDark(settings.theme));
   const [isFullTab, setIsFullTab] = useState(false);
 
   useEffect(() => {
@@ -38,38 +33,6 @@ export const ToolbarPopupApp: React.FC = () => {
   useEffect(() => {
     if (settings.translateTargetLanguage) setTargetLang(settings.translateTargetLanguage);
   }, [settings.translateTargetLanguage]);
-
-  // Sync theme changes with DOM and system preference
-  useEffect(() => {
-    const isDark = resolveIsDark(settings.theme);
-    setIsDarkMode(isDark);
-
-    if (typeof document !== 'undefined') {
-      document.documentElement.classList.toggle('dark', isDark);
-      document.documentElement.classList.toggle('light', !isDark);
-      document.documentElement.classList.toggle('light-theme', !isDark);
-      document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-      if (document.body) {
-        document.body.classList.toggle('dark', isDark);
-        document.body.classList.toggle('light', !isDark);
-        document.body.classList.toggle('light-theme', !isDark);
-        document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
-      }
-    }
-
-    if (settings.theme === 'system' && typeof window !== 'undefined' && window.matchMedia) {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      const listener = (e: MediaQueryListEvent) => {
-        setIsDarkMode(e.matches);
-        document.documentElement.classList.toggle('dark', e.matches);
-        document.documentElement.classList.toggle('light', !e.matches);
-        document.documentElement.classList.toggle('light-theme', !e.matches);
-        document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
-      };
-      mediaQuery.addEventListener('change', listener);
-      return () => mediaQuery.removeEventListener('change', listener);
-    }
-  }, [settings.theme]);
 
   useEffect(() => {
     if (activeTab === 'ai_assistant') setAiVisited(true);
@@ -101,18 +64,6 @@ export const ToolbarPopupApp: React.FC = () => {
       }
     };
   }, []);
-
-  function toggleTheme() {
-    const next = !isDarkMode;
-    setIsDarkMode(next);
-    if (typeof document !== 'undefined') {
-      document.documentElement.classList.toggle('dark', next);
-      document.documentElement.classList.toggle('light', !next);
-      document.documentElement.classList.toggle('light-theme', !next);
-      document.documentElement.setAttribute('data-theme', next ? 'dark' : 'light');
-    }
-    void saveSettings({ theme: next ? 'dark' : 'light' });
-  }
 
   function handleTabChange(newTab: TabId) {
     session.switchTab(newTab);

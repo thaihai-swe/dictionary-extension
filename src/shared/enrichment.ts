@@ -6,7 +6,7 @@ import type {
   SourceBadge,
   TranslationResult,
 } from '../types';
-import { mergeLexicalProfiles } from './query-utils';
+import { mergeLexicalProfiles } from './query-utils.ts';
 
 export const MAX_DEFINITIONS_PER_POS = 8;
 export const MAX_MEANINGS = 6;

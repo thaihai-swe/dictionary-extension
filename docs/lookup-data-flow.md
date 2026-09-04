@@ -87,7 +87,7 @@ User clicks "AI Assistant" Tab
            │     6. rephrase
            │
            ▼
-[3] AiIntentToolbar Status Dots Transition Automatically:
+[3] AI Intent Status Dots Transition Automatically:
     • Unrequested (gray dot) ➔ Loading (amber pulsing dot) ➔ Ready (emerald dot)
     • Hovering over any intent immediately warms it (preloadSpecificIntent)
     • Clicking any ready intent switches views instantly (0ms)
@@ -139,7 +139,7 @@ selection
 2. After 600ms: `preloadIntents()` requests **only** the `default` (Main AI) intent via `AI_LOOKUP` and prefetches its code chunk.
 3. **The other 6 intents do not make network calls** while the user remains on the Dictionary tab.
 4. When the user switches to the AI tab (`isVisible: true`), `preloadFollowUpIntentsOnTabVisit()` warms the remaining intents sequentially in the background via `requestIdleCallback` (with 250ms spacing). Duplicate in-flight calls share `aiPendingMap`.
-5. Hovering or focusing any intent button in `AiIntentToolbar` immediately warms that specific intent via `preloadSpecificIntent()`.
+5. Hovering or focusing any intent button immediately warms that specific intent via `preloadSpecificIntent()`.
 6. Status indicators on each intent button reflect real-time readiness:
    - **Emerald:** Cached and ready.
    - **Amber Pulse:** Currently fetching.

@@ -7,6 +7,7 @@ import WordLookupView from '@/components/view.word-lookup';
 import { TabId } from '@/types';
 import { isDistinctContext } from '@/shared/page-context';
 import { cx } from '@/ui/cx';
+import { useAppTheme } from '@/ui/theme';
 import { IconClose } from '@/components/icons';
 
 const AiAssistantView = lazy(() => import('@/components/view.ai-assistant'));
@@ -33,15 +34,6 @@ function distinctContext(text: string, context?: string): string {
   return isDistinctContext(text, trimmedContext) ? trimmedContext : '';
 }
 
-function resolveIsDark(theme: string): boolean {
-  if (theme === 'dark') return true;
-  if (theme === 'light') return false;
-  if (typeof window !== 'undefined' && window.matchMedia) {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  }
-  return true;
-}
-
 export const InPageOverlay: React.FC<InPageOverlayProps> = ({
   selectedText,
   contextSentence,
@@ -55,9 +47,9 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
 }) => {
   const { activeTab, settings, saveSettings, setActiveTab } = useStorage();
   const session = useLookupSession();
+  const { isDarkMode, toggleTheme } = useAppTheme(settings.theme, { saveSettings });
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [aiVisited, setAiVisited] = useState(activeTab === 'ai_assistant');
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => resolveIsDark(settings.theme));
   const [currentProvider, setCurrentProvider] = useState(settings.dictionaryProvider || 'free_dictionary');
   const [currentText, setCurrentText] = useState(selectedText || '');
   const [currentContext, setCurrentContext] = useState(
@@ -78,27 +70,8 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
   }, [settings.translateTargetLanguage, targetLang]);
 
   useEffect(() => {
-    const isDark = resolveIsDark(settings.theme);
-    setIsDarkMode(isDark);
-    if (settings.theme === 'system' && typeof window !== 'undefined' && window.matchMedia) {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      const listener = (e: MediaQueryListEvent) => {
-        setIsDarkMode(e.matches);
-      };
-      mediaQuery.addEventListener('change', listener);
-      return () => mediaQuery.removeEventListener('change', listener);
-    }
-  }, [settings.theme]);
-
-  useEffect(() => {
     if (activeTab === 'ai_assistant') setAiVisited(true);
   }, [activeTab]);
-
-  function toggleTheme() {
-    const next = !isDarkMode;
-    setIsDarkMode(next);
-    void saveSettings({ theme: next ? 'dark' : 'light' });
-  }
 
   function syncTextFromSelection(text?: string, context?: string) {
     if (!text?.trim()) return;
