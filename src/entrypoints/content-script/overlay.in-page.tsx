@@ -1,12 +1,13 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { useStorage } from '@/composables/composable.storage';
-import { abortActiveDictRequest, stopAllAudio } from '@/composables/composable.dictionary';
+import { useLookupSession } from '@/composables/composable.lookup-session';
 import AppHeader from '@/components/component.app-header';
 import TabNavigation from '@/components/component.tab-navigation';
 import WordLookupView from '@/components/view.word-lookup';
 import { TabId } from '@/types';
 import { isDistinctContext } from '@/shared/page-context';
 import { cx } from '@/ui/cx';
+import { IconClose } from '@/components/icons';
 
 const AiAssistantView = lazy(() => import('@/components/view.ai-assistant'));
 const ShortcutsModal = lazy(() => import('@/components/modal.shortcuts'));
@@ -32,6 +33,15 @@ function distinctContext(text: string, context?: string): string {
   return isDistinctContext(text, trimmedContext) ? trimmedContext : '';
 }
 
+function resolveIsDark(theme: string): boolean {
+  if (theme === 'dark') return true;
+  if (theme === 'light') return false;
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  return true;
+}
+
 export const InPageOverlay: React.FC<InPageOverlayProps> = ({
   selectedText,
   contextSentence,
@@ -44,9 +54,10 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
   onStartResize,
 }) => {
   const { activeTab, settings, saveSettings, setActiveTab } = useStorage();
+  const session = useLookupSession();
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [aiVisited, setAiVisited] = useState(activeTab === 'ai_assistant');
-  const [isDarkMode, setIsDarkMode] = useState(settings.theme !== 'light');
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => resolveIsDark(settings.theme));
   const [currentProvider, setCurrentProvider] = useState(settings.dictionaryProvider || 'free_dictionary');
   const [currentText, setCurrentText] = useState(selectedText || '');
   const [currentContext, setCurrentContext] = useState(
@@ -67,7 +78,16 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
   }, [settings.translateTargetLanguage, targetLang]);
 
   useEffect(() => {
-    setIsDarkMode(settings.theme !== 'light');
+    const isDark = resolveIsDark(settings.theme);
+    setIsDarkMode(isDark);
+    if (settings.theme === 'system' && typeof window !== 'undefined' && window.matchMedia) {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const listener = (e: MediaQueryListEvent) => {
+        setIsDarkMode(e.matches);
+      };
+      mediaQuery.addEventListener('change', listener);
+      return () => mediaQuery.removeEventListener('change', listener);
+    }
   }, [settings.theme]);
 
   useEffect(() => {
@@ -91,22 +111,11 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
   }
 
   function handleTabChange(newTab: TabId) {
-    stopAllAudio();
-    if (newTab === 'ai_assistant' && settings.enableAI === false) {
-      setActiveTab('dictionary');
-      return;
-    }
-    setActiveTab(newTab);
-    void saveSettings({ defaultTab: newTab });
+    session.switchTab(newTab);
   }
 
   function handleClose() {
-    stopAllAudio();
-    abortActiveDictRequest();
-    void import('@/composables/composable.ai-assistant').then(({ abortActiveAiRequest, cancelAiPreload }) => {
-      abortActiveAiRequest();
-      cancelAiPreload();
-    });
+    session.abortAllLookups();
     onClose?.();
   }
 
@@ -139,12 +148,7 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
         shadowRoot.removeEventListener('dict-update-text', onUpdateText);
         shadowRoot.removeEventListener('dict-switch-tab', onSwitchTab);
       }
-      stopAllAudio();
-      abortActiveDictRequest();
-      void import('@/composables/composable.ai-assistant').then(({ abortActiveAiRequest, cancelAiPreload }) => {
-        abortActiveAiRequest();
-        cancelAiPreload();
-      });
+      session.abortAllLookups();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -166,11 +170,12 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
   return (
     <div
       className={cx(
-        'bg-dark-paper border border-slate-700/80 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col select-none text-slate-100 text-sm ring-1 ring-white/10 relative inpage-popup-card w-full h-full',
-        !isDarkMode ? 'light-theme' : '',
+        'bg-paper border border-border rounded-xl shadow-card-elevated overflow-hidden flex flex-col select-none text-content text-sm relative inpage-popup-card w-full h-full transition-colors dark:border-gold-300/20',
+        isDarkMode ? 'dark' : 'light-theme light',
         settings.fontFamily === 'editorial' ? 'font-serif' : 'font-sans',
         isMaximized ? 'max-w-5xl max-h-[90vh]' : '',
       )}
+      data-theme={isDarkMode ? 'dark' : 'light'}
       onClick={(e) => e.stopPropagation()}
     >
       {/* Draggable Header Handle Container with Close Button */}
@@ -178,24 +183,31 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
         className="relative cursor-grab active:cursor-grabbing select-none"
         onMouseDown={handleHeaderMouseDown}
       >
-        <AppHeader
-          showShortcuts={showShortcuts}
-          isMaximized={isMaximized}
-          isDarkMode={isDarkMode}
-          onToggleShortcuts={() => setShowShortcuts((v) => !v)}
-          onToggleMaximize={onToggleMaximize}
-          onToggleTheme={toggleTheme}
-          onUpdateProvider={(v) => setCurrentProvider(v as typeof currentProvider)}
-          onUpdateTargetLang={(v) => setCurrentLang(v)}
-        />
-        <button
-          type="button"
-          onClick={handleClose}
-          title="Close (Esc)"
-          className="absolute right-2 top-2 w-5 h-5 rounded-full bg-dark-muted hover:bg-red-500/20 hover:text-red-400 text-slate-400 flex items-center justify-center text-xs transition-colors z-10 cursor-pointer"
-        >
-          ✕
-        </button>
+        <div className="flex items-center">
+          <div className="flex-1">
+            <AppHeader
+              showShortcuts={showShortcuts}
+              isMaximized={isMaximized}
+              isDarkMode={isDarkMode}
+              onToggleShortcuts={() => setShowShortcuts((v) => !v)}
+              onToggleMaximize={onToggleMaximize}
+              onToggleTheme={toggleTheme}
+              onUpdateProvider={(v) => setCurrentProvider(v as typeof currentProvider)}
+              onUpdateTargetLang={(v) => setCurrentLang(v)}
+            />
+          </div>
+          <div className="pr-2 bg-surface border-b border-border py-2 flex items-center">
+            <button
+              type="button"
+              onClick={handleClose}
+              title="Close window (Esc)"
+              aria-label="Close window"
+              className="w-7 h-7 rounded-md bg-surface hover:bg-rose-500/15 text-content-muted hover:text-rose-600 dark:hover:text-rose-300 border border-border flex items-center justify-center transition-colors cursor-pointer"
+            >
+              <IconClose className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Navigation Bar */}
@@ -214,11 +226,12 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
         </div>
         {aiVisited ? (
           <div style={{ display: activeTab === 'ai_assistant' ? undefined : 'none' }}>
-            <Suspense fallback={<div className="p-4 text-xs text-slate-400">Loading AI assistant…</div>}>
+            <Suspense fallback={<div className="p-4 text-[13px] text-content-muted">Loading AI assistant…</div>}>
               <AiAssistantView
                 initialQuery={currentText}
                 initialContext={currentContext}
                 targetLang={currentLang}
+                isVisible={activeTab === 'ai_assistant'}
                 onSwitchTab={handleTabChange}
               />
             </Suspense>
@@ -234,10 +247,12 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
             e.preventDefault();
             onStartResize?.(e.nativeEvent);
           }}
-          className="absolute right-1 bottom-1 w-4 h-4 cursor-nwse-resize text-slate-500 hover:text-slate-200 select-none flex items-center justify-center text-[10px] opacity-70 hover:opacity-100 transition-opacity z-30"
+          className="absolute right-1 bottom-1 w-4 h-4 cursor-nwse-resize text-content-muted hover:text-teal-600 dark:hover:text-teal-400 select-none flex items-center justify-center opacity-50 hover:opacity-100 transition-colors z-30"
           title="Drag to resize popup window"
         >
-          ◢
+          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M22 22H20V20H22V22ZM22 18H18V20H22V18ZM18 22H16V20H18V22ZM22 14H14V16H22V14Z" />
+          </svg>
         </div>
       ) : null}
 

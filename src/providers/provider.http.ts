@@ -1,7 +1,7 @@
 let nextRequestId = 1;
 
-export const DICTIONARY_FETCH_TIMEOUT_MS = 6000;
-export const TRANSLATION_FETCH_TIMEOUT_MS = 8000;
+export const DICTIONARY_FETCH_TIMEOUT_MS = 30000;
+export const TRANSLATION_FETCH_TIMEOUT_MS = 30000;
 export const AI_FETCH_TIMEOUT_MS = 30000;
 
 interface HttpCacheEntry {

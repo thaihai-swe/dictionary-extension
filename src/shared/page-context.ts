@@ -292,14 +292,18 @@ function findBestPageSentenceCandidate(needle: string): PageContextResult {
 
   const candidates: RankedSentenceCandidate[] = [];
   const seen = new Set<string>();
+  const needleLower = needle.toLowerCase();
   const containers = Array.from(document.querySelectorAll(SEMANTIC_CONTAINER_SELECTOR));
   const leaves = Array.from(document.querySelectorAll(LEAF_CONTENT_SELECTOR)).slice(0, MAX_SCAN_ELEMENTS);
-  const nodes = [...containers, ...leaves];
+  const nodes = containers.concat(leaves);
 
-  nodes.forEach((element, documentOrder) => {
+  for (let documentOrder = 0; documentOrder < nodes.length; documentOrder += 1) {
+    const element = nodes[documentOrder];
+    const raw = String((element as HTMLElement).textContent || '');
+    if (!raw || raw.toLowerCase().indexOf(needleLower) < 0) continue;
     const text = sanitizeBlockText(element, MAX_CANDIDATE_TEXT_LENGTH, needle);
     const sentence = findSentenceContaining(text, needle);
-    if (!isDistinctContext(needle, sentence) || seen.has(sentence)) return;
+    if (!isDistinctContext(needle, sentence) || seen.has(sentence)) continue;
     seen.add(sentence);
     candidates.push({
       sentence,
@@ -308,7 +312,7 @@ function findBestPageSentenceCandidate(needle: string): PageContextResult {
       viewportDistance: viewportDistance(element),
       documentOrder,
     });
-  });
+  }
 
   const ranked = rankSentenceCandidates(candidates);
   const best = ranked[0];

@@ -47,15 +47,7 @@ export function clearEnrichmentCache() {
 }
 
 function combinedResultCacheKey(word: string, settings: AppSettings): string {
-  return JSON.stringify({
-    word: word.toLowerCase().trim(),
-    provider: settings.dictionaryProvider || 'free_dictionary',
-    lang: String(settings.translateTargetLanguage || '').toLowerCase(),
-    enableTranslate: Boolean(settings.enableTranslate),
-    enableDictionary: Boolean(settings.enableDictionary),
-    enablePhraseFallback: Boolean(settings.enablePhraseFallback),
-    enableLexicalProfile: settings.enableLexicalProfile !== false,
-  });
+  return `${word.toLowerCase().trim()}|${settings.dictionaryProvider || 'free_dictionary'}|${String(settings.translateTargetLanguage || '').toLowerCase()}|${Boolean(settings.enableTranslate)}|${Boolean(settings.enableDictionary)}|${Boolean(settings.enablePhraseFallback)}|${settings.enableLexicalProfile !== false}`;
 }
 
 function readCombinedResultCache(key: string): DictionaryEntry | undefined {

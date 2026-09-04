@@ -24,7 +24,7 @@ export async function fetchWikipediaSummary(
   const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(clean)}`;
   const res = await safeFetch(url, {
     signal,
-    timeoutMs: 5000,
+    timeoutMs: 30000,
     headers: {
       Accept: 'application/json',
       'Api-User-Agent': 'DictionaryExtension/2.0 (language-learning)',

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { SentenceStructureItem } from '../types';
-import { useDictionary } from '../composables/composable.dictionary';
+import { useDictionaryAudio } from '../composables/composable.dictionary';
+import { IconCheck, IconCopy, IconPuzzle, IconSpeaker } from './icons';
 
 interface SentenceBreakdownCardProps {
   structure?: SentenceStructureItem[];
@@ -11,53 +12,52 @@ export const SentenceBreakdownCard: React.FC<SentenceBreakdownCardProps> = ({
   structure,
   translation,
 }) => {
-  const { speakTTS } = useDictionary();
+  const { playPronunciation } = useDictionaryAudio();
   const [copied, setCopied] = useState(false);
 
-  function speakText(text?: string) {
+  function speakText(text: string) {
     if (!text) return;
-    speakTTS(text);
+    playPronunciation({ text, language: 'en-US', key: `clause-${text.slice(0, 10)}` });
   }
 
   function copyTranslation(text: string) {
+    if (!text) return;
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
-      setTimeout(() => {
-        setCopied(false);
-      }, 2000);
+      setTimeout(() => setCopied(false), 2000);
     });
   }
 
+  if (!structure?.length && !translation) return null;
+
   return (
-    <div className="pt-3.5 border-t border-dark-border/50 space-y-3.5">
-      <div className="flex items-center justify-between text-xs font-bold text-slate-200">
-        <div className="flex items-center gap-2">
-          <span className="text-teal-400 text-sm">🧩</span>
-          <span className="text-teal-300 font-extrabold uppercase tracking-wider text-xs">
-            SENTENCE STRUCTURE BREAKDOWN
-          </span>
-        </div>
-        <span className="text-xs text-slate-400 font-mono font-semibold">Clause Analysis</span>
+    <div className="space-y-4 pt-1">
+      <div className="flex items-center justify-between pb-1 border-b border-border/40">
+        <span className="flex items-center gap-1.5 text-[12px] font-extrabold uppercase tracking-wider text-teal-600 dark:text-teal-400">
+          <IconPuzzle className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+          <span>Sentence Breakdown</span>
+        </span>
+        <span className="text-[11px] text-content-muted font-mono font-medium">Clause Analysis</span>
       </div>
 
-      <div className="space-y-2.5">
+      <div className="space-y-2">
         {structure?.map((item, index) => (
           <div
             key={index}
-            className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1.5 pl-3.5 py-2.5 pr-3 rounded-r-lg border-l-2 border-teal-500/70 bg-dark-muted/50 text-sm group hover:bg-dark-muted/80 transition-colors"
+            className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1.5 pl-3.5 py-2.5 pr-3 rounded-r-xl border-l-2 border-teal-500/70 bg-surface border border-border text-sm group hover:border-teal-500/40 transition-all shadow-xs"
           >
-            <div className="flex-1 min-w-[200px] text-slate-100 font-serif text-base leading-relaxed flex items-center justify-between gap-2">
+            <div className="flex-1 min-w-[200px] text-content text-[14px] leading-relaxed flex items-center justify-between gap-2">
               <span>{item.text}</span>
               <button
                 type="button"
                 onClick={() => speakText(item.text)}
                 title="Read clause aloud"
-                className="opacity-0 group-hover:opacity-100 p-1 text-xs text-slate-400 hover:text-teal-300 transition-opacity cursor-pointer"
+                className="opacity-0 group-hover:opacity-100 h-7 w-7 text-content-muted hover:text-teal-600 dark:hover:text-teal-300 transition-opacity cursor-pointer rounded-md hover:bg-muted flex items-center justify-center"
               >
-                🔊
+                <IconSpeaker className="w-3.5 h-3.5" />
               </button>
             </div>
-            <span className="ml-auto flex-shrink-0 px-3 py-0.5 rounded-full text-xs font-bold text-teal-300 bg-teal-500/15 border border-teal-500/25 capitalize font-mono">
+            <span className="ml-auto flex-shrink-0 px-2.5 py-0.5 rounded-full text-[11px] font-semibold text-teal-600 dark:text-teal-300 bg-teal-500/15 border border-teal-500/25 capitalize font-mono">
               {item.role}
             </span>
           </div>
@@ -65,9 +65,9 @@ export const SentenceBreakdownCard: React.FC<SentenceBreakdownCardProps> = ({
       </div>
 
       {translation && (
-        <div className="pl-4 py-3 pr-3.5 rounded-r-lg border-l-2 border-emerald-500/70 bg-emerald-500/5 text-sm leading-relaxed text-slate-200 space-y-1.5">
+        <div className="pl-4 py-3 pr-3.5 rounded-r-xl border-l-2 border-emerald-500/70 bg-emerald-500/10 text-[14px] leading-relaxed text-content-secondary space-y-1.5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="font-extrabold text-emerald-400 text-xs uppercase tracking-wider">
+            <span className="font-extrabold text-emerald-600 dark:text-emerald-400 text-[11px] uppercase tracking-wider">
               Context Translation:
             </span>
             <div className="flex items-center gap-1.5">
@@ -75,21 +75,32 @@ export const SentenceBreakdownCard: React.FC<SentenceBreakdownCardProps> = ({
                 type="button"
                 onClick={() => speakText(translation)}
                 title="Read translation aloud"
-                className="px-2.5 py-1 rounded bg-dark-muted hover:bg-dark-border text-slate-200 hover:text-white text-xs cursor-pointer font-semibold"
+                className="h-[28px] px-2.5 rounded-lg bg-muted hover:bg-elevated text-content-secondary hover:text-content text-[12px] cursor-pointer font-medium flex items-center gap-1.5 border border-border shadow-xs"
               >
-                🔊 Read
+                <IconSpeaker className="w-3.5 h-3.5 text-teal-500 dark:text-teal-400" />
+                <span>Read</span>
               </button>
               <button
                 type="button"
                 onClick={() => copyTranslation(translation)}
                 title="Copy translation"
-                className="px-2.5 py-1 rounded bg-dark-muted hover:bg-dark-border text-slate-200 hover:text-white text-xs cursor-pointer font-semibold"
+                className="h-[28px] px-2.5 rounded-lg bg-muted hover:bg-elevated text-content-secondary hover:text-content text-[12px] cursor-pointer font-medium flex items-center gap-1.5 border border-border shadow-xs"
               >
-                {copied ? '✓ Copied' : '📋 Copy'}
+                {copied ? (
+                  <>
+                    <IconCheck className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>Copied</span>
+                  </>
+                ) : (
+                  <>
+                    <IconCopy className="w-3.5 h-3.5 text-content-secondary" />
+                    <span>Copy</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
-          <p className="text-slate-100 font-serif text-base leading-relaxed">{translation}</p>
+          <p className="font-medium text-[15px] text-content leading-relaxed">{translation}</p>
         </div>
       )}
     </div>

@@ -33,7 +33,7 @@ function posCodeToName(code: string): string {
 
 async function fetchDatamuseList(url: string, signal?: AbortSignal): Promise<string[]> {
   try {
-    const res = await safeFetch(url, { signal, timeoutMs: 4000 });
+    const res = await safeFetch(url, { signal, timeoutMs: 30000 });
     if (!res.ok) return [];
     const list = await res.json();
     if (!Array.isArray(list)) return [];

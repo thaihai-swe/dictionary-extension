@@ -399,7 +399,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const requestId = String(message.requestId || createRequestId('proxy'));
     const controller = new AbortController();
     activeProxyRequests.set(requestId, controller);
-    const timeoutMs = Math.max(1000, Math.min(Number(message.timeoutMs) || 8000, 30000));
+    const timeoutMs = Math.max(1000, Math.min(Number(message.timeoutMs) || 30000, 30000));
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     fetch(message.url, { ...(message.options || {}), signal: controller.signal })
       .then(async (res) => {

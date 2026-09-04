@@ -27,7 +27,7 @@ export const TokenizedContext: React.FC<TokenizedContextProps> = ({ text, query,
   }, [text, query]);
 
   return (
-    <div className="p-3 rounded-lg border border-dark-border bg-dark-muted text-xs leading-relaxed font-sans text-slate-200">
+    <div className="p-3 rounded-lg border border-border bg-muted/60 text-[13px] leading-relaxed font-sans text-content">
       {tokens.map((token, idx) =>
         token.isWord ? (
           <span
@@ -36,15 +36,15 @@ export const TokenizedContext: React.FC<TokenizedContextProps> = ({ text, query,
             className={cx(
               'inline-block cursor-pointer rounded px-0.5 transition-colors',
               token.isQuery
-                ? 'bg-brand-500/25 text-brand-400 font-bold border-b-2 border-brand-500'
-                : 'hover:bg-brand-500/20 hover:text-brand-400 text-slate-200',
+                ? 'bg-teal-500/25 text-teal-600 dark:text-teal-300 font-bold border-b-2 border-teal-500'
+                : 'hover:bg-teal-500/20 hover:text-teal-600 dark:hover:text-teal-300 text-content',
             )}
             title={`Click to lookup '${token.text}'`}
           >
             {token.text}
           </span>
         ) : (
-          <span key={idx} className="text-slate-300">
+          <span key={idx} className="text-content-secondary">
             {token.text}
           </span>
         ),

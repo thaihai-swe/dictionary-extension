@@ -63,11 +63,12 @@ Welcome to the comprehensive documentation for **Dictionary**, a lightweight, hi
                                        │
                                        ▼
 ┌────────────────────────────────────────────────────────────────────────┐
-│                     Shared Calm Learning Studio UI                     │
-│  • React 18 + Tailwind CSS + Atkinson Hyperlegible                     │
+│                        Editorial Ink Studio UI                         │
+│  • React 18 + Tailwind CSS + Editorial serif headwords                 │
+│  • Warm paper (light) & Obsidian Velvet + Champagne Gold (dark)        │
 │  • Clean headword header + UK/US pronunciation + Stop Voice button     │
 │  • Pronunciation player & Speech Practice evaluator (Levenshtein)      │
-│  • Interactive Lexical Profile (Word family chips & Collocation cards) │
+│  • Distinct Examples, Related Vocabulary & Collocation cards           │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 

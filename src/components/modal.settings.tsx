@@ -12,6 +12,14 @@ import { DEFAULT_AI_PROMPTS } from '../shared/ai-prompts';
 import { KNOWN_LANGUAGE_MAPPINGS } from '../shared/languages';
 import { AppSettings } from '../types';
 import { cx } from '../ui/cx';
+import {
+  IconBook,
+  IconCheck,
+  IconSearch,
+  IconSettings,
+  IconSparkles,
+  IconSun,
+} from './icons';
 
 const TabAppearance = lazy(() => import('./settings/tab.appearance'));
 const TabSources = lazy(() => import('./settings/tab.sources'));
@@ -98,9 +106,10 @@ export const SettingsModal: React.FC = () => {
     setLocalSettings((prev) => {
       let updated = false;
       const next = { ...prev };
-      for (const key of SECRET_SETTING_KEYS) {
-        if (!String(prev[key] || '').trim() && String(settings[key] || '').trim()) {
-          (next as Record<string, unknown>)[key] = settings[key];
+      for (const [key, value] of Object.entries(settings) as Array<[keyof AppSettings, unknown]>) {
+        if (SECRET_SETTING_KEYS.includes(key as never)) continue;
+        if (next[key] !== value) {
+          next[key] = value as never;
           updated = true;
         }
       }
@@ -113,120 +122,79 @@ export const SettingsModal: React.FC = () => {
   }
 
   function toggleManualModelMode() {
-    const nextManual = !isManualModelInput;
-    setIsManualModelInput(nextManual);
-    if (!nextManual && !presetModels.includes(localSettings.aiModel || '')) {
-      patchLocalSettings({ aiModel: 'gemini-3.5-flash-lite' });
+    setIsManualModelInput((prev) => !prev);
+  }
+
+  function restorePrompt(promptKey: keyof AppSettings) {
+    const defaultPrompt = DEFAULT_AI_PROMPTS[promptKey as keyof typeof DEFAULT_AI_PROMPTS];
+    if (defaultPrompt) {
+      patchLocalSettings({ [promptKey]: defaultPrompt });
     }
   }
 
-  function preserveStoredSecrets(current: AppSettings) {
-    if (!canEditApiKey) return current;
-    const next = { ...current };
-    for (const key of SECRET_SETTING_KEYS) {
-      if (!String(next[key] || '').trim() && String(settings[key] || '').trim()) {
-        (next as Record<string, unknown>)[key] = settings[key];
-      }
-    }
-    return next;
-  }
-
-  async function resetForm() {
-    setFormHydrated(false);
-    await syncLocalFromStore();
+  function restoreAllPrompts() {
+    patchLocalSettings({ ...DEFAULT_AI_PROMPTS });
   }
 
   async function handleSave() {
-    await whenSettingsReady();
-    let current = localSettings;
-    if (!formHydrated) current = preserveStoredSecrets(current);
-
-    const parsedHostnames = pausedSitesInput
+    const pausedList = pausedSitesInput
       .split('\n')
-      .map((s) => s.trim().toLowerCase())
-      .filter(Boolean);
+      .map((line) => line.trim().toLowerCase())
+      .filter((line) => line.length > 0 && !line.startsWith('#'));
 
-    const payload: Partial<AppSettings> = {
-      ...current,
-      pausedHostnames: parsedHostnames,
-      aiModel: current.aiModel && current.aiModel.trim() ? current.aiModel : 'gemini-3.5-flash-lite',
+    const toSave: Partial<AppSettings> = {
+      ...localSettings,
+      pausedHostnames: pausedList,
     };
 
-    for (const key of SECRET_SETTING_KEYS) {
-      if (!canEditApiKey || !String(payload[key] ?? '').trim()) delete payload[key];
+    if (!canEditApiKey) {
+      for (const key of SECRET_SETTING_KEYS) {
+        delete toSave[key];
+      }
     }
-    delete payload.hasAiApiKey;
 
-    await saveSettings(payload);
+    await saveSettings(toSave);
     setIsSavedNotice(true);
     setTimeout(() => {
       setIsSavedNotice(false);
-    }, 1600);
+    }, 2000);
+  }
+
+  function resetForm() {
+    applyStoreToLocal();
   }
 
   function exportSettings() {
-    const payload = serializePublicSettings(settings);
-    const jsonStr = JSON.stringify(payload, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const data = JSON.stringify(serializePublicSettings(localSettings), null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `dictionary-settings-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `dictionary-settings-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }
 
   function triggerImportFile() {
-    const fileInput = document.getElementById('settings-import-input') as HTMLInputElement;
-    if (fileInput) fileInput.click();
+    const input = document.getElementById('settings-import-input') as HTMLInputElement;
+    input?.click();
   }
 
   function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = (evt) => {
       try {
-        const imported = parsePublicSettingsImport(JSON.parse(event.target?.result as string));
-        void saveSettings(imported);
-        setLocalSettings((prev) => ({ ...prev, ...imported }));
-        alert('Settings backup restored successfully!');
-      } catch {
-        alert('Invalid JSON settings file.');
+        const text = evt.target?.result as string;
+        const parsed = parsePublicSettingsImport(text);
+        patchLocalSettings(parsed);
+      } catch (err) {
+        alert(err instanceof Error ? err.message : 'Invalid settings JSON file.');
       }
     };
     reader.readAsText(file);
-  }
-
-  async function testDictionaryConnection(providerId: string) {
-    setConnectionBusy((prev) => ({ ...prev, [providerId]: true }));
-    setConnectionStatus((prev) => ({ ...prev, [providerId]: 'Testing…' }));
-    try {
-      const result = await requestProviderValidation('dictionary', providerId, localSettings);
-      setConnectionStatus((prev) => ({
-        ...prev,
-        [providerId]: result.ok ? result.message || 'Connected' : result.error || 'Failed',
-      }));
-    } catch (error) {
-      setConnectionStatus((prev) => ({
-        ...prev,
-        [providerId]: error instanceof Error ? error.message : 'Connection failed.',
-      }));
-    } finally {
-      setConnectionBusy((prev) => ({ ...prev, [providerId]: false }));
-    }
-  }
-
-  function restorePrompt(key: keyof AppSettings) {
-    const fallback = DEFAULT_AI_PROMPTS[key as keyof typeof DEFAULT_AI_PROMPTS];
-    if (typeof fallback === 'string') {
-      patchLocalSettings({ [key]: fallback });
-    }
-  }
-
-  function restoreAllPrompts() {
-    patchLocalSettings(DEFAULT_AI_PROMPTS);
+    e.target.value = '';
   }
 
   async function testAiConnection() {
@@ -245,6 +213,25 @@ export const SettingsModal: React.FC = () => {
       }));
     } finally {
       setConnectionBusy((prev) => ({ ...prev, ai: false }));
+    }
+  }
+
+  async function testDictionaryConnection(providerId: string) {
+    setConnectionBusy((prev) => ({ ...prev, [providerId]: true }));
+    setConnectionStatus((prev) => ({ ...prev, [providerId]: 'Testing…' }));
+    try {
+      const result = await requestProviderValidation('dictionary', providerId, localSettings);
+      setConnectionStatus((prev) => ({
+        ...prev,
+        [providerId]: result.ok ? result.message || 'Connected' : result.error || 'Failed',
+      }));
+    } catch (error) {
+      setConnectionStatus((prev) => ({
+        ...prev,
+        [providerId]: error instanceof Error ? error.message : 'Connection failed.',
+      }));
+    } finally {
+      setConnectionBusy((prev) => ({ ...prev, [providerId]: false }));
     }
   }
 
@@ -268,55 +255,88 @@ export const SettingsModal: React.FC = () => {
     }
   }
 
+  const isDarkMode =
+    localSettings.theme === 'dark' ||
+    (localSettings.theme !== 'light' &&
+      typeof window !== 'undefined' &&
+      Boolean(window.matchMedia?.('(prefers-color-scheme: dark)').matches));
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.toggle('dark', isDarkMode);
+      document.documentElement.classList.toggle('light', !isDarkMode);
+      document.documentElement.classList.toggle('light-theme', !isDarkMode);
+      document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+    }
+  }, [isDarkMode]);
+
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-100 p-4 sm:p-6 flex items-start justify-center">
-      <div className="w-full max-w-5xl bg-dark-surface border border-dark-border rounded-2xl p-8 shadow-2xl space-y-5 text-sm flex flex-col my-4">
-        <div className="flex items-center justify-between border-b border-dark-border pb-3 flex-shrink-0">
-          <h3 className="font-bold text-xl text-slate-100 flex items-center gap-2">
-            <span>⚙️</span>
-            <span>Dictionary Settings</span>
-          </h3>
+    <div
+      className={cx(
+        'min-h-screen bg-paper text-content p-4 sm:p-6 flex items-start justify-center font-sans transition-colors',
+        isDarkMode ? 'dark' : 'light-theme light',
+      )}
+      data-theme={isDarkMode ? 'dark' : 'light'}
+    >
+      <div className="w-full max-w-5xl bg-surface border border-border rounded-2xl p-6 sm:p-8 shadow-card-elevated space-y-6 text-sm flex flex-col my-4">
+        {/* Settings Header */}
+        <div className="flex items-center justify-between border-b border-border/60 pb-4 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-600 dark:text-teal-400 shadow-xs">
+              <IconSettings className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+            </div>
+            <div>
+              <h2 className="font-bold text-lg sm:text-xl text-content font-heading">
+                Dictionary Preferences
+              </h2>
+              <p className="text-xs text-content-muted">Configure lookup behaviors, sources, AI, and appearance.</p>
+            </div>
+          </div>
         </div>
 
         {/* 4-Tab Navigation Bar */}
-        <div className="flex items-center gap-1 bg-dark-muted p-1 rounded-xl border border-dark-border flex-shrink-0">
+        <div className="flex items-center gap-1.5 bg-muted p-1 rounded-xl border border-border flex-shrink-0">
           {(
             [
-              ['general', '⚡ General'],
-              ['appearance', '🎨 Appearance'],
-              ['sources', '📚 Dictionaries'],
-              ['ai', '🤖 Gemini AI'],
+              ['general', 'General', IconSettings],
+              ['appearance', 'Appearance', IconSun],
+              ['sources', 'Dictionaries & Sources', IconBook],
+              ['ai', 'Gemini AI Assistant', IconSparkles],
             ] as const
-          ).map(([id, label]) => (
+          ).map(([id, label, IconComponent]) => (
             <button
               key={id}
               type="button"
               onClick={() => setActiveTab(id)}
               className={cx(
-                'flex-1 py-2.5 rounded-lg text-sm font-bold transition-all cursor-pointer',
+                'flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs',
                 activeTab === id
-                  ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30'
-                  : 'text-slate-400 hover:text-slate-200',
+                  ? 'bg-teal-500/15 text-teal-600 dark:text-teal-300 border border-teal-500/30 font-extrabold'
+                  : 'text-content-muted hover:text-content hover:bg-elevated border border-transparent',
               )}
             >
-              {label}
+              <IconComponent className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+              <span>{label}</span>
             </button>
           ))}
         </div>
 
-        {/* Scrollable Tab Content Container */}
+        {/* Tab Content */}
         <div className="flex-1 overflow-y-auto space-y-4 pr-1">
           {activeTab === 'general' ? (
-            <div className="space-y-3.5">
+            <div className="space-y-4">
+              {/* Trigger Mode */}
               <div className="space-y-2">
-                <label className="font-bold text-slate-200 block">⚡ Text Selection Trigger Mode:</label>
-                <div className="grid grid-cols-2 gap-2">
+                <label className="font-bold text-content-secondary block text-xs uppercase tracking-wider">
+                  Text Selection Trigger Mode
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <label
                     className={cx(
-                      'p-2.5 rounded-xl border cursor-pointer transition-all flex items-center gap-2',
+                      'p-3 rounded-xl border cursor-pointer transition-all flex items-center gap-3 shadow-xs',
                       localSettings.selectionTriggerMode === 'icon'
-                        ? 'bg-teal-500/10 border-teal-500/50 text-teal-300 font-bold'
-                        : 'bg-dark-muted border-dark-border text-slate-300 hover:border-slate-500',
+                        ? 'bg-teal-500/10 border-teal-500/50 text-teal-600 dark:text-teal-300 font-bold'
+                        : 'bg-muted border-border text-content-secondary hover:border-teal-500/40',
                     )}
                   >
                     <input
@@ -327,15 +347,19 @@ export const SettingsModal: React.FC = () => {
                       onChange={() => patchLocalSettings({ selectionTriggerMode: 'icon' })}
                       className="hidden"
                     />
-                    <span>🔍 Floating Action Icon</span>
+                    <IconSearch className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                    <div>
+                      <div className="font-semibold text-xs">Floating Action Icon</div>
+                      <div className="text-[11px] text-content-muted font-normal">Show small icon near highlighted text</div>
+                    </div>
                   </label>
 
                   <label
                     className={cx(
-                      'p-2.5 rounded-xl border cursor-pointer transition-all flex items-center gap-2',
+                      'p-3 rounded-xl border cursor-pointer transition-all flex items-center gap-3 shadow-xs',
                       localSettings.selectionTriggerMode === 'direct'
-                        ? 'bg-teal-500/10 border-teal-500/50 text-teal-300 font-bold'
-                        : 'bg-dark-muted border-dark-border text-slate-300 hover:border-slate-500',
+                        ? 'bg-teal-500/10 border-teal-500/50 text-teal-600 dark:text-teal-300 font-bold'
+                        : 'bg-muted border-border text-content-secondary hover:border-teal-500/40',
                     )}
                   >
                     <input
@@ -346,13 +370,20 @@ export const SettingsModal: React.FC = () => {
                       onChange={() => patchLocalSettings({ selectionTriggerMode: 'direct' })}
                       className="hidden"
                     />
-                    <span>⚡ Auto-open Popup</span>
+                    <IconSparkles className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                    <div>
+                      <div className="font-semibold text-xs">Auto-open Popup</div>
+                      <div className="text-[11px] text-content-muted font-normal">Directly open floating dictionary window</div>
+                    </div>
                   </label>
                 </div>
               </div>
 
-              <div className="space-y-2 pt-2 border-t border-dark-border/60">
-                <label className="font-bold text-slate-200 block">⌨️ Quick Post-Selection Shortcut:</label>
+              {/* Shortcut modifier */}
+              <div className="space-y-2 pt-3 border-t border-border/60">
+                <label className="font-bold text-content-secondary block text-xs uppercase tracking-wider">
+                  Quick Post-Selection Shortcut
+                </label>
                 <select
                   value={localSettings.postSelectionModifier || 'shift'}
                   onChange={(e) =>
@@ -360,7 +391,7 @@ export const SettingsModal: React.FC = () => {
                       postSelectionModifier: e.target.value as AppSettings['postSelectionModifier'],
                     })
                   }
-                  className="w-full bg-dark-muted border border-dark-border text-slate-200 text-sm font-medium rounded-xl px-3 py-2 outline-none focus:border-teal-500 cursor-pointer"
+                  className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-teal-500 cursor-pointer shadow-xs"
                 >
                   <option value="shift">Hold Shift + Press Q (Shift+Q)</option>
                   <option value="alt">Hold Alt + Press Q (Alt+Q)</option>
@@ -368,15 +399,18 @@ export const SettingsModal: React.FC = () => {
                 </select>
               </div>
 
-              <div className="space-y-2 pt-2 border-t border-dark-border/60">
-                <label className="font-bold text-slate-200 block">📌 Default Active Start Tab:</label>
-                <div className="grid grid-cols-2 gap-2">
+              {/* Default tab */}
+              <div className="space-y-2 pt-3 border-t border-border/60">
+                <label className="font-bold text-content-secondary block text-xs uppercase tracking-wider">
+                  Default Start Tab
+                </label>
+                <div className="grid grid-cols-2 gap-2.5">
                   <label
                     className={cx(
-                      'p-2 rounded-xl border cursor-pointer transition-all text-center font-bold',
+                      'p-2.5 rounded-xl border cursor-pointer transition-all text-center font-bold flex items-center justify-center gap-2 shadow-xs',
                       localSettings.defaultTab === 'dictionary'
-                        ? 'bg-teal-500/10 border-teal-500/50 text-teal-300'
-                        : 'bg-dark-muted border-dark-border text-slate-300',
+                        ? 'bg-teal-500/10 border-teal-500/50 text-teal-600 dark:text-teal-300'
+                        : 'bg-muted border-border text-content-secondary hover:border-teal-500/40',
                     )}
                   >
                     <input
@@ -387,15 +421,16 @@ export const SettingsModal: React.FC = () => {
                       onChange={() => patchLocalSettings({ defaultTab: 'dictionary' })}
                       className="hidden"
                     />
-                    <span>📖 Dictionary</span>
+                    <IconBook className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                    <span>Dictionary</span>
                   </label>
 
                   <label
                     className={cx(
-                      'p-2 rounded-xl border cursor-pointer transition-all text-center font-bold',
+                      'p-2.5 rounded-xl border cursor-pointer transition-all text-center font-bold flex items-center justify-center gap-2 shadow-xs',
                       localSettings.defaultTab === 'ai_assistant'
-                        ? 'bg-teal-500/10 border-teal-500/50 text-teal-300'
-                        : 'bg-dark-muted border-dark-border text-slate-300',
+                        ? 'bg-teal-500/10 border-teal-500/50 text-teal-600 dark:text-teal-300'
+                        : 'bg-muted border-border text-content-secondary hover:border-teal-500/40',
                     )}
                   >
                     <input
@@ -406,16 +441,23 @@ export const SettingsModal: React.FC = () => {
                       onChange={() => patchLocalSettings({ defaultTab: 'ai_assistant' })}
                       className="hidden"
                     />
-                    <span>✨ AI Assistant</span>
+                    <IconSparkles className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                    <span>AI Assistant</span>
                   </label>
                 </div>
               </div>
 
-              <div className="space-y-2 pt-2 border-t border-dark-border/60">
-                <label className="flex items-center justify-between cursor-pointer">
-                  <span className="font-bold text-slate-200">
-                    🖱️ Enable Right-Click Context Menu ("Lookup in Dictionary"):
-                  </span>
+              {/* Context menu toggle */}
+              <div className="space-y-2 pt-3 border-t border-border/60">
+                <label className="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-muted transition-colors">
+                  <div>
+                    <span className="font-semibold text-content text-xs block">
+                      Enable Right-Click Context Menu
+                    </span>
+                    <span className="text-[11px] text-content-muted block">
+                      Adds "Lookup in Dictionary" to Chrome context menu
+                    </span>
+                  </div>
                   <input
                     type="checkbox"
                     checked={Boolean(localSettings.enableContextMenuTrigger)}
@@ -425,11 +467,17 @@ export const SettingsModal: React.FC = () => {
                 </label>
               </div>
 
-              <div className="space-y-2 pt-2 border-t border-dark-border/60">
-                <label className="flex items-center justify-between cursor-pointer">
-                  <span className="font-bold text-slate-200">
-                    📖 Disable Surrounding Page Context Extraction:
-                  </span>
+              {/* Surrounding Context toggle */}
+              <div className="space-y-2 pt-1">
+                <label className="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-muted transition-colors">
+                  <div>
+                    <span className="font-semibold text-content text-xs block">
+                      Disable Surrounding Page Context Extraction
+                    </span>
+                    <span className="text-[11px] text-content-muted block">
+                      When enabled, looks up only the exact selection without neighboring sentences
+                    </span>
+                  </div>
                   <input
                     type="checkbox"
                     checked={Boolean(localSettings.disablePageContextExtraction)}
@@ -439,32 +487,33 @@ export const SettingsModal: React.FC = () => {
                 </label>
               </div>
 
-              <div className="space-y-2 pt-2 border-t border-dark-border/60">
-                <label className="font-bold text-slate-200 block">
-                  🚫 Paused Web Hostnames (1 hostname per line):
+              {/* Paused Hostnames */}
+              <div className="space-y-2 pt-3 border-t border-border/60">
+                <label className="font-bold text-content-secondary block text-xs uppercase tracking-wider">
+                  Paused Web Hostnames (1 per line)
                 </label>
                 <textarea
                   value={pausedSitesInput}
                   onChange={(e) => setPausedSitesInput(e.target.value)}
                   rows={3}
                   placeholder={'example.com\ndocs.google.com'}
-                  className="w-full bg-dark-muted border border-dark-border rounded-xl p-2.5 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 font-mono"
+                  className="w-full bg-muted border border-border rounded-xl p-2.5 text-xs text-content placeholder:text-content-muted outline-none focus:border-teal-500 font-mono shadow-xs"
                 />
-                <p className="text-xs text-slate-400">
-                  The floating lookup icon will be suppressed on these domain names.
+                <p className="text-[11px] text-content-muted">
+                  The floating lookup icon will be disabled on these domain names.
                 </p>
               </div>
             </div>
           ) : null}
 
           {activeTab === 'appearance' ? (
-            <Suspense fallback={<div className="p-4 text-xs text-slate-400">Loading appearance settings…</div>}>
+            <Suspense fallback={<div className="p-4 text-xs text-content-muted">Loading appearance settings…</div>}>
               <TabAppearance localSettings={localSettings} onChange={patchLocalSettings} />
             </Suspense>
           ) : null}
 
           {activeTab === 'sources' ? (
-            <Suspense fallback={<div className="p-4 text-xs text-slate-400">Loading dictionary sources…</div>}>
+            <Suspense fallback={<div className="p-4 text-xs text-content-muted">Loading dictionary sources…</div>}>
               <TabSources
                 localSettings={localSettings}
                 languageOptions={languageOptions}
@@ -479,7 +528,7 @@ export const SettingsModal: React.FC = () => {
           ) : null}
 
           {activeTab === 'ai' ? (
-            <Suspense fallback={<div className="p-4 text-xs text-slate-400">Loading AI settings…</div>}>
+            <Suspense fallback={<div className="p-4 text-xs text-content-muted">Loading AI settings…</div>}>
               <TabAi
                 localSettings={localSettings}
                 isManualModelInput={isManualModelInput}
@@ -496,24 +545,24 @@ export const SettingsModal: React.FC = () => {
           ) : null}
         </div>
 
-        {/* Footer Buttons & Actions */}
-        <div className="flex items-center justify-between border-t border-dark-border pt-3 flex-shrink-0">
-          <div className="flex items-center gap-1.5">
+        {/* Footer Actions */}
+        <div className="flex items-center justify-between border-t border-border/60 pt-4 flex-shrink-0 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={exportSettings}
               title="Download settings JSON backup"
-              className="px-2.5 py-1.5 rounded-xl bg-dark-muted hover:bg-dark-border text-slate-300 text-sm font-medium border border-dark-border transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-muted hover:bg-elevated text-content-secondary hover:text-content text-xs font-semibold border border-border transition-colors cursor-pointer shadow-xs active:scale-95"
             >
-              📥 Export JSON
+              Export JSON
             </button>
             <button
               type="button"
               onClick={triggerImportFile}
               title="Restore settings from JSON file"
-              className="px-2.5 py-1.5 rounded-xl bg-dark-muted hover:bg-dark-border text-slate-300 text-sm font-medium border border-dark-border transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-muted hover:bg-elevated text-content-secondary hover:text-content text-xs font-semibold border border-border transition-colors cursor-pointer shadow-xs active:scale-95"
             >
-              📤 Import JSON
+              Import JSON
             </button>
             <input
               id="settings-import-input"
@@ -528,7 +577,7 @@ export const SettingsModal: React.FC = () => {
             <button
               type="button"
               onClick={resetForm}
-              className="px-4 py-2 rounded-xl bg-dark-muted hover:bg-dark-border text-slate-300 text-sm font-bold transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-muted hover:bg-elevated text-content-secondary hover:text-content text-xs font-bold transition-colors cursor-pointer shadow-xs active:scale-95 border border-border"
             >
               Reset
             </button>
@@ -536,9 +585,16 @@ export const SettingsModal: React.FC = () => {
             <button
               type="button"
               onClick={handleSave}
-              className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+              className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95"
             >
-              <span>{isSavedNotice ? '✓ Saved!' : 'Save Settings'}</span>
+              {isSavedNotice ? (
+                <>
+                  <IconCheck className="w-4 h-4 text-white" />
+                  <span>Saved!</span>
+                </>
+              ) : (
+                <span>Save Changes</span>
+              )}
             </button>
           </div>
         </div>

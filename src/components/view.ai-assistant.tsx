@@ -4,6 +4,7 @@ import { searchWord, stopAllAudio, useDictionaryQuery } from '../composables/com
 import { useStorage } from '../composables/composable.storage';
 import { AiIntentId, TabId } from '../types';
 import AiIntentToolbar from './component.ai-intent-toolbar';
+import { IconClose, IconSearch } from './icons';
 import TokenizedContext from './component.tokenized-context';
 import {
   AiMarkdownIntent,
@@ -15,18 +16,19 @@ interface AiAssistantViewProps {
   initialQuery?: string;
   initialContext?: string;
   targetLang?: string;
+  isVisible?: boolean;
   onSwitchTab?: (tab: TabId) => void;
 }
 
 const intentTitleMap: Record<AiIntentId, string> = {
-  default: 'MAIN AI EXPLANATION',
-  explain_in_context: 'EXPLAIN IN CONTEXT',
-  grammar: 'GRAMMAR & NUANCE',
-  collocations: 'PHRASE & COLLOCATIONS',
-  sentence_breakdown: 'SENTENCE BREAKDOWN',
-  confusables: 'COMPARE CONFUSABLES',
-  rephrase: 'REPHRASE & STYLES',
-  phrase_fallback: 'PHRASE EXPLANATION',
+  default: 'Main AI Explanation',
+  explain_in_context: 'Context Explanation',
+  grammar: 'Grammar & Nuance',
+  collocations: 'Phrase & Collocations',
+  sentence_breakdown: 'Sentence Breakdown',
+  confusables: 'Compare Confusables',
+  rephrase: 'Rephrase & Styles',
+  phrase_fallback: 'Phrase Explanation',
 };
 
 function resolveQuery(query?: string, context?: string): string {
@@ -47,6 +49,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
   initialQuery,
   initialContext,
   targetLang,
+  isVisible = true,
   onSwitchTab,
 }) => {
   const {
@@ -58,6 +61,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
     intentStatusEpoch,
     runIntent,
     preloadSpecificIntent,
+    preloadFollowUpIntentsOnTabVisit,
     getAiIntentStatus,
     isAiIntentDisabled,
   } = useAiAssistant();
@@ -131,6 +135,16 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialQuery, initialContext]);
 
+  // When user switches to the AI tab and it becomes visible, automatically sequence the remaining intents
+  useEffect(() => {
+    if (!isVisible) return;
+    const q = resolveQuery(queryInput, contextInput);
+    if (!q) return;
+    const c = contextInput.trim();
+    void preloadFollowUpIntentsOnTabVisit(q, c, targetLang);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isVisible, queryInput, contextInput, targetLang]);
+
   useEffect(() => {
     if (targetLang && resolveQuery(queryInput, contextInput)) {
       runCurrentIntent();
@@ -155,13 +169,13 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
       setCopied(true);
       setTimeout(() => {
         setCopied(false);
-      }, 2000);
+      }, 1800);
     });
   }
 
   return (
-    <div className="p-3.5 space-y-3.5 font-sans">
-      {/* AI Intent Buttons Toolbar */}
+    <div className="px-4 py-3 space-y-3 font-sans">
+      {/* Segmented AI Intent Toolbar */}
       <AiIntentToolbar
         activeIntent={activeIntent}
         isIntentDisabled={(intentId) => {
@@ -184,13 +198,11 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
         }}
       />
 
-      {/* Single-line Lookup Search Bar */}
+      {/* Query Search Bar */}
       <div className="space-y-2">
         <div className="relative flex items-center">
-          <span className="absolute left-3 text-slate-400 pointer-events-none">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+          <span className="absolute left-3 text-content-muted pointer-events-none">
+            <IconSearch className="w-3.5 h-3.5" />
           </span>
           <input
             value={queryInput}
@@ -199,8 +211,8 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
               if (e.key === 'Enter') handleIntentSelect(activeIntent);
             }}
             type="text"
-            placeholder="Type or paste any word or sentence here to analyze..."
-            className="w-full bg-dark-muted border border-dark-border rounded-xl pl-9 pr-28 py-2.5 text-xs text-slate-100 placeholder-slate-400 outline-none focus:border-teal-500 transition-all shadow-sm font-sans"
+            placeholder="Analyze word or complete sentence…"
+            className="w-full h-[38px] bg-surface border border-border rounded-lg pl-9 pr-24 text-[13px] text-content placeholder:text-content-muted outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/15 transition-all font-sans"
           />
 
           {queryInput ? (
@@ -211,11 +223,9 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
                 stopAllAudio();
               }}
               title="Clear search text"
-              className="absolute right-20 text-slate-400 hover:text-slate-200 p-1 cursor-pointer flex items-center justify-center"
+              className="absolute right-[4.75rem] text-content-muted hover:text-content p-1 cursor-pointer flex items-center justify-center"
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <IconClose className="w-3.5 h-3.5" />
             </button>
           ) : null}
 
@@ -223,43 +233,36 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
             type="button"
             onClick={() => handleIntentSelect(activeIntent)}
             disabled={!queryInput || isAiLoading}
-            className="absolute right-1.5 px-3.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 active:scale-95 text-white text-xs font-bold transition-all disabled:opacity-50 shadow-sm cursor-pointer flex items-center gap-1"
+            className="absolute right-1.5 h-7 px-3 rounded-md bg-teal-700 hover:bg-teal-600 dark:bg-gold-400 dark:hover:bg-gold-300 dark:text-neutral-950 active:scale-95 text-white text-[12px] font-semibold transition-all disabled:opacity-50 cursor-pointer"
           >
-            <span>{isAiLoading ? 'Analyzing…' : 'Lookup'}</span>
+            <span>{isAiLoading ? 'Analyzing…' : 'Analyze'}</span>
           </button>
         </div>
 
-        {/* One context surface: hidden when it would duplicate the query */}
+        {/* Context Strip */}
         {!showContextCard ? (
-          <div className="flex items-center justify-end px-1">
+          <div className="flex items-center justify-end px-0.5">
             <button
               type="button"
               onClick={() => setIsEditingContext(true)}
-              className="text-[11px] text-teal-400 hover:text-teal-300 font-semibold cursor-pointer"
+              className="text-[11.5px] text-teal-700 dark:text-teal-400 hover:underline font-medium cursor-pointer"
             >
-              + Add context
+              + Add context sentence
             </button>
           </div>
         ) : (
-          <div className="rounded-xl border border-dark-border bg-dark-muted/40 p-2.5 space-y-2">
+          <div className="rounded-lg border border-border bg-surface p-2.5 space-y-1.5">
             <div className="flex items-center justify-between gap-2">
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Context</div>
-                <p className="text-[10px] text-slate-500">
-                  {showContextEditor
-                    ? 'Paste the sentence that contains this word. Used only for this explanation.'
-                    : 'Click any word → lookup in Dictionary'}
-                </p>
-              </div>
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setIsEditingContext(!showContextEditor)}
-                  className="text-xs px-2.5 py-1 rounded-lg bg-dark-surface hover:bg-dark-border text-slate-300 hover:text-white border border-dark-border transition-colors cursor-pointer font-semibold"
-                >
-                  {showContextEditor ? 'Done' : 'Edit'}
-                </button>
-              </div>
+              <span className="text-[10.5px] font-bold uppercase tracking-wider text-content-muted">
+                Context Sentence
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsEditingContext(!showContextEditor)}
+                className="text-[11px] font-medium text-content-secondary hover:text-content cursor-pointer"
+              >
+                {showContextEditor ? 'Done' : 'Edit'}
+              </button>
             </div>
 
             {showContextEditor ? (
@@ -268,8 +271,8 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
                 onChange={(e) => setContextInput(e.target.value)}
                 onBlur={() => setIsEditingContext(!contextInput.trim())}
                 rows={2}
-                placeholder="Paste the sentence or context here..."
-                className="w-full bg-dark-muted border border-dark-border rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-400 outline-none focus:border-teal-500 resize-y min-h-[52px]"
+                placeholder="Paste the sentence that contains this word..."
+                className="w-full bg-muted/50 border border-border rounded-md px-2.5 py-1.5 text-[12.5px] text-content placeholder:text-content-muted outline-none focus:border-teal-500 resize-y min-h-[44px]"
               />
             ) : (
               <TokenizedContext
@@ -279,47 +282,41 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
               />
             )}
 
-            {contextError ? <p className="text-[11px] text-rose-400">{contextError}</p> : null}
+            {contextError ? <p className="text-[11.5px] text-rose-600 dark:text-rose-400">{contextError}</p> : null}
           </div>
         )}
       </div>
 
-      {/* AI Header Row with Copy Button */}
+      {/* AI Header Strip */}
       {aiResult ? (
-        <div className="flex items-center justify-between pt-1">
-          <div className="flex items-center gap-2">
-            <span className="text-teal-400 text-sm">✨</span>
-            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
-              <span>{intentTitleMap[aiResult.type as AiIntentId] || 'AI ANALYSIS'}</span>
-            </h2>
-          </div>
+        <div className="flex items-center justify-between pt-0.5 border-b border-border pb-1.5">
+          <h3 className="text-[12px] font-semibold text-content uppercase tracking-wider font-mono">
+            {intentTitleMap[aiResult.type as AiIntentId] || 'AI Explanation'}
+          </h3>
 
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => copyResult(aiResult.summary)}
-              title="Copy response"
-              className="px-2.5 py-1 rounded-lg bg-dark-surface hover:bg-dark-border text-slate-300 hover:text-white border border-dark-border text-[11px] font-semibold transition-colors flex items-center gap-1 shadow-sm cursor-pointer"
-            >
-              <span>{copied ? '✓ Copied' : '📋 Copy'}</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => copyResult(aiResult.summary)}
+            title="Copy response"
+            className="h-6 px-2 rounded bg-surface hover:bg-elevated text-content-secondary hover:text-content border border-border text-[11px] font-medium transition-colors cursor-pointer"
+          >
+            {copied ? '✓ Copied' : 'Copy'}
+          </button>
         </div>
       ) : null}
 
-      {/* AI Loading State */}
       {isAiLoading ? (
-        <div className="p-4 rounded-xl border border-dark-border bg-[#0a161d] animate-pulse space-y-3">
-          <div className="h-3 bg-dark-border rounded w-1/3"></div>
-          <div className="h-16 bg-dark-border rounded w-full"></div>
-          <div className="h-16 bg-dark-border rounded w-full"></div>
+        <div className="p-4 rounded-xl border border-border bg-surface animate-pulse space-y-2.5">
+          <div className="h-3 bg-muted rounded w-1/4"></div>
+          <div className="h-12 bg-muted rounded w-full"></div>
+          <div className="h-12 bg-muted rounded w-full"></div>
         </div>
       ) : aiError ? (
-        <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-400">
-          ⚠️ {aiError}
+        <div className="p-3 rounded-lg bg-rose-500/8 border border-rose-500/25 text-[12.5px] text-rose-700 dark:text-rose-400">
+          {aiError}
         </div>
       ) : aiResult ? (
-        <Suspense fallback={<div className="p-3 text-xs text-slate-400">Loading analysis…</div>}>
+        <Suspense fallback={<div className="p-3 text-[12.5px] text-content-muted">Loading analysis…</div>}>
           {aiResult.type === 'sentence_breakdown' ? (
             <SentenceBreakdownIntent result={aiResult} targetLang={resultTargetLang} />
           ) : aiResult.type === 'confusables' ? (

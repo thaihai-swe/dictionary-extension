@@ -1,69 +1,69 @@
 import React, { useMemo } from 'react';
 import { Meaning } from '../types';
-import { useDictionary } from '../composables/composable.dictionary';
+import { useDictionaryAudio } from '../composables/composable.dictionary';
 import { mergeMeanings } from '../shared/enrichment';
 import { cx } from '../ui/cx';
+import { IconSpeaker } from './icons';
+import RelatedWords from './component.related-words';
 
 interface SenseMatrixCardProps {
   meanings: Meaning[];
   onSelectWord?: (word: string) => void;
 }
 
-function getPosClass(pos: string): string {
-  const p = pos.toLowerCase();
-  if (p.includes('noun')) return 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30';
-  if (p.includes('verb')) return 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
-  if (p.includes('adj')) return 'bg-amber-500/15 text-amber-400 border-amber-500/30';
-  if (p.includes('adv')) return 'bg-rose-500/15 text-rose-400 border-rose-500/30';
-  return 'bg-brand-500/15 text-brand-400 border-brand-500/30';
+function getPosBadgeClass(pos: string): string {
+  const p = (pos || '').toLowerCase();
+  if (p.includes('noun')) return 'badge-pos-noun';
+  if (p.includes('verb')) return 'badge-pos-verb';
+  if (p.includes('adj')) return 'badge-pos-adj';
+  if (p.includes('adv')) return 'badge-pos-adv';
+  return 'badge-pos-other';
 }
 
 export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSelectWord }) => {
   const groupedMeanings = useMemo(() => mergeMeanings(meanings || [], []), [meanings]);
-  const { playPronunciation, playingKey } = useDictionary();
+  const { playPronunciation, playingKey } = useDictionaryAudio();
 
   return (
-    <div className="space-y-6 pt-1">
+    <div className="space-y-5 pt-0.5">
       {groupedMeanings.map((meaning, mIdx) => (
         <div
           key={meaning.partOfSpeech || mIdx}
-          className="space-y-3.5 border-b border-dark-border/50 pb-5 last:border-b-0 last:pb-0"
+          className="space-y-3 border-b border-border/70 pb-4 last:border-b-0 last:pb-0"
         >
-          <div className="flex items-center justify-between pb-1">
-            <div className="flex items-center gap-2">
-              <span
-                className={cx(
-                  'inline-flex items-center px-3 py-0.5 rounded-full font-extrabold text-xs uppercase tracking-wider',
-                  getPosClass(meaning.partOfSpeech),
-                )}
-              >
-                {meaning.partOfSpeech}
-              </span>
-            </div>
+          <div className="flex items-center justify-between">
+            <span
+              className={cx(
+                'inline-flex items-center px-2 py-0.5 rounded-md font-semibold text-[10.5px] uppercase tracking-wider',
+                getPosBadgeClass(meaning.partOfSpeech),
+              )}
+            >
+              {meaning.partOfSpeech}
+            </span>
             {meaning.source ? (
-              <span className="px-2.5 py-0.5 rounded-full bg-dark-muted text-slate-300 font-bold border border-dark-border text-[10px]">
+              <span className="text-[10.5px] text-content-muted font-mono">
                 {meaning.source}
               </span>
             ) : null}
           </div>
 
-          <ol className="space-y-4 text-slate-100">
+          <ol className="space-y-3 text-content">
             {meaning.definitions.map((def, dIdx) => {
               const listenKey = `sense-${mIdx}-${dIdx}`;
               const isPlaying = playingKey === listenKey;
               return (
-                <li key={dIdx} className="space-y-2.5">
-                  <div className="flex items-start gap-2.5">
-                    <span className="font-bold text-teal-400 text-sm mt-0.5 flex-shrink-0 font-mono">
+                <li key={dIdx} className="space-y-1.5">
+                  <div className="flex items-start gap-2">
+                    <span className="font-semibold text-teal-700 dark:text-teal-400 text-[13px] mt-0.5 flex-shrink-0 font-mono select-none">
                       {dIdx + 1}.
                     </span>
-                    <span className="font-serif text-base text-slate-100 leading-relaxed font-normal">
+                    <span className="text-[14.5px] text-content leading-relaxed">
                       {def.definition}
                     </span>
                   </div>
 
                   {def.example ? (
-                    <div className="mt-2.5 pl-3.5 py-2 pr-3 border-l-2 border-teal-500/70 bg-teal-500/5 rounded-r-lg text-slate-200 italic text-sm leading-relaxed flex items-center justify-between gap-3">
+                    <div className="ml-5 pl-3 py-1.5 pr-2 border-l-2 border-teal-500/50 bg-muted/40 rounded-r-md text-content-secondary text-[13.5px] leading-relaxed flex items-center justify-between gap-2">
                       <span>"{def.example}"</span>
                       <button
                         type="button"
@@ -74,54 +74,39 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSe
                             key: listenKey,
                           })
                         }
-                        title="Listen example sentence"
+                        title="Listen to example sentence"
                         className={cx(
-                          'px-2.5 py-1 rounded border text-xs not-italic flex-shrink-0 transition-colors flex items-center gap-1 cursor-pointer font-semibold',
+                          'h-[24px] px-2 rounded border text-[11px] flex-shrink-0 flex items-center gap-1 cursor-pointer',
                           isPlaying
-                            ? 'bg-teal-500/25 text-teal-200 border-teal-500/50'
-                            : 'bg-dark-muted hover:bg-dark-border text-slate-200 hover:text-white border-dark-border',
+                            ? 'bg-teal-500/20 text-teal-700 dark:text-teal-300 border-teal-500/40'
+                            : 'bg-surface text-content-secondary hover:text-content border-border',
                         )}
                         aria-pressed={isPlaying}
                       >
-                        <span>🔊 Listen</span>
+                        <IconSpeaker className="w-3 h-3 text-teal-600 dark:text-teal-400" />
+                        <span>Listen</span>
                       </button>
                     </div>
                   ) : null}
 
                   {def.synonyms && def.synonyms.length > 0 ? (
-                    <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                      <span className="text-xs text-slate-400 font-bold uppercase tracking-wider mr-1">
-                        Synonyms:
-                      </span>
-                      {def.synonyms.slice(0, 5).map((syn) => (
-                        <button
-                          key={syn}
-                          type="button"
-                          onClick={() => onSelectWord?.(syn)}
-                          className="px-3 py-1 rounded-full bg-dark-muted hover:bg-teal-500/20 hover:text-teal-300 text-slate-200 text-xs font-semibold transition-all cursor-pointer"
-                        >
-                          {syn}
-                        </button>
-                      ))}
-                    </div>
+                    <RelatedWords
+                      label="Synonyms"
+                      tone="synonym"
+                      words={def.synonyms}
+                      onSelectWord={onSelectWord}
+                      className="ml-5"
+                    />
                   ) : null}
 
                   {def.antonyms && def.antonyms.length > 0 ? (
-                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                      <span className="text-xs text-rose-400/80 font-bold uppercase tracking-wider mr-1">
-                        Antonyms:
-                      </span>
-                      {def.antonyms.slice(0, 5).map((ant) => (
-                        <button
-                          key={ant}
-                          type="button"
-                          onClick={() => onSelectWord?.(ant)}
-                          className="px-3 py-1 rounded-full bg-dark-muted hover:bg-rose-500/20 hover:text-rose-400 text-slate-200 text-xs font-semibold transition-all cursor-pointer"
-                        >
-                          {ant}
-                        </button>
-                      ))}
-                    </div>
+                    <RelatedWords
+                      label="Antonyms"
+                      tone="antonym"
+                      words={def.antonyms}
+                      onSelectWord={onSelectWord}
+                      className="ml-5"
+                    />
                   ) : null}
                 </li>
               );

@@ -4,10 +4,9 @@
 
 **Dictionary** is a modern Chrome extension built for readers, students, and language learners. It brings instant definitions, neural translations, natural pronunciation, speech practice, and deep contextual AI explanations directly to the text you are reading—without breaking your reading flow or requiring external tabs.
 
-The user interface is powered by the **Calm Learning Studio** design system:
-- **Editorial Typography:** Clear, distraction-free serif typography for definitions and explanations, or bundled **Atkinson Hyperlegible** in **Learner Font** mode to improve character disambiguation for ESL learners.
-- **Adaptive Appearance:** Native support for System, Light, and Dark themes with WCAG 2.1 AA compliant contrast ratios.
-- **Calm Header:** The Dictionary tab shows the headword plus UK/US pronunciation, speech practice controls, and a prominent red **Stop Voice** button (`⏹️ STOP VOICE` / `🔇`) to cancel audio or speech synthesis at any moment.
+The user interface is powered by the **Editorial Ink** design system:
+- **Editorial Typography:** Clear, distraction-free serif typography for headwords and crisp sans-serif body text, with native support for System, Light (warm paper), and Dark (obsidian velvet + champagne gold) themes.
+- **Calm Header:** The Dictionary tab shows the headword plus UK/US pronunciation, speech practice controls, and a quiet pulsing **Stop Voice** button (`⏹ Stop`) to cancel audio or speech synthesis at any moment.
 - **Persistent Geometry:** In-page popup dimensions can be resized from the bottom-right corner and are automatically saved.
 
 ---

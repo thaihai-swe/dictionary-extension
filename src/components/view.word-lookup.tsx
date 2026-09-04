@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { searchWord, stopAllAudio, useDictionaryQuery, useDictionaryResult } from '../composables/composable.dictionary';
 import { useStorage } from '../composables/composable.storage';
+import { IconClose, IconSearch } from './icons';
 import WordLookupResult from './view.word-lookup-result';
 
 interface WordLookupViewProps {
@@ -72,63 +73,57 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
   }, [initialQuery, lookupRequestId, provider, targetLang, settings.dictionaryProvider, settings.translateTargetLanguage]);
 
   return (
-    <div className="p-4 space-y-4 font-sans">
-      <div className="space-y-2">
-        <div className="relative flex items-center">
-          <span className="absolute left-3 text-slate-400 pointer-events-none">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </span>
-          <input
-            ref={searchInputElement}
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleSearch();
-            }}
-            type="text"
-            placeholder="Lookup word or sentence..."
-            className="w-full bg-dark-muted border border-dark-border rounded-xl pl-9 pr-28 py-2.5 text-xs text-slate-100 placeholder-slate-400 outline-none focus:border-teal-500 transition-all shadow-sm font-sans"
-          />
+    <div className="px-4 py-3 space-y-3.5 font-sans">
+      <div className="relative flex items-center">
+        <span className="absolute left-3 text-content-muted pointer-events-none">
+          <IconSearch className="w-3.5 h-3.5" />
+        </span>
+        <input
+          ref={searchInputElement}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleSearch();
+          }}
+          type="text"
+          placeholder="Look up a word or sentence…"
+          className="w-full h-[38px] bg-surface border border-border rounded-lg pl-9 pr-24 text-[13px] text-content placeholder:text-content-muted outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/15 transition-all font-sans"
+        />
 
-          {searchInput ? (
-            <button
-              type="button"
-              onClick={clearSearch}
-              title="Clear search text"
-              className="absolute right-20 text-slate-400 hover:text-slate-200 p-1 cursor-pointer flex items-center justify-center"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          ) : null}
-
+        {searchInput ? (
           <button
             type="button"
-            onClick={() => handleSearch()}
-            disabled={!searchInput || isLoading}
-            className="absolute right-1.5 px-3.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 active:scale-95 text-white text-xs font-bold transition-all disabled:opacity-50 shadow-sm cursor-pointer"
+            onClick={clearSearch}
+            title="Clear search text"
+            className="absolute right-[4.75rem] text-content-muted hover:text-content p-1 cursor-pointer flex items-center justify-center"
           >
-            Lookup
+            <IconClose className="w-3.5 h-3.5" />
           </button>
-        </div>
+        ) : null}
+
+        <button
+          type="button"
+          onClick={() => handleSearch()}
+          disabled={!searchInput || isLoading}
+          className="absolute right-1.5 h-7 px-3 rounded-md bg-teal-700 hover:bg-teal-600 dark:bg-gold-400 dark:hover:bg-gold-300 dark:text-neutral-950 active:scale-95 text-white text-[12px] font-semibold transition-all disabled:opacity-50 cursor-pointer"
+        >
+          Lookup
+        </button>
       </div>
 
       {isLoading ? (
-        <div className="p-4 space-y-3 rounded-xl border border-dark-border bg-dark-surface animate-pulse">
+        <div className="p-4 space-y-3 rounded-xl border border-border bg-surface animate-pulse">
           <div className="flex items-center justify-between">
-            <div className="h-6 bg-dark-border rounded w-1/3"></div>
-            <div className="h-5 bg-dark-border rounded-full w-16"></div>
+            <div className="h-7 bg-muted rounded w-1/3"></div>
+            <div className="h-5 bg-muted rounded-full w-16"></div>
           </div>
-          <div className="h-4 bg-dark-border rounded w-2/3"></div>
-          <div className="h-3 bg-dark-border rounded w-1/2"></div>
-          <div className="h-16 bg-dark-border rounded-xl"></div>
+          <div className="h-4 bg-muted rounded w-2/3"></div>
+          <div className="h-3 bg-muted rounded w-1/2"></div>
+          <div className="h-16 bg-muted rounded-lg"></div>
         </div>
       ) : error ? (
-        <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-400 flex items-center gap-2">
-          <span className="text-base">⚠️</span>
+        <div className="p-3 rounded-lg bg-rose-500/8 border border-rose-500/25 text-[13px] text-rose-700 dark:text-rose-400 flex items-start gap-2">
+          <span className="mt-0.5 text-rose-500" aria-hidden="true">●</span>
           <span>{error}</span>
         </div>
       ) : result ? (

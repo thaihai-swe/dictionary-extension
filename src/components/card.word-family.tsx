@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { WordFamily } from '../types';
+import { IconTree } from './icons';
 
 interface WordFamilyCardProps {
   word?: string;
@@ -8,7 +9,7 @@ interface WordFamilyCardProps {
 }
 
 const chipClass =
-  'px-3 py-1 rounded-full bg-dark-muted hover:bg-emerald-500/20 hover:text-emerald-300 text-slate-200 text-xs font-semibold transition-all cursor-pointer';
+  'h-[24px] px-2 rounded bg-surface hover:bg-elevated text-content text-[11.5px] font-medium transition-colors cursor-pointer border border-border flex items-center justify-center';
 
 export const WordFamilyCard: React.FC<WordFamilyCardProps> = ({ family, onSelectWord }) => {
   const calculatedFamily = useMemo<WordFamily>(() => {
@@ -39,9 +40,11 @@ export const WordFamilyCard: React.FC<WordFamilyCardProps> = ({ family, onSelect
 
   const renderRow = (label: string, items?: string[]) =>
     items?.length ? (
-      <div className="flex items-center gap-3">
-        <span className="w-20 text-slate-400 font-bold text-xs flex-shrink-0">{label}</span>
-        <div className="flex flex-wrap gap-1.5">
+      <div className="flex items-start gap-2">
+        <span className="w-[78px] text-content-muted font-semibold text-[10.5px] flex-shrink-0 uppercase tracking-wider pt-1">
+          {label}
+        </span>
+        <div className="flex flex-wrap gap-1">
           {items.map((item) => (
             <button key={item} type="button" onClick={() => onSelectWord?.(item)} className={chipClass}>
               {item}
@@ -52,18 +55,19 @@ export const WordFamilyCard: React.FC<WordFamilyCardProps> = ({ family, onSelect
     ) : null;
 
   return (
-    <div className="pt-3.5 border-t border-dark-border/50 space-y-3">
-      <div className="flex items-center gap-1.5 text-xs font-extrabold text-emerald-400 uppercase tracking-wider">
-        <span>🌲</span>
-        <span>WORD FAMILY</span>
+    <div className="pt-3 border-t border-border space-y-2">
+      <div className="flex items-center gap-1.5 text-[11px] font-bold text-content-muted uppercase tracking-wider">
+        <IconTree className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+        <span>Word Family</span>
       </div>
-      <div className="space-y-2.5 text-xs">
-        {renderRow('Noun', calculatedFamily.nouns)}
-        {renderRow('Verb', calculatedFamily.verbs)}
-        {renderRow('Adjective', calculatedFamily.adjectives)}
-        {renderRow('Adverb', calculatedFamily.adverbs)}
-        {renderRow('Derivatives', calculatedFamily.derivatives)}
+
+      <div className="space-y-1.5 text-[12px]">
+        {renderRow('Nouns', calculatedFamily.nouns)}
+        {renderRow('Verbs', calculatedFamily.verbs)}
+        {renderRow('Adjectives', calculatedFamily.adjectives)}
+        {renderRow('Adverbs', calculatedFamily.adverbs)}
         {renderRow('Inflections', calculatedFamily.inflections)}
+        {renderRow('Derivatives', calculatedFamily.derivatives)}
       </div>
     </div>
   );

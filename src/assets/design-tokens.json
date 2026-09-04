@@ -1,0 +1,140 @@
+{
+  "name": "Dictionary Assistant Design System",
+  "version": "3.1.0",
+  "description": "Editorial Ink Premium: warm quiet paper, deep obsidian velvet dark mode, ivory typography, warm champagne-gold reading accents",
+  "layers": {
+    "primitive": {
+      "color": {
+        "paper": {
+          "50": "#fdfdfc",
+          "100": "#f8f8f5",
+          "200": "#f1f1ec",
+          "300": "#e5e5dc",
+          "400": "#d2d2c5",
+          "500": "#a3a392",
+          "600": "#737363",
+          "700": "#505044",
+          "800": "#313129",
+          "900": "#191915"
+        },
+        "obsidian": {
+          "950": "#08090b",
+          "900": "#0e1015",
+          "850": "#14171e",
+          "800": "#1b1f28",
+          "750": "#232834",
+          "700": "#2d3342",
+          "600": "#454d60",
+          "500": "#636d83",
+          "400": "#8d97ac",
+          "300": "#bdc4d4",
+          "200": "#e0e3eb",
+          "100": "#f1f3f7",
+          "50": "#f8f9fb"
+        },
+        "champagne": {
+          "500": "#b8860b",
+          "400": "#d4af37",
+          "300": "#e6ca65",
+          "200": "#f3e29f",
+          "100": "#fbf4d8"
+        },
+        "teal": {
+          "500": "#0d9488",
+          "600": "#0f766e",
+          "400": "#2dd4bf"
+        },
+        "amber": {
+          "500": "#d97706",
+          "400": "#fbbf24",
+          "600": "#b45309"
+        },
+        "rose": {
+          "500": "#e11d48",
+          "400": "#fb7185",
+          "600": "#be123c"
+        }
+      },
+      "radius": {
+        "xs": "4px",
+        "sm": "6px",
+        "md": "8px",
+        "lg": "12px",
+        "xl": "16px",
+        "full": "9999px"
+      },
+      "spacing": {
+        "1": "4px",
+        "2": "8px",
+        "3": "12px",
+        "4": "16px",
+        "5": "20px",
+        "6": "24px"
+      },
+      "typography": {
+        "display": { "fontSize": "26px", "lineHeight": "32px", "fontWeight": "600", "fontFamily": "serif" },
+        "subheading": { "fontSize": "18px", "lineHeight": "24px", "fontWeight": "600" },
+        "primaryReading": { "fontSize": "15px", "lineHeight": "24px", "fontWeight": "400" },
+        "secondaryReading": { "fontSize": "13.5px", "lineHeight": "21px", "fontWeight": "400" },
+        "meta": { "fontSize": "11.5px", "lineHeight": "16px", "fontWeight": "600", "letterSpacing": "0.02em" },
+        "code": { "fontSize": "12.5px", "lineHeight": "18px", "fontWeight": "500", "fontFamily": "mono" }
+      }
+    },
+    "semantic": {
+      "light": {
+        "bg": {
+          "paper": "#fafaf7",
+          "surface": "#ffffff",
+          "elevated": "#f4f4ef",
+          "muted": "#ebebe4",
+          "hover": "#e2e2d9"
+        },
+        "border": {
+          "default": "#e2e2d9",
+          "subtle": "#ecece5",
+          "focus": "#0d9488"
+        },
+        "text": {
+          "primary": "#18181b",
+          "secondary": "#52525b",
+          "muted": "#71717a",
+          "disabled": "#a1a1aa"
+        },
+        "accent": {
+          "primary": "#0d9488",
+          "primaryHover": "#0f766e",
+          "primarySubtle": "rgba(13, 148, 136, 0.08)",
+          "warm": "#b45309",
+          "rose": "#be123c"
+        }
+      },
+      "dark": {
+        "bg": {
+          "paper": "#090a0d",
+          "surface": "#101319",
+          "elevated": "#171b23",
+          "muted": "#1e232e",
+          "hover": "#262c3a"
+        },
+        "border": {
+          "default": "#222735",
+          "subtle": "#171a24",
+          "focus": "#d4af37"
+        },
+        "text": {
+          "primary": "#f7f6f2",
+          "secondary": "#c6c7cf",
+          "muted": "#848a9b",
+          "disabled": "#565c6c"
+        },
+        "accent": {
+          "primary": "#d4af37",
+          "primaryHover": "#e6ca65",
+          "primarySubtle": "rgba(212, 175, 55, 0.12)",
+          "warm": "#f59e0b",
+          "rose": "#fb7185"
+        }
+      }
+    }
+  }
+}

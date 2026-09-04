@@ -1,5 +1,6 @@
 import React from 'react';
 import MarkdownRenderer from './component.markdown-renderer';
+import { IconDna } from './icons';
 
 interface WordFormationCardProps {
   formation?: string;
@@ -16,21 +17,21 @@ export const WordFormationCard: React.FC<WordFormationCardProps> = ({
   if (!hasData) return null;
 
   return (
-    <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-3.5 space-y-2">
-      <div className="flex items-center gap-2 text-xs font-bold text-slate-100 uppercase tracking-wider">
-        <span>🧬</span>
-        <span>WORD FORMATION</span>
+    <div className="rounded-lg border border-border bg-surface p-3 space-y-2">
+      <div className="flex items-center gap-1.5 text-[11px] font-bold text-content-muted uppercase tracking-wider">
+        <IconDna className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+        <span>Word Formation</span>
       </div>
       {(prefixes?.length || suffixes?.length) ? (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1">
           {prefixes?.map((item) => (
-            <span key={`p-${item}`} className="px-2 py-0.5 rounded bg-dark-muted text-slate-100 text-[11px] font-semibold">
-              {item}
+            <span key={`p-${item}`} className="h-[24px] px-2 rounded bg-muted border border-border text-content text-[11.5px] font-mono inline-flex items-center">
+              prefix: {item}
             </span>
           ))}
           {suffixes?.map((item) => (
-            <span key={`s-${item}`} className="px-2 py-0.5 rounded bg-dark-muted text-slate-100 text-[11px] font-semibold">
-              {item}
+            <span key={`s-${item}`} className="h-[24px] px-2 rounded bg-muted border border-border text-content text-[11.5px] font-mono inline-flex items-center">
+              suffix: {item}
             </span>
           ))}
         </div>

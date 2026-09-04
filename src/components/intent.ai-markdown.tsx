@@ -17,7 +17,7 @@ export const AiMarkdownIntent: React.FC<AiMarkdownIntentProps> = ({
   return (
     <div className="space-y-4">
       {result.summary ? (
-        <div className="pt-2 border-t border-dark-border/50 space-y-3">
+        <div className="pt-2 border-t border-border/50 space-y-3">
           <MarkdownRenderer content={result.summary} targetLang={targetLang} />
         </div>
       ) : null}

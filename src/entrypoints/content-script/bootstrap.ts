@@ -61,11 +61,13 @@ const TRIGGER_CSS = `
   background: #0d9488;
   color: #fff;
   border: 2px solid #1e293b;
+  box-shadow: 0 10px 24px rgba(13, 148, 136, 0.4);
 }
 .dictionary-trigger-icon-btn.light {
-  background: #4f46a5;
+  background: #0d9488;
   color: #fff;
-  border: 2px solid #fff;
+  border: 2px solid #ffffff;
+  box-shadow: 0 10px 24px rgba(13, 148, 136, 0.25);
 }
 .dictionary-popup-layer {
   position: fixed;
@@ -175,13 +177,17 @@ async function startBootstrap() {
   }
 
   function applyTheme() {
-    triggerBtn.classList.toggle('dark', isDarkMode());
-    triggerBtn.classList.toggle('light', !isDarkMode());
+    const dark = isDarkMode();
+    triggerBtn.classList.toggle('dark', dark);
+    triggerBtn.classList.toggle('light', !dark);
+    host.setAttribute('data-theme', dark ? 'dark' : 'light');
+    host.classList.toggle('dark', dark);
+    host.classList.toggle('light', !dark);
   }
 
   function isHostnamePaused() {
     const hostName = location.hostname.toLowerCase();
-    return settings.pausedHostnames.some((item) => item === hostName);
+    return settings.pausedHostnames.includes(hostName);
   }
 
   function popupSize() {

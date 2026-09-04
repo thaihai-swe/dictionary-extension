@@ -1,5 +1,5 @@
 import { signal, useSignal } from '../ui/signal';
-import { settingsStore, whenSettingsReady } from './composable.storage';
+import { registerCacheInvalidator, settingsStore, whenSettingsReady } from './composable.storage';
 import { stopAllAudio } from './composable.dictionary';
 import { AiResult, AiIntentId, AppSettings } from '../types';
 import { canonicalAiIntent, PRELOAD_ALL_INTENTS, PRELOAD_FOLLOW_UPS } from '../shared/ai-prompts';
@@ -16,13 +16,13 @@ export interface AiIntentOption {
 }
 
 export const AI_INTENTS: AiIntentOption[] = [
-  { id: 'default', label: 'Main AI', icon: '📖' },
-  { id: 'explain_in_context', label: 'Context Explain', icon: '🔍' },
-  { id: 'grammar', label: 'Grammar & Nuance', icon: '📐' },
-  { id: 'collocations', label: 'Phrase & Collocations', icon: '💡' },
-  { id: 'sentence_breakdown', label: 'Sentence Breakdown', icon: '🧩' },
-  { id: 'confusables', label: 'Compare Confusables', icon: '⚖️' },
-  { id: 'rephrase', label: 'Rephrase', icon: '✨' },
+  { id: 'default', label: 'Main AI', icon: 'book' },
+  { id: 'explain_in_context', label: 'Context Explain', icon: 'search' },
+  { id: 'grammar', label: 'Grammar & Nuance', icon: 'dna' },
+  { id: 'collocations', label: 'Phrase & Collocations', icon: 'link' },
+  { id: 'sentence_breakdown', label: 'Sentence Breakdown', icon: 'puzzle' },
+  { id: 'confusables', label: 'Compare Confusables', icon: 'scale' },
+  { id: 'rephrase', label: 'Rephrase', icon: 'edit' },
 ];
 
 const activeContextRef = signal<string>('');
@@ -58,15 +58,7 @@ function getAiCacheKey(
   context: string | undefined,
   settings: AppSettings,
 ): string {
-  return JSON.stringify({
-    intent: canonicalAiIntent(intentId),
-    lang: String(lang || '').toLowerCase(),
-    text: String(text || '').toLowerCase().trim(),
-    context: String(context || '').toLowerCase().trim(),
-    model: settings.aiModel || '',
-    baseUrl: settings.aiBaseUrl || '',
-    enableLexicalProfile: settings.enableLexicalProfile !== false,
-  });
+  return `${canonicalAiIntent(intentId)}|${String(text || '').toLowerCase().trim()}|${String(lang || '').toLowerCase()}|${String(context || '').toLowerCase().trim()}|${settings.aiModel || ''}|${settings.aiBaseUrl || ''}|${settings.enableLexicalProfile !== false}`;
 }
 
 let intentStatusRaf = 0;
@@ -155,6 +147,8 @@ export function clearAiCache() {
   bumpIntentStatus();
 }
 
+registerCacheInvalidator(clearAiCache);
+
 function abortAllAiRequests() {
   stopAllAudio();
   aiGeneration += 1;
@@ -226,37 +220,6 @@ async function requestAnalysis(
   return request;
 }
 
-function preloadFollowUpIntents(text: string, context: string, lang: string) {
-  const token = preloadToken;
-  const queryKey = makePreloadKey(text, context, lang);
-  void preloadIntentChunks(PRELOAD_FOLLOW_UPS);
-  const queue = PRELOAD_FOLLOW_UPS.filter(
-    (intent) => !(intent === 'explain_in_context' && !context),
-  );
-
-  const runNext = (index: number) => {
-    if (token !== preloadToken) return;
-    if (activeLookupKey && activeLookupKey !== queryKey && activePreloadKey !== queryKey) return;
-    const intent = queue[index];
-    if (!intent) return;
-    void requestAnalysis(intent, text, lang, context)
-      .catch(() => undefined)
-      .finally(() => {
-        if (token !== preloadToken) return;
-        const idle = (globalThis as typeof globalThis & {
-          requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
-        }).requestIdleCallback;
-        if (typeof idle === 'function') {
-          idle(() => runNext(index + 1), { timeout: 600 });
-          return;
-        }
-        setTimeout(() => runNext(index + 1), 250);
-      });
-  };
-
-  runNext(0);
-}
-
 async function runIntent(intentId: AiIntentId, text: string, targetLang?: string, context?: string) {
   if (!text || !text.trim()) return;
   const settings = settingsStore.value;
@@ -285,9 +248,6 @@ async function runIntent(intentId: AiIntentId, text: string, targetLang?: string
   if (cached) {
     aiResultRef.value = cached;
     isAiLoadingRef.value = false;
-    if (shouldPreloadAi(settings)) {
-      void preloadFollowUpIntents(cleanText, cleanContext, lang);
-    }
     return;
   }
 
@@ -316,7 +276,8 @@ async function runIntent(intentId: AiIntentId, text: string, targetLang?: string
   }
 
   if (shouldPreloadAi(settings) && generation === aiGeneration) {
-    void preloadFollowUpIntents(cleanText, cleanContext, lang);
+    // Only preload code chunks lazily, do NOT trigger background API calls for other intents
+    void preloadIntentChunks(PRELOAD_FOLLOW_UPS);
   }
 }
 
@@ -327,6 +288,59 @@ async function preloadIntentChunks(intentIds: AiIntentId[] = PRELOAD_ALL_INTENTS
   } catch {
     // Code preloading fails gracefully
   }
+}
+
+export async function preloadFollowUpIntentsOnTabVisit(
+  text: string,
+  context?: string,
+  targetLang?: string,
+) {
+  await whenSettingsReady();
+  const settings = settingsStore.value;
+  if (!shouldPreloadAi(settings)) return;
+  const cleanText = String(text || '').trim();
+  if (!cleanText) return;
+  const lang = targetLang || settings.translateTargetLanguage || 'Vietnamese';
+  const rawContext = String(context || activeContextRef.value || '').replace(/\s+/g, ' ').trim();
+  const cleanContext = rawContext && rawContext.toLowerCase() !== cleanText.toLowerCase() ? rawContext : '';
+
+  const token = preloadToken;
+  const queryKey = makePreloadKey(cleanText, cleanContext, lang);
+  void preloadIntentChunks(PRELOAD_FOLLOW_UPS);
+
+  const queue = PRELOAD_FOLLOW_UPS.filter(
+    (intent) => !(intent === 'explain_in_context' && !cleanContext),
+  );
+
+  const runNext = (index: number) => {
+    if (token !== preloadToken) return;
+    if (activeLookupKey && activeLookupKey !== queryKey && activePreloadKey !== queryKey) return;
+    const intent = queue[index];
+    if (!intent) return;
+
+    // Only fetch if not already cached
+    const cacheKey = getAiCacheKey(canonicalAiIntent(intent), cleanText, lang, cleanContext, settings);
+    if (aiCache.read(cacheKey) || aiPendingMap.has(cacheKey)) {
+      runNext(index + 1);
+      return;
+    }
+
+    void requestAnalysis(intent, cleanText, lang, cleanContext)
+      .catch(() => undefined)
+      .finally(() => {
+        if (token !== preloadToken) return;
+        const idle = (globalThis as typeof globalThis & {
+          requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+        }).requestIdleCallback;
+        if (typeof idle === 'function') {
+          idle(() => runNext(index + 1), { timeout: 600 });
+          return;
+        }
+        setTimeout(() => runNext(index + 1), 250);
+      });
+  };
+
+  runNext(0);
 }
 
 export async function preloadSpecificIntent(
@@ -391,6 +405,7 @@ export function getAiAssistantStore() {
     runIntent,
     preloadIntents,
     preloadSpecificIntent,
+    preloadFollowUpIntentsOnTabVisit,
     isAiIntentReady,
     isAiIntentPending,
     getAiIntentStatus,
@@ -412,6 +427,7 @@ export function useAiAssistant() {
     runIntent,
     preloadIntents,
     preloadSpecificIntent,
+    preloadFollowUpIntentsOnTabVisit,
     isAiIntentReady,
     isAiIntentPending,
     getAiIntentStatus,

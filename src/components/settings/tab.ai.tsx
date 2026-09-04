@@ -1,6 +1,6 @@
 import React from 'react';
-import { DEFAULT_AI_PROMPTS } from '../../shared/ai-prompts';
 import { AppSettings } from '../../types';
+import { IconEdit, IconExternalLink, IconSparkles, IconSpinner } from '../icons';
 
 interface TabAiProps {
   localSettings: AppSettings;
@@ -11,7 +11,7 @@ interface TabAiProps {
   onChange: (patch: Partial<AppSettings>) => void;
   onToggleManualModel: () => void;
   onTestAi: () => void;
-  onRestorePrompt: (key: keyof AppSettings) => void;
+  onRestorePrompt: (promptKey: keyof AppSettings) => void;
   onRestoreAllPrompts: () => void;
 }
 
@@ -28,10 +28,18 @@ export const TabAi: React.FC<TabAiProps> = ({
   onRestoreAllPrompts,
 }) => {
   return (
-    <div className="space-y-3.5">
+    <div className="space-y-4 font-sans text-xs">
+      {/* Enable AI Assistant */}
       <div className="space-y-2">
-        <label className="flex items-center justify-between cursor-pointer">
-          <span className="font-bold text-slate-200">✨ Enable AI Assistant Features:</span>
+        <label className="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-muted transition-colors">
+          <div>
+            <span className="font-bold text-content block text-xs">
+              Enable Gemini AI Assistant &amp; Smart Analysis
+            </span>
+            <span className="text-[11px] text-content-muted block">
+              Enables contextual analysis, grammar nuance, breakdown, and confusable comparison
+            </span>
+          </div>
           <input
             type="checkbox"
             checked={localSettings.enableAI !== false}
@@ -41,78 +49,87 @@ export const TabAi: React.FC<TabAiProps> = ({
         </label>
       </div>
 
-      <div className="space-y-2 pt-2 border-t border-dark-border/60">
-        <label className="flex items-center justify-between cursor-pointer">
+      {/* AI Preload Background */}
+      <div className="space-y-2 pt-2 border-t border-border/60">
+        <label className="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-muted transition-colors">
           <div>
-            <span className="font-bold text-slate-200 block">⚡ Enable AI Preload (Background Pre-fetch):</span>
-            <span className="text-xs text-slate-400 block">
-              After Dictionary lookup finishes, load Main AI first, then Context, Grammar, and the other intents in the
-              background.
+            <span className="font-bold text-content block text-xs">
+              Background AI Preload on Text Selection
+            </span>
+            <span className="text-[11px] text-content-muted block">
+              Pre-fetches explanations when text is highlighted so results appear instantly
             </span>
           </div>
           <input
             type="checkbox"
             checked={Boolean(localSettings.enableAiPreload)}
             onChange={(e) => onChange({ enableAiPreload: e.target.checked })}
-            className="accent-teal-500 w-4 h-4 cursor-pointer flex-shrink-0 ml-2"
+            className="accent-teal-500 w-4 h-4 cursor-pointer"
           />
         </label>
       </div>
 
-      <div className="space-y-2 pt-2 border-t border-dark-border/60">
-        <label className="flex items-center justify-between cursor-pointer">
+      {/* Phrase Fallback */}
+      <div className="space-y-2 pt-2 border-t border-border/60">
+        <label className="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-muted transition-colors">
           <div>
-            <span className="font-bold text-slate-200 block">
-              💬 Use AI when a phrase has no dictionary definition:
+            <span className="font-bold text-content block text-xs">
+              Use AI when a phrase has no dictionary definition
             </span>
-            <span className="text-xs text-slate-400 block">
-              Only runs when AI is enabled. Explains idioms dictionary backends miss.
+            <span className="text-[11px] text-content-muted block">
+              Automatically provides AI explanations for idioms and multi-word phrases
             </span>
           </div>
           <input
             type="checkbox"
             checked={Boolean(localSettings.enablePhraseFallback)}
             onChange={(e) => onChange({ enablePhraseFallback: e.target.checked })}
-            className="accent-teal-500 w-4 h-4 cursor-pointer flex-shrink-0 ml-2"
+            className="accent-teal-500 w-4 h-4 cursor-pointer"
           />
         </label>
       </div>
 
-      <div className="space-y-2 pt-2 border-t border-dark-border/60">
-        <label className="font-bold text-slate-200 block flex items-center justify-between">
-          <span>🔑 Google Gemini API Key:</span>
+      {/* Gemini API Key */}
+      <div className="space-y-2 pt-3 border-t border-border/60">
+        <div className="flex items-center justify-between">
+          <label className="font-bold text-content-secondary uppercase tracking-wider text-[11px]">
+            Google Gemini API Key
+          </label>
           <a
             href="https://aistudio.google.com/app/apikey"
             target="_blank"
             rel="noreferrer"
-            className="text-xs text-teal-400 hover:underline flex items-center gap-1"
+            className="text-xs text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1 font-semibold"
           >
-            <span>Get Free API Key ↗</span>
+            <span>Get Free Key</span>
+            <IconExternalLink className="w-3 h-3" />
           </a>
-        </label>
+        </div>
 
         <input
           value={localSettings.aiApiKey || ''}
           onChange={(e) => onChange({ aiApiKey: e.target.value })}
           type="password"
-          placeholder="Paste API Key (AIzaSy...)"
-          className="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 transition-all font-mono"
+          placeholder="Paste Gemini API Key (AIzaSy...)"
+          className="w-full bg-muted border border-border rounded-xl px-3 py-2.5 text-xs text-content placeholder:text-content-muted outline-none focus:border-teal-500 font-mono shadow-xs"
         />
-        <p className="text-xs text-slate-400 leading-normal">
-          Stored only on this device in `chrome.storage.local`. It is not synced and is never exported. Leave blank to
-          keep the current key.
+        <p className="text-[11px] text-content-muted">
+          Stored locally on this device via Chrome secure storage. Never exported in backups.
         </p>
       </div>
 
-      <div className="space-y-2 pt-2 border-t border-dark-border/60">
+      {/* Model Selection */}
+      <div className="space-y-2 pt-3 border-t border-border/60">
         <div className="flex items-center justify-between">
-          <label className="font-bold text-slate-200">🤖 AI Model (Gemini Model):</label>
+          <label className="font-bold text-content-secondary uppercase tracking-wider text-[11px]">
+            Gemini Model
+          </label>
           <button
             type="button"
             onClick={onToggleManualModel}
-            className="text-xs px-2 py-0.5 rounded bg-dark-muted hover:bg-dark-border text-teal-400 font-bold border border-dark-border transition-colors cursor-pointer"
+            className="text-[11px] px-2.5 py-1 rounded-lg bg-muted hover:bg-elevated text-teal-600 dark:text-teal-300 font-semibold border border-border cursor-pointer transition-colors"
           >
-            {isManualModelInput ? '📋 Preset List' : '✏️ Custom Model ID'}
+            {isManualModelInput ? 'Select Presets' : 'Custom Model ID'}
           </button>
         </div>
 
@@ -120,9 +137,9 @@ export const TabAi: React.FC<TabAiProps> = ({
           <select
             value={localSettings.aiModel || 'gemini-3.5-flash-lite'}
             onChange={(e) => onChange({ aiModel: e.target.value })}
-            className="w-full bg-dark-muted border border-dark-border text-slate-200 text-sm font-medium rounded-xl px-3 py-2 outline-none focus:border-teal-500 cursor-pointer"
+            className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-teal-500 cursor-pointer shadow-xs"
           >
-            <option value="gemini-3.5-flash-lite">⚡ gemini-3.5-flash-lite (Recommended - Fast &amp; Smart)</option>
+            <option value="gemini-3.5-flash-lite" className="bg-surface text-content">gemini-3.5-flash-lite (Recommended · Ultra Fast &amp; Smart)</option>
           </select>
         ) : (
           <input
@@ -130,77 +147,81 @@ export const TabAi: React.FC<TabAiProps> = ({
             onChange={(e) => onChange({ aiModel: e.target.value })}
             type="text"
             placeholder="Enter custom Gemini model ID (e.g. gemini-3.5-flash-lite)..."
-            className="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 transition-all font-mono"
+            className="w-full bg-muted border border-border rounded-xl px-3 py-2 text-xs text-content placeholder:text-content-muted outline-none focus:border-teal-500 font-mono shadow-xs"
           />
         )}
       </div>
 
-      <div className="space-y-2 pt-2 border-t border-dark-border/60">
-        <label className="font-bold text-slate-200 block">🔗 Custom AI Base URL (Optional Endpoint):</label>
+      {/* Custom AI Base URL */}
+      <div className="space-y-2 pt-3 border-t border-border/60">
+        <label className="font-bold text-content-secondary block uppercase tracking-wider text-[11px]">
+          Custom AI Endpoint Base URL (Optional)
+        </label>
         <input
           value={localSettings.aiBaseUrl || ''}
           onChange={(e) => onChange({ aiBaseUrl: e.target.value })}
           type="text"
           placeholder="https://generativelanguage.googleapis.com"
-          className="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 transition-all font-mono"
+          className="w-full bg-muted border border-border rounded-xl px-3 py-2 text-xs text-content placeholder:text-content-muted outline-none focus:border-teal-500 font-mono shadow-xs"
         />
-        <p className="text-xs text-slate-400">
-          Gemini URLs use generateContent. Any other URL is treated as OpenAI-compatible /chat/completions.
-        </p>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 pt-1">
           <button
             type="button"
-            className="px-2.5 py-1.5 rounded-lg bg-dark-muted border border-dark-border text-sm font-bold text-slate-200 hover:border-teal-500 cursor-pointer"
+            className="px-3 py-1.5 rounded-lg bg-muted hover:bg-elevated border border-border text-xs font-semibold text-content-secondary hover:text-teal-600 dark:hover:text-teal-300 cursor-pointer shadow-xs flex items-center gap-1.5 active:scale-95"
             disabled={connectionBusy.ai}
             onClick={onTestAi}
           >
-            Test AI connection
+            {connectionBusy.ai ? <IconSpinner className="w-3.5 h-3.5 text-teal-500 dark:text-teal-400" /> : <IconSparkles className="w-3.5 h-3.5 text-teal-500 dark:text-teal-400" />}
+            <span>Test AI Connection</span>
           </button>
-          <span className="text-xs text-slate-400">{connectionStatus.ai}</span>
+          {connectionStatus.ai && (
+            <span className="text-[11px] px-2 py-0.5 rounded-md bg-muted border border-border text-teal-600 dark:text-teal-300 font-mono">
+              {connectionStatus.ai}
+            </span>
+          )}
         </div>
       </div>
 
-      <div className="space-y-3 pt-2 border-t border-dark-border/60">
+      {/* Prompt Templates */}
+      <div className="space-y-3 pt-3 border-t border-border/60">
         <div className="flex items-center justify-between">
-          <label className="font-bold text-slate-200">📝 Prompt templates</label>
+          <label className="font-bold text-content-secondary uppercase tracking-wider text-[11px]">
+            Prompt Templates
+          </label>
           <button
             type="button"
-            className="text-xs px-2 py-0.5 rounded bg-dark-muted hover:bg-dark-border text-teal-400 font-bold border border-dark-border cursor-pointer"
+            className="text-[11px] px-2.5 py-1 rounded-lg bg-muted hover:bg-elevated text-teal-600 dark:text-teal-300 font-semibold border border-border cursor-pointer transition-colors"
             onClick={onRestoreAllPrompts}
           >
-            Restore all defaults
+            Reset All Prompts
           </button>
         </div>
-        <p className="text-xs text-slate-400">
-          These are the live prompts sent to Gemini. Edit to customize. Variables:{' '}
-          <code>{'{{str}}'}</code>, <code>{'{{text}}'}</code>, <code>{'{{sentence}}'}</code>,{' '}
-          <code>{'{{context}}'}</code>, <code>{'{{targetLang}}'}</code>, <code>{'{{word_count}}'}</code>
-        </p>
-        {promptEditors.map((editor) => {
-          const stored = String((localSettings as unknown as Record<string, unknown>)[editor.key] || '');
-          const fallback = DEFAULT_AI_PROMPTS[editor.key as keyof typeof DEFAULT_AI_PROMPTS] || '';
-          return (
-            <div key={editor.key} className="space-y-1.5">
+
+        <div className="space-y-3">
+          {promptEditors.map(({ key, label }) => (
+            <div key={key} className="p-3 rounded-xl border border-border bg-surface space-y-2 shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-bold text-slate-300">{editor.label}</span>
+                <span className="font-bold text-content text-xs flex items-center gap-1.5">
+                  <IconEdit className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                  <span>{label}</span>
+                </span>
                 <button
                   type="button"
-                  className="text-xs text-teal-400 font-bold cursor-pointer"
-                  onClick={() => onRestorePrompt(editor.key)}
+                  onClick={() => onRestorePrompt(key)}
+                  className="text-[10px] text-content-muted hover:text-teal-600 dark:hover:text-teal-300 underline cursor-pointer"
                 >
                   Restore default
                 </button>
               </div>
               <textarea
-                value={stored.trim() ? stored : fallback}
-                onChange={(e) => onChange({ [editor.key]: e.target.value } as Partial<AppSettings>)}
-                rows={12}
-                spellCheck={false}
-                className="w-full min-h-[12rem] bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-xs leading-relaxed text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 font-mono"
+                value={String(localSettings[key] || '')}
+                onChange={(e) => onChange({ [key]: e.target.value })}
+                rows={4}
+                className="w-full bg-muted border border-border rounded-lg p-2.5 text-xs text-content font-mono outline-none focus:border-teal-500 leading-relaxed"
               />
             </div>
-          );
-        })}
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -11,9 +11,9 @@ export const ConfusablesIntent: React.FC<ConfusablesIntentProps> = ({ result, ta
   return (
     <div className="space-y-4">
       {result.comparison?.rows?.length ? (
-        <div className="overflow-x-auto rounded-xl border border-dark-border">
-          <table className="w-full text-xs text-left">
-            <thead className="bg-dark-muted text-slate-300">
+        <div className="overflow-x-auto rounded-xl border border-border">
+          <table className="w-full text-[13px] text-left">
+            <thead className="bg-muted text-content font-bold">
               <tr>
                 <th className="px-3 py-2 font-bold">Dimension</th>
                 <th className="px-3 py-2 font-bold">{result.comparison.leftTerm || 'Term A'}</th>
@@ -22,10 +22,10 @@ export const ConfusablesIntent: React.FC<ConfusablesIntentProps> = ({ result, ta
             </thead>
             <tbody>
               {result.comparison.rows.map((row) => (
-                <tr key={row.dimension} className="border-t border-dark-border">
-                  <td className="px-3 py-2 text-slate-400 font-semibold">{row.dimension}</td>
-                  <td className="px-3 py-2 text-slate-100">{row.left}</td>
-                  <td className="px-3 py-2 text-slate-100">{row.right}</td>
+                <tr key={row.dimension} className="border-t border-border">
+                  <td className="px-3 py-2 text-content-muted font-semibold">{row.dimension}</td>
+                  <td className="px-3 py-2 text-content">{row.left}</td>
+                  <td className="px-3 py-2 text-content">{row.right}</td>
                 </tr>
               ))}
             </tbody>
@@ -34,7 +34,7 @@ export const ConfusablesIntent: React.FC<ConfusablesIntentProps> = ({ result, ta
       ) : null}
 
       {result.summary ? (
-        <div className="pt-2 border-t border-dark-border/50 space-y-3">
+        <div className="pt-2 border-t border-border/50 space-y-3">
           <MarkdownRenderer content={result.summary} targetLang={targetLang} />
         </div>
       ) : null}

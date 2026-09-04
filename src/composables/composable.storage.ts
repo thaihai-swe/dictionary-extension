@@ -50,16 +50,23 @@ function shouldInvalidateLookupCache(keys: string[]): boolean {
   return keys.some((key) => CACHE_INVALIDATION_KEYS.has(key));
 }
 
-async function invalidateLookupCaches() {
-  try {
-    const [{ clearDictionaryCache }, { clearAiCache }] = await Promise.all([
-      import('./composable.dictionary'),
-      import('./composable.ai-assistant'),
-    ]);
-    clearDictionaryCache();
-    clearAiCache();
-  } catch (error) {
-    console.warn('Lookup cache invalidation failed:', error);
+type CacheInvalidator = () => void;
+const cacheInvalidators = new Set<CacheInvalidator>();
+
+export function registerCacheInvalidator(invalidate: CacheInvalidator): () => void {
+  cacheInvalidators.add(invalidate);
+  return () => {
+    cacheInvalidators.delete(invalidate);
+  };
+}
+
+function invalidateLookupCaches() {
+  for (const invalidate of cacheInvalidators) {
+    try {
+      invalidate();
+    } catch (error) {
+      console.warn('Lookup cache invalidation failed:', error);
+    }
   }
 }
 
@@ -221,7 +228,7 @@ export async function saveSettingsToStorage(partial: Partial<AppSettings>): Prom
   }
 
   if (shouldInvalidateLookupCache([...Object.keys(writable), ...Object.keys(secretWrites)])) {
-    void invalidateLookupCaches();
+    invalidateLookupCaches();
   }
 }
 
@@ -259,7 +266,7 @@ export function initStorage() {
       normalizeSettingsArrayFields(nextSettings);
       settingsRef.value = nextSettings;
       if (shouldInvalidateLookupCache(Object.keys(changes))) {
-        void invalidateLookupCaches();
+        invalidateLookupCaches();
       }
     });
   }

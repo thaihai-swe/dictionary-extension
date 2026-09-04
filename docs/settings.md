@@ -101,7 +101,7 @@ To guarantee that private credentials can never leak across browser sync channel
 | `aiApiKey` | `string` | `local` | `""` | Private API key for Google Gemini or your custom AI provider. |
 | `hasAiApiKey` | `boolean` | `sync & local`| `false` | Boolean indicator reflecting key presence without leaking the key string. |
 | `aiModel` | `string` | `sync` | `"gemini-3.5-flash-lite"` | Model identifier. Standard is `gemini-3.5-flash-lite` for Google Gemini; custom endpoints may specify `gpt-4o-mini`, `deepseek-chat`, etc. |
-| `enableAiPreload` | `boolean` | `sync` | `true` | Speculatively preloads Main AI in background after 300ms, then warms follow-up intents sequentially. |
+| `enableAiPreload` | `boolean` | `sync` | `true` | Speculatively preloads Main AI in background after 600ms on Dictionary tab, then warms follow-up intents sequentially when visiting the AI tab. |
 | `disablePageContextExtraction`| `boolean`| `sync`| `false` | When `true`, suppresses automatic extraction of surrounding webpage sentences. Manual context entry remains available. |
 | `aiPromptTemplate` | `string` | `sync` | *(Built-in)* | Prompt template for **Main AI** (`default`). |
 | `aiContextPromptTemplate` | `string` | `sync` | *(Built-in)* | Prompt template for **Context Explain** (`explain_in_context`). |

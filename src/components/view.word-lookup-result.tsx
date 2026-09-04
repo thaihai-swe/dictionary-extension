@@ -7,7 +7,7 @@ import {
   useDictionaryQuery,
   useDictionaryResult,
 } from '../composables/composable.dictionary';
-import { Phonetic } from '../types';
+import { AttributedItem, Phonetic } from '../types';
 import SenseMatrixCard from './card.sense-matrix';
 import MarkdownRenderer from './component.markdown-renderer';
 import {
@@ -18,9 +18,25 @@ import {
   WordFormationCard,
 } from './async-views';
 import { cx } from '../ui/cx';
+import { IconMic, IconQuote, IconSparkles, IconSpeaker } from './icons';
+import RelatedWords from './component.related-words';
 
 interface WordLookupResultProps {
   onSelectWord?: (word: string) => void;
+}
+
+function normalizeExample(text?: string): string {
+  return String(text || '')
+    .toLowerCase()
+    .replace(/["“”'‘’.,/#!$%^&*;:{}=\-_`~()]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function normalizeTerm(term?: string): string {
+  return String(term || '')
+    .toLowerCase()
+    .trim();
 }
 
 export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord }) => {
@@ -109,11 +125,6 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
     return typeof formation === 'object' ? formation?.suffixes || [] : [];
   }, [result]);
 
-  function accentLabel(item: Phonetic | undefined, accent: 'UK' | 'US' | ''): string {
-    const action = audioUrlOf(item) ? 'Listen' : 'Speak';
-    return accent ? `🔊 ${action} (${accent})` : `🔊 ${action}`;
-  }
-
   function handleSearch(wordToSearch: string) {
     onSelectWord?.(wordToSearch);
   }
@@ -126,61 +137,89 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
       setCopiedNotice(true);
       setTimeout(() => {
         setCopiedNotice(false);
-      }, 2000);
+      }, 1800);
     });
   }
+
+  const { filteredExamples, filteredSynonyms, filteredAntonyms } = useMemo(() => {
+    if (!result) {
+      return { filteredExamples: [], filteredSynonyms: [], filteredAntonyms: [] };
+    }
+
+    const seenExamples = new Set<string>();
+    const seenSynonyms = new Set<string>();
+    const seenAntonyms = new Set<string>();
+
+    for (const meaning of result.meanings || []) {
+      for (const s of meaning.synonyms || []) {
+        const norm = normalizeTerm(s);
+        if (norm) seenSynonyms.add(norm);
+      }
+      for (const a of meaning.antonyms || []) {
+        const norm = normalizeTerm(a);
+        if (norm) seenAntonyms.add(norm);
+      }
+      for (const def of meaning.definitions || []) {
+        if (def.example) {
+          const normEx = normalizeExample(def.example);
+          if (normEx) seenExamples.add(normEx);
+        }
+        for (const s of def.synonyms || []) {
+          const norm = normalizeTerm(s);
+          if (norm) seenSynonyms.add(norm);
+        }
+        for (const a of def.antonyms || []) {
+          const norm = normalizeTerm(a);
+          if (norm) seenAntonyms.add(norm);
+        }
+      }
+    }
+
+    const filteredExamples: AttributedItem[] = [];
+    for (const ex of result.examples || []) {
+      const norm = normalizeExample(ex.text);
+      if (norm && !seenExamples.has(norm)) {
+        seenExamples.add(norm);
+        filteredExamples.push(ex);
+      }
+    }
+
+    const filteredSynonyms: AttributedItem[] = [];
+    for (const syn of result.synonyms || []) {
+      const norm = normalizeTerm(syn.text);
+      if (norm && !seenSynonyms.has(norm)) {
+        seenSynonyms.add(norm);
+        filteredSynonyms.push(syn);
+      }
+    }
+
+    const filteredAntonyms: AttributedItem[] = [];
+    for (const ant of result.antonyms || []) {
+      const norm = normalizeTerm(ant.text);
+      if (norm && !seenAntonyms.has(norm)) {
+        seenAntonyms.add(norm);
+        filteredAntonyms.push(ant);
+      }
+    }
+
+    return { filteredExamples, filteredSynonyms, filteredAntonyms };
+  }, [result]);
 
   if (!result) return null;
 
   return (
     <div className="space-y-4">
-      <div className="pb-3.5 border-b border-dark-border/60 space-y-2.5">
+      {/* Headword Plate: Serif title, phonetics, audio triggers */}
+      <div className="pb-3 border-b border-border space-y-2">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-2xl font-extrabold text-slate-100 tracking-tight font-heading">
+          <div className="space-y-1">
+            <h2 className="text-2xl sm:text-[28px] font-semibold text-content font-heading tracking-tight leading-tight dark:text-[#f8f4ea]">
               {displayHeadword}
             </h2>
-          </div>
 
-          <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
-            {ukPronunciation ? (
-              <div className="flex items-center gap-1">
-                {phoneticText(ukPronunciation) ? (
-                  <span className="text-[11px] font-mono font-bold text-teal-400">
-                    {phoneticText(ukPronunciation)} (UK)
-                  </span>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={() =>
-                    playPronunciation({
-                      text: displayHeadword,
-                      audioUrl: audioUrlOf(ukPronunciation),
-                      language: 'en-GB',
-                      key: 'en-GB',
-                    })
-                  }
-                  className={cx(
-                    'px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all flex items-center gap-1 shadow-xs cursor-pointer active:scale-95 font-mono',
-                    playingKey === 'en-GB'
-                      ? 'bg-teal-500/25 text-teal-200 border-teal-500/50'
-                      : 'bg-dark-muted hover:bg-teal-500/20 hover:text-teal-300 text-slate-200 border-dark-border',
-                  )}
-                  aria-pressed={playingKey === 'en-GB'}
-                  title={accentLabel(ukPronunciation, 'UK')}
-                >
-                  <span>{accentLabel(ukPronunciation, 'UK')}</span>
-                </button>
-              </div>
-            ) : null}
-
-            {usPronunciation ? (
-              <div className="flex items-center gap-1">
-                {phoneticText(usPronunciation) ? (
-                  <span className="text-[11px] font-mono font-bold text-teal-400">
-                    {phoneticText(usPronunciation)} (US)
-                  </span>
-                ) : null}
+            {/* Phonetic & Accent Audio Buttons */}
+            <div className="flex flex-wrap items-center gap-2 pt-0.5">
+              {usPronunciation ? (
                 <button
                   type="button"
                   onClick={() =>
@@ -192,26 +231,45 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                     })
                   }
                   className={cx(
-                    'px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all flex items-center gap-1 shadow-xs cursor-pointer active:scale-95 font-mono',
+                    'h-[26px] px-2 rounded-md border text-[11.5px] font-medium transition-all flex items-center gap-1 cursor-pointer font-mono',
                     playingKey === 'en-US'
-                      ? 'bg-teal-500/25 text-teal-200 border-teal-500/50'
-                      : 'bg-dark-muted hover:bg-teal-500/20 hover:text-teal-300 text-slate-200 border-dark-border',
+                      ? 'bg-teal-500/20 text-teal-700 dark:text-teal-300 border-teal-500/40'
+                      : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
                   )}
                   aria-pressed={playingKey === 'en-US'}
-                  title={accentLabel(usPronunciation, 'US')}
+                  title="Listen (US)"
                 >
-                  <span>{accentLabel(usPronunciation, 'US')}</span>
+                  <IconSpeaker className="w-3 h-3 text-teal-600 dark:text-teal-400" />
+                  <span>US {phoneticText(usPronunciation) ? `${phoneticText(usPronunciation)}` : ''}</span>
                 </button>
-              </div>
-            ) : null}
+              ) : null}
 
-            {genericPronunciation ? (
-              <div className="flex items-center gap-1">
-                {phoneticText(genericPronunciation) ? (
-                  <span className="text-[11px] font-mono font-bold text-teal-400">
-                    {phoneticText(genericPronunciation)}
-                  </span>
-                ) : null}
+              {ukPronunciation ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    playPronunciation({
+                      text: displayHeadword,
+                      audioUrl: audioUrlOf(ukPronunciation),
+                      language: 'en-GB',
+                      key: 'en-GB',
+                    })
+                  }
+                  className={cx(
+                    'h-[26px] px-2 rounded-md border text-[11.5px] font-medium transition-all flex items-center gap-1 cursor-pointer font-mono',
+                    playingKey === 'en-GB'
+                      ? 'bg-teal-500/20 text-teal-700 dark:text-teal-300 border-teal-500/40'
+                      : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
+                  )}
+                  aria-pressed={playingKey === 'en-GB'}
+                  title="Listen (UK)"
+                >
+                  <IconSpeaker className="w-3 h-3 text-teal-600 dark:text-teal-400" />
+                  <span>UK {phoneticText(ukPronunciation) ? `${phoneticText(ukPronunciation)}` : ''}</span>
+                </button>
+              ) : null}
+
+              {genericPronunciation ? (
                 <button
                   type="button"
                   onClick={() =>
@@ -223,99 +281,97 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                     })
                   }
                   className={cx(
-                    'px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all flex items-center gap-1 shadow-xs cursor-pointer active:scale-95 font-mono',
+                    'h-[26px] px-2 rounded-md border text-[11.5px] font-medium transition-all flex items-center gap-1 cursor-pointer font-mono',
                     playingKey === 'generic'
-                      ? 'bg-teal-500/25 text-teal-200 border-teal-500/50'
-                      : 'bg-dark-muted hover:bg-teal-500/20 hover:text-teal-300 text-slate-200 border-dark-border',
+                      ? 'bg-teal-500/20 text-teal-700 dark:text-teal-300 border-teal-500/40'
+                      : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
                   )}
                   aria-pressed={playingKey === 'generic'}
-                  title={accentLabel(genericPronunciation, '')}
+                  title="Listen pronunciation"
                 >
-                  <span>{accentLabel(genericPronunciation, '')}</span>
+                  <IconSpeaker className="w-3 h-3 text-teal-600 dark:text-teal-400" />
+                  <span>{phoneticText(genericPronunciation) || 'Audio'}</span>
                 </button>
-              </div>
-            ) : null}
+              ) : null}
 
-            {supportsSpeechPractice ? (
-              <button
-                type="button"
-                onClick={() => startSpeechPractice(displayHeadword, 'en-US')}
-                className={cx(
-                  'px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all flex items-center gap-1 shadow-xs cursor-pointer active:scale-95',
-                  isPracticing
-                    ? 'bg-amber-500/25 text-amber-200 border-amber-500/50'
-                    : 'bg-dark-muted hover:bg-amber-500/20 hover:text-amber-300 text-slate-200 border-dark-border',
-                )}
-                aria-pressed={isPracticing}
-                title="Practice pronunciation"
-              >
-                <span>{isPracticing ? 'Listening…' : '🎙️ Practice'}</span>
-              </button>
-            ) : (
-              <span className="text-[10px] text-slate-400 font-medium">
-                Practice needs Chrome speech recognition.
-              </span>
-            )}
-
-            <button
-              type="button"
-              onClick={copyWordDefinition}
-              title="Copy definition"
-              className="p-1.5 rounded-lg bg-dark-muted hover:bg-dark-border text-slate-300 hover:text-white border border-dark-border text-xs transition-colors cursor-pointer active:scale-95"
-            >
-              {copiedNotice ? '✓' : '📋'}
-            </button>
+              {supportsSpeechPractice ? (
+                <button
+                  type="button"
+                  onClick={() => startSpeechPractice(displayHeadword, 'en-US')}
+                  className={cx(
+                    'h-[26px] px-2 rounded-md border text-[11.5px] font-medium transition-all flex items-center gap-1 cursor-pointer',
+                    isPracticing
+                      ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/40 animate-pulse'
+                      : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
+                  )}
+                  aria-pressed={isPracticing}
+                  title="Speech practice evaluator"
+                >
+                  <IconMic className="w-3 h-3" />
+                  <span>{isPracticing ? 'Listening…' : 'Practice'}</span>
+                </button>
+              ) : null}
+            </div>
           </div>
+
+          <button
+            type="button"
+            onClick={copyWordDefinition}
+            title="Copy definition"
+            className="h-7 px-2 rounded-md bg-surface hover:bg-elevated text-content-secondary hover:text-content border border-border text-[11.5px] font-medium transition-colors cursor-pointer flex items-center gap-1 flex-shrink-0"
+          >
+            <span>{copiedNotice ? '✓ Copied' : 'Copy'}</span>
+          </button>
         </div>
       </div>
 
+      {/* Translation: Clean, inline text plate */}
       {result.translation?.translatedText ? (
-        <div className="rounded-xl border border-teal-500/30 bg-teal-500/10 p-3.5 space-y-1.5">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 text-[11px] font-extrabold text-teal-300 uppercase tracking-wider">
-              <span>🌐</span>
-              <span>Translation</span>
-            </div>
-            <span className="text-[10px] text-slate-400 font-semibold">
-              {result.translation.sourceBadges?.map((badge) => badge.label).join(' + ') ||
-                'Google Translate'}
+        <div className="p-3 rounded-lg border border-border bg-surface flex items-baseline justify-between gap-3">
+          <div className="space-y-0.5">
+            <span className="text-[10.5px] font-bold text-teal-700 dark:text-teal-400 uppercase tracking-wider">
+              Translation
             </span>
+            <p className="text-[14.5px] text-content font-medium leading-relaxed">
+              {result.translation.translatedText}
+            </p>
           </div>
-          <p className="text-sm text-slate-100 leading-relaxed font-medium">
-            {result.translation.translatedText}
-          </p>
+          <span className="text-[10px] text-content-muted flex-shrink-0 font-mono">
+            {result.translation.sourceBadges?.map((b) => b.label).join(' · ') || 'Google'}
+          </span>
         </div>
       ) : null}
 
+      {/* Speech Practice Result Badge */}
       {practiceResult ? (
         <div
           className={cx(
-            'rounded-xl border px-3 py-2 text-xs font-semibold space-y-1.5',
+            'rounded-lg border px-3 py-2 text-[12.5px] space-y-1',
             practiceResult.grade === 'excellent'
-              ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+              ? 'border-emerald-500/30 bg-emerald-500/8 text-emerald-700 dark:text-emerald-300'
               : practiceResult.grade === 'good'
-                ? 'border-teal-500/40 bg-teal-500/10 text-teal-300'
+                ? 'border-teal-500/30 bg-teal-500/8 text-teal-700 dark:text-teal-300'
                 : practiceResult.grade === 'almost'
-                  ? 'border-amber-500/40 bg-amber-500/10 text-amber-300'
-                  : 'border-rose-500/40 bg-rose-500/10 text-rose-300',
+                  ? 'border-amber-500/30 bg-amber-500/8 text-amber-700 dark:text-amber-300'
+                  : 'border-rose-500/30 bg-rose-500/8 text-rose-700 dark:text-rose-300',
           )}
         >
-          <div>
+          <div className="font-semibold">
             {practiceResult.score}% · {practiceResult.gradeLabel}
             {practiceResult.spoken ? <span> · heard “{practiceResult.spoken}”</span> : null}
           </div>
           {practiceResult.details && practiceResult.details.length > 1 ? (
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1 pt-0.5">
               {practiceResult.details.map((detail, index) => (
                 <span
                   key={`${detail.word}-${index}`}
                   className={cx(
-                    'px-2 py-0.5 rounded-full text-[10px] font-bold border',
+                    'px-1.5 py-0.2 rounded text-[11px] font-mono font-medium border',
                     detail.matched
-                      ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                      ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
                       : detail.closeMatch
-                        ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
-                        : 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+                        ? 'bg-amber-500/15 border-amber-500/30 text-amber-700 dark:text-amber-300'
+                        : 'bg-rose-500/15 border-rose-500/30 text-rose-700 dark:text-rose-300',
                   )}
                 >
                   {detail.word}
@@ -326,31 +382,32 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
         </div>
       ) : null}
 
+      {/* Definitions & Senses */}
       {result.meanings?.length ? (
         <SenseMatrixCard meanings={result.meanings} onSelectWord={handleSearch} />
       ) : null}
 
-      {result.examples?.length ? (
-        <div className="space-y-2">
-          <div className="text-[11px] font-extrabold text-teal-400 uppercase tracking-wider">
-            💬 Examples
+      {/* Additional Examples */}
+      {filteredExamples.length ? (
+        <section className="space-y-2 pt-3 mt-1 border-t border-border">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-[11px] font-bold text-content-muted uppercase tracking-wider">
+              <IconQuote className="w-3.5 h-3.5 text-teal-600 dark:text-gold-200" />
+              <span>Examples</span>
+            </div>
+            <span className="text-[10px] font-mono text-content-muted bg-muted/70 px-1.5 py-0.5 rounded">
+              {filteredExamples.length}
+            </span>
           </div>
-          {result.examples.map((example, index) => {
+          {filteredExamples.map((example, index) => {
             const listenKey = `example-${index}`;
             const isPlaying = playingKey === listenKey;
             return (
               <blockquote
                 key={`${example.text}-${index}`}
-                className="pl-3.5 py-2 pr-3 border-l-2 border-teal-500/70 bg-teal-500/5 rounded-r-lg text-slate-200 italic text-sm flex items-center justify-between gap-3"
+                className="pl-3 py-2 pr-2 border-l-2 border-teal-500/50 dark:border-gold-300/40 bg-muted/30 rounded-r-md text-content-secondary italic text-[13.5px] leading-relaxed flex items-center justify-between gap-2"
               >
-                <span>
-                  "{example.text}"
-                  {example.source ? (
-                    <span className="not-italic text-[10px] text-slate-400 ml-2">
-                      {example.source}
-                    </span>
-                  ) : null}
-                </span>
+                <span className="not-italic text-content">“{example.text}”</span>
                 <button
                   type="button"
                   onClick={() =>
@@ -361,79 +418,65 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                     })
                   }
                   className={cx(
-                    'px-2.5 py-1 rounded border text-[10px] not-italic font-semibold cursor-pointer',
+                    'h-[24px] px-2 rounded border text-[11px] flex-shrink-0 flex items-center gap-1 cursor-pointer transition-colors',
                     isPlaying
-                      ? 'bg-teal-500/25 text-teal-200 border-teal-500/50'
-                      : 'bg-dark-muted hover:bg-dark-border text-slate-200 border-dark-border',
+                      ? 'bg-teal-500/20 text-teal-700 dark:text-gold-100 border-teal-500/40 dark:border-gold-300/40'
+                      : 'bg-surface text-content-secondary hover:text-content border-border',
                   )}
                   aria-pressed={isPlaying}
+                  title="Listen to example"
                 >
-                  🔊 Listen
+                  <IconSpeaker className="w-3 h-3 text-teal-600 dark:text-gold-200" />
+                  <span>Listen</span>
                 </button>
               </blockquote>
             );
           })}
-        </div>
+        </section>
       ) : null}
 
-      {result.synonyms?.length ? (
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-xs text-slate-400 font-bold uppercase tracking-wider mr-1">
-            Synonyms:
-          </span>
-          {result.synonyms.map((item) => (
-            <button
-              key={item.text}
-              type="button"
-              onClick={() => handleSearch(item.text)}
-              className="px-3 py-1 rounded-full bg-dark-muted hover:bg-teal-500/20 hover:text-teal-300 text-slate-200 text-xs font-semibold transition-all cursor-pointer"
-            >
-              {item.text}
-            </button>
-          ))}
-        </div>
+      {/* Additional Synonyms & Antonyms */}
+      {filteredSynonyms.length || filteredAntonyms.length ? (
+        <section className="rounded-lg border border-border bg-surface/60 p-3 space-y-2.5">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-content-muted uppercase tracking-wider">
+            <IconSparkles className="w-3.5 h-3.5 text-teal-600 dark:text-gold-200" />
+            <span>Related vocabulary</span>
+          </div>
+          {filteredSynonyms.length ? (
+            <RelatedWords
+              label="Synonyms"
+              tone="synonym"
+              words={filteredSynonyms.map((s) => s.text)}
+              onSelectWord={handleSearch}
+            />
+          ) : null}
+          {filteredAntonyms.length ? (
+            <RelatedWords
+              label="Antonyms"
+              tone="antonym"
+              words={filteredAntonyms.map((a) => a.text)}
+              onSelectWord={handleSearch}
+            />
+          ) : null}
+        </section>
       ) : null}
 
-      {result.antonyms?.length ? (
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-xs text-rose-400/80 font-bold uppercase tracking-wider mr-1">
-            Antonyms:
-          </span>
-          {result.antonyms.map((item) => (
-            <button
-              key={item.text}
-              type="button"
-              onClick={() => handleSearch(item.text)}
-              className="px-3 py-1 rounded-full bg-dark-muted hover:bg-rose-500/20 hover:text-rose-400 text-slate-200 text-xs font-semibold transition-all cursor-pointer"
-            >
-              {item.text}
-            </button>
-          ))}
-        </div>
-      ) : null}
-
+      {/* Phrase Fallback Explanation */}
       {result.phraseExplanation?.length ? (
-        <div className="rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-3.5 space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="text-[11px] font-extrabold text-indigo-300 uppercase tracking-wider">
-              💡 Phrase explanation
-            </div>
-            {result.phraseExplanation[0]?.source ? (
-              <span className="px-2 py-0.5 rounded-full bg-dark-muted border border-dark-border text-[10px] text-slate-300 font-semibold">
-                {result.phraseExplanation[0].source}
-              </span>
-            ) : null}
+        <div className="rounded-lg border border-border bg-surface p-3 space-y-2">
+          <div className="text-[11px] font-bold text-teal-700 dark:text-teal-300 uppercase tracking-wider">
+            Phrase Explanation
           </div>
           {result.phraseExplanation.map((section, index) => (
-            <div key={index} className="space-y-2">
+            <div key={index} className="space-y-1.5">
               {section.title && index > 0 ? (
-                <div className="font-bold text-xs text-indigo-200">{section.title}</div>
+                <div className="font-semibold text-[12.5px] text-content">{section.title}</div>
               ) : null}
               {section.markdown || section.text ? (
                 <MarkdownRenderer content={section.text || ''} />
               ) : null}
               {section.items?.length ? (
-                <ul className="space-y-1 text-sm text-slate-100 list-disc pl-4">
+                <ul className="space-y-0.5 text-[13.5px] text-content list-disc pl-4">
                   {section.items.map((item) => (
                     <li key={item}>{item}</li>
                   ))}
@@ -444,6 +487,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
         </div>
       ) : null}
 
+      {/* Lexical Profile Cards */}
       {extrasReady ? (
         <Suspense fallback={null}>
           <WordFamilyCard

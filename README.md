@@ -48,7 +48,7 @@ yarn build
 
 - `src/entrypoints/` — Chrome Extension entry points:
   - `background/` — Background Service Worker (`service-worker.ts`)
-  - `content-script/` — In-page selection listener & floating overlay UI (`app.content-script.tsx`, `overlay.in-page.tsx`, `index.tsx`, `overlay-app.tsx`, `bootstrap.ts`)
+  - `content-script/` — In-page selection listener & floating overlay UI (`bootstrap.ts`, `overlay-app.tsx`, `overlay.in-page.tsx`)
   - `toolbar-popup/` — Extension action toolbar popup (`app.toolbar-popup.tsx`, `main.tsx`)
 - `src/components/` — React 18 shared UI components, cards, and modals
 - `src/composables/` — Custom hooks and reactive external stores (dictionary, AI, storage & audio/voice management)

@@ -10,11 +10,12 @@ The runtime architecture is organized into clean, decoupled layers following mod
 2. **Content Script & In-Page Overlay** (`src/entrypoints/content-script/`) — Injected Shadow DOM overlay system (`bootstrap.ts`, `overlay-app.tsx`, `overlay.in-page.tsx`) handling text selection, floating trigger icon, exact context extraction, collision-safe viewport positioning, dragging & resizing, and result rendering.
 3. **Background Service Worker Entrypoint** (`src/entrypoints/background/service-worker.ts`) — Central background service worker handling context menu actions, CORS-bypassing fetch proxies (`FETCH_PROXY`), dictionary and AI lookup dispatch, network cancellation, and keyboard shortcut commands.
 4. **React Stores & Hooks** (`src/composables/`) — External-store state engines subscribed via `useSyncExternalStore` using lightweight reactive signals (`src/ui/signal.ts`):
+   - `composable.lookup-session.ts`: Unified session facade coordinating term, sentence context, dictionary lookup, AI intents, audio stop, and tab switching. Overlay close/unmount calls `abortAllLookups()`.
    - `composable.dictionary.ts`: Handles caching, dictionary lookups, audio playback & reactive `isAudioPlayingRef` state with global `stopAllAudio()`.
-   - `composable.ai-assistant.ts`: Handles Gemini AI prompts, 7 intent pipelines, hover prefetching, and offline grammar engine.
+   - `composable.ai-assistant.ts`: Handles Gemini AI prompts, 7 intent pipelines, Dictionary-tab Main AI preload, AI-tab visit sequencing, hover prefetching, and offline grammar engine.
    - `composable.storage.ts`: Reactive `chrome.storage` settings synchronization and lookup history management.
 5. **Provider Adapters** (`src/providers/`) — Keyless vendor adapters for dictionary providers (`free_dictionary`, `wiktionary`, `datamuse`, `wikipedia`, `urban_dictionary`, `rhymebrain`), translation (`google_translate`, `mymemory`, `libre_translate`), and Gemini AI (`gemini-3.5-flash-lite`).
-6. **UI Component System** (`src/components/`) — Modular React 18 components: `AppHeader` (with Global Stop Voice button), `SenseMatrixCard`, `WordFamilyCard`, `UsageNotesCard`, `WordFormationCard`, `LearnerMistakesCard`, `CollocationsCard`, `SentenceBreakdownCard`, `MarkdownRenderer`, `TokenizedContext`, and Settings Modals.
+6. **UI Component System** (`src/components/`) — Modular React 18 components in the **Editorial Ink** system (warm paper light / obsidian velvet + champagne gold dark): `AppHeader` (quiet Stop Voice control), `RelatedWords` (inline synonym/antonym links), `SenseMatrixCard`, `WordFamilyCard`, `UsageNotesCard`, `WordFormationCard`, `LearnerMistakesCard`, `CollocationsCard`, `SentenceBreakdownCard`, `MarkdownRenderer`, `TokenizedContext`, and Settings Modals.
 
 ---
 
@@ -103,7 +104,7 @@ User selects text on webpage OR types query in toolbar popup
    *(The primary provider is prioritized at the front of this sequence.)*
 4. **Primary Exact Query:** The primary provider looks up the selected text as-is. Inflections and phrases are not rewritten to a root lemma.
 5. **Secondary Exact Query:** If the primary still has no hit, remaining keyless providers try the same exact query. `NotFoundError` and transient network/5xx/429/timeout continue to the next provider.
-6. **Operational Failure Gate:** Transient network, timeout, 429, and 5xx errors continue to the next provider. Dictionary HTTP timeouts are 6s (translation 8s).
+6. **Operational Failure Gate:** Transient network, timeout, 429, and 5xx errors continue to the next provider. Dictionary, translation, AI, and fetch-proxy HTTP timeouts are uniformly **30s**.
 7. **Non-Blocking Translation:** When `enableTranslate` is active, translation starts in parallel. If it finishes before the dictionary result, it is included in the first paint. Otherwise the dictionary result is returned immediately and translation is merged later via `LOOKUP_UPDATE` (`revision: 1`).
 8. **Initial Delivery:** The dictionary result is returned immediately to the UI with `enriched: false` and `revision: 0` for first paint. Settings are cached in the service worker until `chrome.storage` changes.
 
@@ -178,27 +179,30 @@ The AI subsystem (`src/composables/composable.ai-assistant.ts` and `src/provider
 
 ### AI Concurrency & Preload Architecture
 
-1. **Speculative 300ms Debounced Preload:**
-   - When text is selected, `maybePreloadAi()` waits 300ms, then `preloadIntents()` fetches the `default` intent first.
-   - After that settles, `preloadFollowUpIntents()` warms the remaining intents (`explain_in_context`, `grammar`, `collocations`, `sentence_breakdown`, `confusables`, `rephrase`) sequentially via idle callbacks or 250ms timeouts.
+1. **Dictionary-tab Main AI preload (600ms debounce):**
+   - When text is selected, `maybePreloadAi()` waits 600ms, then `preloadIntents()` fetches **only** the `default` (Main AI) intent.
+   - Follow-up intents do **not** make network calls while the user stays on the Dictionary tab.
    - Rapid selection changes or overlay dismissal clear the timer (`cancelAiPreload()`), so no LLM tokens are spent on discarded words.
-2. **Intent Hover/Focus Prefetching & Live Status Indicators:**
+2. **AI-tab visit sequencing (`preloadFollowUpIntentsOnTabVisit`):**
+   - When `<AiAssistantView />` becomes visible (`isVisible === true`), remaining intents (`explain_in_context`, `grammar`, `collocations`, `sentence_breakdown`, `confusables`, `rephrase`) queue sequentially via `requestIdleCallback` or 250ms timeouts.
+   - Cached or already-pending intents are skipped.
+3. **Intent Hover/Focus Prefetching & Live Status Indicators:**
    - In `AiIntentToolbar`, hovering over or focusing any secondary intent button triggers `preloadSpecificIntent()`.
    - Each intent button features a live status indicator dot:
      - **Emerald (Ready):** Response is cached and displays instantly on click.
      - **Amber Pulse (Loading):** Request is actively in-flight.
-     - **Rose (Not requested):** Intent has not yet been fetched.
-3. **In-Flight Request Deduplication (`aiPendingMap`):**
+     - **Gray (Not requested):** Intent has not yet been fetched.
+4. **In-Flight Request Deduplication (`aiPendingMap`):**
    - If a background preload is already in flight when the user switches to the AI tab or clicks an intent, the UI attaches to the running promise (`aiPendingMap.get(cacheKey)`), preventing duplicate API calls.
-4. **Persistent 24-Hour LRU Cache (`chrome.storage.local`):**
+5. **Persistent 24-Hour LRU Cache (`chrome.storage.local`):**
    - Up to 100 AI responses are cached locally with a **24-hour TTL** (`ai_lookup_cache_v2`).
    - Keys are hashed compound representations of `intent`, `text`, `targetLang`, `context`, `model`, `baseUrl`, and `enableLexicalProfile`.
-5. **Keep-Alive UI Mounting & Lazy Code Splitting:**
+6. **Keep-Alive UI Mounting & Lazy Code Splitting:**
    - The `<AiAssistantView />` chunk is loaded lazily on first tab visit (`aiVisited` state).
-   - Once mounted, switching between Dictionary and AI tabs keeps the component mounted with `display: none`, preserving scroll positions, active intents, and rendered syntax trees.
-6. **Tab-Scoped Abort & Context Invalidation:**
+   - Once mounted, switching between Dictionary and AI tabs keeps the component mounted with `display: none`, preserving scroll positions, active intents, and rendered syntax trees. Follow-up API preload only runs while `isVisible` is true.
+7. **Tab-Scoped Abort & Context Invalidation:**
    - Each AI lookup creates a unique `requestId` and registers an `AbortController`.
-   - Selecting a new word aborts in-flight AI requests via `abortAllAiRequests()`.
+   - Selecting a new word or closing the overlay aborts in-flight AI requests via `abortAllAiRequests()` / `useLookupSession().abortAllLookups()`.
 
 ### AI Request Pipeline
 
@@ -265,7 +269,7 @@ Pronunciation handling (`src/composables/composable.dictionary.ts`) coordinates 
 2. **Global Voice Control & Cancellation:**
    - **Reactive State:** `isAudioPlayingRef` signal tracks active audio playback.
    - **Immediate Cancellation:** `stopAllAudio()` instantly halts `window.speechSynthesis` and pauses/destroys any playing `HTMLAudioElement`.
-   - **Header Stop Voice Button:** Prominent red button (`⏹️ STOP VOICE` / `🔇`) in `AppHeader` renders whenever audio or speech synthesis is active.
+   - **Header Stop Voice Button:** Quiet pulsing Stop Voice control in `AppHeader` renders whenever audio or speech synthesis is active.
    - **Keyboard Dismissal:** Pressing `Esc` halts all active speech immediately.
 3. **Speech Practice Evaluator (`startSpeechPractice`):**
    - Uses browser `SpeechRecognition` / `webkitSpeechRecognition` to capture learner attempts.

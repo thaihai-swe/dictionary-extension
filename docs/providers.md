@@ -158,10 +158,10 @@ Primary lookup uses the configured `dictionaryProvider` (`free_dictionary` by de
 free_dictionary ➔ wiktionary ➔ datamuse ➔ rhymebrain ➔ wikipedia ➔ urban_dictionary
 ```
 
-`NotFoundError` and transient network/5xx/429/timeout continue to the next provider. Dictionary HTTP timeout is 6s.
+`NotFoundError` and transient network/5xx/429/timeout continue to the next provider. Dictionary HTTP timeout is 30s.
 
 ### Translation fallback
-`lookupTranslationResult()` tries the configured `translateProvider` first (`google`, `libretranslate`, or `mymemory`). If the primary is Google or LibreTranslate and it fails, MyMemory is attempted automatically. Translation HTTP timeout is 8s.
+`lookupTranslationResult()` tries the configured `translateProvider` first (`google`, `libretranslate`, or `mymemory`). If the primary is Google or LibreTranslate and it fails, MyMemory is attempted automatically. Translation HTTP timeout is 30s.
 
 ### AI protocol routing
 - **Native Gemini REST:** When `aiBaseUrl` includes `generativelanguage.googleapis.com` (or is empty), `fetchAiAnalysis` calls `models/{model}:generateContent` with `gemini-3.5-flash-lite`.

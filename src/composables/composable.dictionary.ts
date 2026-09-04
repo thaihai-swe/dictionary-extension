@@ -1,5 +1,5 @@
 import { signal, useSignal } from '../ui/signal';
-import { settingsStore, whenSettingsReady } from './composable.storage';
+import { registerCacheInvalidator, settingsStore, whenSettingsReady } from './composable.storage';
 import {
   cancelDictionaryLookup,
   createRequestId,
@@ -42,16 +42,7 @@ const dictPendingMap = new Map<string, Promise<DictionaryEntry>>();
 const dictPendingRequestIds = new Map<string, string>();
 
 function getDictCacheKey(word: string, settings: AppSettings, provider: string, lang: string): string {
-  return JSON.stringify({
-    word: word.toLowerCase().trim(),
-    provider: provider.toLowerCase(),
-    lang: lang.toLowerCase(),
-    enableTranslate: Boolean(settings.enableTranslate),
-    enableDictionary: Boolean(settings.enableDictionary),
-    enablePhraseFallback: Boolean(settings.enablePhraseFallback),
-    enableLexicalProfile: settings.enableLexicalProfile !== false,
-    translateProvider: settings.translateProvider || '',
-  });
+  return `${word.toLowerCase().trim()}|${provider.toLowerCase()}|${lang.toLowerCase()}|${settings.translateProvider || ''}|${Boolean(settings.enableTranslate)}|${Boolean(settings.enableDictionary)}|${Boolean(settings.enablePhraseFallback)}|${settings.enableLexicalProfile !== false}`;
 }
 
 function practiceKey(text: string, language = 'en-US'): string {
@@ -75,24 +66,20 @@ function levenshteinDistance(a: string, b: string): number {
   if (!left.length) return right.length;
   if (!right.length) return left.length;
 
-  const matrix: number[][] = [];
-  for (let i = 0; i <= left.length; i += 1) {
-    matrix[i] = [i];
-  }
-  for (let j = 0; j <= right.length; j += 1) {
-    matrix[0][j] = j;
-  }
+  let prev = new Array<number>(right.length + 1);
+  let curr = new Array<number>(right.length + 1);
+  for (let j = 0; j <= right.length; j += 1) prev[j] = j;
   for (let i = 1; i <= left.length; i += 1) {
+    curr[0] = i;
     for (let j = 1; j <= right.length; j += 1) {
-      const cost = left[i - 1] === right[j - 1] ? 0 : 1;
-      matrix[i][j] = Math.min(
-        matrix[i - 1][j] + 1,
-        matrix[i][j - 1] + 1,
-        matrix[i - 1][j - 1] + cost,
-      );
+      const cost = left.charCodeAt(i - 1) === right.charCodeAt(j - 1) ? 0 : 1;
+      curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
     }
+    const swap = prev;
+    prev = curr;
+    curr = swap;
   }
-  return matrix[left.length][right.length];
+  return prev[right.length];
 }
 
 function scorePractice(target: string, spoken: string): PracticeResult {
@@ -190,6 +177,8 @@ export function clearDictionaryCache() {
   dictPendingMap.clear();
   dictPendingRequestIds.clear();
 }
+
+registerCacheInvalidator(clearDictionaryCache);
 
 let dictPreloadGeneration = 0;
 let aiPreloadTimer: ReturnType<typeof setTimeout> | null = null;

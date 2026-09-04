@@ -1,5 +1,6 @@
 import React from 'react';
 import { AppSettings } from '../../types';
+import { IconBook, IconSpeaker, IconSpinner, IconTranslate } from '../icons';
 
 interface TabSourcesProps {
   localSettings: AppSettings;
@@ -31,10 +32,14 @@ export const TabSources: React.FC<TabSourcesProps> = ({
       .slice(-1)[0];
 
   return (
-    <div className="space-y-3.5">
+    <div className="space-y-4 font-sans text-xs">
+      {/* Toggles */}
       <div className="space-y-2">
-        <label className="flex items-center justify-between cursor-pointer">
-          <span className="font-bold text-slate-200">🌐 Show translation in Dictionary tab:</span>
+        <label className="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-muted transition-colors">
+          <div>
+            <span className="font-bold text-content block text-xs">Show Translation in Dictionary View</span>
+            <span className="text-[11px] text-content-muted block">Displays instant localized translation above meanings</span>
+          </div>
           <input
             type="checkbox"
             checked={localSettings.enableTranslate !== false}
@@ -42,8 +47,11 @@ export const TabSources: React.FC<TabSourcesProps> = ({
             className="accent-teal-500 w-4 h-4 cursor-pointer"
           />
         </label>
-        <label className="flex items-center justify-between cursor-pointer">
-          <span className="font-bold text-slate-200">📖 Show definitions in Dictionary tab:</span>
+        <label className="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-muted transition-colors">
+          <div>
+            <span className="font-bold text-content block text-xs">Show Definitions in Dictionary View</span>
+            <span className="text-[11px] text-content-muted block">Displays full dictionary definition cards and word senses</span>
+          </div>
           <input
             type="checkbox"
             checked={localSettings.enableDictionary !== false}
@@ -53,151 +61,164 @@ export const TabSources: React.FC<TabSourcesProps> = ({
         </label>
       </div>
 
-      <div className="space-y-2 pt-2 border-t border-dark-border/60">
-        <label className="font-bold text-slate-200 block">🌐 Default Target Translation Language:</label>
+      {/* Target language */}
+      <div className="space-y-2 pt-3 border-t border-border/60">
+        <label className="font-bold text-content-secondary block uppercase tracking-wider text-[11px]">
+          Default Target Translation Language
+        </label>
         <select
           value={localSettings.translateTargetLanguage || 'Vietnamese'}
           onChange={(e) => onChange({ translateTargetLanguage: e.target.value })}
-          className="w-full bg-dark-muted border border-dark-border text-slate-200 text-sm font-medium rounded-xl px-3 py-2 outline-none focus:border-teal-500 cursor-pointer"
+          className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-teal-500 cursor-pointer shadow-xs"
         >
           {languageOptions.map((lang) => (
-            <option key={lang} value={lang}>
+            <option key={lang} value={lang} className="bg-surface text-content">
               {lang}
             </option>
           ))}
         </select>
       </div>
 
-      <div className="space-y-2 pt-2 border-t border-dark-border/60">
-        <label className="font-bold text-slate-200 block">📝 Custom language list:</label>
+      {/* Custom languages */}
+      <div className="space-y-2 pt-3 border-t border-border/60">
+        <label className="font-bold text-content-secondary block uppercase tracking-wider text-[11px]">
+          Custom Language List
+        </label>
         <input
           value={localSettings.customLanguages || ''}
           onChange={(e) => onChange({ customLanguages: e.target.value })}
           type="text"
-          placeholder="Vietnamese, English, Japanese"
-          className="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500"
+          placeholder="Vietnamese, English, Japanese, French"
+          className="w-full bg-muted border border-border rounded-xl px-3 py-2 text-xs text-content placeholder:text-content-muted outline-none focus:border-teal-500 shadow-xs"
         />
       </div>
 
-      <div className="space-y-2 pt-2 border-t border-dark-border/60">
-        <label className="font-bold text-slate-200 block">🌍 Translation provider:</label>
+      {/* Translation Provider */}
+      <div className="space-y-2 pt-3 border-t border-border/60">
+        <label className="font-bold text-content-secondary block uppercase tracking-wider text-[11px]">
+          Translation Engine Provider
+        </label>
         <select
           value={localSettings.translateProvider || 'google'}
           onChange={(e) => onChange({ translateProvider: e.target.value as AppSettings['translateProvider'] })}
-          className="w-full bg-dark-muted border border-dark-border text-slate-200 text-sm font-medium rounded-xl px-3 py-2 outline-none focus:border-teal-500 cursor-pointer"
+          className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-teal-500 cursor-pointer shadow-xs"
         >
-          <option value="google">Google Translate</option>
-          <option value="libretranslate">LibreTranslate</option>
-          <option value="mymemory">MyMemory (keyless fallback)</option>
+          <option value="google" className="bg-surface text-content">Google Translate (Default)</option>
+          <option value="libretranslate" className="bg-surface text-content">LibreTranslate</option>
+          <option value="mymemory" className="bg-surface text-content">MyMemory (Keyless fallback)</option>
         </select>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 pt-1">
           <button
             type="button"
-            className="px-2.5 py-1.5 rounded-lg bg-dark-muted border border-dark-border text-sm font-bold text-slate-200 hover:border-teal-500 cursor-pointer"
+            className="px-3 py-1.5 rounded-lg bg-muted hover:bg-elevated border border-border text-xs font-semibold text-content-secondary hover:text-teal-600 dark:hover:text-teal-300 cursor-pointer shadow-xs flex items-center gap-1.5"
             disabled={connectionBusy[translationKey]}
             onClick={onTestTranslation}
           >
-            Test translation
+            {connectionBusy[translationKey] ? <IconSpinner className="w-3.5 h-3.5 text-teal-500 dark:text-teal-400" /> : <IconTranslate className="w-3.5 h-3.5 text-teal-500 dark:text-teal-400" />}
+            <span>Test Translation Connection</span>
           </button>
-          <span className="text-xs text-slate-400">{connectionStatus[translationKey]}</span>
+          {connectionStatus[translationKey] && (
+            <span className="text-[11px] px-2 py-0.5 rounded-md bg-muted border border-border text-teal-600 dark:text-teal-300 font-mono">
+              {connectionStatus[translationKey]}
+            </span>
+          )}
         </div>
       </div>
 
-      {localSettings.translateProvider === 'libretranslate' ? (
-        <div className="space-y-2 pt-2 border-t border-dark-border/60">
-          <label className="font-bold text-slate-200 block">LibreTranslate base URL:</label>
-          <input
-            value={localSettings.libreTranslateBaseUrl || ''}
-            onChange={(e) => onChange({ libreTranslateBaseUrl: e.target.value })}
-            type="url"
-            placeholder="https://libretranslate.com"
-            className="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 font-mono"
-          />
-          <label className="font-bold text-slate-200 block">LibreTranslate API key (optional):</label>
-          <input
-            value={localSettings.libreTranslateApiKey || ''}
-            onChange={(e) => onChange({ libreTranslateApiKey: e.target.value })}
-            type="password"
-            placeholder="LibreTranslate API key"
-            className="w-full bg-dark-muted border border-dark-border rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-teal-500 font-mono"
-          />
-        </div>
-      ) : null}
-
-      <div className="space-y-2 pt-2 border-t border-dark-border/60">
-        <label className="font-bold text-slate-200 block">📚 Default Dictionary Provider:</label>
+      {/* Dictionary Provider */}
+      <div className="space-y-2 pt-3 border-t border-border/60">
+        <label className="font-bold text-content-secondary block uppercase tracking-wider text-[11px]">
+          Default Dictionary Provider
+        </label>
         <select
           value={localSettings.dictionaryProvider || 'free_dictionary'}
           onChange={(e) =>
             onChange({ dictionaryProvider: e.target.value as AppSettings['dictionaryProvider'] })
           }
-          className="w-full bg-dark-muted border border-dark-border text-slate-200 text-sm font-medium rounded-xl px-3 py-2 outline-none focus:border-teal-500 cursor-pointer"
+          className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-teal-500 cursor-pointer shadow-xs"
         >
-          <option value="free_dictionary">🌐 Free Dictionary API (Google Baseline)</option>
-          <option value="wiktionary">📖 Wiktionary Open API</option>
-          <option value="datamuse">⚡ Datamuse (keyless collocations)</option>
-          <option value="wikipedia">📰 Wikipedia Summary</option>
-          <option value="urban_dictionary">💬 Urban Dictionary (slang)</option>
-          <option value="google_translate">🌐 Google Translate API</option>
+          <option value="free_dictionary" className="bg-surface text-content">Free Dictionary API (Google Baseline)</option>
+          <option value="wiktionary" className="bg-surface text-content">Wiktionary Open API</option>
+          <option value="datamuse" className="bg-surface text-content">Datamuse (Keyless collocations)</option>
+          <option value="wikipedia" className="bg-surface text-content">Wikipedia Summary</option>
+          <option value="urban_dictionary" className="bg-surface text-content">Urban Dictionary (Slang &amp; Idioms)</option>
+          <option value="google_translate" className="bg-surface text-content">Google Translate API</option>
         </select>
       </div>
 
-      <div className="space-y-2 pt-2 border-t border-dark-border/60">
-        <label className="font-bold text-slate-200 block">🔎 Test dictionary connection:</label>
-        <div className="grid grid-cols-2 gap-2">
+      {/* Test Dictionary Connection */}
+      <div className="space-y-2 pt-3 border-t border-border/60">
+        <label className="font-bold text-content-secondary block uppercase tracking-wider text-[11px]">
+          Test Dictionary Connectivity
+        </label>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {(
             [
-              ['free_dictionary', 'Test Free Dictionary'],
-              ['wiktionary', 'Test Wiktionary'],
-              ['datamuse', 'Test Datamuse'],
-              ['wikipedia', 'Test Wikipedia'],
-              ['urban_dictionary', 'Test Urban Dictionary'],
-              ['rhymebrain', 'Test RhymeBrain'],
+              ['free_dictionary', 'Free Dictionary'],
+              ['wiktionary', 'Wiktionary'],
+              ['datamuse', 'Datamuse'],
+              ['wikipedia', 'Wikipedia'],
+              ['urban_dictionary', 'Urban Dictionary'],
+              ['rhymebrain', 'RhymeBrain'],
             ] as const
           ).map(([id, label]) => (
             <button
               key={id}
               type="button"
-              className="px-2 py-1.5 rounded-lg bg-dark-muted border border-dark-border text-sm font-bold cursor-pointer"
+              className="px-2.5 py-1.5 rounded-lg bg-muted hover:bg-elevated border border-border text-xs font-semibold text-content-secondary hover:text-teal-600 dark:hover:text-teal-300 cursor-pointer shadow-xs flex items-center justify-center gap-1 active:scale-95"
               disabled={connectionBusy[id]}
               onClick={() => onTestDictionary(id)}
             >
-              {label}
+              {connectionBusy[id] ? <IconSpinner className="w-3 h-3 text-teal-500 dark:text-teal-400" /> : <IconBook className="w-3 h-3 text-teal-500 dark:text-teal-400" />}
+              <span>{label}</span>
             </button>
           ))}
         </div>
-        <p className="text-xs text-slate-400">{lastDictStatus}</p>
+        {lastDictStatus ? (
+          <p className="text-[11px] text-teal-600 dark:text-teal-300/90 font-mono mt-1">{lastDictStatus}</p>
+        ) : null}
       </div>
 
-      <div className="space-y-2 pt-2 border-t border-dark-border/60">
-        <label className="font-bold text-slate-200 block">🔊 Speech Synthesis Voice (TTS Voice):</label>
+      {/* Voice & Speech Synthesis */}
+      <div className="space-y-2 pt-3 border-t border-border/60">
+        <label className="font-bold text-content-secondary block uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+          <IconSpeaker className="w-3.5 h-3.5 text-teal-500 dark:text-teal-400" />
+          <span>Speech Synthesis (TTS Voice)</span>
+        </label>
         <select
           value={localSettings.pronunciationVoiceURI || ''}
           onChange={(e) => onChange({ pronunciationVoiceURI: e.target.value })}
-          className="w-full bg-dark-muted border border-dark-border text-slate-200 text-sm font-medium rounded-xl px-3 py-2 outline-none focus:border-teal-500 cursor-pointer"
+          className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-teal-500 cursor-pointer shadow-xs"
         >
-          <option value="">Auto-select system default voice</option>
+          <option value="" className="bg-surface text-content">Auto-select system default voice</option>
           {availableVoices.map((voice) => (
-            <option key={voice.voiceURI} value={voice.voiceURI}>
+            <option key={voice.voiceURI} value={voice.voiceURI} className="bg-surface text-content">
               {voice.name} ({voice.lang})
             </option>
           ))}
         </select>
 
-        <div className="flex items-center gap-3 pt-1">
-          <span className="text-slate-300 font-bold">Speech Rate:</span>
-          <input
-            type="range"
-            value={localSettings.pronunciationRate ?? 0.95}
-            min={0.5}
-            max={1.5}
-            step={0.05}
-            onChange={(e) => onChange({ pronunciationRate: Number(e.target.value) })}
-            className="flex-1 accent-teal-500 cursor-pointer"
-          />
-          <span className="font-mono text-teal-400 font-bold w-10 text-right">
-            {localSettings.pronunciationRate}x
-          </span>
+        <div className="pt-2">
+          <div className="flex items-center justify-between gap-3 bg-muted/40 p-2.5 rounded-xl border border-border">
+            <div>
+              <span className="text-content font-semibold text-xs block">Pronunciation Speech Rate:</span>
+              <span className="text-[11px] text-content-muted">Controls playback speed of speech synthesis</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="range"
+                min="0.5"
+                max="1.5"
+                step="0.05"
+                value={localSettings.pronunciationRate ?? 1}
+                onChange={(e) => onChange({ pronunciationRate: parseFloat(e.target.value) })}
+                className="accent-teal-500 cursor-pointer w-28"
+              />
+              <span className="font-mono text-teal-600 dark:text-teal-300 text-xs w-10 text-right">
+                {localSettings.pronunciationRate ?? 1}x
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
