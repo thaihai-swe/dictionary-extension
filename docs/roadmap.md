@@ -35,9 +35,6 @@ This document outlines completed milestones and future enhancements for **Dictio
 
 ### Phase 4: Audio Engine & Practice Evaluator
 - [x] High-fidelity dictionary MP3 playback with US/UK variants.
-- [x] Fast-path pronunciation enrichment queue and independent L1/L2 phonetics cache (`phn_{word}`).
-- [x] Wiktionary inline IPA parsing for immediate first-paint pronunciation.
-- [x] Always-available US and UK buttons with authentic regional TTS fallbacks.
 - [x] Google Translate TTS and Web Speech synthesis fallbacks.
 - [x] Prominent red **Stop Voice** button in `AppHeader` and `Esc` key cancellation.
 - [x] Speech Practice Evaluator using Web Speech Recognition and Levenshtein similarity scoring.

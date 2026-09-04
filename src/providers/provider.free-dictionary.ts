@@ -10,10 +10,10 @@ function accentFromAudio(audio?: string): Phonetic['region'] {
   return 'all';
 }
 
-function languageFromRegion(region?: Phonetic['region']): string | undefined {
+function languageFromRegion(region?: Phonetic['region']): string {
   if (region === 'uk') return 'en-GB';
   if (region === 'us') return 'en-US';
-  return undefined;
+  return 'en-US';
 }
 
 export async function fetchFreeDictionary(word: string, _targetLang: string = 'vi', signal?: AbortSignal): Promise<DictionaryEntry> {
@@ -31,16 +31,14 @@ export async function fetchFreeDictionary(word: string, _targetLang: string = 'v
   }
 
   const entry = data[0];
-  const topPhonetic = String(entry.phonetic || '').trim();
   const rawPhonetics = (entry.phonetics as Array<{ text?: string; audio?: string }>) || [];
-  const mapped: Phonetic[] = rawPhonetics
+  const phonetics: Phonetic[] = rawPhonetics
     .filter((p) => p.text || p.audio)
     .map((p) => {
       const region = accentFromAudio(p.audio);
-      const text = String(p.text || '').trim() || topPhonetic;
       return {
-        text,
-        phonetic: text,
+        text: p.text || '',
+        phonetic: p.text || '',
         audio: p.audio || '',
         audioUrl: p.audio || '',
         region,
@@ -49,17 +47,6 @@ export async function fetchFreeDictionary(word: string, _targetLang: string = 'v
         fallbackOnly: !p.audio,
       };
     });
-
-  const phonetics: Phonetic[] = mapped.length
-    ? mapped
-    : topPhonetic
-      ? [{
-          text: topPhonetic,
-          phonetic: topPhonetic,
-          fallbackOnly: true,
-          label: 'Listen',
-        }]
-      : [];
 
   const examples: AttributedItem[] = [];
   const synonyms: AttributedItem[] = [];
@@ -102,7 +89,7 @@ export async function fetchFreeDictionary(word: string, _targetLang: string = 'v
     word: (entry.word as string) || term,
     phonetics,
     pronunciations: phonetics,
-    phonetic: topPhonetic || phonetics.find((p) => p.text)?.text || '',
+    phonetic: phonetics.find((p) => p.text)?.text || '',
     meanings,
     examples,
     synonyms,

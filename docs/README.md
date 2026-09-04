@@ -16,7 +16,6 @@ Welcome to the comprehensive documentation for **Dictionary**, a lightweight, hi
 - [**Architecture Overview**](architecture.md) — Core architectural blueprints, decoupled execution layers, progressive lazy enrichment lifecycle, tab-scoped cancellation, and storage security boundaries.
 - [**Lookup Data Flow**](lookup-data-flow.md) — Step-by-step parallel concurrency model, request lifecycle, message routing, and caching behavior between the Dictionary and AI Assistant tabs.
 - [**Providers Specification**](providers.md) — Normalized provider contracts, API integration models, fallback sequences, and schema definitions for Dictionary (6 keyless backends), Translation (Google, LibreTranslate, MyMemory), AI generation (`gemini-3.5-flash-lite` & OpenAI-compatible), and Pronunciation.
-- [**Provider Data Comparison**](provider-data-comparison.md) — Detailed feature comparison table showing what specific fields (definitions, examples, synonyms, IPA, audio, syllables, collocations) each provider returns.
 - [**Context & Sentence Extraction**](context-extraction.md) — Deep dive into dual-mode context retrieval: Mode 1 exact DOM Range offset slicing vs. Mode 2 multi-factor ranked page candidate scanning.
 
 ### 3. Engineering & Contribution
@@ -80,9 +79,9 @@ Welcome to the comprehensive documentation for **Dictionary**, a lightweight, hi
 | Feature Domain | Capabilities & Specifications | Documentation Guide |
 |---|---|---|
 | **Multi-Source Dictionary** | Keyless backends (`free_dictionary`, `wiktionary`, `datamuse`, `wikipedia`, `urban_dictionary`, plus RhymeBrain enrichment) with progressive fallback. Lookups use the selected text as-is. | [Providers](providers.md), [User Guide](user-guide.md) |
-| **Lazy Enrichment** | Non-blocking secondary query batches (`concurrency: 2`), pronunciation-first queue when IPA is missing, cumulative definition merging, IPA phonetic backfilling, and 2-level caching plus independent `phn_{word}` phonetics cache. | [Architecture](architecture.md), [Providers](providers.md) |
+| **Lazy Enrichment** | Non-blocking secondary query batches (`concurrency: 2`), cumulative definition merging, IPA phonetic backfilling, and 2-level caching (Memory + Session storage). | [Architecture](architecture.md), [Providers](providers.md) |
 | **Neural Translation** | Parallel translation with Google Translate, LibreTranslate, or MyMemory; dynamic dropdown with custom language definitions. | [Settings](settings.md), [Providers](providers.md) |
-| **Pronunciation & Voice Control** | Always-on US/UK listen buttons, dictionary MP3s + Google TTS + Web Speech fallback with matching `en-US`/`en-GB` voices, adjustable speed (0.5x–1.5x), global red **Stop Voice** button in header, and microphone Speech Practice Evaluator with Levenshtein scoring. | [User Guide](user-guide.md), [Providers](providers.md) |
+| **Pronunciation & Voice Control** | High-quality dictionary MP3s + Google TTS + Web Speech fallback, adjustable speed (0.5x–1.5x), global red **Stop Voice** button in header, and microphone Speech Practice Evaluator with Levenshtein scoring. | [User Guide](user-guide.md), [Providers](providers.md) |
 | **Context Extraction** | Dual-mode retrieval: Exact DOM Range character offset measurement (Mode 1) and ranked page candidate search (Mode 2) with soft-hyphen and abbreviation healing. | [Context Extraction](context-extraction.md) |
 | **Contextual AI Actions** | 7 specialized intents: Main AI, Context Explain, Grammar & Nuance, Phrase & Collocations, Sentence Breakdown, Compare Confusables, and Rephrase. Powered by `gemini-3.5-flash-lite` or custom endpoints. | [User Guide](user-guide.md), [Settings](settings.md) |
 | **Structured Lexical Profile** | Interactive Word Family chips, Word Formation tags, Usage/Register warnings, Confusable pairs, Common Learner Mistakes, and categorized Collocations. | [User Guide](user-guide.md), [Architecture](architecture.md) |

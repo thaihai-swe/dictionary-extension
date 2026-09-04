@@ -8,7 +8,6 @@ import {
   useDictionaryResult,
 } from '../composables/composable.dictionary';
 import { AttributedItem, Phonetic } from '../types';
-import { cleanPhoneticString } from '../shared/enrichment';
 import SenseMatrixCard from './card.sense-matrix';
 import MarkdownRenderer from './component.markdown-renderer';
 import {
@@ -63,24 +62,19 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
     return result?.phonetics || [];
   }, [result]);
 
-  function matchesLang(item: Phonetic, lang: 'en-GB' | 'en-US'): boolean {
-    const language = String(item.language || '').toLowerCase();
-    if (language === lang.toLowerCase()) return true;
-    if (lang === 'en-GB') return item.region === 'uk';
-    if (lang === 'en-US') return item.region === 'us';
-    return false;
+  function pronunciationFor(lang: 'en-GB' | 'en-US'): Phonetic | undefined {
+    return (
+      pronunciations.find((item) => String(item.language || '').toLowerCase() === lang.toLowerCase()) ||
+      pronunciations.find((item) => (lang === 'en-GB' ? item.region === 'uk' : item.region === 'us'))
+    );
   }
 
   function phoneticText(item?: Phonetic): string {
     const word = String(result?.word || '').trim().toLowerCase();
-    const candidates = [item?.phonetic, item?.text, result?.phonetic];
-    for (const raw of candidates) {
-      const value = cleanPhoneticString(raw);
-      if (!value) continue;
-      const stripped = value.replace(/^\/+|\/+$/g, '').toLowerCase();
-      if (stripped && stripped !== word) return value;
-      if (value.startsWith('/') && value.endsWith('/') && value.length > 2) return value;
-    }
+    const phonetic = String(item?.phonetic || '').trim();
+    if (phonetic && phonetic.toLowerCase() !== word) return phonetic;
+    const text = String(item?.text || '').trim();
+    if (text && text.toLowerCase() !== word) return text;
     return '';
   }
 
@@ -92,81 +86,15 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
     return Boolean(phoneticText(item) || audioUrlOf(item));
   }
 
-  const sharedIpa = useMemo(() => {
-    const fromItems = pronunciations.map((item) => phoneticText(item)).find(Boolean);
-    if (fromItems) return fromItems;
-    const top = cleanPhoneticString(result?.phonetic);
-    const word = String(result?.word || '').trim().toLowerCase();
-    if (top && top.toLowerCase() !== word) return top;
-    return '';
-  }, [pronunciations, result]);
-
-  function withSharedIpa(item: Phonetic, lang: 'en-GB' | 'en-US'): Phonetic {
-    if (phoneticText(item) || !sharedIpa) {
-      return { ...item, language: item.language || lang, region: item.region || (lang === 'en-GB' ? 'uk' : 'us') };
-    }
-    return {
-      ...item,
-      phonetic: sharedIpa,
-      text: sharedIpa,
-      language: item.language || lang,
-      region: item.region || (lang === 'en-GB' ? 'uk' : 'us'),
-    };
-  }
-
-  function pronunciationFor(lang: 'en-GB' | 'en-US'): Phonetic | undefined {
-    const matches = pronunciations.filter((item) => matchesLang(item, lang));
-    const withIpaAndAudio = matches.find((item) => phoneticText(item) && audioUrlOf(item));
-    const withIpa = matches.find((item) => phoneticText(item));
-    const withAudio = matches.find((item) => audioUrlOf(item));
-    return withIpaAndAudio || withIpa || withAudio || matches[0];
-  }
-
-  const fallbackPronunciation = (lang: 'en-GB' | 'en-US'): Phonetic | undefined => {
-    const generic = pronunciations.find((item) => phoneticText(item) || audioUrlOf(item) || item?.fallbackOnly);
-    if (generic && (phoneticText(generic) || sharedIpa)) {
-      return {
-        ...generic,
-        phonetic: phoneticText(generic) || sharedIpa,
-        text: phoneticText(generic) || sharedIpa,
-        language: lang,
-        region: lang === 'en-GB' ? 'uk' : 'us',
-        audio: undefined,
-        audioUrl: undefined,
-        fallbackOnly: true,
-      };
-    }
-    if (sharedIpa) {
-      return {
-        text: sharedIpa,
-        phonetic: sharedIpa,
-        language: lang,
-        region: lang === 'en-GB' ? 'uk' : 'us',
-        fallbackOnly: true,
-      };
-    }
-    if (displayHeadword) {
-      return {
-        text: displayHeadword,
-        language: lang,
-        region: lang === 'en-GB' ? 'uk' : 'us',
-        fallbackOnly: true,
-      };
-    }
-    return undefined;
-  };
-
   const ukPronunciation = useMemo(() => {
     const item = pronunciationFor('en-GB');
-    if (item && hasAccentData(item)) return withSharedIpa(item, 'en-GB');
-    return fallbackPronunciation('en-GB');
-  }, [pronunciations, displayHeadword, sharedIpa]);
+    return hasAccentData(item) ? item : undefined;
+  }, [pronunciations]);
 
   const usPronunciation = useMemo(() => {
     const item = pronunciationFor('en-US');
-    if (item && hasAccentData(item)) return withSharedIpa(item, 'en-US');
-    return fallbackPronunciation('en-US');
-  }, [pronunciations, displayHeadword, sharedIpa]);
+    return hasAccentData(item) ? item : undefined;
+  }, [pronunciations]);
 
   const genericPronunciation = useMemo(() => {
     if (ukPronunciation || usPronunciation) return undefined;
@@ -276,14 +204,8 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
               {displayHeadword}
             </h2>
 
-            {/* Dedicated IPA transcription plus Listen (US)/(UK) */}
+            {/* Phonetic & Accent Audio Buttons */}
             <div className="flex flex-wrap items-center gap-2 pt-0.5">
-              {phoneticText(usPronunciation) || phoneticText(ukPronunciation) || phoneticText(genericPronunciation) ? (
-                <span className="text-[12px] font-mono font-semibold text-teal-700 dark:text-teal-400">
-                  {phoneticText(usPronunciation) || phoneticText(ukPronunciation) || phoneticText(genericPronunciation)}
-                </span>
-              ) : null}
-
               {usPronunciation ? (
                 <button
                   type="button"
@@ -296,7 +218,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                     })
                   }
                   className={cx(
-                    'h-[26px] px-2 rounded-md border text-[11.5px] font-medium transition-all flex items-center gap-1 cursor-pointer',
+                    'h-[26px] px-2 rounded-md border text-[11.5px] font-medium transition-all flex items-center gap-1 cursor-pointer font-mono',
                     playingKey === 'en-US'
                       ? 'bg-teal-500/20 text-teal-700 dark:text-teal-300 border-teal-500/40'
                       : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
@@ -305,7 +227,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                   title="Listen (US)"
                 >
                   <IconSpeaker className="w-3 h-3 text-teal-600 dark:text-teal-400" />
-                  <span>Listen (US)</span>
+                  <span>US {phoneticText(usPronunciation) ? `${phoneticText(usPronunciation)}` : ''}</span>
                 </button>
               ) : null}
 
@@ -321,7 +243,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                     })
                   }
                   className={cx(
-                    'h-[26px] px-2 rounded-md border text-[11.5px] font-medium transition-all flex items-center gap-1 cursor-pointer',
+                    'h-[26px] px-2 rounded-md border text-[11.5px] font-medium transition-all flex items-center gap-1 cursor-pointer font-mono',
                     playingKey === 'en-GB'
                       ? 'bg-teal-500/20 text-teal-700 dark:text-teal-300 border-teal-500/40'
                       : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
@@ -330,7 +252,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                   title="Listen (UK)"
                 >
                   <IconSpeaker className="w-3 h-3 text-teal-600 dark:text-teal-400" />
-                  <span>Listen (UK)</span>
+                  <span>UK {phoneticText(ukPronunciation) ? `${phoneticText(ukPronunciation)}` : ''}</span>
                 </button>
               ) : null}
 
@@ -346,7 +268,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                     })
                   }
                   className={cx(
-                    'h-[26px] px-2 rounded-md border text-[11.5px] font-medium transition-all flex items-center gap-1 cursor-pointer',
+                    'h-[26px] px-2 rounded-md border text-[11.5px] font-medium transition-all flex items-center gap-1 cursor-pointer font-mono',
                     playingKey === 'generic'
                       ? 'bg-teal-500/20 text-teal-700 dark:text-teal-300 border-teal-500/40'
                       : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
@@ -355,7 +277,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                   title="Listen pronunciation"
                 >
                   <IconSpeaker className="w-3 h-3 text-teal-600 dark:text-teal-400" />
-                  <span>Listen</span>
+                  <span>{phoneticText(genericPronunciation) || 'Audio'}</span>
                 </button>
               ) : null}
 

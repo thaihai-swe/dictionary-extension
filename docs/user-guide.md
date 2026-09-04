@@ -72,11 +72,11 @@ The **Dictionary** tab delivers a comprehensive, multi-source learning view comb
 Dictionary lookups execute in two synchronized phases:
 
 1. **Phase 1 — Fast Primary Lookup (Sub-second):**
-   - The primary dictionary provider (default: **Wiktionary** or **Free Dictionary API**) returns first. Lookups use the selected text as-is.
+   - The primary dictionary provider (default: **Free Dictionary API**) returns first. Lookups use the selected text as-is.
    - Translation starts in parallel and appears on first paint when it is already ready; otherwise it fills in a moment later.
-   - Distinct **US** and **UK** listen buttons always appear under the headword. Cached IPA and audio (`phn_{word}`) seed first paint when available.
+   - Initial definitions, examples, and phonetic audio appear immediately under a clean headword header.
 2. **Phase 2 — Asynchronous Lazy Enrichment (Non-blocking):**
-   - Remaining keyless providers (**Wiktionary**, **Datamuse**, **Wikipedia**, **Urban Dictionary**, **RhymeBrain**) always run in concurrent batches of 2. If IPA is missing, Free Dictionary and RhymeBrain run first.
+   - Remaining keyless providers (**Wiktionary**, **Datamuse**, **Wikipedia**, **Urban Dictionary**, **RhymeBrain**) always run in concurrent batches of 2.
    - New definitions, additional example sentences, missing synonyms/antonyms, and phonetic transcriptions are merged dynamically.
    - Extra lexical cards (collocations, word family, common learner mistakes) mount on subsequent animation frames so they do not block first paint.
 
@@ -100,9 +100,8 @@ Pronunciation tools are integrated directly into the result header:
 
 ### Audio Playback & Global Voice Control
 1. **Remote Audio:** Prefers high-fidelity MP3 recordings from native dictionary databases (US and UK variants).
-2. **Always-on US / UK buttons:** Both accents stay available. If one recording is missing, that button still plays authentic regional TTS (`en-US` or `en-GB`).
-3. **Google Translate TTS Fallback:** If dictionary MP3s are absent, attempts web-audio pronunciation with matching US or UK language codes.
-4. **Web Speech Synthesis Fallback:** If offline or network audio fails, seamlessly uses your browser's local SpeechSynthesis engine with an accent-matching voice.
+2. **Google Translate TTS Fallback:** If dictionary MP3s are absent, attempts web-audio pronunciation.
+3. **Web Speech Synthesis Fallback:** If offline or network audio fails, seamlessly uses your browser's local SpeechSynthesis engine.
 4. **Global Stop Voice Button:** The top header bar features a global audio stop button (`⏹️ Stop Voice` / `🔇`). When audio or TTS is actively playing, the button glows with a red pulsing indicator—allowing you to instantly cancel any speech playback with a single click. Pressing `Esc` also cancels active voice audio.
 5. **Speed Control:** Customize speech rate in Settings (clamped from `0.5x` to `1.5x`).
 6. **Voice Selection:** Choose your preferred operating system voice in Settings for speech synthesis fallback.

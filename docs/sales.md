@@ -25,7 +25,7 @@ The UI is the **Calm Learning Studio**: editorial or Atkinson Hyperlegible typog
 ## Key Differentiators
 
 ### 1. Dual-phase dictionary lookup
-Phase 1 returns the primary dictionary result and (when ready) translation in under a second, with always-on US/UK listen buttons. Phase 2 then enriches remaining keyless backends in concurrent batches of 2, prioritizing pronunciation providers when IPA is missing, then merging extra senses, examples, and lexical cards without blocking first paint.
+Phase 1 returns the primary dictionary result and (when ready) translation in under a second. Phase 2 then enriches remaining keyless backends in concurrent batches of 2, merging extra senses, examples, IPA, and lexical cards without blocking first paint.
 
 ### 2. Exact selected text
 Lookups use the highlighted or typed query as-is. Inflected forms (`went`, `running`) are not rewritten to a root lemma. Multi-word queries that no dictionary backend defined can still receive a concise **AI Phrase Fallback** when AI is enabled.
@@ -49,7 +49,7 @@ Default model: **`gemini-3.5-flash-lite`**. Any OpenAI-compatible endpoint (Olla
 Mode 1 measures the selection Range offset inside the containing block so the extracted sentence is the one the user highlighted—even when the word appears multiple times. Mode 2 ranks page candidates by visibility, semantic container, and viewport proximity. Context is capped at 800 characters and is never sent during ordinary dictionary lookups.
 
 ### 5. Pronunciation you can stop
-Always-on US and UK buttons. Dictionary MP3 → Google Translate TTS (`en` / `en-GB`) → Web Speech with matching voices. A red **Stop Voice** button in the header and the `Esc` key cancel playback. **Practice** grades spoken attempts with Levenshtein similarity.
+Dictionary MP3 → Google Translate TTS → Web Speech. A red **Stop Voice** button in the header and the `Esc` key cancel playback. **Practice** grades spoken attempts with Levenshtein similarity.
 
 ### 6. Zero-leak credentials
 API keys live in `chrome.storage.local`. The content script and public sync payload never receive `aiApiKey`. Schema v12 exposes only `hasAiApiKey` as a boolean.
@@ -63,7 +63,7 @@ API keys live in `chrome.storage.local`. The content script and public sync payl
 | Dictionary | Keyless: Free Dictionary, Wiktionary, Datamuse, Wikipedia, Urban Dictionary, RhymeBrain enrichment |
 | Translation | Google Translate (default), LibreTranslate, MyMemory fallback |
 | AI | `gemini-3.5-flash-lite` or custom OpenAI-compatible URL; 7 UI intents + phrase fallback |
-| Audio | Always-on US/UK; MP3 / Google TTS / SpeechSynthesis; Stop Voice; speech practice |
+| Audio | MP3 / Google TTS / SpeechSynthesis; Stop Voice; speech practice |
 | Triggers | Floating icon, direct popup, post-selection modifier, context menu, toolbar, paused hostnames |
 | Appearance | Dark default, system/light/dark, editorial or learner font, 360–1000 × 380–900 resizable card |
 | Privacy | Local secrets, 800-char context cap, opt-out page extraction, sanitized settings export (schema v12) |

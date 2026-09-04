@@ -140,9 +140,9 @@ The AI subsystem operates in two user-selectable providers (`aiProvider`):
 - **State:** Reactive `isAudioPlayingRef` (`signal<boolean>`) and `playingKeyRef` (`signal<string | null>`).
 - **Global Control:** `stopAllAudio()` instantly cancels `window.speechSynthesis` and pauses/destroys any active `HTMLAudioElement`.
 - **Playback Pipeline (`playAudio`):**
-  1. High-quality dictionary MP3 recordings (`audioUrl`) from Free Dictionary API, tagged by US/UK region.
-  2. Free Google Translate audio synthesis fallback (`getFreeTtsUrl`) using explicit `en` (US) or `en-GB` (UK) `tl` codes.
-  3. Browser Web Speech Synthesis (`speakTTS`) with accent-aware voice matching (`en-US` vs `en-GB`).
+  1. High-quality dictionary MP3 recordings (`audioUrl`).
+  2. Free Google Translate audio synthesis fallback (`getFreeTtsUrl`).
+  3. Browser Web Speech Synthesis (`speakTTS`).
 - **Speech Practice Engine (`startSpeechPractice`):**
   - Captures microphone speech with `webkitSpeechRecognition`.
   - Normalizes and compares input using Levenshtein distance metrics.
@@ -155,16 +155,11 @@ The AI subsystem operates in two user-selectable providers (`aiProvider`):
 ## 5. Fallback, Timeouts, and Protocol Routing
 
 ### Dictionary fallback
-Primary lookup uses the configured `dictionaryProvider` (`free_dictionary` by default, or `wiktionary`). Remaining keyless backends run after first paint in concurrent batches of 2:
+Primary lookup uses the configured `dictionaryProvider` (`free_dictionary` by default). Remaining keyless backends run after first paint in concurrent batches of 2:
 
 ```text
 free_dictionary ➔ wiktionary ➔ datamuse ➔ rhymebrain ➔ wikipedia ➔ urban_dictionary
 ```
-
-- **Pronunciation Fast-Path Enrichment:** When the primary dictionary entry lacks phonetic transcriptions, the enrichment queue dynamically prioritizes pronunciation-bearing providers (`free_dictionary`, `rhymebrain`) to front batches ahead of heavy semantic lookups (`datamuse`, `wikipedia`), drastically reducing latency before US/UK audio badges appear.
-- **Dedicated Phonetics L1/L2 Cache:** Normalized phonetics are stored in an independent in-memory and session cache (`phn_{word}`) across target languages and modes, allowing instant headword pronunciation on subsequent lookups.
-- **Wiktionary IPA Extraction:** In addition to definition glosses, Wiktionary lookups parse clean IPA brackets when present in section content for instant first-paint phonetics.
-- **Dual-Accent Audio Triggers:** The headword card guarantees distinct **US** and **UK** pronunciation triggers. When human MP3 recordings are unavailable, regional TTS engines (Google TTS and Web Speech synthesis with explicit `en-US` and `en-GB` voice targets) provide authentic accented playback.
 
 `NotFoundError` and transient network/5xx/429/timeout continue to the next provider. Dictionary HTTP timeout is 60s.
 
