@@ -8,126 +8,60 @@ interface CollocationsCardProps {
   onSelectWord?: (word: string) => void;
 }
 
-const standardChipClass =
-  'h-[24px] px-2 rounded bg-surface hover:bg-elevated text-content text-[11.5px] transition-colors cursor-pointer font-medium border border-border flex items-center justify-center';
+const GROUPS: Array<{ key: keyof Collocations; label: string }> = [
+  { key: 'patterns', label: 'Patterns' },
+  { key: 'verbs', label: 'Verbs' },
+  { key: 'adjectives', label: 'Adjectives' },
+  { key: 'nouns', label: 'Nouns' },
+  { key: 'prepositions', label: 'Prepositions' },
+];
 
 export const CollocationsCard: React.FC<CollocationsCardProps> = ({
+  word,
   collocations,
   onSelectWord,
 }) => {
-  const calculatedCollocations = useMemo<Collocations>(() => {
-    if (
-      collocations &&
-      (collocations.verbs?.length ||
-        collocations.nouns?.length ||
-        collocations.adjectives?.length ||
-        collocations.prepositions?.length ||
-        collocations.patterns?.length)
-    ) {
-      return collocations;
-    }
-    return {};
+  const groups = useMemo(() => {
+    return GROUPS.map((group) => ({
+      ...group,
+      items: (collocations?.[group.key] || []).filter(Boolean),
+    })).filter((group) => group.items.length);
   }, [collocations]);
 
-  const hasAnyData = Boolean(
-    calculatedCollocations.verbs?.length ||
-    calculatedCollocations.nouns?.length ||
-    calculatedCollocations.adjectives?.length ||
-    calculatedCollocations.prepositions?.length ||
-    calculatedCollocations.patterns?.length,
-  );
-
-  if (!hasAnyData) return null;
+  if (!groups.length) return null;
 
   return (
-    <div className="pt-3 border-t border-border space-y-2.5">
+    <section className="pt-3 border-t border-border space-y-2.5 font-sans">
       <div className="flex items-center gap-1.5 text-[11px] font-bold text-content-muted uppercase tracking-wider">
-        <IconLink className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+        <IconLink className="w-3.5 h-3.5 text-teal-600 dark:text-gold-200" />
         <span>Collocations</span>
       </div>
 
-      <div className="space-y-2.5 text-[12px]">
-        {calculatedCollocations.patterns?.length ? (
-          <div className="space-y-1.5 p-2.5 rounded-lg border border-border bg-muted/40">
-            <span className="text-[10.5px] font-bold text-content-muted uppercase tracking-wider">
-              Patterns
+      <div className="space-y-2">
+        {groups.map((group) => (
+          <div key={group.key} className="flex items-baseline gap-x-3 gap-y-1">
+            <span className="w-[92px] shrink-0 text-[11px] font-semibold text-content-muted">
+              {group.label}
             </span>
-            <div className="flex flex-wrap gap-1">
-              {calculatedCollocations.patterns.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => onSelectWord?.(item)}
-                  className="h-[24px] px-2 rounded bg-surface hover:bg-elevated text-content text-[11.5px] font-medium cursor-pointer border border-border"
-                >
-                  {item}
-                </button>
+            <p className="min-w-0 flex-1 text-[13.5px] leading-relaxed text-content">
+              {group.items.map((item, index) => (
+                <React.Fragment key={item}>
+                  {index > 0 ? <span className="text-content-muted/50"> · </span> : null}
+                  <button
+                    type="button"
+                    onClick={() => onSelectWord?.(item)}
+                    title={word ? `Look up “${item}”` : `Look up ${item}`}
+                    className="related-word-link"
+                  >
+                    {item}
+                  </button>
+                </React.Fragment>
               ))}
-            </div>
+            </p>
           </div>
-        ) : null}
-
-        {calculatedCollocations.verbs?.length ? (
-          <div className="space-y-1">
-            <span className="text-content-muted font-semibold text-[10.5px] uppercase tracking-wider block">
-              Verbs
-            </span>
-            <div className="flex flex-wrap gap-1">
-              {calculatedCollocations.verbs.map((item) => (
-                <button key={item} type="button" onClick={() => onSelectWord?.(item)} className={standardChipClass}>
-                  {item}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        {calculatedCollocations.nouns?.length ? (
-          <div className="space-y-1">
-            <span className="text-content-muted font-semibold text-[10.5px] uppercase tracking-wider block">
-              Nouns
-            </span>
-            <div className="flex flex-wrap gap-1">
-              {calculatedCollocations.nouns.map((item) => (
-                <button key={item} type="button" onClick={() => onSelectWord?.(item)} className={standardChipClass}>
-                  {item}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        {calculatedCollocations.adjectives?.length ? (
-          <div className="space-y-1">
-            <span className="text-content-muted font-semibold text-[10.5px] uppercase tracking-wider block">
-              Adjectives
-            </span>
-            <div className="flex flex-wrap gap-1">
-              {calculatedCollocations.adjectives.map((item) => (
-                <button key={item} type="button" onClick={() => onSelectWord?.(item)} className={standardChipClass}>
-                  {item}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        {calculatedCollocations.prepositions?.length ? (
-          <div className="space-y-1">
-            <span className="text-content-muted font-semibold text-[10.5px] uppercase tracking-wider block">
-              Prepositions
-            </span>
-            <div className="flex flex-wrap gap-1">
-              {calculatedCollocations.prepositions.map((item) => (
-                <button key={item} type="button" onClick={() => onSelectWord?.(item)} className={standardChipClass}>
-                  {item}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null}
+        ))}
       </div>
-    </div>
+    </section>
   );
 };
 
