@@ -24,6 +24,7 @@ export async function fetchWiktionary(word: string, _targetLang = 'vi', signal?:
     }
 
     const examples: NonNullable<DictionaryEntry['examples']> = [];
+
     const meanings = enSections.slice(0, MAX_MEANINGS).map((sec: {
       partOfSpeech?: string;
       definitions?: Array<{ definition?: string; parsedExamples?: Array<{ example?: string }> }>;
@@ -31,9 +32,13 @@ export async function fetchWiktionary(word: string, _targetLang = 'vi', signal?:
       partOfSpeech: sec.partOfSpeech || 'general',
       source: 'Wiktionary',
       definitions: (sec.definitions || []).slice(0, MAX_DEFINITIONS).map((d) => {
+        let defExample: string | undefined;
         if (Array.isArray(d.parsedExamples)) {
           for (const exObj of d.parsedExamples) {
             const exText = stripHtml(exObj.example || '');
+            if (exText && !defExample) {
+              defExample = exText;
+            }
             if (exText && examples.length < MAX_EXAMPLES && !examples.some((item) => item.text === exText)) {
               examples.push({ text: exText, source: 'Wiktionary' });
             }
@@ -41,6 +46,7 @@ export async function fetchWiktionary(word: string, _targetLang = 'vi', signal?:
         }
         return {
           definition: stripHtml(d.definition || ''),
+          example: defExample,
           source: 'Wiktionary',
         };
       }).filter((d: { definition: string }) => d.definition.length > 0),

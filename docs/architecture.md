@@ -115,8 +115,8 @@ After the initial result is dispatched to the popup, the background service work
 1. **Late Translation Merge:** If translation was still in flight at first paint, it is merged via `LOOKUP_UPDATE` (`revision: 1`) before phrase fallback or dictionary enrichment.
 2. **AI Phrase Fallback (Multi-word Lookups):** After a ~300ms delay when translation was already included (so a dismissed card can cancel), if the query is phrase-like, lacks usable definitions, and both `enableAI` and `enablePhraseFallback` are on, `lookupAiProvider(text, settings, { intent: "phrase_fallback" })` runs first. Upon completion, the phrase explanation is merged and broadcast via `LOOKUP_UPDATE` before secondary dictionary enrichment.
 3. **Always-enrich:** Secondary keyless providers always run after Phase 1, even when the primary entry already has definitions. There is no thin-entry gate.
-4. **Secondary Provider Filtering:** Remaining keyless providers (Datamuse, Wiktionary, Wikipedia, Urban Dictionary, RhymeBrain) participate in progressive enrichment without requiring API keys.
-5. **Bounded Concurrency:** Remaining unqueried providers are fetched in concurrent batches of 2 (`ENRICHMENT_CONCURRENCY = 2`).
+4. **Secondary Provider Filtering:** Remaining keyless providers (Datamuse, Wiktionary, Wikipedia, Urban Dictionary, RhymeBrain) participate in progressive enrichment without requiring API keys. If the primary result lacks phonetics, `free_dictionary` and `rhymebrain` are floated to the first enrichment batch so UK/US IPA and audio arrive before semantic extras.
+5. **Bounded Concurrency:** Remaining unqueried providers are fetched in concurrent batches of 2 (`ENRICHMENT_CONCURRENCY = 2`). Pronunciations are independently cached (`phn_{word}` in memory + `chrome.storage.session`, 30 min TTL) so later lookups in another target language skip the phonetic round-trip.
 6. **Resilient Failure Handling:** Secondary `NotFoundError` results and operational errors are caught and logged silently without disrupting the displayed primary result.
 7. **Cumulative Merge Engine (`mergeDictionaryEntries`):**
    - **Sections:** Definitions, examples, synonyms, and antonyms are matched by normalized kind/title, deduplicated by normalized text, and clamped by strict limits:
@@ -125,7 +125,7 @@ After the initial result is dispatched to the popup, the background service work
      - `MAX_SYNONYM_SECTIONS = 1`
      - `MAX_ANTONYM_SECTIONS = 1`
      - `MAX_ITEMS_PER_SECTION = 8`
-   - **Pronunciations:** Audio URLs and IPA phonetic transcriptions are backfilled onto matching language/accent slots (`en-US`, `en-GB`). Phonetic entries are sorted first (`preferPhoneticPronunciations`) so the header row always surfaces transcription text when any provider supplies it. Clamped to `MAX_PRONUNCIATIONS = 4`.
+   - **Pronunciations:** Audio URLs and IPA phonetic transcriptions are backfilled onto matching language/accent slots (`en-US`, `en-GB`). The Dictionary tab always renders distinct US and UK listen buttons; missing recordings fall through to regional TTS. Clamped to `MAX_PHONETICS = 4`.
    - **Lexical Profiles:** Normalized word family forms, word formation, warnings, learner mistakes, and collocations are merged across providers via `mergeLexicalProfiles`.
    - **Source Badges:** Every provider that successfully returned data is added to `sourceBadges`, ensuring full attribution even when content duplicates an existing section.
 8. **Incremental Broadcast:** The enriched payload is sent to the originating tab/frame via `LOOKUP_UPDATE`. The UI coalesces revisions onto `requestAnimationFrame` and ignores equal-or-older revisions.

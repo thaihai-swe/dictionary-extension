@@ -9,7 +9,16 @@ import {
   parseLexicalProfile,
   splitPhraseExplanation,
 } from '../shared/query-utils';
-import { cloneDictionaryEntry, mergeDictionaryEntries, mergeMeanings, mergeSourceBadges } from '../shared/enrichment';
+import {
+  cloneDictionaryEntry,
+  hasPhoneticText,
+  mergeDictionaryEntries,
+  mergeMeanings,
+  mergePhonetics,
+  mergeSourceBadges,
+  readSessionPhonetics,
+  writePhoneticsCache,
+} from '../shared/enrichment';
 import { fetchAiAnalysis } from './provider.gemini-ai';
 import { fetchDatamuse } from './provider.datamuse';
 import { fetchFreeDictionary } from './provider.free-dictionary';
@@ -371,6 +380,9 @@ export async function runDictionaryEnrichment(
       ? currentCombined.phraseExplanation
       : baseResult.phraseExplanation;
     currentCombined.enriched = true;
+    if (currentCombined.phonetics?.length) {
+      writePhoneticsCache(queryTerm, currentCombined.phonetics);
+    }
     onEnrichUpdate(currentCombined);
   };
 
@@ -379,7 +391,12 @@ export async function runDictionaryEnrichment(
     return;
   }
 
-  const secondaryProviders = DICTIONARY_FALLBACK_ORDER.filter((id) => id !== primaryProviderId);
+  const remaining = DICTIONARY_FALLBACK_ORDER.filter((id) => id !== primaryProviderId);
+  const pronunciationProviders = remaining.filter((id) => id === 'free_dictionary' || id === 'rhymebrain');
+  const semanticProviders = remaining.filter((id) => id !== 'free_dictionary' && id !== 'rhymebrain');
+  const secondaryProviders = hasPhoneticText(baseResult)
+    ? remaining
+    : [...pronunciationProviders, ...semanticProviders];
   const collected: DictionaryEntry[] = [];
 
   for (let index = 0; index < secondaryProviders.length; index += ENRICHMENT_CONCURRENCY) {
@@ -443,6 +460,7 @@ export async function fetchCombinedDictionaryResult(
     );
 
   const dictionary = await dictionaryPromise;
+  const cachedPhonetics = await readSessionPhonetics(cleanWord);
   const primaryProviderId = dictionary?.providerId || provider;
   const canEnrich = settings.enableDictionary !== false
     && DICTIONARY_FALLBACK_ORDER.some((id) => id !== primaryProviderId);
@@ -470,6 +488,12 @@ export async function fetchCombinedDictionaryResult(
   if (dictionary && settledTranslation) current.translation = settledTranslation;
   if (!current.translation && dictionary?.translation) current.translation = dictionary.translation;
   if (!dictionary && settledTranslation) current.originalText = cleanWord;
+
+  if (cachedPhonetics?.length && (!current.phonetics?.length || !hasPhoneticText(current))) {
+    current.phonetics = mergePhonetics(current.phonetics || current.pronunciations, cachedPhonetics);
+    current.pronunciations = mergePhonetics(current.pronunciations || current.phonetics, cachedPhonetics);
+    current.phonetic = current.phonetic || current.phonetics.find((p) => p.phonetic || p.text)?.phonetic;
+  }
 
   const pendingTranslation = Boolean(translationPromise && !translationState.outcome);
   const needsPhraseFallback = isPhraseLike(cleanWord) && !hasUsableDefinitions(dictionary);

@@ -13,6 +13,106 @@ export const MAX_MEANINGS = 6;
 export const MAX_PHONETICS = 4;
 export const MAX_ITEMS_PER_SECTION = 8;
 
+const PHONETICS_CACHE_TTL_MS = 30 * 60 * 1000;
+const MAX_PHONETICS_CACHE = 50;
+
+interface PhoneticsCacheEntry {
+  phonetics: Phonetic[];
+  timestamp: number;
+}
+
+const phoneticsMemoryCache = new Map<string, PhoneticsCacheEntry>();
+
+function phoneticsStorageKey(word: string): string {
+  return `phn_${word.toLowerCase().replace(/[^a-z0-9_]/gi, '_').slice(0, 80)}`;
+}
+
+export function readPhoneticsCache(word: string): Phonetic[] | undefined {
+  const key = word.trim().toLowerCase();
+  if (!key) return undefined;
+  const entry = phoneticsMemoryCache.get(key);
+  if (!entry) return undefined;
+  if (Date.now() - entry.timestamp > PHONETICS_CACHE_TTL_MS) {
+    phoneticsMemoryCache.delete(key);
+    return undefined;
+  }
+  return sanitizePhonetics(entry.phonetics);
+}
+
+function sanitizePhonetics(phonetics: Phonetic[]): Phonetic[] {
+  return phonetics
+    .map((item) => {
+      const phonetic = cleanPhoneticString(item.phonetic || item.text);
+      return {
+        ...item,
+        phonetic,
+        text: phonetic || undefined,
+      };
+    })
+    .filter((item) => Boolean(item.phonetic || item.audioUrl || item.audio));
+}
+
+export async function readSessionPhonetics(word: string): Promise<Phonetic[] | undefined> {
+  const mem = readPhoneticsCache(word);
+  if (mem) return mem;
+  const key = word.trim().toLowerCase();
+  if (!key) return undefined;
+  try {
+    if (typeof chrome === 'undefined' || !chrome.storage?.session?.get) return undefined;
+    const sKey = phoneticsStorageKey(key);
+    const stored = await Promise.resolve(chrome.storage.session.get(sKey)).catch(() => ({})) as Record<string, PhoneticsCacheEntry | undefined>;
+    const entry = stored?.[sKey];
+    if (!entry || Date.now() - entry.timestamp > PHONETICS_CACHE_TTL_MS) return undefined;
+    const cleaned = sanitizePhonetics(entry.phonetics);
+    phoneticsMemoryCache.set(key, { ...entry, phonetics: cleaned });
+    return cleaned.map((item) => ({ ...item }));
+  } catch {
+    return undefined;
+  }
+}
+
+export function writePhoneticsCache(word: string, phonetics: Phonetic[]): void {
+  const key = word.trim().toLowerCase();
+  const cleaned = sanitizePhonetics(phonetics);
+  if (!key || !cleaned.length) return;
+  const entry: PhoneticsCacheEntry = {
+    phonetics: cleaned,
+    timestamp: Date.now(),
+  };
+  phoneticsMemoryCache.delete(key);
+  phoneticsMemoryCache.set(key, entry);
+  while (phoneticsMemoryCache.size > MAX_PHONETICS_CACHE) {
+    const oldest = phoneticsMemoryCache.keys().next().value;
+    if (!oldest) break;
+    phoneticsMemoryCache.delete(oldest);
+  }
+  try {
+    if (typeof chrome !== 'undefined' && chrome.storage?.session?.set) {
+      const sKey = phoneticsStorageKey(key);
+      void Promise.resolve(chrome.storage.session.set({ [sKey]: entry })).catch(() => undefined);
+    }
+  } catch {
+    // Ignore storage write issues
+  }
+}
+
+export function isValidPhoneticText(value?: string): boolean {
+  const clean = String(value || '').trim();
+  if (!clean || clean.length < 2) return false;
+  const inner = clean.replace(/^[/\[\]]+|[/\[\]]+$/g, '').trim();
+  if (!inner) return false;
+  // Reject wiki links, html tags, URLs, or path-like artifacts
+  if (/wiki|\.org|\.com|http|href|<|>|=/i.test(inner)) return false;
+  if (/^[a-z]+$/i.test(inner) && inner.length <= 6 && /wiki|html|http|href/.test(inner.toLowerCase())) return false;
+  return true;
+}
+
+export function cleanPhoneticString(value?: string): string {
+  const clean = String(value || '').trim();
+  if (!isValidPhoneticText(clean)) return '';
+  return clean;
+}
+
 const POS_ALIASES: Record<string, string> = {
   n: 'noun',
   noun: 'noun',
@@ -175,10 +275,18 @@ export function mergeMeanings(existing: Meaning[], incoming: Meaning[]): Meaning
     for (const incDef of incMeaning.definitions || []) {
       const defText = (incDef.definition || '').trim();
       if (!defText) continue;
-      const exists = target.definitions.some((definition) => (
+      const matchIndex = target.definitions.findIndex((definition) => (
         normalizeComparableText(definition.definition) === normalizeComparableText(defText)
       ));
-      if (!exists && target.definitions.length < MAX_DEFINITIONS_PER_POS) {
+      if (matchIndex >= 0) {
+        const match = target.definitions[matchIndex];
+        const incomingExample = String(incDef.example || '').trim();
+        if (!String(match.example || '').trim() && incomingExample) {
+          target.definitions[matchIndex] = { ...match, example: incomingExample };
+        }
+        continue;
+      }
+      if (target.definitions.length < MAX_DEFINITIONS_PER_POS) {
         target.definitions.push({
           ...incDef,
           definition: defText,
@@ -199,16 +307,27 @@ export function mergeMeanings(existing: Meaning[], incoming: Meaning[]): Meaning
 
 export function mergePhonetics(existing: Phonetic[] = [], incoming: Phonetic[] = []): Phonetic[] {
   const merged = existing.map((item) => ({ ...item }));
+
+  // Find any known phonetic text across both sets to backfill textless audio items
+  const bestPhoneticText = [...existing, ...incoming]
+    .map((item) => cleanPhoneticString(item.phonetic || item.text))
+    .find((text) => text.length > 0) || '';
+
   for (const item of incoming || []) {
-    const phonetic = String(item.phonetic || item.text || '').trim();
+    const phonetic = cleanPhoneticString(item.phonetic || item.text);
     const audioUrl = String(item.audioUrl || item.audio || '').trim();
     const language = String(item.language || '').trim();
+    const region = item.region;
     if (!phonetic && !audioUrl) continue;
 
     const matchIndex = merged.findIndex((entry) => {
+      if (region && entry.region && region === entry.region) return true;
       const entryLanguage = String(entry.language || '').trim();
-      if (language && entryLanguage) return entryLanguage === language;
-      return normalizeText(String(entry.phonetic || entry.text || '')) === normalizeText(phonetic);
+      if (language && entryLanguage) return entryLanguage.toLowerCase() === language.toLowerCase();
+      if (phonetic && (entry.phonetic || entry.text)) {
+        return normalizeText(String(entry.phonetic || entry.text || '')) === normalizeText(phonetic);
+      }
+      return false;
     });
 
     if (matchIndex >= 0) {
@@ -223,6 +342,7 @@ export function mergePhonetics(existing: Phonetic[] = [], incoming: Phonetic[] =
         current.fallbackOnly = false;
       }
       if (language && !current.language) current.language = language;
+      if (region && !current.region) current.region = region;
       continue;
     }
 
@@ -234,8 +354,20 @@ export function mergePhonetics(existing: Phonetic[] = [], incoming: Phonetic[] =
       audioUrl,
       audio: audioUrl || item.audio,
       language,
+      region,
     });
   }
+
+  // Ensure items with audio but missing text inherit any available IPA transcription
+  if (bestPhoneticText) {
+    for (const item of merged) {
+      if (!String(item.phonetic || item.text || '').trim()) {
+        item.phonetic = bestPhoneticText;
+        item.text = bestPhoneticText;
+      }
+    }
+  }
+
   return merged;
 }
 
@@ -309,14 +441,13 @@ export function hasUsableDefinitions(entry?: DictionaryEntry | null): boolean {
   return Boolean(entry?.meanings?.some((meaning) => meaning.definitions?.some((item) => item.definition?.trim())));
 }
 
-function hasPhoneticText(entry?: DictionaryEntry | null): boolean {
+export function hasPhoneticText(entry?: DictionaryEntry | null): boolean {
   const word = String(entry?.word || '').trim().toLowerCase();
   const phonetics = [...(entry?.pronunciations || []), ...(entry?.phonetics || [])];
-  if (String(entry?.phonetic || '').trim() && String(entry?.phonetic || '').trim().toLowerCase() !== word) {
-    return true;
-  }
+  const top = cleanPhoneticString(entry?.phonetic);
+  if (top && top.toLowerCase() !== word) return true;
   return phonetics.some((item) => {
-    const phonetic = String(item?.phonetic || item?.text || '').trim();
+    const phonetic = cleanPhoneticString(item?.phonetic || item?.text);
     return Boolean(phonetic && phonetic.toLowerCase() !== word);
   });
 }

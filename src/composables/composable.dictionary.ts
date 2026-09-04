@@ -270,13 +270,18 @@ export function speakTTS(text: string, accent: 'uk' | 'us' = 'us', key?: string)
     try {
       if (window.speechSynthesis.paused) window.speechSynthesis.resume();
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = accent === 'uk' ? 'en-GB' : 'en-US';
+      const lang = accent === 'uk' ? 'en-GB' : 'en-US';
+      utterance.lang = lang;
       utterance.rate = settings.pronunciationRate || 0.95;
-      if (settings.pronunciationVoiceURI) {
-        const voices = window.speechSynthesis.getVoices();
-        const match = voices.find((v) => v.voiceURI === settings.pronunciationVoiceURI);
-        if (match) utterance.voice = match;
-      }
+      const voices = typeof window.speechSynthesis.getVoices === 'function'
+        ? window.speechSynthesis.getVoices()
+        : [];
+      const preferred = settings.pronunciationVoiceURI
+        ? voices.find((v) => v.voiceURI === settings.pronunciationVoiceURI)
+        : undefined;
+      const preferredMatchesAccent = preferred?.lang?.toLowerCase().startsWith(lang.toLowerCase());
+      const accentVoice = voices.find((v) => v.lang?.toLowerCase().startsWith(lang.toLowerCase()));
+      utterance.voice = (preferredMatchesAccent && preferred) || accentVoice || preferred || null;
       utterance.onstart = () => {
         isAudioPlayingRef.value = true;
         playingKeyRef.value = playKey;

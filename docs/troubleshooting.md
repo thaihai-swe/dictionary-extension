@@ -79,7 +79,11 @@ This guide provides actionable solutions for common issues across extension relo
 - **Fix 2 — Escape Key:** Press `Esc` anywhere in the popup to cancel speech synthesis immediately.
 
 ### Symptom: Audio button plays browser speech instead of real human voice.
-- **Explanation:** Pronunciation uses this keyless chain: `api.dictionaryapi.dev` MP3 first (when the lookup provided one) → Google Translate TTS (`translate.googleapis.com`, no API key) → browser `window.speechSynthesis`. A 502 from the dictionary CDN does not block the later fallbacks.
+- **Explanation:** Pronunciation uses this keyless chain: `api.dictionaryapi.dev` MP3 first (when the lookup provided one) → Google Translate TTS (`translate.googleapis.com`, no API key, `en` vs `en-GB`) → browser `window.speechSynthesis` with an accent-matching voice. A 502 from the dictionary CDN does not block the later fallbacks. US and UK buttons remain available even when only one MP3 exists.
+
+### Symptom: IPA or UK/US chips appear late after definitions.
+- **Cause:** Wiktionary (default primary) often returns definitions without phonetics, so IPA/audio arrive from Free Dictionary or RhymeBrain enrichment.
+- **What to expect:** The first enrichment batch now prioritizes those pronunciation providers, and later lookups reuse the independent `phn_{word}` cache so chips appear immediately.
 - **Speech Voice Selection:** Open Settings → **Preferred speech voice** to choose your favorite installed operating system voice.
 - **Speed Adjustment:** Set **Pronunciation speed** (clamped between `0.5x` and `1.5x`).
 

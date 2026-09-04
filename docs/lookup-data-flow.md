@@ -51,11 +51,11 @@ User selects word in browser (or types in toolbar popup)
            │   FreeDict / Wiktionary / Datamuse / RhymeBrain /           │   gemini-3.5-flash-lite / OpenAI-compatible
            │   Wikipedia / Urban Dictionary                              │
            │                                                             │
-           ├─ Phase A: Primary definitions + phonetics                   ├─ Stores Main AI intent in aiCache
+           ├─ Phase A: Primary definitions + cached phonetics                   ├─ Stores Main AI intent in aiCache
            │   Resolves LOOKUP_TEXT → Dictionary tab paints              │   Ready if the user switches tabs
-           │   (Editorial serif headword + UK/US pronunciation)          │
+           │   (Editorial serif headword + always-on US/UK buttons)          │
            │                                                             │
-           └─ Phase B: Lexical Profile & secondary enrichment            └─ Other 6 intents: NOT REQUESTED
+           └─ Phase B: Pronunciation-first enrichment, then lexical            └─ Other 6 intents: NOT REQUESTED
                LOOKUP_UPDATE messages (revision++)                           No background API calls while on
                Word family, collocations, mistakes, additional senses        the Dictionary tab. Zero token waste.
 ```
@@ -128,9 +128,9 @@ selection
 1. `<WordLookupView />` calls `searchWord(text, provider, lang, context)` via `useLookupSession()`.
 2. **Cache:** in-memory LRU synced to `chrome.storage.local` (200 entries, 48h TTL, `dict_lookup_cache_v2`). Hit paints definitions and phonetics immediately with 0ms network latency.
 3. **Miss:** `LOOKUP_TEXT` message sent to `src/entrypoints/background/service-worker.ts` → `fetchCombinedDictionaryResult()`.
-4. **Phase A (Fast Primary Lookup):** Primary provider (default: Free Dictionary API) and neural translation run in parallel. First paint renders the serif headword, UK/US phonetic chips, audio playback buttons, and core definitions.
-5. **Phase B (Progressive Lazy Enrichment):** Background worker queries secondary keyless providers (`Datamuse`, `Wiktionary`, `Wikipedia`, `Urban Dictionary`, `RhymeBrain`) in concurrent batches of 2 (`ENRICHMENT_CONCURRENCY = 2`). `LOOKUP_UPDATE` messages are pushed with incrementing `revision` numbers. Extra cards (`CollocationsCard`, `WordFamilyCard`, `LearnerMistakesCard`, `WordFormationCard`) mount on subsequent animation frames without layout jump.
-6. **Timeouts:** All dictionary, translation, and proxy fetch calls enforce a uniform **60,000ms (60s)** timeout limit (`DICTIONARY_FETCH_TIMEOUT_MS = 60000`, `TRANSLATION_FETCH_TIMEOUT_MS = 60000`).
+4. **Phase A (Fast Primary Lookup):** Primary provider (default: Wiktionary or Free Dictionary API) and neural translation run in parallel. Cached phonetics (`phn_{word}`) seed US/UK chips on first paint when available. First paint always renders the serif headword, US/UK listen buttons (MP3 or TTS), and core definitions.
+5. **Phase B (Progressive Lazy Enrichment):** Background worker queries remaining keyless providers in concurrent batches of 2 (`ENRICHMENT_CONCURRENCY = 2`). When IPA is missing, `free_dictionary` and `rhymebrain` run first so pronunciation lands before semantic extras. `LOOKUP_UPDATE` messages are pushed with incrementing `revision` numbers. Extra cards (`CollocationsCard`, `WordFamilyCard`, `LearnerMistakesCard`, `WordFormationCard`) mount on subsequent animation frames without layout jump.
+6. **Timeouts:** All dictionary, translation, and proxy fetch calls enforce a uniform **60,000ms (60s)** timeout limit (`DICTIONARY_FETCH_TIMEOUT_MS = 120000`, `TRANSLATION_FETCH_TIMEOUT_MS = 120000`).
 
 > **Inspecting Network Requests:** Because dictionary and translation requests run in the background service worker to bypass webpage CORS boundaries, their HTTP requests appear in the **Background Service Worker's DevTools Network tab** (`chrome://extensions` → "service worker"), not the in-page DevTools.
 

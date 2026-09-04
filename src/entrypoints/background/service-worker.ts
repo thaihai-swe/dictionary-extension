@@ -1,4 +1,11 @@
-import type { AiIntentId, AiResult, AppSettings, DictionaryEntry } from '../../types';
+import { fetchAiAnalysis, validateAiProvider } from '../../providers/provider.gemini-ai';
+import {
+  clearEnrichmentCache,
+  fetchCombinedDictionaryResult,
+  validateDictionaryProvider,
+  validateTranslationProvider,
+} from '../../providers/provider.index';
+import { canonicalAiIntent } from '../../shared/ai-prompts';
 import {
   ABORT_FETCH_PROXY,
   AI_LOOKUP,
@@ -20,15 +27,8 @@ import {
   type ProviderValidationResult,
   type ValidateProviderPayload,
 } from '../../shared/messages';
-import { fetchAiAnalysis, validateAiProvider } from '../../providers/provider.gemini-ai';
-import {
-  clearEnrichmentCache,
-  fetchCombinedDictionaryResult,
-  validateDictionaryProvider,
-  validateTranslationProvider,
-} from '../../providers/provider.index';
 import { loadFullSettings, migrateSettingsSchema, normalizeSettings } from '../../shared/settings';
-import { canonicalAiIntent } from '../../shared/ai-prompts';
+import type { AiIntentId, AiResult, AppSettings, DictionaryEntry } from '../../types';
 
 const CONTENT_SCRIPT_JS = ['content-script.js'];
 const SETTINGS_TTL_MS = 15_000;
@@ -421,7 +421,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const requestId = String(message.requestId || createRequestId('proxy'));
     const controller = new AbortController();
     activeProxyRequests.set(requestId, controller);
-    const timeoutMs = Math.max(1000, Math.min(Number(message.timeoutMs) || 60000, 60000));
+    const timeoutMs = Math.max(1000, Math.min(Number(message.timeoutMs) || 120000, 120000));
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     fetch(message.url, { ...(message.options || {}), signal: controller.signal })
       .then(async (res) => {
