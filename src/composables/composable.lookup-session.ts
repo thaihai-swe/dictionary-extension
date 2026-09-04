@@ -12,7 +12,7 @@ import {
   supportsSpeechPractice,
   getDictionaryStore,
 } from './composable.dictionary';
-import { getAiAssistantStore } from './composable.ai-assistant';
+import { abortAiRuntimeIfLoaded } from './runtime-hooks';
 import { useStorage } from './composable.storage';
 
 const sessionTermRef = signal<string>('');
@@ -21,7 +21,6 @@ const sessionContextRef = signal<string>('');
 export function useLookupSession() {
   const { settings, saveSettings, activeTab, setActiveTab, activeIntent, setActiveIntent } = useStorage();
   const dictStore = getDictionaryStore();
-  const aiStore = getAiAssistantStore();
 
   const term = useSignal(sessionTermRef);
   const context = useSignal(sessionContextRef);
@@ -33,18 +32,17 @@ export function useLookupSession() {
   const isAudioPlaying = useSignal(isAudioPlayingRef);
   const playingKey = useSignal(playingKeyRef);
 
-  const aiResult = useSignal(aiStore.aiResult);
-  const isAiLoading = useSignal(aiStore.isAiLoading);
-  const aiError = useSignal(aiStore.aiError);
-  const intentStatusEpoch = useSignal(aiStore.intentStatusEpoch);
-
   function setSessionTerm(newTerm: string) {
     sessionTermRef.value = newTerm;
   }
 
   function setSessionContext(newContext: string) {
     sessionContextRef.value = newContext;
-    aiStore.activeContext.value = newContext;
+    void import('./composable.ai-assistant')
+      .then(({ getAiAssistantStore }) => {
+        getAiAssistantStore().activeContext.value = newContext;
+      })
+      .catch(() => undefined);
   }
 
   function lookupTerm(
@@ -75,14 +73,15 @@ export function useLookupSession() {
     if (!word) return;
     const ctx = surroundingContext !== undefined ? surroundingContext : sessionContextRef.value;
     setActiveIntent(intentId);
-    void aiStore.runIntent(intentId, word, targetLang, ctx);
+    void import('./composable.ai-assistant')
+      .then(({ getAiAssistantStore }) => getAiAssistantStore().runIntent(intentId, word, targetLang, ctx))
+      .catch(() => undefined);
   }
 
   function abortAllLookups() {
     stopAllAudio();
     abortActiveDictRequest();
-    aiStore.abortActiveAiRequest();
-    aiStore.cancelAiPreload();
+    abortAiRuntimeIfLoaded();
   }
 
   function switchTab(nextTab: TabId) {
@@ -116,18 +115,10 @@ export function useLookupSession() {
     isAudioPlaying,
     playingKey,
     stopAllAudio,
-    aiResult,
-    isAiLoading,
-    aiError,
     activeIntent,
     setActiveIntent,
     activeTab,
     setActiveTab,
-    intentStatusEpoch,
-    getAiIntentStatus: aiStore.getAiIntentStatus,
-    isAiIntentDisabled: aiStore.isAiIntentDisabled,
-    preloadSpecificIntent: aiStore.preloadSpecificIntent,
-    clearAiCache: aiStore.clearAiCache,
     settings,
     saveSettings,
   };

@@ -1,6 +1,7 @@
 import { signal, useSignal } from '../ui/signal';
 import { registerCacheInvalidator, settingsStore, whenSettingsReady } from './composable.storage';
 import { stopAllAudio } from './composable.dictionary';
+import { registerAiRuntimeAbort } from './runtime-hooks';
 import { AiResult, AiIntentId, AppSettings } from '../types';
 import { canonicalAiIntent, PRELOAD_ALL_INTENTS, PRELOAD_FOLLOW_UPS } from '../shared/ai-prompts';
 import { hasConfiguredAiApiKey } from '../shared/settings-export';
@@ -171,6 +172,11 @@ export function cancelAiPreload() {
   preloadToken += 1;
   activePreloadKey = '';
 }
+
+registerAiRuntimeAbort(() => {
+  abortActiveAiRequest();
+  cancelAiPreload();
+});
 
 function makePreloadKey(text: string, context: string, lang: string): string {
   return `${text.toLowerCase()}\0${context.toLowerCase()}\0${lang.toLowerCase()}`;

@@ -44,10 +44,24 @@ const enrichmentMemoryCache = new Map<string, EnrichmentCacheEntry>();
 export function clearEnrichmentCache() {
   enrichmentMemoryCache.clear();
   combinedResultCache.clear();
+  if (hasSessionStorage()) {
+    try {
+      void chrome.storage.session.get(null).then((all) => {
+        const keysToRemove = Object.keys(all || {}).filter((k) => k.startsWith('enrich_') || k.startsWith('comb_'));
+        if (keysToRemove.length) void chrome.storage.session.remove(keysToRemove);
+      }).catch(() => undefined);
+    } catch {
+      // Ignore
+    }
+  }
 }
 
 function combinedResultCacheKey(word: string, settings: AppSettings): string {
   return `${word.toLowerCase().trim()}|${settings.dictionaryProvider || 'free_dictionary'}|${String(settings.translateTargetLanguage || '').toLowerCase()}|${Boolean(settings.enableTranslate)}|${Boolean(settings.enableDictionary)}|${Boolean(settings.enablePhraseFallback)}|${settings.enableLexicalProfile !== false}`;
+}
+
+function combinedSessionStorageKey(key: string): string {
+  return `comb_${key.replace(/[^a-z0-9_]/gi, '_')}`.toLowerCase().slice(0, 100);
 }
 
 function readCombinedResultCache(key: string): DictionaryEntry | undefined {
@@ -62,14 +76,35 @@ function readCombinedResultCache(key: string): DictionaryEntry | undefined {
   return cloneDictionaryEntry(entry.result);
 }
 
+async function readSessionCombinedResult(key: string): Promise<DictionaryEntry | undefined> {
+  const mem = readCombinedResultCache(key);
+  if (mem) return mem;
+  if (!hasSessionStorage()) return undefined;
+  try {
+    const sKey = combinedSessionStorageKey(key);
+    const stored = await Promise.resolve(chrome.storage.session.get(sKey)).catch(() => ({})) as Record<string, CombinedResultCacheEntry | undefined>;
+    const entry = stored?.[sKey];
+    if (!entry || Date.now() - entry.timestamp > COMBINED_RESULT_TTL_MS) return undefined;
+    combinedResultCache.set(key, entry);
+    return cloneDictionaryEntry(entry.result);
+  } catch {
+    return undefined;
+  }
+}
+
 function writeCombinedResultCache(key: string, result: DictionaryEntry) {
   if (!result.enriched) return;
+  const entry: CombinedResultCacheEntry = { result: cloneDictionaryEntry(result), timestamp: Date.now() };
   combinedResultCache.delete(key);
-  combinedResultCache.set(key, { result: cloneDictionaryEntry(result), timestamp: Date.now() });
+  combinedResultCache.set(key, entry);
   while (combinedResultCache.size > MAX_COMBINED_RESULT_CACHE) {
     const oldest = combinedResultCache.keys().next().value;
     if (!oldest) break;
     combinedResultCache.delete(oldest);
+  }
+  if (hasSessionStorage()) {
+    const sKey = combinedSessionStorageKey(key);
+    void Promise.resolve(chrome.storage.session.set({ [sKey]: entry })).catch(() => undefined);
   }
 }
 
@@ -379,7 +414,7 @@ export async function fetchCombinedDictionaryResult(
   const provider = settings.dictionaryProvider || 'free_dictionary';
   const targetLang = settings.translateTargetLanguage || 'Vietnamese';
   const combinedKey = combinedResultCacheKey(cleanWord, settings);
-  const cachedCombined = readCombinedResultCache(combinedKey);
+  const cachedCombined = await readSessionCombinedResult(combinedKey);
   if (cachedCombined?.enriched) {
     emitUpdate(onEnrichUpdate, cachedCombined, cachedCombined.revision || 0);
     return cachedCombined;

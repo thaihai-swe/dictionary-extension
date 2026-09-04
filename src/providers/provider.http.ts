@@ -148,10 +148,18 @@ async function safeFetchOnce(url: string, options?: SafeFetchOptions): Promise<R
 
   const inflight = inflightHttpMap.get(cacheKey);
   if (inflight) {
-    const shared = await inflight;
-    const warmed = httpCacheMap.get(cacheKey);
-    if (warmed && Date.now() - warmed.timestamp < HTTP_CACHE_TTL_MS) return cachedResponse(warmed);
-    return shared.clone();
+    try {
+      const shared = await inflight;
+      if (userSignal?.aborted) {
+        throw new DOMException('The user aborted a request.', 'AbortError');
+      }
+      const warmed = httpCacheMap.get(cacheKey);
+      if (warmed && Date.now() - warmed.timestamp < HTTP_CACHE_TTL_MS) return cachedResponse(warmed);
+      return shared.clone();
+    } catch (error) {
+      if (userSignal?.aborted || !isRequestCancelled(error)) throw error;
+      // Previous inflight was cancelled by a different lookup; fall through and retry.
+    }
   }
 
   const timeoutController = new AbortController();
@@ -267,10 +275,17 @@ export async function safeFetch(url: string, options?: SafeFetchOptions): Promis
   const cacheKey = getHttpCacheKey(url, options);
   const existing = inflightHttpMap.get(cacheKey);
   if (existing) {
-    const shared = await existing;
-    const warmed = httpCacheMap.get(cacheKey);
-    if (warmed && Date.now() - warmed.timestamp < HTTP_CACHE_TTL_MS) return cachedResponse(warmed);
-    return shared.clone();
+    try {
+      const shared = await existing;
+      if (options?.signal?.aborted) {
+        throw new DOMException('The user aborted a request.', 'AbortError');
+      }
+      const warmed = httpCacheMap.get(cacheKey);
+      if (warmed && Date.now() - warmed.timestamp < HTTP_CACHE_TTL_MS) return cachedResponse(warmed);
+      return shared.clone();
+    } catch (error) {
+      if (options?.signal?.aborted || !isRequestCancelled(error)) throw error;
+    }
   }
 
   const request = (async () => {
@@ -299,6 +314,6 @@ export async function safeFetch(url: string, options?: SafeFetchOptions): Promis
   try {
     return await request;
   } finally {
-    inflightHttpMap.delete(cacheKey);
+    if (inflightHttpMap.get(cacheKey) === request) inflightHttpMap.delete(cacheKey);
   }
 }

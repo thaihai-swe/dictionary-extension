@@ -22,6 +22,7 @@ import {
 } from '../../shared/messages';
 import { fetchAiAnalysis, validateAiProvider } from '../../providers/provider.gemini-ai';
 import {
+  clearEnrichmentCache,
   fetchCombinedDictionaryResult,
   validateDictionaryProvider,
   validateTranslationProvider,
@@ -182,12 +183,17 @@ async function handleDictionaryLookup(payload: LookupTextPayload, sender: chrome
             result: enriched,
             sender,
           });
+          if (enriched.enriched) {
+            unregisterController(tabId, scope, requestId);
+          }
         },
         controller.signal,
       );
       return { ...result, requestId };
-    } finally {
+    } catch (error) {
       unregisterController(tabId, scope, requestId);
+      throw error;
+    } finally {
       inflightDictionaryLookups.delete(requestKey);
     }
   })();
@@ -357,6 +363,22 @@ chrome.runtime.onStartup?.addListener(() => {
 chrome.storage?.onChanged?.addListener((changes, area) => {
   if (area !== 'sync' && area !== 'local') return;
   invalidateSettingsCache();
+  const cacheKeys = [
+    'dictionaryProvider',
+    'enableDictionary',
+    'enableTranslate',
+    'enablePhraseFallback',
+    'enableLexicalProfile',
+    'translateTargetLanguage',
+    'translateProvider',
+    'libreTranslateBaseUrl',
+    'libreTranslateApiKey',
+    'aiApiKey',
+    'hasAiApiKey',
+    'aiModel',
+    'aiBaseUrl',
+  ];
+  if (cacheKeys.some((key) => key in changes)) clearEnrichmentCache();
   if (area === 'sync' && toolbarWindowId && (changes.popupWidth || changes.popupHeight)) {
     void applyToolbarWindowSize(toolbarWindowId);
   }
