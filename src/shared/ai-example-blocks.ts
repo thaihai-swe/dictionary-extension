@@ -1,5 +1,11 @@
 export type ExampleRenderItem =
   | { kind: 'example'; english: string; translation?: string }
+  | {
+      kind: 'pattern_rule';
+      title?: string;
+      description: string;
+      example?: { english: string; translation?: string };
+    }
   | { kind: 'quote'; text: string }
   | { kind: 'bullet'; text: string }
   | { kind: 'paragraph'; text: string };
@@ -42,6 +48,222 @@ export function isExampleSectionTitle(title?: string): boolean {
   if (!title) return false;
   const t = title.toLowerCase();
   return t.includes('example') || t.includes('minimal pair');
+}
+
+export function isPatternRulesSectionTitle(title?: string): boolean {
+  if (!title) return false;
+  const t = title.toLowerCase();
+  return (
+    t.includes('pattern rule') ||
+    t.includes('pattern rules') ||
+    (t.includes('pattern') && t.includes('rule')) ||
+    t.includes('grammar & pattern')
+  );
+}
+
+export function parsePatternRuleLine(line: string): { title?: string; description: string } {
+  let clean = String(line || '').trim();
+  // Strip leading list markers: "1. ", "1) ", "- ", "• ", "* "
+  clean = clean.replace(/^([•*-]|\d+[\.)])\s*/, '').trim();
+
+  // Pattern A: **Title**: Description or **Title** — Description or **Title** - Description
+  const boldMatch = clean.match(/^\*\*(.+?)\*\*[:\s—–-]*(.*)$/);
+  if (boldMatch) {
+    const title = boldMatch[1].trim();
+    const description = boldMatch[2].trim();
+    return {
+      title: title || undefined,
+      description: description || clean,
+    };
+  }
+
+  // Pattern B: Title: Description (where title is not excessively long, e.g. < 60 chars)
+  const colonIdx = clean.indexOf(':');
+  if (colonIdx > 1 && colonIdx < 60) {
+    const candidateTitle = clean.slice(0, colonIdx).trim().replace(/^\*\*/, '').replace(/\*\*$/, '').trim();
+    const candidateDesc = clean.slice(colonIdx + 1).trim();
+    if (candidateDesc.length > 0) {
+      return {
+        title: candidateTitle,
+        description: candidateDesc,
+      };
+    }
+  }
+
+  // Pattern C: Title — Description
+  const dashMatch = clean.match(/^([A-Za-z0-9\s+/()_-]{3,50})\s+[—–]\s+(.+)$/);
+  if (dashMatch) {
+    return {
+      title: dashMatch[1].trim(),
+      description: dashMatch[2].trim(),
+    };
+  }
+
+  return {
+    description: clean,
+  };
+}
+
+export function groupPatternRules(
+  lines: string[],
+  options: { targetLang?: string } = {},
+): ExampleRenderItem[] {
+  const items: ExampleRenderItem[] = [];
+  const targetLang = options.targetLang;
+
+  let index = 0;
+  while (index < lines.length) {
+    const raw = lines[index];
+    const trimmed = String(raw || '').trim();
+    if (!trimmed) {
+      index += 1;
+      continue;
+    }
+
+    // If it's a quote line without a preceding rule, render as quote or example
+    if (isQuoteLine(trimmed)) {
+      const quoteItems = groupMarkdownLines([raw], { exampleSection: true, targetLang });
+      items.push(...quoteItems);
+      index += 1;
+      continue;
+    }
+
+    // Otherwise, it's a rule definition
+    const { title, description } = parsePatternRuleLine(trimmed);
+    let ruleExample: { english: string; translation?: string } | undefined;
+
+    // Check if subsequent lines have inline example blockquotes ('> ...')
+    const quoteLines: string[] = [];
+    let nextIdx = index + 1;
+    while (nextIdx < lines.length) {
+      const nextRaw = lines[nextIdx];
+      const nextTrimmed = String(nextRaw || '').trim();
+      if (!nextTrimmed) {
+        nextIdx += 1;
+        continue;
+      }
+      if (isQuoteLine(nextTrimmed)) {
+        quoteLines.push(nextTrimmed);
+        nextIdx += 1;
+      } else {
+        break;
+      }
+    }
+
+    if (quoteLines.length > 0) {
+      const exItems = groupMarkdownLines(quoteLines, { exampleSection: true, targetLang });
+      const firstEx = exItems.find((it) => it.kind === 'example');
+      if (firstEx && firstEx.kind === 'example') {
+        ruleExample = {
+          english: firstEx.english,
+          translation: firstEx.translation,
+        };
+      }
+      index = nextIdx;
+    } else {
+      index += 1;
+    }
+
+    items.push({
+      kind: 'pattern_rule',
+      title,
+      description,
+      example: ruleExample,
+    });
+  }
+
+  return items;
+}
+
+export interface MarkdownSectionBlock {
+  title?: string;
+  exampleSection: boolean;
+  patternRulesSection: boolean;
+  items: ExampleRenderItem[];
+}
+
+export function attachExamplesToPatternRules(blocks: MarkdownSectionBlock[]): MarkdownSectionBlock[] {
+  const pool: Array<{ english: string; translation?: string }> = [];
+  for (const block of blocks) {
+    if (!block.exampleSection) continue;
+    for (const item of block.items) {
+      if (item.kind === 'example') {
+        pool.push({ english: item.english, translation: item.translation });
+      }
+    }
+  }
+
+  let consumeCount = 0;
+  const withRules = blocks.map((block) => {
+    if (!block.patternRulesSection) return block;
+    const items = block.items.map((item) => {
+      if (item.kind !== 'pattern_rule' || item.example || consumeCount >= pool.length) return item;
+      const example = pool[consumeCount];
+      consumeCount += 1;
+      return { ...item, example };
+    });
+    return { ...block, items };
+  });
+
+  if (consumeCount === 0) return withRules;
+
+  let skipped = 0;
+  const result: MarkdownSectionBlock[] = [];
+  for (const block of withRules) {
+    if (!block.exampleSection) {
+      result.push(block);
+      continue;
+    }
+    const items: ExampleRenderItem[] = [];
+    for (const item of block.items) {
+      if (item.kind === 'example' && skipped < consumeCount) {
+        skipped += 1;
+        continue;
+      }
+      items.push(item);
+    }
+    if (items.length) result.push({ ...block, items });
+  }
+  return result;
+}
+
+export function parseMarkdownSections(content: string, targetLang?: string): MarkdownSectionBlock[] {
+  if (!content) return [];
+  const rawLines = content.trim().split('\n');
+  const blocks: Array<{ title?: string; lines: string[] }> = [];
+  let currentTitle = '';
+  let currentLines: string[] = [];
+
+  for (const line of rawLines) {
+    const trimmedLine = line.trim();
+    if (trimmedLine.startsWith('### ') || trimmedLine.startsWith('## ')) {
+      if (currentLines.length > 0 || currentTitle) {
+        blocks.push({ title: currentTitle, lines: currentLines });
+      }
+      currentTitle = trimmedLine.replace(/^#+\s*/, '');
+      currentLines = [];
+    } else {
+      currentLines.push(line);
+    }
+  }
+  if (currentLines.length > 0 || currentTitle) {
+    blocks.push({ title: currentTitle, lines: currentLines });
+  }
+
+  const initial = blocks.map((block) => {
+    const exampleSection = isExampleSectionTitle(block.title);
+    const patternRulesSection = isPatternRulesSectionTitle(block.title);
+    return {
+      title: block.title,
+      exampleSection,
+      patternRulesSection,
+      items: patternRulesSection
+        ? groupPatternRules(block.lines, { targetLang })
+        : groupMarkdownLines(block.lines, { exampleSection, targetLang }),
+    };
+  });
+
+  return attachExamplesToPatternRules(initial);
 }
 
 export function unwrapExampleText(text: string): string {

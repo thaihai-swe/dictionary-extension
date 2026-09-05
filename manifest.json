@@ -50,6 +50,7 @@
     "https://libretranslate.com/*",
     "https://api.datamuse.com/*",
     "https://en.wikipedia.org/*",
+    "https://api.urbandictionary.com/*",
     "https://rhymebrain.com/*",
     "https://tatoeba.org/*",
     "https://api.mymemory.translated.net/*"

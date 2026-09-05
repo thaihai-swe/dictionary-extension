@@ -182,10 +182,9 @@ Include these sections:
 Identify the part of speech, grammatical slot / syntactic role in the sentence (e.g. subject complement, transitive verb head, modifier), and dependency relations. If formality or register changes the slot, mention it in one clause here. Do not add a separate heading for formality.
 
 ### Pattern Rules
-List 1-2 governing syntactic rules or clause patterns for this structure.
+List 1-2 governing syntactic rules or clause patterns for this structure. For each rule, give the pattern formula or definition, then immediately 1 example that illustrates that specific rule. Do not add a separate Short Examples heading. Use this shape for every rule:
 
-### Short Examples
-Provide 2 short example sentences illustrating this pattern. For each example use exactly this shape:
+- **Pattern formula**: one-sentence definition of the rule
 ${BILINGUAL_EXAMPLE_SHAPE}`;
 
 export const DEFAULT_AI_COMPARE_PROMPT_TEMPLATE = `Compare and contrast the confusable terms or query "{{str}}" for a language learner.

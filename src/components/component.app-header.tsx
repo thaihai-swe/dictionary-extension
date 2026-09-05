@@ -69,6 +69,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <option value="free_dictionary" className="bg-surface text-content">FreeDict</option>
         <option value="datamuse" className="bg-surface text-content">Datamuse</option>
         <option value="wikipedia" className="bg-surface text-content">Wikipedia</option>
+        <option value="urban_dictionary" className="bg-surface text-content">UrbanDict</option>
         <option value="wiktionary_etymology" className="bg-surface text-content">Etymology</option>
         <option value="wiktionary_bilingual" className="bg-surface text-content">Bilingual</option>
         <option value="tatoeba" className="bg-surface text-content">Tatoeba</option>

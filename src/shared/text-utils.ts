@@ -16,6 +16,7 @@ export const DICTIONARY_FALLBACK_ORDER = [
   'datamuse',
   'rhymebrain',
   'wikipedia',
+  'urban_dictionary',
   'wiktionary_etymology',
   'wiktionary_bilingual',
   'tatoeba',

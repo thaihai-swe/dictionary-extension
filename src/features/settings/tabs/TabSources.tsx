@@ -18,6 +18,7 @@ const DICTIONARY_TESTS = [
   ['free_dictionary', 'Free Dictionary'],
   ['datamuse', 'Datamuse'],
   ['wikipedia', 'Wikipedia'],
+  ['urban_dictionary', 'Urban Dictionary'],
   ['rhymebrain', 'RhymeBrain'],
   ['wiktionary_etymology', 'Etymology'],
   ['wiktionary_bilingual', 'Bilingual'],
@@ -174,6 +175,7 @@ export const TabSources: React.FC<TabSourcesProps> = ({
           <option value="free_dictionary" className="bg-surface text-content">Free Dictionary API</option>
           <option value="datamuse" className="bg-surface text-content">Datamuse</option>
           <option value="wikipedia" className="bg-surface text-content">Wikipedia Summary</option>
+          <option value="urban_dictionary" className="bg-surface text-content">Urban Dictionary</option>
           <option value="wiktionary_etymology" className="bg-surface text-content">Wiktionary Etymology</option>
           <option value="wiktionary_bilingual" className="bg-surface text-content">Wiktionary Bilingual</option>
           <option value="tatoeba" className="bg-surface text-content">Tatoeba Sentences</option>

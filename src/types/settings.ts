@@ -15,6 +15,7 @@ export type DictionaryProviderId =
   | 'datamuse'
   | 'wikipedia'
   | 'rhymebrain'
+  | 'urban_dictionary'
   | 'tatoeba';
 
 export interface AppSettings {

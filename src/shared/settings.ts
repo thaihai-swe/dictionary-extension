@@ -46,6 +46,7 @@ const DICTIONARY_PROVIDERS = new Set<string>([
   'datamuse',
   'wikipedia',
   'rhymebrain',
+  'urban_dictionary',
   'tatoeba',
 ]);
 

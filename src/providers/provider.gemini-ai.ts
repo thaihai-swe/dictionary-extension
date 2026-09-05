@@ -265,7 +265,7 @@ function buildOfflineFallback(intentId: AiIntentId, term: string, trimmed: strin
     return {
       type: intentId,
       query: term,
-      summary: `### Syntactic Breakdown\n• Selected text: "${term}"\n• Structure: ${isLong ? 'clause / complex sentence' : 'phrase'}\n• Translation: ${translation}\n\n> "${trimmed}"`,
+      summary: `### Syntactic Breakdown\n• Selected text: "${term}"\n• Structure: ${isLong ? 'clause / complex sentence' : 'phrase'}\n• Translation: ${translation}\n\n### Pattern Rules\n- **Headword in context**: treat "${term}" as occupying its current syntactic slot.\n> "${trimmed}"\n> ${translation}`,
       translation,
     };
   }
