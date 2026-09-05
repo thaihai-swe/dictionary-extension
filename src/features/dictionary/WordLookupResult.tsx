@@ -18,7 +18,7 @@ import {
   WordFormationCard,
 } from '@/components/async-views';
 import { cx } from '@/ui/cx';
-import { IconCheck, IconCopy, IconMic, IconQuote, IconSparkles, IconSpeaker } from '@/components/icons';
+import { IconCheck, IconChevronDown, IconCopy, IconMic, IconQuote, IconSparkles, IconSpeaker } from '@/components/icons';
 import RelatedWords from '@/components/component.related-words';
 import { showToast } from '@/composables/composable.toast';
 
@@ -206,7 +206,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1 min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
-              <h2 className="text-2xl sm:text-[28px] font-semibold text-content font-heading tracking-tight leading-tight dark:text-[#f8f4ea] min-w-0">
+              <h2 className="text-2xl sm:text-[28px] font-semibold text-content font-heading tracking-tight leading-tight min-w-0">
                 {displayHeadword}
               </h2>
               <div className="flex items-center gap-1.5 shrink-0 mt-1">
@@ -238,14 +238,14 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                   className={cx(
                     'h-[18px] px-1.5 rounded text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1 whitespace-nowrap',
                     isEnriching
-                      ? 'bg-teal-500/10 text-teal-700 dark:text-gold-200 border border-teal-500/25'
+                      ? 'bg-accent-subtle text-accent border border-accent/25'
                       : 'invisible border border-transparent',
                   )}
                   aria-live="polite"
                   aria-atomic="true"
                   aria-hidden={!isEnriching}
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-teal-600 dark:bg-gold-300 animate-pulse" aria-hidden="true" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" aria-hidden="true" />
                   Enriching
                 </span>
               </div>
@@ -272,7 +272,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                     className={cx(
                       'h-[26px] pl-1.5 pr-2.5 rounded-md border text-[11.5px] font-medium transition-all flex items-center gap-1.5 cursor-pointer font-mono shadow-2xs',
                       playingKey === listenKey
-                        ? 'bg-teal-500/20 text-teal-700 dark:bg-gold-300/15 dark:text-gold-200 border-teal-500/40 dark:border-gold-300/40 audio-playing-indicator'
+                        ? 'bg-accent-subtle text-accent border-accent/40 audio-playing-indicator'
                         : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
                     )}
                     aria-pressed={playingKey === listenKey}
@@ -281,7 +281,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                     <span className="text-[9.5px] font-bold uppercase px-1 py-0.2 rounded bg-muted text-content-muted font-sans border border-border/60">
                       {phoneticLabel(item)}
                     </span>
-                    <IconSpeaker className="w-3 h-3 text-teal-600 dark:text-gold-300" />
+                    <IconSpeaker className="w-3 h-3 text-accent" />
                     <span>{ipa ? `/${ipa.replace(/^\/+|\/+$/g, '')}/` : 'Audio'}</span>
                   </button>
                 );
@@ -310,9 +310,9 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
       </div>
 
       {result.translation?.translatedText ? (
-        <section className="p-3 rounded-lg border border-teal-500/25 dark:border-gold-300/25 bg-teal-500/5 dark:bg-gold-300/5 flex items-baseline justify-between gap-3 shadow-2xs">
+        <section className="p-3 rounded-lg border border-accent/25 bg-accent-subtle flex items-baseline justify-between gap-3 shadow-2xs">
           <div className="space-y-0.5 min-w-0 flex-1">
-            <span className="text-[10px] font-bold text-teal-800 dark:text-gold-300 uppercase tracking-wider font-mono">
+            <span className="text-[11px] font-bold text-accent uppercase tracking-wider font-mono">
               Translation
             </span>
             <p className="text-[14.5px] text-content font-medium leading-relaxed">
@@ -333,7 +333,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
             practiceResult.grade === 'excellent'
               ? 'border-emerald-500/30 bg-emerald-500/8 text-emerald-700 dark:text-emerald-300'
               : practiceResult.grade === 'good'
-                ? 'border-teal-500/30 bg-teal-500/8 text-teal-700 dark:border-gold-300/30 dark:bg-gold-300/10 dark:text-gold-200'
+                ? 'border-accent/30 bg-accent-subtle text-accent'
                 : practiceResult.grade === 'almost'
                   ? 'border-amber-500/30 bg-amber-500/8 text-amber-700 dark:text-amber-300'
                   : 'border-rose-500/30 bg-rose-500/8 text-rose-700 dark:text-rose-300',
@@ -374,7 +374,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
       {filteredExamples.length ? (
         <section className="p-3.5 rounded-lg border border-border bg-surface space-y-2.5 shadow-card">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-content-muted uppercase tracking-wider">
-            <IconQuote className="w-3.5 h-3.5 text-teal-600 dark:text-gold-200" />
+            <IconQuote className="w-3.5 h-3.5 text-accent" />
             <span>Examples</span>
           </div>
           <ul className="space-y-2">
@@ -399,7 +399,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                     className={cx(
                       'h-6 px-2 rounded-full border text-[10.5px] font-semibold flex items-center gap-1 cursor-pointer transition-colors flex-shrink-0',
                       isPlaying
-                        ? 'bg-teal-500/20 text-teal-700 dark:bg-gold-300/15 dark:text-gold-100 border-teal-500/40 dark:border-gold-300/40 audio-playing-indicator'
+                        ? 'bg-accent-subtle text-accent border-accent/40 audio-playing-indicator'
                         : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
                     )}
                     aria-pressed={isPlaying}
@@ -419,7 +419,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
       {filteredSynonyms.length || filteredAntonyms.length ? (
         <section className="p-3.5 rounded-lg border border-border bg-surface space-y-2 shadow-card">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-content-muted uppercase tracking-wider">
-            <IconSparkles className="w-3.5 h-3.5 text-teal-600 dark:text-gold-200" />
+            <IconSparkles className="w-3.5 h-3.5 text-accent" />
             <span>Related</span>
           </div>
           {filteredSynonyms.length ? (
@@ -444,7 +444,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
       {/* 6. Phrase Fallback Explanation */}
       {result.phraseExplanation?.length ? (
         <section className="p-3.5 rounded-lg border border-border bg-surface space-y-2 shadow-card">
-          <p className="text-[10px] font-bold uppercase tracking-wider font-mono text-teal-700 dark:text-gold-300">
+          <p className="text-[11px] font-bold uppercase tracking-wider font-mono text-accent">
             Phrase Explanation
           </p>
           {result.phraseExplanation.map((section, index) => (
@@ -467,34 +467,47 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
         </section>
       ) : null}
 
-      {/* 7. Structured Lexical Profile Cards */}
-      <Suspense fallback={null}>
-        <WordFamilyCard
-          word={displayHeadword}
-          family={result.lexicalProfile?.wordFamily}
-          onSelectWord={handleSearch}
-        />
-
-        <CollocationsCard
-          word={displayHeadword}
-          collocations={result.lexicalProfile?.collocations}
-          onSelectWord={handleSearch}
-        />
-
-        <UsageNotesCard
-          notes={result.lexicalProfile?.usageNotes}
-          warnings={usageWarnings}
-          pairs={result.lexicalProfile?.confusablePairs}
-        />
-
-        <WordFormationCard
-          formation={formationText}
-          prefixes={formationPrefixes}
-          suffixes={formationSuffixes}
-        />
-
-        <LearnerMistakesCard mistakes={result.lexicalProfile?.learnerMistakes} />
-      </Suspense>
+      {result.lexicalProfile?.wordFamily
+      || result.lexicalProfile?.collocations
+      || result.lexicalProfile?.usageNotes
+      || usageWarnings.length
+      || result.lexicalProfile?.confusablePairs
+      || formationText
+      || formationPrefixes.length
+      || formationSuffixes.length
+      || result.lexicalProfile?.learnerMistakes ? (
+        <details className="lexical-accordion rounded-lg border border-border bg-surface shadow-card">
+          <summary className="px-3.5 py-2.5 text-[11px] font-bold text-content-muted uppercase tracking-wider flex items-center justify-between gap-2">
+            <span>More lexical detail</span>
+            <IconChevronDown className="w-3.5 h-3.5" />
+          </summary>
+          <div className="px-3.5 pb-3.5 space-y-3 border-t border-border pt-3">
+            <Suspense fallback={null}>
+              <WordFamilyCard
+                word={displayHeadword}
+                family={result.lexicalProfile?.wordFamily}
+                onSelectWord={handleSearch}
+              />
+              <CollocationsCard
+                word={displayHeadword}
+                collocations={result.lexicalProfile?.collocations}
+                onSelectWord={handleSearch}
+              />
+              <UsageNotesCard
+                notes={result.lexicalProfile?.usageNotes}
+                warnings={usageWarnings}
+                pairs={result.lexicalProfile?.confusablePairs}
+              />
+              <WordFormationCard
+                formation={formationText}
+                prefixes={formationPrefixes}
+                suffixes={formationSuffixes}
+              />
+              <LearnerMistakesCard mistakes={result.lexicalProfile?.learnerMistakes} />
+            </Suspense>
+          </div>
+        </details>
+      ) : null}
     </div>
   );
 };

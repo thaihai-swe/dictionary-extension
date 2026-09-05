@@ -37,8 +37,8 @@ export const TokenizedContext: React.FC<TokenizedContextProps> = ({ text, query,
             className={cx(
               'inline-block cursor-pointer rounded px-0.5 transition-colors',
               token.isQuery
-                ? 'bg-teal-500/25 text-teal-600 dark:bg-gold-300/20 dark:text-gold-200 font-bold border-b-2 border-teal-500 dark:border-gold-300'
-                : 'hover:bg-teal-500/20 hover:text-teal-600 dark:hover:bg-gold-300/15 dark:hover:text-gold-200 text-content',
+                ? 'bg-accent-subtle text-accent font-bold border-b-2 border-accent'
+                : 'hover:bg-accent-subtle hover:text-accent text-content',
             )}
             title={`Click to lookup '${token.text}'`}
           >

@@ -3,7 +3,7 @@ import { useAiAssistant, AI_INTENTS, AiIntentStatus } from '@/composables/compos
 import { searchWord, stopAllAudio, useDictionaryQuery } from '@/composables/composable.dictionary';
 import { useStorage } from '@/composables/composable.storage';
 import { AiIntentId, TabId } from '@/types';
-import { IconClose, IconSearch } from '@/components/icons';
+import { IconCheck, IconClose, IconCopy, IconSearch } from '@/components/icons';
 import TokenizedContext from '@/components/component.tokenized-context';
 import PresetChips from '@/components/component.preset-chips';
 import type { DemoPreset } from '@/shared/presets';
@@ -190,9 +190,9 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
         className={cx(
           'w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors',
           isActive
-            ? 'bg-teal-700 dark:bg-gold-300'
+            ? 'bg-accent'
             : status === 'ready'
-              ? 'bg-teal-600 dark:bg-gold-400'
+              ? 'bg-accent'
               : status === 'loading'
                 ? 'bg-amber-500 animate-pulse'
                 : 'bg-content-muted/40',
@@ -204,7 +204,6 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
 
   return (
     <div className="p-4 space-y-3 font-sans">
-      {/* Search Input */}
       <div className="relative flex items-center">
         <span className="absolute left-3 text-content-muted pointer-events-none">
           <IconSearch className="w-3.5 h-3.5" />
@@ -216,8 +215,9 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
             if (e.key === 'Enter') handleIntentSelect(activeIntent);
           }}
           type="text"
-          placeholder="Analyze word or complete sentence…"
-          className="w-full h-[38px] bg-surface border border-border rounded-lg pl-9 pr-24 text-[13px] text-content placeholder:text-content-muted outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/15 dark:focus:border-gold-300 dark:focus:ring-gold-300/20 transition-all font-sans"
+          placeholder="Analyze a word or sentence…"
+          aria-label="Analyze a word or sentence"
+          className="w-full h-10 bg-muted/50 hover:bg-muted/70 focus:bg-surface border border-border rounded-xl pl-9 pr-24 text-[13px] text-content placeholder:text-content-muted outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all font-sans"
         />
 
         {queryInput ? (
@@ -228,6 +228,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
               stopAllAudio();
             }}
             title="Clear search text"
+            aria-label="Clear search text"
             className="absolute right-[4.75rem] text-content-muted hover:text-content p-1 cursor-pointer flex items-center justify-center"
           >
             <IconClose className="w-3.5 h-3.5" />
@@ -238,56 +239,60 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
           type="button"
           onClick={() => handleIntentSelect(activeIntent)}
           disabled={!queryInput || isAiLoading}
-          className="absolute right-1.5 h-7 px-3 rounded-md bg-teal-700 hover:bg-teal-600 dark:bg-gold-400 dark:hover:bg-gold-300 dark:text-neutral-950 active:scale-95 text-white text-[12px] font-semibold transition-all disabled:opacity-50 cursor-pointer"
+          className="absolute right-1.5 h-7 px-3 rounded-md bg-accent hover:opacity-90 text-white dark:text-neutral-950 active:scale-95 text-[12px] font-semibold transition-all disabled:opacity-50 cursor-pointer"
         >
           <span>{isAiLoading ? 'Analyzing…' : 'Analyze'}</span>
         </button>
       </div>
 
-      {/* Context Strip */}
       {!isEditingContext && !contextInput.trim() ? (
         <div className="flex items-center justify-end px-0.5">
           <button
             type="button"
             onClick={() => setIsEditingContext(true)}
-            className="text-[11.5px] text-teal-700 dark:text-gold-300 hover:underline font-medium cursor-pointer"
+            className="text-[11px] text-accent hover:underline font-medium cursor-pointer"
           >
-            + Add context sentence
+            + Add context
           </button>
         </div>
+      ) : !isEditingContext ? (
+        <button
+          type="button"
+          onClick={() => setIsEditingContext(true)}
+          className="max-w-full inline-flex items-center gap-1.5 min-h-[28px] px-2.5 rounded-full border border-accent/25 bg-accent-subtle text-accent text-[11px] font-medium cursor-pointer whitespace-nowrap"
+          title="Edit context sentence"
+        >
+          <span className="truncate max-w-[22rem]">{contextInput.trim()}</span>
+        </button>
       ) : (
         <div className="rounded-lg border border-border bg-surface p-2.5 space-y-1.5">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[10.5px] font-bold uppercase tracking-wider text-content-muted">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-content-muted">
               Context Sentence
             </span>
             <button
               type="button"
-              onClick={() => setIsEditingContext(!isEditingContext)}
+              onClick={() => setIsEditingContext(false)}
               className="text-[11px] font-medium text-content-secondary hover:text-content cursor-pointer"
             >
-              {isEditingContext || !contextInput.trim() ? 'Done' : 'Edit'}
+              Done
             </button>
           </div>
-
-          {isEditingContext || !contextInput.trim() ? (
-            <textarea
-              value={contextInput}
-              onChange={(e) => setContextInput(e.target.value)}
-              onBlur={() => setIsEditingContext(!contextInput.trim())}
-              rows={2}
-              placeholder="Paste the sentence that contains this word..."
-              className="w-full bg-muted/50 border border-border rounded-md px-2.5 py-1.5 text-[12.5px] text-content placeholder:text-content-muted outline-none focus:border-teal-500 dark:focus:border-gold-300 resize-y min-h-[44px]"
-            />
-          ) : (
+          <textarea
+            value={contextInput}
+            onChange={(e) => setContextInput(e.target.value)}
+            rows={2}
+            placeholder="Paste the sentence that contains this word..."
+            className="w-full bg-muted/50 border border-border rounded-md px-2.5 py-1.5 text-[12.5px] text-content placeholder:text-content-muted outline-none focus:border-accent resize-y min-h-[44px]"
+          />
+          {contextInput.trim() ? (
             <TokenizedContext
               text={contextInput}
               query={queryInput}
               onSelectToken={handleTokenSelect}
             />
-          )}
-
-          {contextError ? <p className="text-[11.5px] text-rose-600 dark:text-rose-400">{contextError}</p> : null}
+          ) : null}
+          {contextError ? <p className="text-[11px] text-rose-600 dark:text-rose-400">{contextError}</p> : null}
         </div>
       )}
 
@@ -304,10 +309,11 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
                 void preloadSpecificIntent(item.id, resolvedQuery, contextInput, targetLang);
               }
             }}
+            aria-pressed={item.isActive}
             className={cx(
-              'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border text-[11.5px] font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed',
+              'inline-flex items-center gap-1.5 min-h-[28px] px-2.5 rounded-full border text-[11px] font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap',
               item.isActive
-                ? 'bg-teal-500/15 border-teal-500/40 text-teal-800 dark:text-gold-200 dark:bg-gold-300/15 dark:border-gold-300/40 font-semibold'
+                ? 'chip-active font-semibold'
                 : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
             )}
           >
@@ -347,9 +353,10 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
                 type="button"
                 onClick={() => copyResult(aiResult.summary)}
                 title="Copy response"
-                className="h-6 px-2 rounded bg-surface hover:bg-elevated text-content-secondary hover:text-content border border-border text-[11px] font-medium transition-colors cursor-pointer"
+                className="h-7 px-2 rounded bg-surface hover:bg-elevated text-content-secondary hover:text-content border border-border text-[11px] font-medium transition-colors cursor-pointer inline-flex items-center gap-1"
               >
-                {copied ? '✓ Copied' : 'Copy'}
+                {copied ? <IconCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> : <IconCopy className="w-3 h-3" />}
+                <span>{copied ? 'Copied' : 'Copy'}</span>
               </button>
             </div>
 

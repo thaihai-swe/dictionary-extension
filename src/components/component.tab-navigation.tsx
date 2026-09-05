@@ -36,13 +36,13 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
         aria-selected={currentActive === 'dictionary'}
         onClick={() => selectTab('dictionary')}
         className={cx(
-          'relative h-[30px] px-3 rounded-md flex items-center gap-1.5 text-[12.5px] font-semibold transition-all duration-150 outline-none cursor-pointer',
+          'relative min-h-[30px] px-3 rounded-md flex items-center gap-1.5 text-[12.5px] font-semibold transition-all duration-150 outline-none cursor-pointer focus-ring',
           currentActive === 'dictionary'
-            ? 'bg-teal-500/12 text-teal-800 dark:bg-gold-300/12 dark:text-gold-200 border border-teal-500/25 dark:border-gold-300/30 shadow-2xs'
+            ? 'chip-active shadow-2xs'
             : 'text-content-secondary hover:text-content hover:bg-muted border border-transparent',
         )}
       >
-        <IconBook className="w-3.5 h-3.5 text-teal-600 dark:text-gold-300" />
+        <IconBook className="w-3.5 h-3.5" />
         <span>Dictionary</span>
         <span className="hidden sm:inline-block text-[9.5px] font-mono px-1 py-0.2 rounded bg-surface/80 border border-border/70 text-content-muted">
           Alt+1
@@ -56,13 +56,13 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
           aria-selected={currentActive === 'ai_assistant'}
           onClick={() => selectTab('ai_assistant')}
           className={cx(
-            'relative h-[30px] px-3 rounded-md flex items-center gap-1.5 text-[12.5px] font-semibold transition-all duration-150 outline-none cursor-pointer',
+            'relative min-h-[30px] px-3 rounded-md flex items-center gap-1.5 text-[12.5px] font-semibold transition-all duration-150 outline-none cursor-pointer focus-ring',
             currentActive === 'ai_assistant'
-              ? 'bg-teal-500/12 text-teal-800 dark:bg-gold-300/12 dark:text-gold-200 border border-teal-500/25 dark:border-gold-300/30 shadow-2xs'
+              ? 'chip-active shadow-2xs'
               : 'text-content-secondary hover:text-content hover:bg-muted border border-transparent',
           )}
         >
-          <IconSparkles className="w-3.5 h-3.5 text-teal-600 dark:text-gold-300" />
+          <IconSparkles className="w-3.5 h-3.5" />
           <span>AI Assistant</span>
           <span className="hidden sm:inline-block text-[9.5px] font-mono px-1 py-0.2 rounded bg-surface/80 border border-border/70 text-content-muted">
             Alt+2

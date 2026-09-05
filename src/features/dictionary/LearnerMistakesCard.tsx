@@ -36,12 +36,12 @@ export const LearnerMistakesCard: React.FC<LearnerMistakesCardProps> = ({ mistak
         className={cx(
           'h-[24px] px-2 rounded border text-[11px] font-medium transition-colors flex items-center gap-1 ml-auto cursor-pointer not-italic',
           isPlaying
-            ? 'bg-teal-500/20 text-teal-700 dark:bg-gold-300/15 dark:text-gold-200 border-teal-500/40 dark:border-gold-300/40 audio-playing-indicator'
+            ? 'bg-accent-subtle text-accent border-accent/40 audio-playing-indicator'
             : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
         )}
         aria-pressed={isPlaying}
       >
-        <IconSpeaker className="w-3 h-3 text-teal-600 dark:text-gold-300" />
+        <IconSpeaker className="w-3 h-3 text-accent" />
         <span>Listen</span>
       </button>
     );

@@ -17,7 +17,7 @@ export const PresetChips: React.FC<PresetChipsProps> = ({ onSelect }) => {
             key={preset.query}
             type="button"
             onClick={() => onSelect(preset)}
-            className="inline-flex items-center gap-1.5 min-h-8 px-2.5 rounded-full border border-border bg-muted/40 hover:bg-teal-500/10 hover:border-teal-500/40 dark:hover:bg-gold-300/10 dark:hover:border-gold-300/40 text-content-secondary hover:text-content transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 min-h-8 px-2.5 rounded-full border border-border bg-muted/40 hover:bg-accent-subtle hover:border-accent/40 text-content-secondary hover:text-content transition-colors cursor-pointer"
           >
             <span className="px-1.5 py-px rounded text-[9.5px] font-bold uppercase tracking-wider text-content-muted border border-border bg-surface">
               {preset.tag}

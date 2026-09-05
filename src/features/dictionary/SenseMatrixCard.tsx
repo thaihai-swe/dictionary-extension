@@ -61,7 +61,7 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSe
             className={cx(
               'h-6 px-2.5 rounded-full text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1',
               selectedPos === 'all'
-                ? 'bg-teal-700 text-white dark:bg-gold-300 dark:text-neutral-950 shadow-2xs'
+                ? 'bg-accent text-white dark:text-neutral-950 shadow-2xs'
                 : 'bg-muted hover:bg-elevated text-content-secondary hover:text-content border border-border',
             )}
           >
@@ -78,7 +78,7 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSe
                 className={cx(
                   'h-6 px-2.5 rounded-full text-[11px] font-semibold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap flex items-center gap-1',
                   isActive
-                    ? 'bg-teal-700 text-white dark:bg-gold-300 dark:text-neutral-950 shadow-2xs'
+                    ? 'bg-accent text-white dark:text-neutral-950 shadow-2xs'
                     : 'bg-muted hover:bg-elevated text-content-secondary hover:text-content border border-border',
                 )}
               >
@@ -113,7 +113,7 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSe
               return (
                 <li key={dIdx} className="space-y-1.5">
                   <div className="flex items-start gap-2">
-                    <span className="font-semibold text-teal-700 dark:text-gold-300 text-[13px] mt-0.5 flex-shrink-0 font-mono select-none">
+                    <span className="font-semibold text-accent text-[13px] mt-0.5 flex-shrink-0 font-mono select-none">
                       {dIdx + 1}.
                     </span>
                     <span className="text-[14.5px] text-content leading-relaxed">
@@ -122,7 +122,7 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSe
                   </div>
 
                   {def.example ? (
-                    <div className="ml-5 pl-3 py-1.5 pr-2 border-l-2 border-teal-500/50 dark:border-l-gold-300/40 bg-muted/40 rounded-r-md text-content-secondary text-[13.5px] leading-relaxed flex items-center justify-between gap-2">
+                    <div className="ml-5 pl-3 py-1.5 pr-2 border-l-2 border-accent/50 bg-muted/40 rounded-r-md text-content-secondary text-[13.5px] leading-relaxed flex items-center justify-between gap-2">
                       <span>"{def.example}"</span>
                       <button
                         type="button"
@@ -137,12 +137,12 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSe
                         className={cx(
                           'h-[24px] px-2 rounded border text-[11px] flex-shrink-0 flex items-center gap-1 cursor-pointer',
                           isPlaying
-                            ? 'bg-teal-500/20 text-teal-700 dark:bg-gold-300/15 dark:text-gold-200 border-teal-500/40 dark:border-gold-300/40 audio-playing-indicator'
+                            ? 'bg-accent-subtle text-accent border-accent/40 audio-playing-indicator'
                             : 'bg-surface text-content-secondary hover:text-content border-border',
                         )}
                         aria-pressed={isPlaying}
                       >
-                        <IconSpeaker className="w-3 h-3 text-teal-600 dark:text-gold-300" />
+                        <IconSpeaker className="w-3 h-3 text-accent" />
                         <span>Listen</span>
                       </button>
                     </div>

@@ -35,7 +35,7 @@ export const UsageNotesCard: React.FC<UsageNotesCardProps> = ({ notes, warnings,
             <span className="text-amber-600 dark:text-amber-400 mt-0.5">•</span>
             <span>
               <strong>
-                Confused with <em className="text-teal-700 dark:text-gold-300 not-italic font-semibold">{pair.word}</em>:
+                Confused with <em className="text-accent not-italic font-semibold">{pair.word}</em>:
               </strong>{' '}
               {pair.distinction}
             </span>

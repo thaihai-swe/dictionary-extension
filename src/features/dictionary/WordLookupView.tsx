@@ -94,7 +94,7 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
             type="text"
             placeholder="Look up a word, phrase, or sentence…"
             aria-label="Look up a word, phrase, or sentence"
-            className="w-full h-[38px] bg-muted/40 hover:bg-muted/60 focus:bg-surface border border-border focus:border-teal-600 dark:focus:border-gold-300 rounded-lg pl-9 pr-8 text-[13.5px] text-content placeholder:text-content-muted outline-none focus-visible:ring-2 focus-visible:ring-teal-500/20 dark:focus-visible:ring-gold-300/20 transition-all font-sans"
+            className="w-full h-[38px] bg-muted/40 hover:bg-muted/60 focus:bg-surface border border-border focus:border-accent rounded-lg pl-9 pr-8 text-[13.5px] text-content placeholder:text-content-muted outline-none focus-visible:ring-2 focus-visible:ring-accent/20 transition-all font-sans"
           />
 
           {searchInput ? (
@@ -107,7 +107,7 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
               <IconClose className="w-3.5 h-3.5" />
             </button>
           ) : (
-            <span className="hidden sm:inline-flex absolute right-2.5 px-1.5 py-0.5 rounded text-[10px] font-mono text-content-muted/70 border border-border/60 bg-surface/80 select-none pointer-events-none">
+            <span className="hidden sm:inline-flex absolute right-2.5 px-1.5 py-0.5 rounded text-[11px] font-mono text-content-muted/70 border border-border/60 bg-surface/80 select-none pointer-events-none">
               ↵ Enter
             </span>
           )}
@@ -117,7 +117,7 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
           type="button"
           onClick={() => handleSearch()}
           disabled={!searchInput || isLoading}
-          className="h-[38px] px-4 rounded-lg bg-teal-700 hover:bg-teal-600 dark:bg-gold-300 dark:hover:bg-gold-200 dark:text-neutral-950 active:scale-95 text-white text-[13px] font-bold transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer shadow-xs flex items-center gap-1.5"
+          className="h-[38px] px-4 rounded-lg bg-accent hover:opacity-90 text-white dark:text-neutral-950 active:scale-95 text-[13px] font-bold transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer shadow-xs flex items-center gap-1.5"
         >
           {isLoading ? (
             <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />

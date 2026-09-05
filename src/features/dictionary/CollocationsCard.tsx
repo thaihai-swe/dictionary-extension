@@ -31,9 +31,9 @@ export const CollocationsCard: React.FC<CollocationsCardProps> = ({
   if (!groups.length) return null;
 
   return (
-    <section className="p-3.5 rounded-lg border border-border bg-surface dark:bg-gold-300/5 space-y-2.5 font-sans shadow-card">
+    <section className="p-3.5 rounded-lg border border-border bg-surface dark:bg-accent-subtle/50 space-y-2.5 font-sans shadow-card">
       <div className="flex items-center gap-1.5 text-[11px] font-bold text-content-muted uppercase tracking-wider">
-        <IconLink className="w-3.5 h-3.5 text-teal-600 dark:text-gold-200" />
+        <IconLink className="w-3.5 h-3.5 text-accent" />
         <span>Collocations</span>
       </div>
 
@@ -50,7 +50,7 @@ export const CollocationsCard: React.FC<CollocationsCardProps> = ({
                   type="button"
                   onClick={() => onSelectWord?.(item)}
                   title={word ? `Look up “${item}”` : `Look up ${item}`}
-                  className="h-[22px] px-2 rounded-full bg-teal-500/10 hover:bg-teal-500/18 border border-teal-500/25 text-teal-800 dark:text-gold-100 dark:bg-gold-300/10 dark:border-gold-300/25 dark:hover:bg-gold-300/18 text-[11.5px] font-semibold whitespace-nowrap cursor-pointer transition-colors"
+                  className="h-[22px] px-2 rounded-full bg-accent-subtle hover:bg-accent/20 border border-accent/25 text-accent text-[11.5px] font-semibold whitespace-nowrap cursor-pointer transition-colors"
                 >
                   {item}
                 </button>

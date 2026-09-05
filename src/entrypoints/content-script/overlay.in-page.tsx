@@ -232,7 +232,7 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
       aria-label="Dictionary lookup"
       tabIndex={-1}
       className={cx(
-        'bg-paper/95 dark:bg-paper/90 backdrop-blur-xl border border-border/80 rounded-xl shadow-card-elevated overflow-hidden flex flex-col select-none text-content text-sm relative inpage-popup-card w-full h-full transition-colors dark:border-gold-300/25 outline-none',
+        'bg-paper/95 dark:bg-paper/90 backdrop-blur-xl border border-border/80 rounded-xl shadow-card-elevated overflow-hidden flex flex-col select-none text-content text-sm relative inpage-popup-card w-full h-full transition-colors outline-none',
         isDarkMode ? 'dark' : 'light-theme light',
         settings.fontFamily === 'editorial' ? 'font-serif' : 'font-sans',
         isMaximized ? 'max-w-5xl max-h-[90vh]' : '',
@@ -291,12 +291,15 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
       {/* Bottom-Right Resize Handle */}
       {!isMaximized ? (
         <div
+          role="separator"
+          aria-label="Resize overlay window"
+          tabIndex={0}
           onMouseDown={(e) => {
             e.stopPropagation();
             e.preventDefault();
             onStartResize?.(e.nativeEvent);
           }}
-          className="absolute right-1 bottom-1 w-4 h-4 cursor-nwse-resize text-content-muted hover:text-teal-600 dark:hover:text-gold-300 select-none flex items-center justify-center opacity-50 hover:opacity-100 transition-colors z-30"
+          className="absolute right-1 bottom-1 w-4 h-4 cursor-nwse-resize text-content-muted hover:text-accent select-none flex items-center justify-center opacity-50 hover:opacity-100 transition-colors z-30 focus-ring"
           title="Drag to resize popup window"
         >
           <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">

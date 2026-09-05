@@ -9,7 +9,7 @@ interface WordFamilyCardProps {
 }
 
 const chipClass =
-  'h-[24px] px-2 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-800 dark:text-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/60 text-[11.5px] font-medium transition-colors cursor-pointer border border-indigo-200 dark:border-indigo-800/50 inline-flex items-center justify-center';
+  'h-[24px] px-2 rounded-full bg-muted hover:bg-elevated text-content text-[11.5px] font-medium transition-colors cursor-pointer border border-border inline-flex items-center justify-center';
 
 export const WordFamilyCard: React.FC<WordFamilyCardProps> = ({ family, onSelectWord }) => {
   const calculatedFamily = useMemo<WordFamily>(() => {
@@ -55,7 +55,7 @@ export const WordFamilyCard: React.FC<WordFamilyCardProps> = ({ family, onSelect
   return (
     <section className="p-3.5 rounded-lg border border-border bg-surface space-y-2 font-sans shadow-card">
       <div className="flex items-center gap-1.5 text-[11px] font-bold text-content-muted uppercase tracking-wider">
-        <IconTree className="w-3.5 h-3.5 text-teal-600 dark:text-gold-300" />
+        <IconTree className="w-3.5 h-3.5 text-accent" />
         <span>Word Family</span>
       </div>
 
