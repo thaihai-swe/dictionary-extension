@@ -11,7 +11,7 @@ import { requestProviderValidation } from '@/shared/runtime-client';
 import { DEFAULT_AI_PROMPTS } from '@/shared/ai-prompts';
 import { KNOWN_LANGUAGE_MAPPINGS } from '@/shared/languages';
 import { AppSettings } from '@/types';
-import { syncDocumentTheme, useAppTheme } from '@/ui/theme';
+import { useAppTheme } from '@/ui/theme';
 import { cx } from '@/ui/cx';
 import {
   IconBook,
@@ -22,6 +22,7 @@ import {
   IconSun,
 } from '@/components/icons';
 
+const TabGeneral = lazy(() => import('./tabs/TabGeneral'));
 const TabAppearance = lazy(() => import('./tabs/TabAppearance'));
 const TabSources = lazy(() => import('./tabs/TabSources'));
 const TabAi = lazy(() => import('./tabs/TabAi'));
@@ -38,23 +39,49 @@ const promptEditors: Array<{ key: keyof AppSettings; label: string }> = [
   { key: 'aiRephrasePromptTemplate', label: 'Rephrase prompt' },
 ];
 
-const presetModels = [
-  'gemini-3.5-flash-lite',
+const presetModels = ['gemini-3.5-flash-lite'];
+
+const TABS: Array<{ id: SettingsTab; label: string; icon: React.FC<{ className?: string }> }> = [
+  { id: 'general', label: 'Triggers & Shortcuts', icon: IconSearch },
+  { id: 'appearance', label: 'Appearance', icon: IconSun },
+  { id: 'sources', label: 'Dictionaries & Translation', icon: IconBook },
+  { id: 'ai', label: 'AI Intelligence', icon: IconSparkles },
 ];
 
+function getInitialTab(): SettingsTab {
+  if (typeof window !== 'undefined') {
+    const hash = window.location.hash.replace('#', '') as SettingsTab;
+    if (['general', 'appearance', 'sources', 'ai'].includes(hash)) return hash;
+    const saved = sessionStorage.getItem('dict_settings_active_tab') as SettingsTab;
+    if (['general', 'appearance', 'sources', 'ai'].includes(saved)) return saved;
+  }
+  return 'general';
+}
+
 export const SettingsModal: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<SettingsTab>('general');
+  const [activeTab, setActiveTab] = useState<SettingsTab>(getInitialTab);
   const { settings, saveSettings } = useStorage();
 
   const [localSettings, setLocalSettings] = useState<AppSettings>({ ...settings });
   const [formHydrated, setFormHydrated] = useState(false);
   const [isSavedNotice, setIsSavedNotice] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [pausedSitesInput, setPausedSitesInput] = useState<string>('');
   const [isManualModelInput, setIsManualModelInput] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<Record<string, string>>({});
   const [connectionBusy, setConnectionBusy] = useState<Record<string, boolean>>({});
   const canEditApiKey = canAccessSecretSettings();
+
+  function switchTab(tab: SettingsTab) {
+    setActiveTab(tab);
+    if (typeof window !== 'undefined') {
+      window.location.hash = tab;
+      try {
+        sessionStorage.setItem('dict_settings_active_tab', tab);
+      } catch {}
+    }
+  }
 
   const languageOptions = useMemo(() => {
     const custom = String(localSettings.customLanguages || '')
@@ -139,6 +166,8 @@ export const SettingsModal: React.FC = () => {
   }
 
   async function handleSave() {
+    if (isSaving) return;
+    setIsSaving(true);
     const pausedList = pausedSitesInput
       .split('\n')
       .map((line) => line.trim().toLowerCase())
@@ -155,12 +184,28 @@ export const SettingsModal: React.FC = () => {
       }
     }
 
-    await saveSettings(toSave);
-    setIsSavedNotice(true);
-    setTimeout(() => {
-      setIsSavedNotice(false);
-    }, 2000);
+    try {
+      await saveSettings(toSave);
+      setIsSavedNotice(true);
+      setTimeout(() => {
+        setIsSavedNotice(false);
+      }, 2000);
+    } finally {
+      setIsSaving(false);
+    }
   }
+
+  // Keyboard shortcut: Cmd/Ctrl + S to save
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        void handleSave();
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [localSettings, pausedSitesInput, isSaving, canEditApiKey]);
 
   function resetForm() {
     applyStoreToLocal();
@@ -262,297 +307,199 @@ export const SettingsModal: React.FC = () => {
   return (
     <div
       className={cx(
-        'min-h-screen bg-paper text-content p-4 sm:p-6 flex items-start justify-center font-sans transition-colors',
+        'min-h-screen bg-paper text-content font-sans transition-colors',
         isDarkMode ? 'dark' : 'light-theme light',
       )}
       data-theme={isDarkMode ? 'dark' : 'light'}
     >
-      <div className="w-full max-w-5xl bg-surface border border-border rounded-2xl p-6 sm:p-8 shadow-card-elevated space-y-6 text-sm flex flex-col my-4">
-        {/* Settings Header */}
-        <div className="flex items-center justify-between border-b border-border/60 pb-4 flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-accent-subtle border border-accent/30 flex items-center justify-center text-accent shadow-xs">
-              <IconSettings className="w-5 h-5 text-accent" />
+      {/* Top App Bar */}
+      <header className="sticky top-0 z-30 bg-surface/85 backdrop-blur-md border-b border-border">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-accent-subtle border border-accent/30 flex items-center justify-center text-accent shadow-2xs shrink-0">
+              <IconSettings className="w-5 h-5" />
             </div>
-            <div>
-              <h2 className="font-bold text-lg sm:text-xl text-content font-heading">
-                Dictionary Preferences
-              </h2>
-              <p className="text-xs text-content-muted">Configure lookup behaviors, sources, AI, and appearance.</p>
+            <div className="min-w-0">
+              <h1 className="font-bold text-base sm:text-lg text-content font-heading truncate">
+                Preferences
+              </h1>
+              <p className="text-[11.5px] text-content-muted truncate hidden sm:block">
+                Configure triggers, dictionaries, AI provider, and appearance
+              </p>
             </div>
           </div>
-        </div>
 
-        {/* 4-Tab Navigation Bar */}
-        <div className="flex items-center gap-1.5 bg-muted p-1 rounded-xl border border-border flex-shrink-0">
-          {(
-            [
-              ['general', 'General', IconSettings],
-              ['appearance', 'Appearance', IconSun],
-              ['sources', 'Dictionaries & Sources', IconBook],
-              ['ai', 'AI Assistant', IconSparkles],
-            ] as const
-          ).map(([id, label, IconComponent]) => (
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={isSaving}
+            className="h-8 px-4 rounded-lg bg-accent hover:opacity-90 text-white dark:text-neutral-950 text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50 shrink-0"
+          >
+            {isSavedNotice ? (
+              <>
+                <IconCheck className="w-3.5 h-3.5" />
+                <span>Saved</span>
+              </>
+            ) : (
+              <span>Save</span>
+            )}
+          </button>
+        </div>
+      </header>
+
+      {/* Main Container */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-24">
+        {/* Mobile Horizontal Tab Scroller (< md) */}
+        <div className="md:hidden flex items-center gap-1.5 overflow-x-auto pb-3 mb-4">
+          {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               type="button"
-              onClick={() => setActiveTab(id)}
+              onClick={() => switchTab(id)}
               className={cx(
-                'flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs',
+                'px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-2xs',
                 activeTab === id
                   ? 'chip-active font-extrabold'
-                  : 'text-content-muted hover:text-content hover:bg-elevated border border-transparent',
+                  : 'bg-surface border border-border text-content-secondary hover:text-content',
               )}
             >
-              <IconComponent className="w-4 h-4" />
+              <Icon className="w-3.5 h-3.5" />
               <span>{label}</span>
             </button>
           ))}
         </div>
 
-        {/* Tab Content */}
-        <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-          {activeTab === 'general' ? (
-            <div className="space-y-4">
-              {/* Trigger Mode */}
-              <div className="space-y-2">
-                <label className="font-bold text-content-secondary block text-xs uppercase tracking-wider">
-                  Text Selection Trigger Mode
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <label
+        {/* 2-Column Layout on Desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-[240px_minmax(0,1fr)] gap-8 items-start">
+          {/* Desktop Left Rail (Sticky) */}
+          <aside className="hidden md:block sticky top-24 space-y-4">
+            <nav className="space-y-1 bg-surface border border-border rounded-xl p-2 shadow-xs">
+              {TABS.map(({ id, label, icon: Icon }) => {
+                const isActive = activeTab === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => switchTab(id)}
                     className={cx(
-                      'p-3 rounded-xl border cursor-pointer transition-all flex items-center gap-3 shadow-xs',
-                      localSettings.selectionTriggerMode === 'icon'
-                        ? 'bg-accent-subtle border-accent/50 text-accent font-bold'
-                        : 'bg-muted border-border text-content-secondary hover:border-accent/40',
+                      'w-full px-3 py-2 rounded-lg text-left text-xs font-semibold transition-all cursor-pointer flex items-center gap-2.5',
+                      isActive
+                        ? 'chip-active font-bold shadow-2xs'
+                        : 'text-content-secondary hover:text-content hover:bg-muted/60',
                     )}
                   >
-                    <input
-                      type="radio"
-                      name="selectionTriggerMode"
-                      value="icon"
-                      checked={localSettings.selectionTriggerMode === 'icon'}
-                      onChange={() => patchLocalSettings({ selectionTriggerMode: 'icon' })}
-                      className="hidden"
-                    />
-                    <IconSearch className="w-4 h-4 text-accent" />
-                    <div>
-                      <div className="font-semibold text-xs">Floating Action Icon</div>
-                      <div className="text-[11px] text-content-muted font-normal">Show small icon near highlighted text</div>
-                    </div>
-                  </label>
+                    <Icon className={cx('w-4 h-4 shrink-0', isActive ? 'text-accent' : 'text-content-muted')} />
+                    <span>{label}</span>
+                  </button>
+                );
+              })}
+            </nav>
 
-                  <label
-                    className={cx(
-                      'p-3 rounded-xl border cursor-pointer transition-all flex items-center gap-3 shadow-xs',
-                      localSettings.selectionTriggerMode === 'direct'
-                        ? 'bg-accent-subtle border-accent/50 text-accent font-bold'
-                        : 'bg-muted border-border text-content-secondary hover:border-accent/40',
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      name="selectionTriggerMode"
-                      value="direct"
-                      checked={localSettings.selectionTriggerMode === 'direct'}
-                      onChange={() => patchLocalSettings({ selectionTriggerMode: 'direct' })}
-                      className="hidden"
-                    />
-                    <IconSparkles className="w-4 h-4 text-accent" />
-                    <div>
-                      <div className="font-semibold text-xs">Auto-open Popup</div>
-                      <div className="text-[11px] text-content-muted font-normal">Directly open floating dictionary window</div>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              {/* Shortcut modifier */}
-              <div className="space-y-2 pt-3 border-t border-border/60">
-                <label className="font-bold text-content-secondary block text-xs uppercase tracking-wider">
-                  Quick Post-Selection Shortcut
-                </label>
-                <select
-                  value={localSettings.postSelectionModifier || 'shift'}
-                  onChange={(e) =>
-                    patchLocalSettings({
-                      postSelectionModifier: e.target.value as AppSettings['postSelectionModifier'],
-                    })
-                  }
-                  className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-accent cursor-pointer shadow-xs"
+            {/* Backup & Tools Card */}
+            <div className="bg-surface border border-border rounded-xl p-3.5 space-y-2.5 shadow-xs">
+              <span className="text-[10.5px] font-bold text-content-muted uppercase tracking-wider block font-mono">
+                Data &amp; Backup
+              </span>
+              <div className="space-y-1.5">
+                <button
+                  type="button"
+                  onClick={exportSettings}
+                  title="Download settings JSON backup"
+                  className="w-full text-left px-2.5 py-1.5 rounded-md hover:bg-muted text-xs text-content-secondary hover:text-content font-medium transition-colors cursor-pointer flex items-center justify-between"
                 >
-                  <option value="shift">Hold Shift + Press Q (Shift+Q)</option>
-                  <option value="alt">Hold Alt + Press Q (Alt+Q)</option>
-                  <option value="ctrl">Hold Ctrl + Press Q (Ctrl+Q)</option>
-                </select>
-              </div>
-
-              {/* Default tab */}
-              <div className="space-y-2 pt-3 border-t border-border/60">
-                <label className="font-bold text-content-secondary block text-xs uppercase tracking-wider">
-                  Default Start Tab
-                </label>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <label
-                    className={cx(
-                      'p-2.5 rounded-xl border cursor-pointer transition-all text-center font-bold flex items-center justify-center gap-2 shadow-xs',
-                      localSettings.defaultTab === 'dictionary'
-                        ? 'bg-accent-subtle border-accent/50 text-accent font-bold'
-                        : 'bg-muted border-border text-content-secondary hover:border-accent/40',
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      name="defaultTab"
-                      value="dictionary"
-                      checked={localSettings.defaultTab === 'dictionary'}
-                      onChange={() => patchLocalSettings({ defaultTab: 'dictionary' })}
-                      className="hidden"
-                    />
-                    <IconBook className="w-4 h-4 text-accent" />
-                    <span>Dictionary</span>
-                  </label>
-
-                  <label
-                    className={cx(
-                      'p-2.5 rounded-xl border cursor-pointer transition-all text-center font-bold flex items-center justify-center gap-2 shadow-xs',
-                      localSettings.defaultTab === 'ai_assistant'
-                        ? 'bg-accent-subtle border-accent/50 text-accent font-bold'
-                        : 'bg-muted border-border text-content-secondary hover:border-accent/40',
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      name="defaultTab"
-                      value="ai_assistant"
-                      checked={localSettings.defaultTab === 'ai_assistant'}
-                      onChange={() => patchLocalSettings({ defaultTab: 'ai_assistant' })}
-                      className="hidden"
-                    />
-                    <IconSparkles className="w-4 h-4 text-accent" />
-                    <span>AI Assistant</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Context menu toggle */}
-              <div className="space-y-2 pt-3 border-t border-border/60">
-                <label className="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-muted transition-colors">
-                  <div>
-                    <span className="font-semibold text-content text-xs block">
-                      Enable Right-Click Context Menu
-                    </span>
-                    <span className="text-[11px] text-content-muted block">
-                      Adds "Lookup in Dictionary" to Chrome context menu
-                    </span>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={Boolean(localSettings.enableContextMenuTrigger)}
-                    onChange={(e) => patchLocalSettings({ enableContextMenuTrigger: e.target.checked })}
-                    className="w-4 h-4 cursor-pointer"
-                  />
-                </label>
-              </div>
-
-              {/* Surrounding Context toggle */}
-              <div className="space-y-2 pt-1">
-                <label className="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-muted transition-colors">
-                  <div>
-                    <span className="font-semibold text-content text-xs block">
-                      Disable Surrounding Page Context Extraction
-                    </span>
-                    <span className="text-[11px] text-content-muted block">
-                      When enabled, looks up only the exact selection without neighboring sentences
-                    </span>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={Boolean(localSettings.disablePageContextExtraction)}
-                    onChange={(e) => patchLocalSettings({ disablePageContextExtraction: e.target.checked })}
-                    className="w-4 h-4 cursor-pointer"
-                  />
-                </label>
-              </div>
-
-              {/* Paused Hostnames */}
-              <div className="space-y-2 pt-3 border-t border-border/60">
-                <label className="font-bold text-content-secondary block text-xs uppercase tracking-wider">
-                  Paused Web Hostnames (1 per line)
-                </label>
-                <textarea
-                  value={pausedSitesInput}
-                  onChange={(e) => setPausedSitesInput(e.target.value)}
-                  rows={3}
-                  placeholder={'example.com\ndocs.google.com'}
-                  className="w-full bg-muted border border-border rounded-xl p-2.5 text-xs text-content placeholder:text-content-muted outline-none focus:border-accent font-mono shadow-xs"
-                />
-                <p className="text-[11px] text-content-muted">
-                  The floating lookup icon will be disabled on these domain names.
-                </p>
+                  <span>Export JSON</span>
+                  <span className="text-[10px] text-content-muted font-mono">↓</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={triggerImportFile}
+                  title="Restore settings from JSON file"
+                  className="w-full text-left px-2.5 py-1.5 rounded-md hover:bg-muted text-xs text-content-secondary hover:text-content font-medium transition-colors cursor-pointer flex items-center justify-between"
+                >
+                  <span>Import JSON</span>
+                  <span className="text-[10px] text-content-muted font-mono">↑</span>
+                </button>
               </div>
             </div>
-          ) : null}
+          </aside>
 
-          {activeTab === 'appearance' ? (
-            <Suspense fallback={<div className="p-4 text-xs text-content-muted">Loading appearance settings…</div>}>
-              <TabAppearance localSettings={localSettings} onChange={patchLocalSettings} />
-            </Suspense>
-          ) : null}
+          {/* Right Main Content Area */}
+          <main className="min-w-0 space-y-6">
+            {activeTab === 'general' && (
+              <Suspense fallback={<div className="p-8 text-xs text-content-muted">Loading settings…</div>}>
+                <TabGeneral
+                  localSettings={localSettings}
+                  pausedSitesInput={pausedSitesInput}
+                  onChange={patchLocalSettings}
+                  onPausedSitesChange={setPausedSitesInput}
+                />
+              </Suspense>
+            )}
 
-          {activeTab === 'sources' ? (
-            <Suspense fallback={<div className="p-4 text-xs text-content-muted">Loading dictionary sources…</div>}>
-              <TabSources
-                localSettings={localSettings}
-                languageOptions={languageOptions}
-                connectionStatus={connectionStatus}
-                connectionBusy={connectionBusy}
-                availableVoices={availableVoices}
-                onChange={patchLocalSettings}
-                onTestTranslation={testTranslationConnection}
-                onTestDictionary={testDictionaryConnection}
-              />
-            </Suspense>
-          ) : null}
+            {activeTab === 'appearance' && (
+              <Suspense fallback={<div className="p-8 text-xs text-content-muted">Loading appearance…</div>}>
+                <TabAppearance localSettings={localSettings} onChange={patchLocalSettings} />
+              </Suspense>
+            )}
 
-          {activeTab === 'ai' ? (
-            <Suspense fallback={<div className="p-4 text-xs text-content-muted">Loading AI settings…</div>}>
-              <TabAi
-                localSettings={localSettings}
-                isManualModelInput={isManualModelInput}
-                connectionStatus={connectionStatus}
-                connectionBusy={connectionBusy}
-                promptEditors={promptEditors}
-                onChange={patchLocalSettings}
-                onToggleManualModel={toggleManualModelMode}
-                onTestAi={testAiConnection}
-                onRestorePrompt={restorePrompt}
-                onRestoreAllPrompts={restoreAllPrompts}
-              />
-            </Suspense>
-          ) : null}
+            {activeTab === 'sources' && (
+              <Suspense fallback={<div className="p-8 text-xs text-content-muted">Loading sources…</div>}>
+                <TabSources
+                  localSettings={localSettings}
+                  languageOptions={languageOptions}
+                  connectionStatus={connectionStatus}
+                  connectionBusy={connectionBusy}
+                  availableVoices={availableVoices}
+                  onChange={patchLocalSettings}
+                  onTestTranslation={testTranslationConnection}
+                  onTestDictionary={testDictionaryConnection}
+                />
+              </Suspense>
+            )}
+
+            {activeTab === 'ai' && (
+              <Suspense fallback={<div className="p-8 text-xs text-content-muted">Loading AI settings…</div>}>
+                <TabAi
+                  localSettings={localSettings}
+                  isManualModelInput={isManualModelInput}
+                  connectionStatus={connectionStatus}
+                  connectionBusy={connectionBusy}
+                  promptEditors={promptEditors}
+                  onChange={patchLocalSettings}
+                  onToggleManualModel={toggleManualModelMode}
+                  onTestAi={testAiConnection}
+                  onRestorePrompt={restorePrompt}
+                  onRestoreAllPrompts={restoreAllPrompts}
+                />
+              </Suspense>
+            )}
+          </main>
         </div>
+      </div>
 
-        {/* Footer Actions */}
-        <div className="flex items-center justify-between border-t border-border/60 pt-4 flex-shrink-0 flex-wrap gap-2">
-          <div className="flex items-center gap-2">
+      {/* Floating Sticky Save Bar on scroll */}
+      <div className="fixed bottom-0 inset-x-0 z-20 bg-surface/90 backdrop-blur-md border-t border-border py-3 px-4 sm:px-6 shadow-elevated">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-xs text-content-muted min-w-0">
             <button
               type="button"
               onClick={exportSettings}
-              title="Download settings JSON backup"
-              className="px-3 py-1.5 rounded-xl bg-muted hover:bg-elevated text-content-secondary hover:text-content text-xs font-semibold border border-border transition-colors cursor-pointer shadow-xs active:scale-95"
+              className="md:hidden px-2.5 py-1.5 rounded-lg bg-muted hover:bg-elevated text-content-secondary hover:text-content text-xs font-semibold border border-border cursor-pointer"
             >
-              Export JSON
+              Export
             </button>
             <button
               type="button"
               onClick={triggerImportFile}
-              title="Restore settings from JSON file"
-              className="px-3 py-1.5 rounded-xl bg-muted hover:bg-elevated text-content-secondary hover:text-content text-xs font-semibold border border-border transition-colors cursor-pointer shadow-xs active:scale-95"
+              className="md:hidden px-2.5 py-1.5 rounded-lg bg-muted hover:bg-elevated text-content-secondary hover:text-content text-xs font-semibold border border-border cursor-pointer"
             >
-              Import JSON
+              Import
             </button>
+            <span className="hidden sm:inline">Press</span>
+            <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-muted text-content border border-border font-mono text-[10.5px]">
+              ⌘S
+            </kbd>
+            <span className="hidden sm:inline">or Ctrl+S to save</span>
             <input
               id="settings-import-input"
               type="file"
@@ -562,23 +509,23 @@ export const SettingsModal: React.FC = () => {
             />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <button
               type="button"
               onClick={resetForm}
-              className="px-4 py-2 rounded-xl bg-muted hover:bg-elevated text-content-secondary hover:text-content text-xs font-bold transition-colors cursor-pointer shadow-xs active:scale-95 border border-border"
+              className="px-3.5 py-1.5 rounded-lg bg-muted hover:bg-elevated text-content-secondary hover:text-content text-xs font-semibold border border-border transition-colors cursor-pointer active:scale-95 shadow-2xs"
             >
               Reset
             </button>
-
             <button
               type="button"
               onClick={handleSave}
-              className="px-5 py-2 rounded-xl bg-accent hover:opacity-90 text-white dark:text-neutral-950 text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95"
+              disabled={isSaving}
+              className="px-5 py-1.5 rounded-lg bg-accent hover:opacity-90 text-white dark:text-neutral-950 text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
             >
               {isSavedNotice ? (
                 <>
-                  <IconCheck className="w-4 h-4 text-white dark:text-neutral-950" />
+                  <IconCheck className="w-3.5 h-3.5" />
                   <span>Saved!</span>
                 </>
               ) : (

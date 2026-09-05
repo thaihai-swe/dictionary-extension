@@ -49,7 +49,7 @@ When introducing a new configuration option:
    - If the key is a public preference, it is automatically included in `PUBLIC_SETTING_KEYS`.
    - Update `normalizeSettings(settings)` with type validation and numeric/string clamping.
 2. **Settings Interface (`src/features/settings/SettingsModal.tsx` and `src/features/settings/tabs/Tab*.tsx`):**
-   - Add the input/select control to the appropriate settings surface (`SettingsModal.tsx` for General, `TabAppearance.tsx`, `TabSources.tsx`, or `TabAi.tsx`).
+   - Add the input/select control to the appropriate tab (`TabGeneral.tsx`, `TabAppearance.tsx`, `TabSources.tsx`, or `TabAi.tsx`).
    - Add help text and accessible labels.
 3. **Documentation:**
    - Document the new option in `docs/settings.md`.

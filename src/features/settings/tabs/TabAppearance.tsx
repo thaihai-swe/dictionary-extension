@@ -10,23 +10,25 @@ interface TabAppearanceProps {
 
 export const TabAppearance: React.FC<TabAppearanceProps> = ({ localSettings, onChange }) => {
   return (
-    <div className="space-y-4 font-sans text-xs">
-      {/* Theme selection */}
-      <div className="space-y-2">
-        <label className="font-bold text-content-secondary block uppercase tracking-wider text-[11px]">
-          Interface Theme
-        </label>
-        <div className="grid grid-cols-3 gap-2.5">
+    <div className="space-y-6 font-sans text-xs">
+      <section className="bg-surface border border-border rounded-xl p-5 space-y-3 shadow-xs">
+        <div>
+          <h3 className="text-sm font-bold text-content font-heading">Interface Theme</h3>
+          <p className="text-[11.5px] text-content-muted">
+            Light, dark, or follow the operating system. Preview applies immediately.
+          </p>
+        </div>
+        <div className="grid grid-cols-3 gap-2.5 pt-1">
           {(['dark', 'light', 'system'] as const).map((mode) => {
             const isSelected = localSettings.theme === mode;
             return (
               <label
                 key={mode}
                 className={cx(
-                  'p-3 rounded-xl border text-center cursor-pointer transition-all font-semibold flex items-center justify-center gap-2 shadow-xs',
+                  'p-3 rounded-xl border text-center cursor-pointer transition-all font-semibold flex items-center justify-center gap-2 shadow-2xs',
                   isSelected
-                    ? 'chip-active font-bold'
-                    : 'bg-muted border-border text-content-secondary hover:border-accent/40',
+                    ? 'chip-active font-bold ring-1 ring-accent/30'
+                    : 'bg-muted/40 border-border text-content-secondary hover:border-accent/40',
                 )}
               >
                 <input
@@ -49,32 +51,43 @@ export const TabAppearance: React.FC<TabAppearanceProps> = ({ localSettings, onC
             );
           })}
         </div>
-      </div>
+      </section>
 
-      {/* Font selection */}
-      <div className="space-y-2 pt-3 border-t border-border/60">
-        <label className="font-bold text-content-secondary block uppercase tracking-wider text-[11px]">
-          Display Typography Style
-        </label>
+      <section className="bg-surface border border-border rounded-xl p-5 space-y-3 shadow-xs">
+        <div>
+          <h3 className="text-sm font-bold text-content font-heading">Typography</h3>
+          <p className="text-[11.5px] text-content-muted">
+            Font used for definitions, examples, and AI responses in the popup.
+          </p>
+        </div>
         <select
           value={localSettings.fontFamily || 'learner'}
           onChange={(e) => onChange({ fontFamily: e.target.value as AppSettings['fontFamily'] })}
           className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-accent cursor-pointer shadow-xs"
         >
-          <option value="learner" className="bg-surface text-content">Modern Academic Font (Plus Jakarta Sans / Clean Sans-Serif)</option>
-          <option value="editorial" className="bg-surface text-content">Classic Editorial Font (Newsreader / Elegant Serif)</option>
+          <option value="learner" className="bg-surface text-content">
+            Modern Academic (Plus Jakarta Sans)
+          </option>
+          <option value="editorial" className="bg-surface text-content">
+            Classic Editorial (Newsreader)
+          </option>
         </select>
-      </div>
+      </section>
 
-      {/* Lexical Profile Cards */}
-      <div className="space-y-2 pt-3 border-t border-border/60">
-        <label className="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-muted transition-colors">
-          <div>
-            <span className="font-bold text-content block text-xs">
-              Structured Lexical Profile Cards (CEFR, Collocations, Mistakes)
+      <section className="bg-surface border border-border rounded-xl p-5 space-y-3 shadow-xs">
+        <div>
+          <h3 className="text-sm font-bold text-content font-heading">Lookup Card Content</h3>
+          <p className="text-[11.5px] text-content-muted">
+            Extra lexical cards sit behind “More lexical detail” on word results.
+          </p>
+        </div>
+        <label className="flex items-center justify-between cursor-pointer py-1.5 hover:bg-muted/30 px-1 rounded-lg transition-colors">
+          <div className="pr-4">
+            <span className="font-semibold text-content text-xs block">
+              Structured Lexical Profile
             </span>
             <span className="text-[11px] text-content-muted block">
-              Enriches dictionary results with vocabulary levels, grammar quirks, and morphology breakdown
+              Word family, collocations, usage notes, formation, and learner mistakes
             </span>
           </div>
           <input
@@ -84,38 +97,44 @@ export const TabAppearance: React.FC<TabAppearanceProps> = ({ localSettings, onC
             className="w-4 h-4 cursor-pointer"
           />
         </label>
-      </div>
+      </section>
 
-      {/* Popup Dimensions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-border/60">
-        <div className="space-y-1.5">
-          <label className="font-bold text-content-secondary block text-[11px] uppercase tracking-wider">
-            Default Popup Width (px)
-          </label>
-          <input
-            type="number"
-            value={localSettings.popupWidth ?? 480}
-            min={360}
-            max={1000}
-            onChange={(e) => onChange({ popupWidth: Number(e.target.value) || 480 })}
-            className="w-full bg-muted border border-border rounded-xl px-3 py-2 text-xs text-content outline-none focus:border-accent font-mono shadow-xs"
-          />
+      <section className="bg-surface border border-border rounded-xl p-5 space-y-3 shadow-xs">
+        <div>
+          <h3 className="text-sm font-bold text-content font-heading">Default Popup Size</h3>
+          <p className="text-[11.5px] text-content-muted">
+            Starting dimensions for the in-page overlay. You can still resize it on the page.
+          </p>
         </div>
-
-        <div className="space-y-1.5">
-          <label className="font-bold text-content-secondary block text-[11px] uppercase tracking-wider">
-            Default Popup Height (px)
-          </label>
-          <input
-            type="number"
-            value={localSettings.popupHeight ?? 580}
-            min={380}
-            max={900}
-            onChange={(e) => onChange({ popupHeight: Number(e.target.value) || 580 })}
-            className="w-full bg-muted border border-border rounded-xl px-3 py-2 text-xs text-content outline-none focus:border-accent font-mono shadow-xs"
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <label className="font-bold text-content-secondary block text-[11px] uppercase tracking-wider">
+              Width (px)
+            </label>
+            <input
+              type="number"
+              value={localSettings.popupWidth ?? 480}
+              min={360}
+              max={1000}
+              onChange={(e) => onChange({ popupWidth: Number(e.target.value) || 480 })}
+              className="w-full bg-muted border border-border rounded-xl px-3 py-2 text-xs text-content outline-none focus:border-accent font-mono shadow-xs"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="font-bold text-content-secondary block text-[11px] uppercase tracking-wider">
+              Height (px)
+            </label>
+            <input
+              type="number"
+              value={localSettings.popupHeight ?? 580}
+              min={380}
+              max={900}
+              onChange={(e) => onChange({ popupHeight: Number(e.target.value) || 580 })}
+              className="w-full bg-muted border border-border rounded-xl px-3 py-2 text-xs text-content outline-none focus:border-accent font-mono shadow-xs"
+            />
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 };

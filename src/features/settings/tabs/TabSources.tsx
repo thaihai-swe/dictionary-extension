@@ -13,6 +13,18 @@ interface TabSourcesProps {
   onTestDictionary: (providerId: string) => void;
 }
 
+const DICTIONARY_TESTS = [
+  ['wiktionary', 'Wiktionary'],
+  ['free_dictionary', 'Free Dictionary'],
+  ['datamuse', 'Datamuse'],
+  ['wikipedia', 'Wikipedia'],
+  ['urban_dictionary', 'Urban Dictionary'],
+  ['rhymebrain', 'RhymeBrain'],
+  ['wiktionary_etymology', 'Etymology'],
+  ['wiktionary_bilingual', 'Bilingual'],
+  ['tatoeba', 'Tatoeba'],
+] as const;
+
 export const TabSources: React.FC<TabSourcesProps> = ({
   localSettings,
   languageOptions,
@@ -32,81 +44,97 @@ export const TabSources: React.FC<TabSourcesProps> = ({
       .slice(-1)[0];
 
   return (
-    <div className="space-y-4 font-sans text-xs">
-      {/* Toggles */}
-      <div className="space-y-2">
-        <label className="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-muted transition-colors">
-          <div>
-            <span className="font-bold text-content block text-xs">Show Translation in Dictionary View</span>
-            <span className="text-[11px] text-content-muted block">Displays instant localized translation above meanings</span>
+    <div className="space-y-6 font-sans text-xs">
+      <section className="bg-surface border border-border rounded-xl p-5 space-y-3 shadow-xs">
+        <div>
+          <h3 className="text-sm font-bold text-content font-heading">Dictionary View</h3>
+          <p className="text-[11.5px] text-content-muted">
+            What appears on a word lookup besides the headword.
+          </p>
+        </div>
+        <div className="space-y-1 divide-y divide-border/40">
+          <label className="flex items-center justify-between cursor-pointer py-2.5 hover:bg-muted/30 px-1 rounded-lg transition-colors">
+            <div className="pr-4">
+              <span className="font-semibold text-content text-xs block">Show translation</span>
+              <span className="text-[11px] text-content-muted block">
+                Localized gloss above meanings
+              </span>
+            </div>
+            <input
+              type="checkbox"
+              checked={localSettings.enableTranslate !== false}
+              onChange={(e) => onChange({ enableTranslate: e.target.checked })}
+              className="w-4 h-4 cursor-pointer"
+            />
+          </label>
+          <label className="flex items-center justify-between cursor-pointer py-2.5 hover:bg-muted/30 px-1 rounded-lg transition-colors">
+            <div className="pr-4">
+              <span className="font-semibold text-content text-xs block">Show definitions</span>
+              <span className="text-[11px] text-content-muted block">
+                Sense cards and example sentences
+              </span>
+            </div>
+            <input
+              type="checkbox"
+              checked={localSettings.enableDictionary !== false}
+              onChange={(e) => onChange({ enableDictionary: e.target.checked })}
+              className="w-4 h-4 cursor-pointer"
+            />
+          </label>
+        </div>
+      </section>
+
+      <section className="bg-surface border border-border rounded-xl p-5 space-y-4 shadow-xs">
+        <div>
+          <h3 className="text-sm font-bold text-content font-heading">Translation</h3>
+          <p className="text-[11.5px] text-content-muted">
+            Target language and engine used for the gloss line.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <label className="font-bold text-content-secondary block text-[11px] uppercase tracking-wider">
+              Target language
+            </label>
+            <select
+              value={localSettings.translateTargetLanguage || 'Vietnamese'}
+              onChange={(e) => onChange({ translateTargetLanguage: e.target.value })}
+              className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-accent cursor-pointer shadow-xs"
+            >
+              {languageOptions.map((lang) => (
+                <option key={lang} value={lang} className="bg-surface text-content">
+                  {lang}
+                </option>
+              ))}
+            </select>
           </div>
-          <input
-            type="checkbox"
-            checked={localSettings.enableTranslate !== false}
-            onChange={(e) => onChange({ enableTranslate: e.target.checked })}
-            className="w-4 h-4 cursor-pointer"
-          />
-        </label>
-        <label className="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-muted transition-colors">
-          <div>
-            <span className="font-bold text-content block text-xs">Show Definitions in Dictionary View</span>
-            <span className="text-[11px] text-content-muted block">Displays full dictionary definition cards and word senses</span>
+          <div className="space-y-1.5">
+            <label className="font-bold text-content-secondary block text-[11px] uppercase tracking-wider">
+              Engine
+            </label>
+            <select
+              value={localSettings.translateProvider || 'google'}
+              onChange={(e) => onChange({ translateProvider: e.target.value as AppSettings['translateProvider'] })}
+              className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-accent cursor-pointer shadow-xs"
+            >
+              <option value="google" className="bg-surface text-content">Google Translate</option>
+              <option value="libretranslate" className="bg-surface text-content">LibreTranslate</option>
+              <option value="mymemory" className="bg-surface text-content">MyMemory</option>
+            </select>
           </div>
+        </div>
+        <div className="space-y-1.5">
+          <label className="font-bold text-content-secondary block text-[11px] uppercase tracking-wider">
+            Extra languages (comma-separated)
+          </label>
           <input
-            type="checkbox"
-            checked={localSettings.enableDictionary !== false}
-            onChange={(e) => onChange({ enableDictionary: e.target.checked })}
-            className="w-4 h-4 cursor-pointer"
+            value={localSettings.customLanguages || ''}
+            onChange={(e) => onChange({ customLanguages: e.target.value })}
+            type="text"
+            placeholder="Vietnamese, English, Japanese, French"
+            className="w-full bg-muted border border-border rounded-xl px-3 py-2 text-xs text-content placeholder:text-content-muted outline-none focus:border-accent shadow-xs"
           />
-        </label>
-      </div>
-
-      {/* Target language */}
-      <div className="space-y-2 pt-3 border-t border-border/60">
-        <label className="font-bold text-content-secondary block uppercase tracking-wider text-[11px]">
-          Default Target Translation Language
-        </label>
-        <select
-          value={localSettings.translateTargetLanguage || 'Vietnamese'}
-          onChange={(e) => onChange({ translateTargetLanguage: e.target.value })}
-          className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-accent cursor-pointer shadow-xs"
-        >
-          {languageOptions.map((lang) => (
-            <option key={lang} value={lang} className="bg-surface text-content">
-              {lang}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Custom languages */}
-      <div className="space-y-2 pt-3 border-t border-border/60">
-        <label className="font-bold text-content-secondary block uppercase tracking-wider text-[11px]">
-          Custom Language List
-        </label>
-        <input
-          value={localSettings.customLanguages || ''}
-          onChange={(e) => onChange({ customLanguages: e.target.value })}
-          type="text"
-          placeholder="Vietnamese, English, Japanese, French"
-          className="w-full bg-muted border border-border rounded-xl px-3 py-2 text-xs text-content placeholder:text-content-muted outline-none focus:border-accent shadow-xs"
-        />
-      </div>
-
-      {/* Translation Provider */}
-      <div className="space-y-2 pt-3 border-t border-border/60">
-        <label className="font-bold text-content-secondary block uppercase tracking-wider text-[11px]">
-          Translation Engine Provider
-        </label>
-        <select
-          value={localSettings.translateProvider || 'google'}
-          onChange={(e) => onChange({ translateProvider: e.target.value as AppSettings['translateProvider'] })}
-          className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-accent cursor-pointer shadow-xs"
-        >
-          <option value="google" className="bg-surface text-content">Google Translate (Default)</option>
-          <option value="libretranslate" className="bg-surface text-content">LibreTranslate</option>
-          <option value="mymemory" className="bg-surface text-content">MyMemory (Keyless fallback)</option>
-        </select>
+        </div>
         <div className="flex items-center gap-2 pt-1">
           <button
             type="button"
@@ -114,22 +142,28 @@ export const TabSources: React.FC<TabSourcesProps> = ({
             disabled={connectionBusy[translationKey]}
             onClick={onTestTranslation}
           >
-            {connectionBusy[translationKey] ? <IconSpinner className="w-3.5 h-3.5 text-accent" /> : <IconTranslate className="w-3.5 h-3.5 text-accent" />}
-            <span>Test Translation Connection</span>
+            {connectionBusy[translationKey] ? (
+              <IconSpinner className="w-3.5 h-3.5 text-accent" />
+            ) : (
+              <IconTranslate className="w-3.5 h-3.5 text-accent" />
+            )}
+            <span>Test translation</span>
           </button>
-          {connectionStatus[translationKey] && (
+          {connectionStatus[translationKey] ? (
             <span className="text-[11px] px-2 py-0.5 rounded-md bg-muted border border-border text-accent font-mono">
               {connectionStatus[translationKey]}
             </span>
-          )}
+          ) : null}
         </div>
-      </div>
+      </section>
 
-      {/* Dictionary Provider */}
-      <div className="space-y-2 pt-3 border-t border-border/60">
-        <label className="font-bold text-content-secondary block uppercase tracking-wider text-[11px]">
-          Default Dictionary Provider
-        </label>
+      <section className="bg-surface border border-border rounded-xl p-5 space-y-4 shadow-xs">
+        <div>
+          <h3 className="text-sm font-bold text-content font-heading">Dictionary provider</h3>
+          <p className="text-[11.5px] text-content-muted">
+            Primary source for definitions. Others still enrich in the background.
+          </p>
+        </div>
         <select
           value={localSettings.dictionaryProvider || 'wiktionary'}
           onChange={(e) =>
@@ -137,96 +171,89 @@ export const TabSources: React.FC<TabSourcesProps> = ({
           }
           className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-accent cursor-pointer shadow-xs"
         >
-          <option value="wiktionary" className="bg-surface text-content">Wiktionary Open API (Default)</option>
+          <option value="wiktionary" className="bg-surface text-content">Wiktionary (default)</option>
           <option value="free_dictionary" className="bg-surface text-content">Free Dictionary API</option>
-          <option value="datamuse" className="bg-surface text-content">Datamuse (Keyless collocations)</option>
+          <option value="datamuse" className="bg-surface text-content">Datamuse</option>
           <option value="wikipedia" className="bg-surface text-content">Wikipedia Summary</option>
-          <option value="urban_dictionary" className="bg-surface text-content">Urban Dictionary (Slang &amp; Idioms)</option>
-          <option value="wiktionary_etymology" className="bg-surface text-content">Wiktionary Etymology (Origins)</option>
-          <option value="wiktionary_bilingual" className="bg-surface text-content">Wiktionary Bilingual Gloss</option>
-          <option value="tatoeba" className="bg-surface text-content">Tatoeba Sentence Corpus</option>
+          <option value="urban_dictionary" className="bg-surface text-content">Urban Dictionary</option>
+          <option value="wiktionary_etymology" className="bg-surface text-content">Wiktionary Etymology</option>
+          <option value="wiktionary_bilingual" className="bg-surface text-content">Wiktionary Bilingual</option>
+          <option value="tatoeba" className="bg-surface text-content">Tatoeba Sentences</option>
           <option value="google_translate" className="bg-surface text-content">Google Translate API</option>
         </select>
-      </div>
+        <details className="rounded-lg border border-border bg-muted/30">
+          <summary className="px-3 py-2 text-[11px] font-bold text-content-muted uppercase tracking-wider cursor-pointer">
+            Test connectivity
+          </summary>
+          <div className="px-3 pb-3 space-y-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {DICTIONARY_TESTS.map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  className="px-2.5 py-1.5 rounded-lg bg-surface hover:bg-elevated border border-border text-xs font-semibold text-content-secondary hover:text-accent cursor-pointer shadow-xs flex items-center justify-center gap-1 active:scale-95"
+                  disabled={connectionBusy[id]}
+                  onClick={() => onTestDictionary(id)}
+                >
+                  {connectionBusy[id] ? (
+                    <IconSpinner className="w-3 h-3 text-accent" />
+                  ) : (
+                    <IconBook className="w-3 h-3 text-accent" />
+                  )}
+                  <span>{label}</span>
+                </button>
+              ))}
+            </div>
+            {lastDictStatus ? (
+              <p className="text-[11px] text-accent font-mono">{lastDictStatus}</p>
+            ) : null}
+          </div>
+        </details>
+      </section>
 
-      {/* Test Dictionary Connection */}
-      <div className="space-y-2 pt-3 border-t border-border/60">
-        <label className="font-bold text-content-secondary block uppercase tracking-wider text-[11px]">
-          Test Dictionary Connectivity
-        </label>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {(
-            [
-              ['wiktionary', 'Wiktionary'],
-              ['free_dictionary', 'Free Dictionary'],
-              ['datamuse', 'Datamuse'],
-              ['wikipedia', 'Wikipedia'],
-              ['urban_dictionary', 'Urban Dictionary'],
-              ['rhymebrain', 'RhymeBrain'],
-              ['wiktionary_etymology', 'Wiktionary Etymology'],
-              ['wiktionary_bilingual', 'Wiktionary Bilingual'],
-              ['tatoeba', 'Tatoeba Sentences'],
-            ] as const
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              className="px-2.5 py-1.5 rounded-lg bg-muted hover:bg-elevated border border-border text-xs font-semibold text-content-secondary hover:text-accent cursor-pointer shadow-xs flex items-center justify-center gap-1 active:scale-95"
-              disabled={connectionBusy[id]}
-              onClick={() => onTestDictionary(id)}
-            >
-              {connectionBusy[id] ? <IconSpinner className="w-3 h-3 text-accent" /> : <IconBook className="w-3 h-3 text-accent" />}
-              <span>{label}</span>
-            </button>
-          ))}
+      <section className="bg-surface border border-border rounded-xl p-5 space-y-4 shadow-xs">
+        <div>
+          <h3 className="text-sm font-bold text-content font-heading flex items-center gap-1.5">
+            <IconSpeaker className="w-4 h-4 text-accent" />
+            Speech
+          </h3>
+          <p className="text-[11.5px] text-content-muted">
+            Voice and speed for pronunciation playback.
+          </p>
         </div>
-        {lastDictStatus ? (
-          <p className="text-[11px] text-accent font-mono mt-1">{lastDictStatus}</p>
-        ) : null}
-      </div>
-
-      {/* Voice & Speech Synthesis */}
-      <div className="space-y-2 pt-3 border-t border-border/60">
-        <label className="font-bold text-content-secondary block uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-          <IconSpeaker className="w-3.5 h-3.5 text-accent" />
-          <span>Speech Synthesis (TTS Voice)</span>
-        </label>
         <select
           value={localSettings.pronunciationVoiceURI || ''}
           onChange={(e) => onChange({ pronunciationVoiceURI: e.target.value })}
           className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-accent cursor-pointer shadow-xs"
         >
-          <option value="" className="bg-surface text-content">Auto-select system default voice</option>
+          <option value="" className="bg-surface text-content">System default</option>
           {availableVoices.map((voice) => (
             <option key={voice.voiceURI} value={voice.voiceURI} className="bg-surface text-content">
               {voice.name} ({voice.lang})
             </option>
           ))}
         </select>
-
-        <div className="pt-2">
-          <div className="flex items-center justify-between gap-3 bg-muted/40 p-2.5 rounded-xl border border-border">
-            <div>
-              <span className="text-content font-semibold text-xs block">Pronunciation Speech Rate:</span>
-              <span className="text-[11px] text-content-muted">Controls playback speed of speech synthesis</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="range"
-                min="0.5"
-                max="1.5"
-                step="0.05"
-                value={localSettings.pronunciationRate ?? 1}
-                onChange={(e) => onChange({ pronunciationRate: parseFloat(e.target.value) })}
-                className="cursor-pointer w-28"
-              />
-              <span className="font-mono text-accent text-xs w-10 text-right">
-                {localSettings.pronunciationRate ?? 1}x
-              </span>
-            </div>
+        <div className="flex items-center justify-between gap-3 bg-muted/40 p-2.5 rounded-xl border border-border">
+          <div>
+            <span className="text-content font-semibold text-xs block">Speech rate</span>
+            <span className="text-[11px] text-content-muted">0.5× to 1.5×</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="range"
+              min="0.5"
+              max="1.5"
+              step="0.05"
+              value={localSettings.pronunciationRate ?? 1}
+              onChange={(e) => onChange({ pronunciationRate: parseFloat(e.target.value) })}
+              className="cursor-pointer w-28"
+            />
+            <span className="font-mono text-accent text-xs w-10 text-right">
+              {localSettings.pronunciationRate ?? 1}x
+            </span>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 };
