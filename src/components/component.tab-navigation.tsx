@@ -26,7 +26,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
 
   return (
     <nav
-      className="flex items-end gap-0 border-b border-border bg-surface px-3.5 transition-colors"
+      className="flex items-center gap-1.5 border-b border-border bg-surface px-3 py-1.5 transition-colors select-none"
       role="tablist"
       aria-label="Lookup mode"
     >
@@ -36,18 +36,17 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
         aria-selected={currentActive === 'dictionary'}
         onClick={() => selectTab('dictionary')}
         className={cx(
-          'relative h-10 px-3.5 flex items-center gap-1.5 text-[13px] font-bold transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40 dark:focus-visible:ring-gold-300/40 cursor-pointer',
+          'relative h-[30px] px-3 rounded-md flex items-center gap-1.5 text-[12.5px] font-semibold transition-all duration-150 outline-none cursor-pointer',
           currentActive === 'dictionary'
-            ? 'text-teal-700 dark:text-gold-200'
-            : 'text-content-muted hover:text-content',
+            ? 'bg-teal-500/12 text-teal-800 dark:bg-gold-300/12 dark:text-gold-200 border border-teal-500/25 dark:border-gold-300/30 shadow-2xs'
+            : 'text-content-secondary hover:text-content hover:bg-muted border border-transparent',
         )}
       >
-        <IconBook className="w-3.5 h-3.5" />
+        <IconBook className="w-3.5 h-3.5 text-teal-600 dark:text-gold-300" />
         <span>Dictionary</span>
-        <span className="hidden sm:inline-block text-[10px] opacity-50 font-mono ml-0.5">Alt+1</span>
-        {currentActive === 'dictionary' ? (
-          <span className="absolute left-3 right-3 bottom-0 h-0.5 bg-teal-600 dark:bg-gold-300 rounded-t" />
-        ) : null}
+        <span className="hidden sm:inline-block text-[9.5px] font-mono px-1 py-0.2 rounded bg-surface/80 border border-border/70 text-content-muted">
+          Alt+1
+        </span>
       </button>
 
       {showAiTab ? (
@@ -57,18 +56,17 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
           aria-selected={currentActive === 'ai_assistant'}
           onClick={() => selectTab('ai_assistant')}
           className={cx(
-            'relative h-10 px-3.5 flex items-center gap-1.5 text-[13px] font-bold transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40 dark:focus-visible:ring-gold-300/40 cursor-pointer',
+            'relative h-[30px] px-3 rounded-md flex items-center gap-1.5 text-[12.5px] font-semibold transition-all duration-150 outline-none cursor-pointer',
             currentActive === 'ai_assistant'
-              ? 'text-teal-700 dark:text-gold-200'
-              : 'text-content-muted hover:text-content',
+              ? 'bg-teal-500/12 text-teal-800 dark:bg-gold-300/12 dark:text-gold-200 border border-teal-500/25 dark:border-gold-300/30 shadow-2xs'
+              : 'text-content-secondary hover:text-content hover:bg-muted border border-transparent',
           )}
         >
-          <IconSparkles className="w-3.5 h-3.5" />
+          <IconSparkles className="w-3.5 h-3.5 text-teal-600 dark:text-gold-300" />
           <span>AI Assistant</span>
-          <span className="hidden sm:inline-block text-[10px] opacity-50 font-mono ml-0.5">Alt+2</span>
-          {currentActive === 'ai_assistant' ? (
-            <span className="absolute left-3 right-3 bottom-0 h-0.5 bg-teal-600 dark:bg-gold-300 rounded-t" />
-          ) : null}
+          <span className="hidden sm:inline-block text-[9.5px] font-mono px-1 py-0.2 rounded bg-surface/80 border border-border/70 text-content-muted">
+            Alt+2
+          </span>
         </button>
       ) : null}
     </nav>

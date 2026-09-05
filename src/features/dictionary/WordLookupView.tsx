@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { searchWord, stopAllAudio, useDictionaryQuery, useDictionaryResult } from '@/composables/composable.dictionary';
 import { useStorage } from '@/composables/composable.storage';
-import { IconClose } from '@/components/icons';
+import { IconClose, IconSearch } from '@/components/icons';
 import WordLookupResult from './WordLookupResult';
 import PresetChips from '@/components/component.preset-chips';
 import type { DemoPreset } from '@/shared/presets';
@@ -80,9 +80,10 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
 
   return (
     <div className="font-sans">
-      {/* Search Bar matching demo .popup-search-bar */}
-      <div className="flex gap-2 p-3 bg-muted/30 border-b border-border">
+      {/* Search Bar - Modern Command Palette Style */}
+      <div className="flex gap-2 p-3 bg-surface border-b border-border shadow-2xs">
         <div className="relative flex-1 flex items-center">
+          <IconSearch className="w-4 h-4 text-content-muted absolute left-3 pointer-events-none" />
           <input
             ref={searchInputElement}
             value={searchInput}
@@ -91,9 +92,9 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
               if (e.key === 'Enter') handleSearch();
             }}
             type="text"
-            placeholder="Look up a word or sentence…"
-            aria-label="Look up a word or sentence"
-            className="w-full h-[38px] bg-surface border border-border rounded-md px-3 pr-8 text-[13.5px] text-content placeholder:text-content-muted outline-none focus-visible:border-teal-500 focus-visible:ring-2 focus-visible:ring-teal-500/15 dark:focus-visible:border-gold-300 dark:focus-visible:ring-gold-300/20 transition-all font-sans"
+            placeholder="Look up a word, phrase, or sentence…"
+            aria-label="Look up a word, phrase, or sentence"
+            className="w-full h-[38px] bg-muted/40 hover:bg-muted/60 focus:bg-surface border border-border focus:border-teal-600 dark:focus:border-gold-300 rounded-lg pl-9 pr-8 text-[13.5px] text-content placeholder:text-content-muted outline-none focus-visible:ring-2 focus-visible:ring-teal-500/20 dark:focus-visible:ring-gold-300/20 transition-all font-sans"
           />
 
           {searchInput ? (
@@ -101,20 +102,28 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
               type="button"
               onClick={clearSearch}
               title="Clear search text"
-              className="absolute right-2 text-content-muted hover:text-content p-1 cursor-pointer flex items-center justify-center"
+              className="absolute right-2 text-content-muted hover:text-content p-1 cursor-pointer flex items-center justify-center rounded-md hover:bg-muted transition-colors"
             >
               <IconClose className="w-3.5 h-3.5" />
             </button>
-          ) : null}
+          ) : (
+            <span className="hidden sm:inline-flex absolute right-2.5 px-1.5 py-0.5 rounded text-[10px] font-mono text-content-muted/70 border border-border/60 bg-surface/80 select-none pointer-events-none">
+              ↵ Enter
+            </span>
+          )}
         </div>
 
         <button
           type="button"
           onClick={() => handleSearch()}
           disabled={!searchInput || isLoading}
-          className="h-[38px] px-4 rounded-md bg-teal-700 hover:bg-teal-600 dark:bg-gold-400 dark:hover:bg-gold-300 dark:text-neutral-950 active:scale-95 text-white text-[13px] font-bold transition-all disabled:opacity-50 cursor-pointer shadow-2xs"
+          className="h-[38px] px-4 rounded-lg bg-teal-700 hover:bg-teal-600 dark:bg-gold-300 dark:hover:bg-gold-200 dark:text-neutral-950 active:scale-95 text-white text-[13px] font-bold transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer shadow-xs flex items-center gap-1.5"
         >
-          Lookup
+          {isLoading ? (
+            <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <span>Lookup</span>
+          )}
         </button>
       </div>
 

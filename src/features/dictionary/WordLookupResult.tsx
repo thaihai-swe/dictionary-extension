@@ -45,6 +45,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
   const query = useDictionaryQuery();
   const { playingKey } = useDictionaryAudio();
   const { practiceResult, isPracticing, supportsSpeechPractice } = useDictionaryPractice();
+  const [hasCopied, setHasCopied] = React.useState(false);
 
   const displayHeadword = useMemo(() => {
     const entry = result;
@@ -126,6 +127,8 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
     }
 
     void navigator.clipboard.writeText(md.trim()).then(() => {
+      setHasCopied(true);
+      setTimeout(() => setHasCopied(false), 1800);
       showToast('Copied definition to clipboard');
     });
   }
@@ -212,10 +215,24 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                   onClick={copyAsMarkdown}
                   title="Copy as Markdown flashcard"
                   aria-label="Copy as Markdown flashcard"
-                  className="h-[22px] px-2 rounded-md bg-muted hover:bg-elevated border border-border text-[11px] font-semibold text-content-secondary hover:text-content transition-all cursor-pointer flex items-center gap-1 shadow-2xs active:scale-95 select-none"
+                  className={cx(
+                    'h-[22px] px-2 rounded-md border text-[11px] font-semibold transition-all cursor-pointer flex items-center gap-1 shadow-2xs active:scale-95 select-none',
+                    hasCopied
+                      ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
+                      : 'bg-muted hover:bg-elevated border-border text-content-secondary hover:text-content',
+                  )}
                 >
-                  <IconCopy className="w-3 h-3 text-content-muted hover:text-content" />
-                  <span className="hidden sm:inline">Copy MD</span>
+                  {hasCopied ? (
+                    <>
+                      <IconCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                      <span>Copied</span>
+                    </>
+                  ) : (
+                    <>
+                      <IconCopy className="w-3 h-3 text-content-muted" />
+                      <span className="hidden sm:inline">Copy MD</span>
+                    </>
+                  )}
                 </button>
                 <span
                   className={cx(
@@ -253,7 +270,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                       })
                     }
                     className={cx(
-                      'h-[26px] px-2 rounded-md border text-[11.5px] font-medium transition-all flex items-center gap-1 cursor-pointer font-mono',
+                      'h-[26px] pl-1.5 pr-2.5 rounded-md border text-[11.5px] font-medium transition-all flex items-center gap-1.5 cursor-pointer font-mono shadow-2xs',
                       playingKey === listenKey
                         ? 'bg-teal-500/20 text-teal-700 dark:bg-gold-300/15 dark:text-gold-200 border-teal-500/40 dark:border-gold-300/40 audio-playing-indicator'
                         : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
@@ -261,8 +278,11 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                     aria-pressed={playingKey === listenKey}
                     title={`Listen (${phoneticLabel(item)})`}
                   >
+                    <span className="text-[9.5px] font-bold uppercase px-1 py-0.2 rounded bg-muted text-content-muted font-sans border border-border/60">
+                      {phoneticLabel(item)}
+                    </span>
                     <IconSpeaker className="w-3 h-3 text-teal-600 dark:text-gold-300" />
-                    <span>{phoneticLabel(item)}{ipa ? ` /${ipa.replace(/^\/+|\/+$/g, '')}/` : ''}</span>
+                    <span>{ipa ? `/${ipa.replace(/^\/+|\/+$/g, '')}/` : 'Audio'}</span>
                   </button>
                 );
               })}
@@ -272,7 +292,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                   type="button"
                   onClick={() => startSpeechPractice(displayHeadword, 'en-US')}
                   className={cx(
-                    'h-[26px] px-2 rounded-md border text-[11.5px] font-medium transition-all flex items-center gap-1 cursor-pointer',
+                    'h-[26px] px-2.5 rounded-md border text-[11.5px] font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs',
                     isPracticing
                       ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/40 animate-pulse'
                       : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
@@ -280,7 +300,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                   aria-pressed={isPracticing}
                   title="Speech practice evaluator"
                 >
-                  <IconMic className="w-3 h-3" />
+                  <IconMic className="w-3 h-3 text-amber-600 dark:text-amber-400" />
                   <span>{isPracticing ? 'Listening…' : 'Practice'}</span>
                 </button>
               ) : null}
@@ -290,16 +310,16 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
       </div>
 
       {result.translation?.translatedText ? (
-        <section className="p-3 rounded-lg border border-border bg-surface flex items-baseline justify-between gap-3">
-          <div className="space-y-0.5">
-            <span className="text-[10.5px] font-bold text-teal-700 dark:text-gold-300 uppercase tracking-wider">
+        <section className="p-3 rounded-lg border border-teal-500/25 dark:border-gold-300/25 bg-teal-500/5 dark:bg-gold-300/5 flex items-baseline justify-between gap-3 shadow-2xs">
+          <div className="space-y-0.5 min-w-0 flex-1">
+            <span className="text-[10px] font-bold text-teal-800 dark:text-gold-300 uppercase tracking-wider font-mono">
               Translation
             </span>
             <p className="text-[14.5px] text-content font-medium leading-relaxed">
               {result.translation.translatedText}
             </p>
           </div>
-          <span className="text-[10px] text-content-muted flex-shrink-0 font-mono">
+          <span className="text-[10px] text-content-muted flex-shrink-0 font-mono px-1.5 py-0.5 rounded bg-surface/70 border border-border/50">
             {result.translation.sourceBadges?.map((b) => b.label).join(' · ') || 'Google'}
           </span>
         </section>
