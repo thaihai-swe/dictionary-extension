@@ -347,17 +347,16 @@ function initializeContextMenu() {
 }
 
 chrome.runtime.onInstalled.addListener(() => {
+  initializeContextMenu();
   void Promise.all([
     migrateSettingsSchema(),
     loadFullSettings(),
-    Promise.resolve(initializeContextMenu()),
   ]).catch(() => undefined);
 });
 
 chrome.runtime.onStartup?.addListener(() => {
   void migrateSettingsSchema().catch(() => undefined);
   void loadFullSettings().catch(() => undefined);
-  initializeContextMenu();
 });
 
 chrome.storage?.onChanged?.addListener((changes, area) => {

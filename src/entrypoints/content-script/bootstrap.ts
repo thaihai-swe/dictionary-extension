@@ -104,7 +104,7 @@ if (document.getElementById('dictionary-extension-root')) {
   void startBootstrap();
 }
 
-async function startBootstrap() {
+function startBootstrap() {
   const host = document.createElement('div');
   host.id = 'dictionary-extension-root';
   (document.body || document.documentElement).appendChild(host);
@@ -168,8 +168,8 @@ async function startBootstrap() {
   let pendingPointerX = 0;
   let pendingPointerY = 0;
 
-  await loadBootSettings();
   applyTheme();
+  void loadBootSettings().then(() => applyTheme());
 
   if (typeof window !== 'undefined' && window.matchMedia) {
     const media = window.matchMedia('(prefers-color-scheme: dark)');
@@ -269,6 +269,13 @@ async function startBootstrap() {
     }
     if (!overlayModulePromise) {
       try {
+        if (!shadow.querySelector('[data-dict-overlay-css]')) {
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.dataset.dictOverlayCss = 'true';
+          link.href = chrome.runtime.getURL('overlay.css');
+          shadow.appendChild(link);
+        }
         overlayModulePromise = import(/* @vite-ignore */ chrome.runtime.getURL('overlay.js')) as Promise<OverlayModule>;
       } catch (error) {
         if (isExtensionContextInvalidated(error)) {

@@ -85,7 +85,6 @@ export async function lookupSingleProvider(
     throw new Error(`Unknown dictionary provider: ${providerId}`);
   }
   const result = await adapter.lookup(query, { targetLang, signal, settings });
-  console.log(`[Dictionary] Raw provider result (${providerId}):`, result);
   return result;
 }
 
@@ -229,7 +228,6 @@ export async function runDictionaryEnrichment(
     for (const item of results) {
       currentCombined = mergeDictionaryEntries(currentCombined, item);
       currentCombined.lexicalProfile = mergeLexicalProfiles(currentCombined.lexicalProfile, item.lexicalProfile);
-      console.log('[Dictionary] Merged model after provider:', currentCombined);
     }
     currentCombined.translation = currentCombined.translation || baseResult.translation;
     currentCombined.phraseExplanation = currentCombined.phraseExplanation?.length
@@ -339,7 +337,6 @@ export async function fetchCombinedDictionaryResult(
   const pendingTranslation = Boolean(translationPromise && !translationState.outcome);
   const needsPhraseFallback = isPhraseLike(cleanWord) && !hasUsableDefinitions(dictionary);
   let latest = current;
-  console.log('[Dictionary] Initial merged model (revision 0):', latest);
   emitUpdate(onEnrichUpdate, latest, latest.revision || 0);
 
   const applyLiveUpdate = (updated: DictionaryEntry, revision?: number) => {
@@ -349,7 +346,6 @@ export async function fetchCombinedDictionaryResult(
       phraseExplanation: updated.phraseExplanation?.length ? updated.phraseExplanation : latest.phraseExplanation,
       revision: Math.max((latest.revision || 0) + 1, revision || 0),
     };
-    console.log(`[Dictionary] Merged model (revision ${latest.revision}):`, latest);
     emitUpdate(onEnrichUpdate, latest, latest.revision || 0);
   };
 
@@ -394,7 +390,6 @@ export async function fetchCombinedDictionaryResult(
       revision: (latest.revision || 0) + 1,
     };
     writeCombinedResultCache(combinedKey, latest);
-    console.log(`[Dictionary] Final merged model (revision ${latest.revision}):`, latest);
     emitUpdate(onEnrichUpdate, latest, latest.revision || 0);
     return latest;
   }).catch((error) => {
