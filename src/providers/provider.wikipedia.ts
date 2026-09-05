@@ -61,10 +61,8 @@ export async function fetchWikipediaSummary(
     phonetics: [],
     meanings: [{
       partOfSpeech: 'encyclopedia',
-      source: 'Wikipedia',
       definitions: [{
         definition: description ? `${description}. ${clipped}` : clipped,
-        source: 'Wikipedia',
       }],
     }],
     providerId: 'wikipedia',

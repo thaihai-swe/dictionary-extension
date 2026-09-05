@@ -91,8 +91,7 @@ export async function fetchDatamuse(
     if (groupCount >= MAX_POS_GROUPS) break;
     meanings.push({
       partOfSpeech: pos,
-      definitions: defs.map((definition) => ({ definition, source: 'Datamuse' })),
-      source: 'Datamuse',
+      definitions: defs.map((definition) => ({ definition })),
     });
     groupCount += 1;
   }
@@ -104,8 +103,8 @@ export async function fetchDatamuse(
     fetchDatamuseList(`${DATAMUSE_BASE}?rel_trg=${encodeURIComponent(clean)}&max=8`, signal),
   ]);
 
-  const synonyms: AttributedItem[] = synonymsList.map((text) => ({ text, source: 'Datamuse' }));
-  const antonyms: AttributedItem[] = antonymsList.map((text) => ({ text, source: 'Datamuse' }));
+  const synonyms: AttributedItem[] = synonymsList.map((text) => ({ text }));
+  const antonyms: AttributedItem[] = antonymsList.map((text) => ({ text }));
 
   const collocations: Collocations = {};
   if (jjbList.length) collocations.adjectives = jjbList;

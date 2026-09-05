@@ -29,7 +29,6 @@ export async function fetchWiktionary(word: string, _targetLang = 'vi', signal?:
       definitions?: Array<{ definition?: string; parsedExamples?: Array<{ example?: string }> }>;
     }) => ({
       partOfSpeech: sec.partOfSpeech || 'general',
-      source: 'Wiktionary',
       definitions: (sec.definitions || []).slice(0, MAX_DEFINITIONS).map((d) => {
         let definitionExample: string | undefined;
         if (Array.isArray(d.parsedExamples)) {
@@ -39,14 +38,13 @@ export async function fetchWiktionary(word: string, _targetLang = 'vi', signal?:
               definitionExample = exText;
             }
             if (exText && examples.length < MAX_EXAMPLES && !examples.some((item) => item.text === exText)) {
-              examples.push({ text: exText, source: 'Wiktionary' });
+              examples.push({ text: exText });
             }
           }
         }
         return {
           definition: stripHtml(d.definition || ''),
           example: definitionExample,
-          source: 'Wiktionary',
         };
       }).filter((d: { definition: string }) => d.definition.length > 0),
     })).filter((m: { definitions: Array<{ definition: string }> }) => m.definitions.length > 0);

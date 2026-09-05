@@ -45,7 +45,6 @@ export interface Phonetic {
   language?: string;
   label?: string;
   region?: 'uk' | 'us' | 'all';
-  fallbackOnly?: boolean;
 }
 
 export interface Meaning {
@@ -53,7 +52,6 @@ export interface Meaning {
   definitions: Definition[];
   synonyms?: string[];
   antonyms?: string[];
-  source?: string;
 }
 
 export interface Definition {
@@ -61,7 +59,6 @@ export interface Definition {
   example?: string;
   synonyms?: string[];
   antonyms?: string[];
-  source?: string;
 }
 
 export interface TranslationResult {
@@ -96,8 +93,8 @@ The dictionary provider facade (`src/providers/provider.index.ts`) routes reques
 
 | Provider ID | Provider Module | Authentication | Description |
 |---|---|---|---|
-| `free_dictionary` | `provider.free-dictionary.ts` | None (`api.dictionaryapi.dev`) | Definitions, examples, synonyms/antonyms, US/UK audio MP3s, and phonetic transcriptions. Default primary provider. |
-| `wiktionary` | `provider.wiktionary.ts` | None (`en.wiktionary.org`) | Multi-sense English definitions, examples, and etymological glosses. |
+| `free_dictionary` | `provider.free-dictionary.ts` | None (`api.dictionaryapi.dev`) | Definitions, examples, synonyms/antonyms, US/UK audio MP3s, and phonetic transcriptions. |
+| `wiktionary` | `provider.wiktionary.ts` | None (`en.wiktionary.org`) | Multi-sense English definitions, examples, and etymological glosses. Default primary provider. |
 | `datamuse` | `provider.datamuse.ts` | None (`api.datamuse.com`) | WordNet-style definitions, synonyms, antonyms, and collocations. |
 | `rhymebrain` | `provider.rhymebrain.ts` | None (`rhymebrain.com`) | IPA transcription and pronunciation. Enrichment-only. |
 | `wikipedia` | `provider.wikipedia.ts` | None (`en.wikipedia.org`) | Encyclopedic summary for terms, names, and concepts. |
@@ -161,10 +158,10 @@ The AI subsystem operates in two user-selectable providers (`aiProvider`):
 ## 5. Fallback, Timeouts, and Protocol Routing
 
 ### Dictionary fallback
-Primary lookup uses the configured `dictionaryProvider` (`free_dictionary` by default). Remaining keyless backends run after first paint in concurrent batches of 2:
+Primary lookup uses the configured `dictionaryProvider` (`wiktionary` by default). Remaining keyless backends run after first paint in concurrent batches of 2:
 
 ```text
-free_dictionary ➔ wiktionary ➔ datamuse ➔ rhymebrain ➔ wikipedia ➔ urban_dictionary
+wiktionary ➔ free_dictionary ➔ datamuse ➔ rhymebrain ➔ wikipedia ➔ urban_dictionary
 ```
 
 `NotFoundError` and transient network/5xx/429/timeout continue to the next provider. Dictionary HTTP timeout is 60s.

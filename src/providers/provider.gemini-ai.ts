@@ -35,7 +35,7 @@ import {
   defaultAiBaseUrlFor,
   defaultAiModelFor,
   isOpenAiStandard,
-} from '../shared/settings.ts';
+} from '../shared/settings';
 
 const GEMINI_MODELS = [
   DEFAULT_GEMINI_MODEL,

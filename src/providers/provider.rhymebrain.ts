@@ -49,7 +49,6 @@ export async function fetchRhymeBrain(
     text: ipa,
     language: 'en-US',
     label: 'Speak',
-    fallbackOnly: true,
   }];
 
   return {

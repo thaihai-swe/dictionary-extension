@@ -96,10 +96,10 @@ User selects text on webpage OR types query in toolbar popup
 ### Phase 1: Initial Fast Lookup
 
 1. **Facade Dispatch:** The background worker calls `fetchCombinedDictionaryResult(text, settings)` via `src/providers/provider.index.ts`.
-2. **Primary Provider Selection:** The configured `dictionaryProvider` (`free_dictionary` by default) is attempted first.
+2. **Primary Provider Selection:** The configured `dictionaryProvider` (`wiktionary` by default) is attempted first.
 3. **Provider Fallback Chain:** All remaining dictionary backends are keyless. `NotFoundError` and transient network/5xx/429/timeout continue to the next provider. The fallback chain evaluates in order:
    ```text
-   free_dictionary ➔ wiktionary ➔ datamuse ➔ rhymebrain ➔ wikipedia ➔ urban_dictionary
+   wiktionary ➔ free_dictionary ➔ datamuse ➔ rhymebrain ➔ wikipedia ➔ urban_dictionary
    ```
    *(The primary provider is prioritized at the front of this sequence.)*
 4. **Primary Exact Query:** The primary provider looks up the selected text as-is. Inflections and phrases are not rewritten to a root lemma.
@@ -119,15 +119,14 @@ After the initial result is dispatched to the popup, the background service work
 5. **Bounded Concurrency:** Remaining unqueried providers are fetched in concurrent batches of 2 (`ENRICHMENT_CONCURRENCY = 2`).
 6. **Resilient Failure Handling:** Secondary `NotFoundError` results and operational errors are caught and logged silently without disrupting the displayed primary result.
 7. **Cumulative Merge Engine (`mergeDictionaryEntries`):**
-   - **Sections:** Definitions, examples, synonyms, and antonyms are matched by normalized kind/title, deduplicated by normalized text, and clamped by strict limits:
-     - `MAX_DEFINITIONS_SECTIONS = 2`
-     - `MAX_EXAMPLES_SECTIONS = 2`
-     - `MAX_SYNONYM_SECTIONS = 1`
-     - `MAX_ANTONYM_SECTIONS = 1`
-     - `MAX_ITEMS_PER_SECTION = 8`
-   - **Pronunciations:** Audio URLs and IPA phonetic transcriptions are backfilled onto matching language/accent slots (`en-US`, `en-GB`). Phonetic entries are sorted first (`preferPhoneticPronunciations`) so the header row always surfaces transcription text when any provider supplies it. Clamped to `MAX_PRONUNCIATIONS = 4`.
-   - **Lexical Profiles:** Normalized word family forms, word formation, warnings, learner mistakes, and collocations are merged across providers via `mergeLexicalProfiles`.
-   - **Source Badges:** Every provider that successfully returned data is added to `sourceBadges`, ensuring full attribution even when content duplicates an existing section.
+   - **Meanings & Definitions:** Meanings are grouped by canonical POS (`canonicalPartOfSpeech`). Definitions are deduplicated with token-overlap / near-duplicate matching (`areDefinitionsEquivalent`); a later provider can backfill a missing example onto an existing definition. Extra POS groups are skipped once `MAX_MEANINGS` is reached. Clamped to:
+     - `MAX_MEANINGS = 6`
+     - `MAX_DEFINITIONS_PER_POS = 8`
+   - **Attributed Lists:** Synonyms, antonyms, and examples are deduplicated and clamped to `MAX_ITEMS_PER_SECTION = 16`.
+   - **Phonetics:** IPA is stored only on `phonetics[]` (`text` = IPA, `audio` = URL). Entries match IPA first, then region. Distinct IPAs are preserved without collisions. Clamped to `MAX_PHONETICS = 8`.
+   - **Lexical Profiles:** Normalized word family forms, word formation, warnings, learner mistakes, and collocations merge via `mergeLexicalProfiles`.
+   - **Specialized POS:** Urban Dictionary slang and Wikipedia encyclopedia stay as separate POS groups, not mixed into general lexical categories.
+   - **Lifecycle:** Intermediate merges keep `enriched: false`. The final service-worker task sets `enriched: true`. Dictionary `sourceBadges`, top-level `phonetic`, `pronunciations`, and `syllables` are removed from the model.
 8. **Incremental Broadcast:** The enriched payload is sent to the originating tab/frame via `LOOKUP_UPDATE`. The UI coalesces revisions onto `requestAnimationFrame` and ignores equal-or-older revisions.
 
 ---

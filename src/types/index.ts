@@ -49,7 +49,6 @@ export interface Phonetic {
   language?: string;
   label?: string;
   region?: 'uk' | 'us' | 'all';
-  fallbackOnly?: boolean;
 }
 
 export interface Definition {
@@ -57,7 +56,6 @@ export interface Definition {
   example?: string;
   synonyms?: string[];
   antonyms?: string[];
-  source?: string;
 }
 
 export interface Meaning {
@@ -65,12 +63,10 @@ export interface Meaning {
   definitions: Definition[];
   synonyms?: string[];
   antonyms?: string[];
-  source?: string;
 }
 
 export interface AttributedItem {
   text: string;
-  source?: string;
 }
 
 export interface WordFamily {
@@ -151,6 +147,14 @@ export interface PhraseExplanationSection {
   markdown?: boolean;
   items?: string[];
   source?: string;
+}
+
+export interface ProviderValidationResult {
+  ok: boolean;
+  providerId?: string;
+  latencyMs?: number;
+  error?: string;
+  message?: string;
 }
 
 export interface PracticeResult {

@@ -109,20 +109,6 @@ function displayPartOfSpeech(pos: string): string {
   return canonicalPartOfSpeech(pos);
 }
 
-function joinSourceLabels(...labels: Array<string | undefined>): string | undefined {
-  const parts: string[] = [];
-  for (const label of labels) {
-    for (const piece of String(label || '').split(/\s*[+|•]\s*/)) {
-      const value = piece.trim();
-      if (!value) continue;
-      if (!parts.some((existing) => existing.toLowerCase() === value.toLowerCase())) {
-        parts.push(value);
-      }
-    }
-  }
-  return parts.length ? parts.join(' + ') : undefined;
-}
-
 function mergeAttributed(existing: AttributedItem[] = [], incoming: AttributedItem[] = []): AttributedItem[] {
   const merged = [...existing];
   for (const item of incoming) {
@@ -130,7 +116,7 @@ function mergeAttributed(existing: AttributedItem[] = [], incoming: AttributedIt
     if (!text) continue;
     if (merged.some((row) => normalizeText(row.text) === normalizeText(text))) continue;
     if (merged.length >= MAX_ITEMS_PER_SECTION) break;
-    merged.push({ text, source: item.source });
+    merged.push({ text });
   }
   return merged;
 }
@@ -141,7 +127,6 @@ function cloneMeaning(meaning: Meaning): Meaning {
     definitions: [...(meaning.definitions || [])],
     synonyms: meaning.synonyms ? [...meaning.synonyms] : undefined,
     antonyms: meaning.antonyms ? [...meaning.antonyms] : undefined,
-    source: meaning.source,
   };
 }
 
@@ -174,7 +159,6 @@ export function mergeMeanings(existing: Meaning[], incoming: Meaning[]): Meaning
         definitions: [],
         synonyms: [],
         antonyms: [],
-        source: incMeaning.source,
       };
       merged.push(target);
     }
@@ -182,7 +166,6 @@ export function mergeMeanings(existing: Meaning[], incoming: Meaning[]): Meaning
     if (!target) return;
 
     target.partOfSpeech = displayPartOfSpeech(target.partOfSpeech || pos);
-    target.source = joinSourceLabels(target.source, incMeaning.source);
 
     for (const incDef of incMeaning.definitions || []) {
       const defText = (incDef.definition || '').trim();
@@ -200,7 +183,6 @@ export function mergeMeanings(existing: Meaning[], incoming: Meaning[]): Meaning
         target.definitions.push({
           ...incDef,
           definition: defText,
-          source: incDef.source || incMeaning.source,
         });
       }
     }
@@ -248,7 +230,6 @@ export function mergePhonetics(existing: Phonetic[] = [], incoming: Phonetic[] =
       if (text && !String(current.text || '').trim()) current.text = text;
       if (audio && !String(current.audio || '').trim()) {
         current.audio = audio;
-        current.fallbackOnly = false;
       }
       if (language && !current.language) current.language = language;
       if (incomingRegion && (!current.region || current.region === 'all')) {
@@ -304,9 +285,6 @@ function extractTranslationFromMeanings(meanings: Meaning[]): TranslationResult 
     if (!translatedText) continue;
     return {
       translatedText,
-      sourceBadges: meaning.source
-        ? [{ label: meaning.source, kind: 'translation' }]
-        : undefined,
     };
   }
   return undefined;

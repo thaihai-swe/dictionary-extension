@@ -1,4 +1,4 @@
-import { AppSettings, DictionaryEntry, PhraseExplanationSection, ProviderLookupDto, TranslationResult } from '../types';
+import { AppSettings, DictionaryEntry, PhraseExplanationSection, ProviderLookupDto, ProviderValidationResult, TranslationResult } from '../types';
 import { NotFoundError, isFatalDictionaryError } from './errors';
 import {
   DICTIONARY_FALLBACK_ORDER,
@@ -553,14 +553,6 @@ export async function fetchCombinedDictionaryResult(
   });
 
   return backgroundWork;
-}
-
-export interface ProviderValidationResult {
-  ok: boolean;
-  providerId?: string;
-  latencyMs?: number;
-  error?: string;
-  message?: string;
 }
 
 export async function validateDictionaryProvider(

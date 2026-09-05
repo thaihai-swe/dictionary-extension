@@ -1,4 +1,6 @@
-import type { AiIntentId, AiResult, AppSettings, DictionaryEntry } from '../types';
+import type { AiIntentId, AiResult, AppSettings, DictionaryEntry, ProviderValidationResult } from '../types';
+
+export type { ProviderValidationResult };
 
 export const LOOKUP_TEXT = 'LOOKUP_TEXT';
 export const AI_LOOKUP = 'AI_LOOKUP';
@@ -75,14 +77,6 @@ export interface RuntimeErrorResponse {
 }
 
 export type RuntimeResponse<T> = RuntimeOkResponse<T> | RuntimeErrorResponse;
-
-export interface ProviderValidationResult {
-  ok: boolean;
-  providerId?: string;
-  latencyMs?: number;
-  error?: string;
-  message?: string;
-}
 
 export function createRequestId(prefix = 'req'): string {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;

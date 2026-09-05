@@ -42,7 +42,6 @@ export async function fetchFreeDictionary(word: string, _targetLang: string = 'v
         region,
         language: languageFromRegion(region),
         label: region === 'uk' ? 'Listen (UK)' : region === 'us' ? 'Listen (US)' : 'Listen',
-        fallbackOnly: !p.audio,
       };
     });
 
@@ -52,34 +51,33 @@ export async function fetchFreeDictionary(word: string, _targetLang: string = 'v
   const meanings: Meaning[] = ((entry.meanings as Meaning[]) || []).map((meaning) => {
     const definitions = (meaning.definitions || []).map((definition) => {
       if (definition.example && examples.length < 8 && !examples.some((item) => item.text === definition.example)) {
-        examples.push({ text: definition.example, source: 'Free Dictionary API' });
+        examples.push({ text: definition.example });
       }
       for (const syn of definition.synonyms || []) {
         if (synonyms.length < 12 && !synonyms.some((item) => item.text === syn)) {
-          synonyms.push({ text: syn, source: 'Free Dictionary API' });
+          synonyms.push({ text: syn });
         }
       }
       for (const ant of definition.antonyms || []) {
         if (antonyms.length < 12 && !antonyms.some((item) => item.text === ant)) {
-          antonyms.push({ text: ant, source: 'Free Dictionary API' });
+          antonyms.push({ text: ant });
         }
       }
-      return { ...definition, source: 'Free Dictionary API' };
+      return { ...definition };
     });
     for (const syn of meaning.synonyms || []) {
       if (synonyms.length < 12 && !synonyms.some((item) => item.text === syn)) {
-        synonyms.push({ text: syn, source: 'Free Dictionary API' });
+        synonyms.push({ text: syn });
       }
     }
     for (const ant of meaning.antonyms || []) {
       if (antonyms.length < 12 && !antonyms.some((item) => item.text === ant)) {
-        antonyms.push({ text: ant, source: 'Free Dictionary API' });
+        antonyms.push({ text: ant });
       }
     }
     return {
       ...meaning,
       definitions,
-      source: 'Free Dictionary API',
     };
   });
 

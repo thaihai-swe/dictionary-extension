@@ -13,82 +13,14 @@ import type {
   WordFormation,
 } from '../types';
 import {
-  getEnglishLemma,
-  getEnglishLemmaCandidates,
   normalizeDictionaryTerm,
-  prefersLemmaHeadword,
 } from './lemma.ts';
 
 export {
-  getEnglishLemma,
-  getEnglishLemmaCandidates,
   normalizeDictionaryTerm,
-  prefersLemmaHeadword,
 };
 
-export function classifyQuery(text: string): 'empty' | 'word' | 'phrase' | 'sentence' {
-  const str = String(text || '').trim();
-  if (!str) return 'empty';
-
-  const hasPunctuation = /[.!?]/.test(str);
-  const words = str.split(/\s+/).filter(Boolean);
-
-  if (words.length === 1) return 'word';
-  if (hasPunctuation || words.length >= 7) return 'sentence';
-  return 'phrase';
-}
-
-const PHRASE_AUXILIARIES = new Set([
-  'am', 'are', 'be', 'been', 'being', 'did', 'do', 'does', 'had', 'has',
-  'have', 'is', 'may', 'might', 'must', 'shall', 'should', 'was', 'were',
-  'will', 'would', 'can', 'could',
-]);
-
-const PHRASE_OBJECT_PRONOUNS = new Set([
-  'him', 'her', 'it', 'me', 'them', 'us', 'you',
-]);
-
-export function getEnglishPhraseCandidates(text: string): string[] {
-  const normalized = String(text || '').replace(/\s+/g, ' ').trim().toLowerCase();
-  if (!normalized || !/\s/.test(normalized) || !/^[a-z]+(?:[ '-][a-z]+)*$/i.test(normalized)) {
-    return [];
-  }
-
-  const tokens = normalized.split(' ');
-  const candidates: string[] = [];
-  const pushCandidate = (value: string[]) => {
-    const candidate = value.join(' ').trim();
-    if (candidate && candidate !== normalized && !candidates.includes(candidate)) {
-      candidates.push(candidate);
-    }
-  };
-
-  let headIndex = 0;
-  while (headIndex < tokens.length - 1 && PHRASE_AUXILIARIES.has(tokens[headIndex])) {
-    headIndex += 1;
-  }
-
-  const head = tokens[headIndex];
-  const headCandidates = [head, ...getEnglishLemmaCandidates(head)];
-
-  for (const lemma of [...new Set(headCandidates)]) {
-    const canonical = tokens.slice(headIndex);
-    canonical[0] = lemma;
-    pushCandidate(canonical);
-
-    if (
-      canonical.length >= 3
-      && PHRASE_OBJECT_PRONOUNS.has(canonical[1])
-      && canonical.length <= 4
-    ) {
-      pushCandidate([canonical[0], ...canonical.slice(2)]);
-    }
-  }
-
-  return candidates;
-}
-
-export type LookupAttemptKind = 'exact' | 'root' | 'phrase';
+export type LookupAttemptKind = 'exact';
 
 export interface DictionaryLookupAttempt {
   providerId: string;
@@ -106,7 +38,6 @@ const FALLBACK_ORDER = [
 ];
 
 export const DICTIONARY_FALLBACK_ORDER = FALLBACK_ORDER;
-export const MAX_PRIMARY_DICTIONARY_ATTEMPTS = 2;
 
 export function isPhraseLike(text: string): boolean {
   const normalized = String(text || '').replace(/\s+/g, ' ').trim();
@@ -164,37 +95,11 @@ export function splitPhraseExplanation(markdown: string, source = 'AI · Phrase 
   return blocks.filter((section) => Boolean(section.text?.trim() || section.title?.trim()));
 }
 
-export function getDictionaryLookupAttempts(text: string, primaryId: string): DictionaryLookupAttempt[] {
-  const normalizedPrimary = FALLBACK_ORDER.includes(primaryId) ? primaryId : 'wiktionary';
-  const fallbackChain = [
-    normalizedPrimary,
-    ...FALLBACK_ORDER.filter((id) => id !== normalizedPrimary),
-  ];
-  const normalizedText = normalizeDictionaryTerm(text) || String(text || '').trim();
-  const attempts: DictionaryLookupAttempt[] = [];
-  const seen = new Set<string>();
-
-  function pushAttempt(providerId: string, query: string, kind: LookupAttemptKind) {
-    const normalizedQuery = String(query || '').trim();
-    if (!providerId || !normalizedQuery) return;
-    const key = `${providerId}\0${normalizedQuery.toLowerCase()}`;
-    if (seen.has(key)) return;
-    seen.add(key);
-    attempts.push({ providerId, query: normalizedQuery, kind });
-  }
-
-  for (const providerId of fallbackChain) {
-    pushAttempt(providerId, normalizedText, 'exact');
-  }
-
-  return attempts;
-}
-
 export function getPrimaryDictionaryLookupAttempts(text: string, primaryId: string): DictionaryLookupAttempt[] {
   const normalizedPrimary = FALLBACK_ORDER.includes(primaryId) ? primaryId : 'wiktionary';
-  return getDictionaryLookupAttempts(text, primaryId)
-    .filter((attempt) => attempt.providerId === normalizedPrimary)
-    .slice(0, MAX_PRIMARY_DICTIONARY_ATTEMPTS);
+  const query = normalizeDictionaryTerm(text) || String(text || '').trim();
+  if (!query) return [];
+  return [{ providerId: normalizedPrimary, query, kind: 'exact' }];
 }
 
 const MAX_LEXICAL_ITEMS = 8;

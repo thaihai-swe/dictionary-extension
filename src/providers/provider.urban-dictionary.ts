@@ -69,11 +69,9 @@ export async function fetchUrbanDictionary(
 
   const meanings: Meaning[] = [{
     partOfSpeech: 'slang',
-    source: 'Urban Dictionary',
     definitions: unique.map((item) => ({
       definition: item.definition,
       example: item.example || undefined,
-      source: 'Urban Dictionary',
     })),
   }];
 
@@ -83,7 +81,7 @@ export async function fetchUrbanDictionary(
     meanings,
     examples: unique
       .filter((item) => item.example)
-      .map((item) => ({ text: item.example, source: 'Urban Dictionary' })),
+      .map((item) => ({ text: item.example })),
     providerId: 'urban_dictionary',
   };
 }
