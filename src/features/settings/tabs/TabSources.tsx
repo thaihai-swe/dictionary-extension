@@ -44,7 +44,7 @@ export const TabSources: React.FC<TabSourcesProps> = ({
             type="checkbox"
             checked={localSettings.enableTranslate !== false}
             onChange={(e) => onChange({ enableTranslate: e.target.checked })}
-            className="accent-[var(--color-primary)] w-4 h-4 cursor-pointer"
+            className="w-4 h-4 cursor-pointer"
           />
         </label>
         <label className="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-muted transition-colors">
@@ -56,7 +56,7 @@ export const TabSources: React.FC<TabSourcesProps> = ({
             type="checkbox"
             checked={localSettings.enableDictionary !== false}
             onChange={(e) => onChange({ enableDictionary: e.target.checked })}
-            className="accent-[var(--color-primary)] w-4 h-4 cursor-pointer"
+            className="w-4 h-4 cursor-pointer"
           />
         </label>
       </div>
@@ -218,7 +218,7 @@ export const TabSources: React.FC<TabSourcesProps> = ({
                 step="0.05"
                 value={localSettings.pronunciationRate ?? 1}
                 onChange={(e) => onChange({ pronunciationRate: parseFloat(e.target.value) })}
-                className="accent-[var(--color-primary)] cursor-pointer w-28"
+                className="cursor-pointer w-28"
               />
               <span className="font-mono text-accent text-xs w-10 text-right">
                 {localSettings.pronunciationRate ?? 1}x

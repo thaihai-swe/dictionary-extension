@@ -53,7 +53,7 @@ export const TabAi: React.FC<TabAiProps> = ({
             type="checkbox"
             checked={localSettings.enableAI !== false}
             onChange={(e) => onChange({ enableAI: e.target.checked })}
-            className="accent-[var(--color-primary)] w-4 h-4 cursor-pointer"
+            className="w-4 h-4 cursor-pointer"
           />
         </label>
       </div>
@@ -73,7 +73,7 @@ export const TabAi: React.FC<TabAiProps> = ({
             type="checkbox"
             checked={Boolean(localSettings.enableAiPreload)}
             onChange={(e) => onChange({ enableAiPreload: e.target.checked })}
-            className="accent-[var(--color-primary)] w-4 h-4 cursor-pointer"
+            className="w-4 h-4 cursor-pointer"
           />
         </label>
       </div>
@@ -93,7 +93,7 @@ export const TabAi: React.FC<TabAiProps> = ({
             type="checkbox"
             checked={Boolean(localSettings.enablePhraseFallback)}
             onChange={(e) => onChange({ enablePhraseFallback: e.target.checked })}
-            className="accent-[var(--color-primary)] w-4 h-4 cursor-pointer"
+            className="w-4 h-4 cursor-pointer"
           />
         </label>
       </div>

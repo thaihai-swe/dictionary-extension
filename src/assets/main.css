@@ -316,6 +316,18 @@ html.light {
 .lexical-accordion > summary::-webkit-details-marker {
   display: none;
 }
+.lexical-accordion > summary svg {
+  transition: transform 160ms ease;
+}
+.lexical-accordion[open] > summary svg {
+  transform: rotate(180deg);
+}
+
+input[type="checkbox"],
+input[type="radio"],
+input[type="range"] {
+  accent-color: var(--color-primary);
+}
 
 /* Editorial Related Words (Synonyms & Antonyms) */
 .related-word-link {

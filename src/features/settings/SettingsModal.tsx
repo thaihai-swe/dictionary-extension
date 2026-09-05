@@ -451,7 +451,7 @@ export const SettingsModal: React.FC = () => {
                     type="checkbox"
                     checked={Boolean(localSettings.enableContextMenuTrigger)}
                     onChange={(e) => patchLocalSettings({ enableContextMenuTrigger: e.target.checked })}
-                    className="accent-[var(--color-primary)] w-4 h-4 cursor-pointer"
+                    className="w-4 h-4 cursor-pointer"
                   />
                 </label>
               </div>
@@ -471,7 +471,7 @@ export const SettingsModal: React.FC = () => {
                     type="checkbox"
                     checked={Boolean(localSettings.disablePageContextExtraction)}
                     onChange={(e) => patchLocalSettings({ disablePageContextExtraction: e.target.checked })}
-                    className="accent-[var(--color-primary)] w-4 h-4 cursor-pointer"
+                    className="w-4 h-4 cursor-pointer"
                   />
                 </label>
               </div>

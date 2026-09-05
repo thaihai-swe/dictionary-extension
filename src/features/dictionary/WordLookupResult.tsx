@@ -18,6 +18,7 @@ import {
   WordFormationCard,
 } from '@/components/async-views';
 import { cx } from '@/ui/cx';
+import { useStorage } from '@/composables/composable.storage';
 import { IconCheck, IconChevronDown, IconCopy, IconMic, IconQuote, IconSparkles, IconSpeaker } from '@/components/icons';
 import RelatedWords from '@/components/component.related-words';
 import { showToast } from '@/composables/composable.toast';
@@ -45,6 +46,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
   const query = useDictionaryQuery();
   const { playingKey } = useDictionaryAudio();
   const { practiceResult, isPracticing, supportsSpeechPractice } = useDictionaryPractice();
+  const { settings } = useStorage();
   const [hasCopied, setHasCopied] = React.useState(false);
 
   const displayHeadword = useMemo(() => {
@@ -467,15 +469,17 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
         </section>
       ) : null}
 
-      {result.lexicalProfile?.wordFamily
-      || result.lexicalProfile?.collocations
-      || result.lexicalProfile?.usageNotes
-      || usageWarnings.length
-      || result.lexicalProfile?.confusablePairs
-      || formationText
-      || formationPrefixes.length
-      || formationSuffixes.length
-      || result.lexicalProfile?.learnerMistakes ? (
+      {settings.enableLexicalProfile !== false && (
+        result.lexicalProfile?.wordFamily
+        || result.lexicalProfile?.collocations
+        || result.lexicalProfile?.usageNotes
+        || usageWarnings.length
+        || result.lexicalProfile?.confusablePairs
+        || formationText
+        || formationPrefixes.length
+        || formationSuffixes.length
+        || result.lexicalProfile?.learnerMistakes
+      ) ? (
         <details className="lexical-accordion rounded-lg border border-border bg-surface shadow-card">
           <summary className="px-3.5 py-2.5 text-[11px] font-bold text-content-muted uppercase tracking-wider flex items-center justify-between gap-2">
             <span>More lexical detail</span>

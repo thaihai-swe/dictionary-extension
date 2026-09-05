@@ -81,7 +81,7 @@ export const TabAppearance: React.FC<TabAppearanceProps> = ({ localSettings, onC
             type="checkbox"
             checked={localSettings.enableLexicalProfile !== false}
             onChange={(e) => onChange({ enableLexicalProfile: e.target.checked })}
-            className="accent-[var(--color-primary)] w-4 h-4 cursor-pointer"
+            className="w-4 h-4 cursor-pointer"
           />
         </label>
       </div>
