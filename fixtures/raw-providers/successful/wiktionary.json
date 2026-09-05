@@ -1,0 +1,21 @@
+{
+  "en": [
+    {
+      "partOfSpeech": "Adjective",
+      "language": "English",
+      "definitions": [
+        {
+          "definition": "Resulting in <a rel=\"mw:WikiLink\" href=\"/wiki/success\" title=\"success\">success</a>; assuring or promoting success; <a rel=\"mw:WikiLink\" href=\"/wiki/accomplish\" title=\"accomplish\">accomplishing</a> what was <a rel=\"mw:WikiLink\" href=\"/wiki/propose\" title=\"propose\">proposed</a>; having the desired <a rel=\"mw:WikiLink\" href=\"/wiki/effect\" title=\"effect\">effect</a>.",
+          "parsedExamples": [
+            {
+              "example": "a <b>successful</b> use of medicine<span typeof=\"mw:Entity\">;</span>&nbsp; a <b>successful</b> experiment<span typeof=\"mw:Entity\">;</span>&nbsp; a <b>successful</b> enterprise"
+            }
+          ],
+          "examples": [
+            "a <b>successful</b> use of medicine<span typeof=\"mw:Entity\">;</span>&nbsp; a <b>successful</b> experiment<span typeof=\"mw:Entity\">;</span>&nbsp; a <b>successful</b> enterprise"
+          ]
+        }
+      ]
+    }
+  ]
+}

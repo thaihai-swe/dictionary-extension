@@ -1,0 +1,49 @@
+{
+  "type": "standard",
+  "title": "Success",
+  "displaytitle": "<span lang=\"en\" dir=\"ltr\"><span class=\"mw-page-title-main\">Success</span></span>",
+  "namespace": {
+    "id": 0,
+    "text": ""
+  },
+  "wikibase_item": "Q7632586",
+  "titles": {
+    "canonical": "Success",
+    "normalized": "Success",
+    "display": "<span lang=\"en\" dir=\"ltr\"><span class=\"mw-page-title-main\">Success</span></span>"
+  },
+  "pageid": 63138616,
+  "thumbnail": {
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Fighting_smallpox_in_Niger%2C_1969.jpg/330px-Fighting_smallpox_in_Niger%2C_1969.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "width": 330,
+    "height": 427
+  },
+  "originalimage": {
+    "source": "https://upload.wikimedia.org/wikipedia/commons/2/28/Fighting_smallpox_in_Niger%2C_1969.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "width": 2124,
+    "height": 2750
+  },
+  "lang": "en",
+  "dir": "ltr",
+  "revision": "1367696620",
+  "tid": "f00042fe-9023-11f1-86c8-33a8a17d6de9",
+  "timestamp": "2026-08-04T16:45:45Z",
+  "description": "Meeting or surpassing an intended goal or objective",
+  "description_source": "local",
+  "content_urls": {
+    "desktop": {
+      "page": "https://en.wikipedia.org/wiki/Success",
+      "revisions": "https://en.wikipedia.org/wiki/Success?action=history",
+      "edit": "https://en.wikipedia.org/wiki/Success?action=edit",
+      "talk": "https://en.wikipedia.org/wiki/Talk:Success"
+    },
+    "mobile": {
+      "page": "https://en.wikipedia.org/wiki/Success",
+      "revisions": "https://en.wikipedia.org/wiki/Special:History/Success",
+      "edit": "https://en.wikipedia.org/wiki/Success?action=edit",
+      "talk": "https://en.wikipedia.org/wiki/Talk:Success"
+    }
+  },
+  "extract": "Success is the state or condition of meeting a defined range of expectations. It may be viewed as the opposite of failure. The criteria for success depend on context, and may be relative to a particular observer or belief system. One person might consider a success what another person considers a failure, particularly in cases of direct competition or a zero-sum game. Similarly, the degree of success or failure in a situation may be differently viewed by distinct observers or participants, such that a situation that one considers to be a success, another might consider to be a failure, a qualified success or a neutral situation. For example, a film that is a commercial failure or even a box-office bomb can go on to receive a cult following, with the initial lack of commercial success even lending a cachet of subcultural coolness.",
+  "extract_html": "<p><b>Success</b> is the state or condition of meeting a defined range of expectations. It may be viewed as the opposite of failure. The criteria for success depend on context, and may be relative to a particular observer or belief system. One person might consider a success what another person considers a failure, particularly in cases of direct competition or a zero-sum game. Similarly, the degree of success or failure in a situation may be differently viewed by distinct observers or participants, such that a situation that one considers to be a success, another might consider to be a failure, a qualified success or a neutral situation. For example, a film that is a commercial failure or even a box-office bomb can go on to receive a cult following, with the initial lack of commercial success even lending a cachet of subcultural coolness.</p>"
+}

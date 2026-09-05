@@ -2,9 +2,9 @@
 
 ## Overview
 
-Contextual AI capabilities (**Context Explain**, **Grammar & Nuance**, **Phrase & Collocations**, and **Sentence Breakdown**) require or benefit from knowing the surrounding sentence of a target word or phrase.
+Contextual AI capabilities (**Context Explain**, **Grammar & Nuance**, **Phrase & Collocations**, **Sentence Breakdown**, **Compare Confusables**, and **Rephrase**) require or benefit from knowing the surrounding sentence of a target word or phrase.
 
-To provide accurate contextual awareness without capturing unnecessary or sensitive page content, **Dictionary** implements a dual-mode sentence extraction engine:
+To provide accurate contextual awareness without capturing unnecessary or sensitive page content, **Dictionary** implements a dual-mode sentence extraction engine in `src/shared/page-context.ts`:
 
 1. **Mode 1 — Selection Mode (Exact — Confidence: `exact`):** Calculates the exact character offset of the user's cursor selection within the containing DOM block, slicing only the containing sentence.
 2. **Mode 2 — Page Search Mode (Ranked Candidate — Confidence: `suggested`):** Searches the readable page DOM for whole-word matches and ranks candidates using visibility, semantic container placement, viewport proximity, and document order.
@@ -59,6 +59,7 @@ To provide accurate contextual awareness without capturing unnecessary or sensit
 │  • Grammar & Nuance: Strictly requires non-empty context               │
 │  • Sentence Breakdown: Uses context sentence, or query if sentence-like│
 │  • Phrase & Collocations: Optional context supplement                  │
+│  • Confusables / Rephrase: Optional context supplement                 │
 │  • Result displays a visible "Context used" quotation section          │
 └────────────────────────────────────────────────────────────────────────┘
 ```
@@ -92,9 +93,10 @@ Mode 1 is triggered when the user highlights text on a webpage or invokes a cont
    ```
 5. **Bidirectional Delimiter Scanning (`extractSentenceAtOffset`):**
    - Scans backward from `offset - 1` for sentence start boundaries: `.`, `!`, `?`, `。`, `！`, `？`.
+   - Heuristically avoids false boundaries at decimal dots (e.g. `3.14`) and common title abbreviations (`Mr.`, `Dr.`, `etc.`).
    - Scans forward from `offset` for sentence end boundaries and extends across trailing quotes and brackets (`["'”’»)]`).
 6. **Boundary Verification:** Verifies `findSentenceContaining(exactSentence, needle)` using a Unicode-aware boundary pattern.
-7. **Context Normalization:** Caps length at `MAX_CONTEXT_CHARS = 800` via `normalizeContext()` with ellipsis truncation if exceeded.
+7. **Context Normalization:** Caps length at `MAX_CONTEXT_CHARS = 800` via `normalizeContext()` with ellipsis truncation (`…`) if exceeded.
 8. **Result Packaging:** Returns `{ context, source: "selection", confidence: "exact" }`.
 
 ### Why Range Offset Solves Multi-Occurrence Ambiguity
@@ -128,11 +130,8 @@ Mode 2 is triggered when the user types a query in the toolbar popup or switches
    - Scans up to `MAX_SCAN_ELEMENTS = 120` elements to maintain 60fps performance.
 3. **Candidate Collection:**
    - Evaluates elements matching the boundary pattern.
-   - Splits block text into sentences via `splitIntoSentences()`:
-     ```javascript
-     text.match(/[^.!?。！？]+(?:[.!?。！？]+["'”’»)]*|$)/g)
-     ```
-   - Collects up to 8 matching candidate sentences, measuring bounding rects and visibility for each.
+   - Splits block text into sentences via `splitIntoSentences()` with abbreviation awareness.
+   - Collects matching candidate sentences, measuring bounding rects and visibility for each.
 4. **Multi-Factor Candidate Ranking (`rankSentenceCandidates`):**
    Candidates are sorted deterministically using 4 weighted criteria:
    - **1. Viewport Visibility (`visible`):** Elements currently inside the active viewport (`rect.bottom >= 0 && rect.top <= viewportHeight`) rank first.
@@ -145,55 +144,23 @@ Mode 2 is triggered when the user types a query in the toolbar popup or switches
 
 ---
 
-## Message Contract (`GET_PAGE_CONTEXT`)
-
-The toolbar popup or background worker queries the active tab's content script via `GET_PAGE_CONTEXT`. If the in-page card already holds `activeContext` and the query matches `activeText`, the content script returns that in-memory value, preserving manual edits.
-
-### Request Payload
-```json
-{
-  "type": "GET_PAGE_CONTEXT",
-  "payload": {
-    "text": "evaluate"
-  }
-}
-```
-
-### Response Payload
-```json
-{
-  "context": "Scientists are currently evaluating evidence of ancient microbial life on Mars.",
-  "source": "selection",
-  "confidence": "exact"
-}
-```
-
-### Confidence & Source Lifecycle Matrix
-
-| `confidence` | `source` | Origin / Trigger | UI Help Text |
-|---|---|---|---|
-| `"exact"` | `"selection"` | Extracted from exact selection Range offset. | `Context detected from your selection. You can edit it.` |
-| `"suggested"` | `"page"` | Extracted from ranked page candidate search. | `Suggested sentence from this page. You can edit or replace it.` |
-| `"manual"` | `"manual"` | User typed or pasted directly into textarea. | `Used only for this explanation. Not saved.` |
-| `"none"` | `""` | No match found or extraction disabled. | `Used only for this explanation. Not saved.` |
-
----
-
 ## Action-Specific Context Handling & Validation
 
 | Action | Intent | Context Requirement | Query & Context Resolution |
 |---|---|---|---|
-| **Context Explain** | `explain_in_context` | **Strictly Required** | Validates `validateContext()`. If empty, shows inline alert `Please enter or paste the sentence containing this word.` and focuses textarea. |
-| **Grammar & Nuance** | `grammar` | **Strictly Required** | Validates `validateContext()`. If empty, shows inline alert `Please enter or paste the sentence containing this word.` and focuses textarea. |
-| **Sentence Breakdown** | `sentence_breakdown` | **Flexible** | If query is already sentence-like (`classifyQuery(text) === "sentence"`), uses query as context. If query is a single word/phrase, requires valid context; otherwise prompts `Enter or paste the sentence to break down.` |
-| **Phrase & Collocations** | `phrase_explorer` | **Optional** | Uses context if provided; functions seamlessly without context. |
+| **Main AI** | `default` | Optional | Enriches definition senses with context-relevant markers when present. |
+| **Context Explain** | `explain_in_context` | **Strictly Required** | Validates context. If empty, the toolbar button is disabled; if triggered, prompts to enter sentence context. |
+| **Grammar & Nuance** | `grammar` | **Strictly Required** | Validates context. If empty, the toolbar button is disabled. Analyzes syntactic slot within that sentence. |
+| **Sentence Breakdown** | `sentence_breakdown` | **Flexible** | If query is already sentence-like (`classifyQuery(text) === "sentence"`), uses query as sentence. Otherwise requires valid surrounding context. |
+| **Phrase & Collocations** | `collocations` | Optional | Uses context to highlight contextual collocations; operates standalone if empty. |
+| **Compare Confusables** | `confusables` | Optional | Context illuminates which confusable word fits the sentence. |
+| **Rephrase** | `rephrase` | Optional | Context provides the full sentence to offer rewritten alternatives. |
 
 When context is used, AI results render a dedicated quote section:
 ```markdown
 ### Context used
 > Scientists are currently evaluating evidence of ancient microbial life on Mars.
 ```
-The query term inside the quote is highlighted with bold markers (`**term**`) via `Renderer.highlightContextQuery()`.
 
 ---
 
@@ -201,21 +168,17 @@ The query term inside the quote is highlighted with bold markers (`**term**`) vi
 
 - **Scriptable HTML5 PDF Text Layers:** Online or local PDFs rendered with HTML5 text layers (`.textLayer`, `.pdfViewer`) expose DOM nodes. Range offset and candidate extraction operate seamlessly over text-layer spans.
 - **Hyphenation & Pagination Healing:** Line-break hyphens (`trans-\nportation` → `transportation`) and soft hyphens are healed automatically before boundary scanning.
-- **Multi-Frame Selection Coordination:** Context-menu lookups transmit `frameId` from the background worker. When `frameId > 0`, the background queries `GET_PAGE_CONTEXT` on that selection frame, copies the returned sentence onto `OPEN_LOOKUP_POPUP`, and opens the popup in the top frame or selection frame.
-- **Restricted Chrome Pages:** For pages where content script injection is impossible, the toolbar popup adapts its help text via `classifyPageRestriction`:
-  - `pdf_viewer`: `"PDF viewer pages cannot auto-extract context. Paste the sentence here."`
-  - `file_url`: `"Local files need Allow access to file URLs, or paste the sentence here."`
-  - `restricted_page`: `"This page cannot provide context automatically. Paste the sentence here."`
-  - `content_script_unavailable`: `"Page context unavailable. Paste the sentence here."`
+- **Multi-Frame Selection Coordination:** Context-menu lookups transmit `frameId` from the background worker. When `frameId > 0`, the background queries context on that selection frame and opens the popup.
+- **Restricted Chrome Pages:** For pages where content script injection is impossible (`chrome://`, Chrome Web Store, internal browser PDF viewer), the toolbar popup prompts users to paste their sentence directly.
 
 ---
 
 ## Privacy Safeguards & Execution Limits
 
-1. **User Opt-Out (`disablePageContextExtraction`):** Configurable in Options. When enabled, `extractSurroundingContext()` immediately returns `{ context: "", source: "", confidence: "none" }`. The in-page card displays `🚫 Context: None`.
+1. **User Opt-Out (`disablePageContextExtraction`):** Configurable in Settings. When enabled, `extractSurroundingContext()` immediately returns `{ context: "", source: "", confidence: "none" }`.
 2. **Strict Payload Clamping (`MAX_CONTEXT_CHARS = 800`):** Enforces strict upper bounds to protect LLM context windows and control token costs. Truncated sentences append an ellipsis (`…`).
 3. **Execution Bounds:**
    - `MAX_CANDIDATE_TEXT_LENGTH = 12000` chars per block.
    - `MAX_SCAN_ELEMENTS = 120` elements per candidate search.
    - `MAX_FALLBACK_TEXT_LENGTH = 50000` chars for full body fallback.
-4. **Sandboxed XML Input Contract:** AI prompts wrap context in `<context>...</context>` tags to prevent malicious webpage text from executing prompt injections.
+4. **Sandboxed XML Input Contract:** Outbound prompts wrap context in `<context>...</context>` tags to prevent malicious webpage text from executing prompt injections.

@@ -1,0 +1,45 @@
+export type {
+  TabId,
+  AiIntentId,
+  SentenceStructureItem,
+  AiPhraseItem,
+  AiComparisonRow,
+  AiMinimalPair,
+  RephraseStyleItem,
+  Phonetic,
+  Definition,
+  Meaning,
+  AttributedItem,
+  WordFamily,
+  Collocations,
+  LearnerMistake,
+  ConfusablePair,
+  WordFormation,
+  LexicalProfile,
+  AiResult,
+  SourceBadge,
+  PhraseExplanationSection,
+  PracticeResult,
+  TranslationResult,
+  DictionaryEntry,
+} from './models';
+
+export type {
+  SelectionTriggerMode,
+  PostSelectionModifier,
+  AppTheme,
+  AppFontFamily,
+  AiProviderId,
+  TranslationProviderId,
+  DictionaryProviderId,
+  AppSettings,
+} from './settings';
+
+export type {
+  ProviderValidationResult,
+  ProviderLookupDto,
+  DictionaryLookupOptions,
+  TranslationLookupOptions,
+  IDictionaryProvider,
+  ITranslationProvider,
+} from './providers';

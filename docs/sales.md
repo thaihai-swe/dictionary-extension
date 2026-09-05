@@ -1,160 +1,103 @@
-# A Smarter Way to Understand English While You Read
+# Sales & Product Guide
 
-## Dictionary, Translation, Pronunciation, and AI Language Learning in One Chrome Extension
+**Dictionary** is a Chrome Manifest V3 reading companion for learners, students, and professionals who need definitions, translations, pronunciation, and contextual AI without leaving the page they are reading.
 
-Most dictionary tools answer only one basic question: **"What does this word mean in the abstract?"**
-
-In real-world reading, language is far more complex. A single word changes its meaning based on syntax, tone, idioms, cultural register, and the specific sentence in which it appears. When learners, researchers, or professionals encounter confusing text, traditional tools force them into a disjointed loop: copy the word, open a separate tab, search a dictionary website, switch to an AI chatbot, draft a prompt, and lose their place in the original article.
-
-**Dictionary** solves this problem permanently. It brings fast multi-source definitions, neural translation, pronunciation practice, and sentence-aware AI intelligence directly to the text you are reading—keeping you immersed in your reading flow.
+This document is a product narrative. Runtime contracts live in [Architecture](architecture.md), [Providers](providers.md), and [Settings](settings.md).
 
 ---
 
-## Why Readers and Learners Choose Dictionary
+## Who It Is For
 
-### 1. Zero Context Switching: Read, Click, and Understand
-Look up unfamiliar words, idioms, or sentences wherever you encounter them across the web:
-- **Floating Selection Icon:** Highlight text or double-click a word to reveal an elegant, non-intrusive lookup trigger.
-- **Post-Selection Hotkey:** Tap `Shift` (or `Alt` / `Ctrl`) immediately after selecting text to summon the card at high speed.
-- **Direct Selection:** Open the lookup card instantly upon text highlighting for intensive study sessions.
-- **Right-Click Context Menu:** Instant fallback on scriptable PDFs, reader-mode pages, and nested iframes.
-
-The in-page card positions itself intelligently near your selection, flips boundaries to prevent screen clipping, and never pulls you away from the author's train of thought.
+- **Language learners** who need exact-form lookups, collocations, and bilingual examples while reading authentic material.
+- **Students and researchers** who highlight academic or technical text and want context-aware explanations, grammar analysis, and sentence breakdowns.
+- **Professionals** who need a quiet, fast lookup card that stays on the page and does not send API keys through webpage scripts.
 
 ---
 
-### 2. Two Synchronized Modes: Fast Answers First, Deep Learning on Demand
+## Product Promise
 
-The product is built around two complementary learning surfaces:
+Look up a word or phrase in place. Hear it. Practice saying it. Translate it. Ask AI what it means *in this sentence*. Keep credentials off the webpage.
 
-- **Dictionary Mode:** Delivers sub-second primary definitions, parallel neural translations, US/UK pronunciation audio, and structured lexical relationships. As you read, non-blocking background workers lazily enrich the card with secondary dictionary data.
-- **AI Mode:** Unlocks 5 specialized contextual actions (Main AI, Context Explain, Grammar & Nuance, Phrase & Collocations, and Sentence Breakdown) powered by Google Gemini or your own self-hosted/OpenAI-compatible LLMs.
-
-Users get immediate clarity in under a second, with the power to explore grammatical nuance and sentence mechanics whenever a word is difficult, technical, or idiomatic.
+The UI is the **Calm Learning Studio**: editorial or Atkinson Hyperlegible typography, system/light/dark themes, a resizable in-page card, and a global **Stop Voice** control when audio is playing.
 
 ---
 
-## Complete Feature Showcase
+## Key Differentiators
 
-```text
-┌────────────────────────────────────────────────────────────────────────┐
-│  D  evaluate                             [Free Dictionary] [Wiktionary]│
-│     /ɪˈvæl.ju.eɪt/  (US) 🔊 Listen (US)  🔊 Listen (UK)  🎙️ Practice    │
-├────────────────────────────────────────────────────────────────────────┤
-│  ▼ Translation · Vietnamese                                            │
-│    đánh giá, định giá                                                  │
-├────────────────────────────────────────────────────────────────────────┤
-│  ▼ Definitions · Verb (Free Dictionary)                                │
-│    1. To determine or fix the value of.                                │
-│    2. To examine and judge carefully; appraise.                        │
-│       "We need to evaluate the experimental results."                  │
-├────────────────────────────────────────────────────────────────────────┤
-│  ▼ Word Family                                                         │
-│    [evaluation]  [evaluative]  [evaluator]  [evaluated]  [evaluating]   │
-├────────────────────────────────────────────────────────────────────────┤
-│  ▼ Collocations                                                        │
-│    • Verbs: carefully evaluate, objectively evaluate                   │
-│    • Patterns: evaluate the effectiveness of, evaluate whether...      │
-└────────────────────────────────────────────────────────────────────────┘
-```
+### 1. Dual-phase dictionary lookup
+Phase 1 returns the primary dictionary result and (when ready) translation in under a second. Phase 2 then enriches remaining keyless backends in concurrent batches of 2, merging extra senses, examples, IPA, and lexical cards without blocking first paint.
 
-### Pillar 1: Progressive Multi-Source Dictionary & Neural Translation
-Rather than relying on a single fallible API, Dictionary orchestrates up to 5 authoritative dictionary backends:
-1. **Primary Provider First:** Free Dictionary API (default), Wiktionary REST API, Merriam-Webster Collegiate, Wordnik, or WordsAPI (RapidAPI).
-2. **Smart Lemmatization & Phrasal Fallback:** Automatically stems inflected verbs (`went` → `go`), irregular plurals (`children` → `child`), comparative adjectives (`better` → `good`), and multi-word phrasal expressions (`taking care of` → `take care of`).
-3. **Phase 2 Lazy Enrichment:** Secondary providers query in background batches (`concurrency: 2`), backfilling missing phonetic IPA, extra example sentences, and synonyms without slowing down initial display.
-4. **Parallel Neural Translation:** Delivers instant translations via Google Translate or self-hosted LibreTranslate in parallel with dictionary results.
+### 2. Exact selected text
+Lookups use the highlighted or typed query as-is. Inflected forms (`went`, `running`) are not rewritten to a root lemma. Multi-word queries that no dictionary backend defined can still receive a concise **AI Phrase Fallback** when AI is enabled.
 
----
+### 3. Seven specialized AI intents
+The AI tab is not a single chat box. It exposes seven actions:
 
-### Pillar 2: Pronunciation Engine & Speech Practice Evaluator
-Speaking and listening practice built directly into every lookup:
-- **Studio-Quality Audio:** Plays authentic human dictionary audio (US and UK accents) with visual 3-bar equalizer animation.
-- **Web Speech Synthesis Fallback:** Seamlessly falls back to local operating system voices when remote MP3s are unavailable.
-- **Customizable Speed:** Adjust playback rate from `0.5x` (slow study) to `1.5x` (natural speed).
-- **Interactive Speech Evaluator:** Click **Practice** (`🎙️ Practice`), speak the word into your microphone, and receive real-time Levenshtein distance grading badges:
-  - `90%–100%`: **Excellent** (Emerald badge)
-  - `70%–89%`: **Good** (Teal badge)
-  - `50%–69%`: **Almost there** (Amber badge)
-  - `<50%`: **Try again** (Rose badge)
-
----
-
-### Pillar 3: Structured Lexical Profile
-Transform passive lookups into comprehensive vocabulary mastery:
-- **Interactive Word Family Chips:** Nouns, verbs, adjectives, adverbs, and derivatives appear as clickable chips (`[evaluation]`, `[evaluative]`). Clicking any chip triggers an instant re-lookup.
-- **Word Formation:** Surfaces root prefixes, suffixes, and morphological explanations.
-- **Usage & Register Warnings:** Highlights formality notes (`[formal]`, `[slang]`, `[archaic]`, `[offensive]`) in high-contrast warning callouts.
-- **Confusable Word Pairs:** Clarifies easily confused terms (e.g. *affect* vs. *effect*, *principal* vs. *principle*).
-- **Common Learner Mistakes:** Alerts learners to typical prepositional errors and false friends.
-- **Categorized Collocations:** Groups natural pairings into verbs, nouns, prepositions, adjectives, and natural sentence patterns.
-
----
-
-### Pillar 4: Sentence-Aware Contextual AI Intelligence
-Meaning depends entirely on context. Dictionary's AI tab provides 5 dedicated capabilities:
-
-| AI Action | Learner Value | Specialized Output |
+| Action | Intent | What the learner gets |
 |---|---|---|
-| **Main AI** | Deep vocabulary comprehension | Oxford Learner-style definitions, sense-specific translations, register notes, bilingual examples, and collapsible etymology. |
-| **Context Explain** | Pinpoint in-sentence meaning | Slices the exact surrounding sentence at your cursor and explains how the word behaves in that specific context. |
-| **Grammar & Nuance** | Structural and stylistic clarity | Analyzes clause roles, syntactic dependencies, formality level, and tone. |
-| **Phrase & Collocations** | Natural idiomatic fluency | Deconstructs phrasal verbs, idioms, and preposition patterns with usage guidelines. |
-| **Sentence Breakdown** | Deep structural sentence parsing | Pure JSON decomposition of clauses, grammatical functions, and phrase chips that can be clicked for sub-lookups. |
+| Main AI | `default` | Learner-style definition, sense cards, bilingual examples |
+| Context Explain | `explain_in_context` | Meaning in *this* sentence, substitutions, nuance lost |
+| Grammar & Nuance | `grammar` | Syntactic slot, pattern rules, learner mistakes |
+| Phrase & Collocations | `collocations` | Idiom meaning, preposition patterns, collocation cards |
+| Sentence Breakdown | `sentence_breakdown` | Clause/role JSON with clickable phrase chips |
+| Compare Confusables | `confusables` | Side-by-side distinction matrix |
+| Rephrase | `rephrase` | Simplified, academic, and native-idiom rewrites |
+
+Default model: **`gemini-3.5-flash-lite`**. Any OpenAI-compatible endpoint (Ollama, Groq, OpenRouter, OpenAI, LocalAI) works via `aiBaseUrl`.
+
+### 4. Dual-mode sentence context
+Mode 1 measures the selection Range offset inside the containing block so the extracted sentence is the one the user highlighted—even when the word appears multiple times. Mode 2 ranks page candidates by visibility, semantic container, and viewport proximity. Context is capped at 800 characters and is never sent during ordinary dictionary lookups.
+
+### 5. Pronunciation you can stop
+Dictionary MP3 → Google Translate TTS → Web Speech. A red **Stop Voice** button in the header and the `Esc` key cancel playback. **Practice** grades spoken attempts with Levenshtein similarity.
+
+### 6. Zero-leak credentials
+API keys live in `chrome.storage.local`. The content script and public sync payload never receive `aiApiKey`. Schema v12 exposes only `hasAiApiKey` as a boolean.
 
 ---
 
-## Competitive Breakdown
+## Feature Snapshot
 
-| Feature / Capability | Basic Dictionary Plugins | Generic AI Chat Tabs | **Dictionary (This Extension)** |
-|---|:---:|:---:|:---:|
-| **Zero-Tab In-Page Reading** | ✅ | ❌ (requires new tab) | ✅ **Full In-Page & Toolbar** |
-| **Multi-Provider Fallback** | ❌ (single source) | ❌ | ✅ **5 Providers + Lazy Enrichment** |
-| **Smart English Lemmatization** | ❌ | ⚠️ (slow prompt) | ✅ **Instant Root & Phrasal Fallback** |
-| **Parallel Neural Translation** | ⚠️ (extra click) | ⚠️ (manual prompt) | ✅ **Simultaneous Sub-Second Translation** |
-| **Authentic Audio + Speech Fallback** | ⚠️ (audio only) | ❌ | ✅ **Dual Audio + Custom Speed** |
-| **Microphone Speech Practice** | ❌ | ❌ | ✅ **Levenshtein Accuracy Scoring** |
-| **Exact Selection-Range Context** | ❌ | ❌ (manual copy-paste) | ✅ **Exact DOM Range Offset Slicing** |
-| **Interactive Word Family Chips** | ❌ | ❌ | ✅ **Clickable Instant Sub-Lookups** |
-| **Structured Sentence Breakdown** | ❌ | ⚠️ (unstructured text) | ✅ **Interactive JSON Clause Decomposition** |
-| **BYO AI Endpoint & Custom Prompts** | ❌ (locked proprietary) | ⚠️ (paid subscription) | ✅ **Gemini Native + OpenAI-Compatible** |
-| **Zero-Leak Secret Storage** | ⚠️ | ⚠️ | ✅ **Local Storage Isolation (No Sync Leak)** |
-| **No Build Step / Zero Runtime Deps** | ❌ | ❌ | ✅ **100% Plain JS/HTML/CSS (MV3)** |
+| Area | What ships today |
+|---|---|
+| Dictionary | Keyless: Free Dictionary, Wiktionary, Datamuse, Wikipedia, Urban Dictionary, RhymeBrain enrichment |
+| Translation | Google Translate (default), LibreTranslate, MyMemory fallback |
+| AI | `gemini-3.5-flash-lite` or custom OpenAI-compatible URL; 7 UI intents + phrase fallback |
+| Audio | MP3 / Google TTS / SpeechSynthesis; Stop Voice; speech practice |
+| Triggers | Floating icon, direct popup, post-selection modifier, context menu, toolbar, paused hostnames |
+| Appearance | Dark default, system/light/dark, editorial or learner font, 360–1000 × 380–900 resizable card |
+| Privacy | Local secrets, 800-char context cap, opt-out page extraction, sanitized settings export (schema v12) |
 
 ---
 
-## Privacy, Control, and Security by Design
+## Competitive Position (Honest)
 
-Dictionary is engineered with a strict local-first privacy boundary:
+Dictionary is not a full spaced-repetition SRS, not an Anki replacement, and not a cloud vocabulary account. It is a **page-native lookup studio**: fast dictionary + translation + pronunciation + contextual AI, with credentials isolated from the webpage.
 
-1. **Isolated Secret Vault:** API keys (Gemini, OpenAI, Merriam-Webster, Wordnik, WordsAPI, LibreTranslate) are stored strictly inside `chrome.storage.local`. They are never synced to Google accounts and never exposed to webpage content scripts.
-2. **Explicit Context Transmission:** Surrounding webpage sentences are extracted only as a transient local suggestion. Context is never transmitted to remote AI servers during standard lookups—only when you explicitly click a contextual action button.
-3. **No Telemetry or Tracking:** Zero analytics tracking, zero telemetry beacons, and zero third-party tracking scripts.
-4. **Transient Cache:** Lookup enrichment caching is strictly bounded (TTL: 10 minutes, max 20 entries) in session memory and cleared upon browser restart.
-5. **No Audio Blobs Cached:** Audio streams play dynamically without leaving persistent cached recordings on your disk.
+Where it is strongest:
+- In-page reading flow (icon, hotkey, context menu, resizable card).
+- Context that is the *selected sentence*, not a page dump.
+- Keyless dictionary/translation so a learner can start without API keys.
+- AI that is intent-structured rather than a generic chatbot.
 
----
-
-## Value Across Learning & Professional Roles
-
-### For English Learners (ESL / EFL)
-Master subtle word choices, overcome preposition confusion, hear authentic pronunciation variants, score your spoken pronunciation, and explore root word families.
-
-### For Students and Academic Researchers
-Read dense scholarly papers, complex literature, and foreign research without losing your place. Use Sentence Breakdown to parse intricate nested clauses.
-
-### For Bilingual Professionals & Developers
-Clarify technical terminology, verify formal business register, review idiomatic expressions, and draft precise international communications.
-
-### For Educators and Tutors
-Demonstrate pronunciation, morphological word formation, grammatical register, and sentence parsing using a single clean, distraction-free reading studio.
+Where it is not (yet):
+- Cloud sync of saved words, AnkiConnect, or a built-in SRS deck (see [Roadmap](roadmap.md)).
 
 ---
 
-## The Product Promise
+## Privacy Talking Points
 
-Dictionary bridges the gap between quick definitions and deep language comprehension:
+1. Dictionary and translation lookups do not require an AI key.
+2. AI keys never leave `chrome.storage.local` into content-script memory.
+3. Surrounding sentences are extracted only for AI actions, clamped to 800 characters, and can be disabled entirely.
+4. Settings export omits `SECRET_KEYS`.
+5. Restricted Chrome pages (`chrome://`, Web Store) are not injected; the toolbar popup still works for typed queries.
 
-> **Look up the word. Hear it. Translate it. Practice speaking it. Understand its context. Learn its grammar and nuance. Keep reading.**
+---
 
-Install Dictionary today, connect your preferred dictionary and AI services, and experience a smarter, frictionless way to master the English language.
+## Related Documents
+
+- [User Guide](user-guide.md) — how to use every surface.
+- [Architecture](architecture.md) — how the runtime is structured.
+- [Settings](settings.md) — every preference and schema v12.
+- [Roadmap](roadmap.md) — shipped vs planned.

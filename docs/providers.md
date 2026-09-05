@@ -1,261 +1,179 @@
 # Providers Specification
 
-This document provides the complete technical specification for all external and browser-backed service integrations across **Dictionary**. It defines normalized data models, error-handling semantics, fallback pipelines, lazy enrichment coordination, and protocol routing.
+This document provides the complete technical specification for all external and browser-backed service integrations across **Dictionary**. It defines normalized data models, error-handling semantics, fallback pipelines, lazy enrichment coordination, and protocol routing in the React 18 + TypeScript runtime.
 
 ---
 
-## 1. Common Normalized Result Contract
+## 1. Common Normalized Result Contracts
 
-All dictionary, translation, and AI providers must produce or normalize into the canonical result model consumed by the shared Calm Learning Studio renderer (`src/ui/renderer.js`):
+All dictionary, translation, and AI providers produce or normalize into canonical TypeScript models (`src/types/index.ts`).
+
+Dictionary backends return a sparse `ProviderLookupDto`. `toDictionaryEntry()` (`src/shared/enrichment.ts`) converts that into a complete `DictionaryEntry` so `mergeDictionaryEntries()` can consolidate Phase A + Phase B results without provider-specific branches.
 
 ```typescript
-interface NormalizedLookupResult {
-  title: string;
-  subtitle?: string;
-  providerId?: string;
-  sourceBadges?: Array<{
-    label: string;
-    kind: "dictionary" | "translation" | "ai" | string;
-    providerId?: string;
-  }>;
-  lemmaFallback?: {
-    originalText: string;
-    lemma: string;
-  };
+export interface ProviderLookupDto {
+  word: string;
+  providerId: DictionaryProviderId | string;
+  phonetics?: Phonetic[];
+  meanings?: Meaning[];
+  examples?: AttributedItem[];
+  synonyms?: AttributedItem[];
+  antonyms?: AttributedItem[];
   lexicalProfile?: LexicalProfile;
-  sections: Array<{
-    title?: string;
-    kind?: SectionKind;
-    text?: string;
-    items?: string[];
-    meta?: string;
-    markdown?: boolean;
-    data?: any;
-  }>;
-  presentation?: {
-    surface: "ai" | "dictionary";
-    intent: "default" | "explain_in_context" | "grammar" | "phrase_fallback" | "phrase_explorer" | "sentence_breakdown";
-  };
-  pronunciation?: Pronunciation;
-  pronunciations?: Pronunciation[];
+  translation?: TranslationResult;
+  phraseExplanation?: PhraseExplanationSection[];
 }
 
-interface Pronunciation {
+export interface DictionaryEntry {
+  word: string;
+  phonetics?: Phonetic[];
+  meanings: Meaning[];
+  examples?: AttributedItem[];
+  synonyms?: AttributedItem[];
+  antonyms?: AttributedItem[];
+  lexicalProfile?: LexicalProfile;
+  translation?: TranslationResult;
+  originalText?: string;
+  phraseExplanation?: PhraseExplanationSection[];
+  enriched?: boolean;
+  revision?: number;
+}
+
+export interface Phonetic {
   text?: string;
-  phonetic?: string;
-  audioUrl?: string;
+  audio?: string;
   language?: string;
   label?: string;
-  fallbackOnly?: boolean;
+  region?: 'uk' | 'us' | 'all';
 }
 
-type SectionKind =
-  | "definitions"
-  | "examples"
-  | "synonyms"
-  | "antonyms"
-  | "translation"
-  | "context"
-  | "intro"
-  | "usage"
-  | "grammar"
-  | "phrase"
-  | "sentence-overview"
-  | "sentence-structure"
-  | "phrase-parsing"
-  | "etymology"
-  | "lexical"
-  | "ai";
-```
+export interface Meaning {
+  partOfSpeech: string;
+  definitions: Definition[];
+  synonyms?: string[];
+  antonyms?: string[];
+}
 
----
+export interface Definition {
+  definition: string;
+  example?: string;
+  synonyms?: string[];
+  antonyms?: string[];
+}
 
-## 2. Multi-Source Dictionary Provider Subsystem
-
-The dictionary facade (`src/providers/dictionary.js`) routes requests across 5 registered adapters:
-
-| Provider ID | Service Name | Authentication | Features & Supported Data |
-|---|---|---|---|
-| `free_dictionary` | **Free Dictionary API (Default)** | None (`dictionaryapi.dev`) | Definitions, examples, synonyms/antonyms, US/UK audio MP3s, and phonetic transcriptions. |
-| `wiktionary` | **Wiktionary REST API** | None (`en.wiktionary.org`) | Multi-sense English definitions, examples, and etymological glosses. |
-| `merriam_webster` | **Merriam-Webster Collegiate API** | `dictionaryApiKey` (`dictionaryapi.com`) | Official collegiate definitions, short examples, and high-fidelity audio recordings. |
-| `wordnik` | **Wordnik API** | `wordnikApiKey` (`api.wordnik.com`) | Multi-source definitions (American Heritage, Century, WordNet), corpus examples, audio, and related words. |
-| `words_api` | **WordsAPI (RapidAPI)** | `wordsApiKey` (`wordsapiv1.p.rapidapi.com`) | Deep definitions, frequency scores, syllable structures, derivations, and synonyms. |
-
----
-
-### Phase 1: Fast Primary Lookup & Fallback Sequence
-
-```text
-User Query: "taking care of"
-       │
-       ▼
-1. Primary Provider: free_dictionary (exact query)
-   └─ NotFoundError ──► Try Wiktionary ──► Try Merriam-Webster ──► Try Wordnik ──► Try WordsAPI
-                             │
-                             ▼ (All exact lookups return NotFoundError)
-2. Smart English Lemmatization (getEnglishLemmaCandidates)
-   - Evaluates stems: irregular verbs, plurals, comparative adjectives, suffixes (-ing, -ed, -es, -ly)
-   └─ NotFoundError across all providers
-                             │
-                             ▼
-3. Smart Phrasal Canonicalization (getEnglishPhraseCandidates)
-   - Canonicalizes "taking care of" ➔ "take care of"
-   - Retries fallback chain: free_dictionary("take care of") ➔ SUCCESS!
-                             │
-                             ▼
-4. Attach metadata:
-   - lemmaFallback: { originalText: "taking care of", lemma: "take care of" }
-   - subtitle: "Showing definitions for phrase: take care of"
-   - Immediate Phase 1 render to UI (revision: 0, enriched: false)
-```
-
-#### Operational Error Boundary
-If an adapter encounters an operational failure (invalid API credentials, network timeout, rate limit 429, or server 500 error), the fallback chain aborts immediately and surfaces an actionable diagnostic error to the user rather than silently masking the failure.
-
----
-
-### Phase 2: Asynchronous Lazy Dictionary Enrichment
-
-Immediately after Phase 1 delivers the initial result, the background service worker initiates non-blocking secondary enrichment:
-
-1. **AI Phrase Fallback (Multi-word Lookups):** If the query is classified as a phrase/idiom, lacks dictionary definitions, and `enableAI` is active, `lookupAiProvider(..., { intent: "phrase_fallback" })` is scheduled first.
-2. **Provider Key Filtering:** Unconfigured key-backed providers are skipped without network overhead.
-3. **Concurrency Batching (`ENRICHMENT_CONCURRENCY = 2`):** Remaining providers are queried in batches of 2.
-4. **Cumulative Section Merging:**
-   - Definitions and examples are matched by normalized kind/part-of-speech and deduplicated.
-   - Enforces strict popup readability bounds:
-     - `MAX_DEFINITIONS_SECTIONS = 2`
-     - `MAX_EXAMPLES_SECTIONS = 2`
-     - `MAX_SYNONYM_SECTIONS = 1`
-     - `MAX_ANTONYM_SECTIONS = 1`
-     - `MAX_ITEMS_PER_SECTION = 8`
-5. **Phonetic IPA Backfill:** If the primary result had audio but lacked IPA, secondary providers backfill phonetic transcriptions onto matching language/accent slots (`en-US`, `en-GB`). Phonetic entries are sorted first (`preferPhoneticPronunciations`, clamped to `MAX_PRONUNCIATIONS = 4`).
-6. **Transparent Source Badges:** Contributing providers are added to `sourceBadges` for complete attribution.
-7. **Broadcast:** Dispatches `LOOKUP_UPDATE` (`revision: 1`, `enriched: true`) to the originating tab.
-
----
-
-### Two-Level Caching Engine
-
-```text
-LOOKUP Request
-      │
-      ▼
-Check L1 In-Memory Map (Max 20 entries, TTL: 10 minutes)
-  ├─ Hit  ──► Hydrate and return cached enrichment immediately
-  └─ Miss ──► Check L2 Storage Cache
-                │
-                ▼
-Check L2 Session Storage (chrome.storage.session with "enrich_" prefix)
-  ├─ Hit  ──► Hydrate L1 Map and return cached result
-  └─ Miss ──► Check in-flight Promise Map (enrichmentInFlight)
-                ├─ In-flight ──► Attach to active Promise
-                └─ Fresh ────► Execute runDictionaryEnrichment()
-                                 │
-                                 ▼
-                     Write to L1 Map & L2 Session Storage
-```
-
-- **Cache Invalidation:** Any preference changes in Settings trigger `clearEnrichmentSessionCache()`.
-- **Cache Schema Migration:** `migrateEnrichmentCacheSchema()` tracks `ENRICHMENT_CACHE_SCHEMA_VERSION = 2` to purge obsolete cache shapes on extension updates.
-
----
-
-## 3. Translation Provider Subsystem
-
-The translation facade (`src/providers/translate.js`) runs in parallel with dictionary lookups:
-
-| Provider ID | Backend Service | Configuration Requirements | Validation Support |
-|---|---|---|---|
-| `google` | **Google Translate** | None (public endpoint `translate.googleapis.com`) | Built-in non-destructive ping |
-| `libretranslate` | **LibreTranslate** | `libreTranslateBaseUrl`, optional `libreTranslateApiKey` | Non-destructive translation test |
-
-### Normalized Translation Contract
-```typescript
-interface NormalizedTranslationResult {
-  title: string;
-  subtitle: string; // e.g. "Detected: Vietnamese → English"
+export interface TranslationResult {
   translatedText: string;
-  detectedLanguage: string;
-  targetLanguage: string;
-  sourceBadges: Array<{ label: string; kind: "translation" }>;
-  sections: Array<{ title: "Original"; text: string }>;
-  providerId: string;
+  detectedLanguage?: string;
+  targetLanguage?: string;
+  sourceBadges?: SourceBadge[];
+}
+
+export interface AiResult {
+  type: string;
+  query: string;
+  summary?: string;
+  translation?: string;
+  structure?: SentenceStructureItem[];
+  lexicalProfile?: LexicalProfile;
+  phrases?: AiPhraseItem[];
+  comparison?: {
+    coreDistinction?: string;
+    rows?: AiComparisonRow[];
+    leftTerm?: string;
+    rightTerm?: string;
+  };
 }
 ```
 
 ---
 
-## 4. Generative AI Provider Subsystem
+## 2. Dictionary & Translation Providers
 
-The AI subsystem (`src/providers/ai-provider.js`) interfaces with generative endpoints through a dual-protocol architecture:
+The dictionary provider facade (`src/providers/provider.index.ts`) routes requests through `ProviderRegistry` (`src/providers/registry.ts`) across definition, lexical-enrichment, and translation adapters. Pipeline orchestration lives in `src/providers/pipeline.ts`. All dictionary backends are keyless. Remaining sources always run in Phase B enrichment after the primary result paints.
 
-### Protocol Routing
-
-1. **Google Gemini Native REST Endpoint:**
-   - Activated when `aiBaseUrl` matches `generativelanguage.googleapis.com`.
-   - Directly invokes `/v1beta/models/<model>:generateContent?key=<aiApiKey>`.
-2. **OpenAI-Compatible Chat Endpoint:**
-   - Activated for all other URLs (OpenAI, Groq, Ollama, OpenRouter, LocalAI).
-   - Invokes `<aiBaseUrl>/chat/completions` with `Authorization: Bearer <aiApiKey>` headers.
-
----
-
-### The 6 AI Intents
-
-| Intent | UI Action | Output Model | Lexical Profile Extraction |
+| Provider ID | Provider Module | Authentication | Description |
 |---|---|---|---|
-| `default` | **Main AI Explanation** | Structured Markdown (`###` sections) | **Yes** |
-| `explain_in_context` | **Context Explain** | Focused In-Context Markdown | No |
-| `grammar` | **Grammar & Nuance** | Syntactic & Tone Analysis Markdown | **Yes** |
-| `phrase_explorer` | **Phrase & Collocations** | Idiom & Preposition Markdown | **Yes** |
-| `sentence_breakdown` | **Sentence Breakdown** | Pure Structural JSON | No |
-| `phrase_fallback` | **Dictionary Phrase Fallback** | Concise Meaning Markdown | No |
+| `free_dictionary` | `provider.free-dictionary.ts` | None (`api.dictionaryapi.dev`) | Definitions, examples, synonyms/antonyms, US/UK audio MP3s, and phonetic transcriptions. |
+| `wiktionary` | `provider.wiktionary.ts` | None (`en.wiktionary.org`) | Multi-sense English definitions, examples, and etymological glosses. Default primary provider. |
+| `wiktionary_etymology` | `provider.wiktionary-etymology.ts` | None (`en.wiktionary.org` Action API) | English etymology / origin note merged into `lexicalProfile.usageNotes`. Enrichment-only by default. |
+| `wiktionary_bilingual` | `provider.wiktionary-bilingual.ts` | None (`{lang}.wiktionary.org`) | Target-language Wiktionary intro extract (skipped when the target is English). |
+| `tatoeba` | `provider.tatoeba.ts` | None (`tatoeba.org`) | Learner example sentences with optional target-language translations. |
+| `datamuse` | `provider.datamuse.ts` | None (`api.datamuse.com`) | WordNet-style definitions, synonyms, antonyms, and collocations. |
+| `rhymebrain` | `provider.rhymebrain.ts` | None (`rhymebrain.com`) | IPA transcription and pronunciation. Enrichment-only. |
+| `wikipedia` | `provider.wikipedia.ts` | None (`en.wikipedia.org`) | Encyclopedic summary for terms, names, and concepts. |
+| `urban_dictionary` | `provider.urban-dictionary.ts` | None (`api.urbandictionary.com`) | Ranked slang/idiom definitions (top thumbs-up). |
+| `google_translate` | `provider.google-translate.ts` | None (`translate.googleapis.com`) | Instant Google Translate neural translation & multi-language definitions. |
+| `mymemory` | `provider.mymemory.ts` | None (`api.mymemory.translated.net`) | Keyless translation provider and automatic fallback if Google/Libre fail. |
+| `libre_translate` | `provider.libre-translate.ts` | `libreTranslateApiKey` (`libretranslate.com` or self-hosted) | Privacy-focused translation service with custom base URL. |
+
+> **Note on Removed Providers:** Legacy commercial dictionary APIs (`merriam_webster`, `wordnik`, `words_api`, `conceptnet`) have been removed from the extension to eliminate unnecessary third-party API keys and ensure all dictionary lookups work immediately out of the box.
 
 ---
 
-### Parse-Time AI Section Normalization & Sandboxing
+## 3. Generative AI Provider & Offline Engine (`src/providers/provider.gemini-ai.ts`)
 
-1. **Prompt Sandboxing:** Outbound prompts enclose user text in `<target>`, `<context>`, and `<target-language>` XML tags.
-2. **Markdown Normalization:** Strips stray code fences, converts bold labels to `###` headings, and splits text into titled `sections[]`.
-3. **Intent Outline Alignment (`kindForAiSection`):** Maps headings to canonical semantic `kind` tokens (`intro`, `translation`, `usage`, `examples`, `grammar`, `etymology`, `phrase`).
-4. **Structured Sentence Breakdown Normalization:**
-   - Extracts and validates JSON using `extractJsonObject` and `normalizeSentenceBreakdown`.
-   - Emits structured clauses (`structureComponents`) and phrase chips (`phraseParsing`).
-5. **Lexical Profile Extraction:**
-   - Extracts `<lexical-profile>` JSON blocks via `parseLexicalProfileFromResponse`.
-   - Strips the raw JSON block from visible Markdown.
-   - Enforces strict bounds:
-     - `MAX_LEXICAL_ITEMS = 12`
-     - `MAX_DERIVATIVES = 12`
-     - `MAX_LEXICAL_WARNINGS = 8`
-     - `MAX_CONFUSABLE_PAIRS = 6`
-     - `MAX_LEARNER_MISTAKES = 6`
-     - `MAX_FORMATION_ITEMS = 6`
-     - `MAX_COLLOCATION_ITEMS_PER_GROUP = 10`
+The AI subsystem operates in two user-selectable providers (`aiProvider`):
+
+1. **Google Gemini (`aiProvider: 'gemini'`):**
+   - Default. Uses native REST `models/{model}:generateContent`.
+   - Requires `aiApiKey`. Default model is `gemini-3.5-flash-lite`.
+2. **OpenAI Standard (`aiProvider: 'openai'`):**
+   - POSTs to `{aiBaseUrl}/chat/completions` with `stream: false`.
+   - Default base URL is `http://localhost:20128/v1`. Model is user-entered (no preset). API key is optional for local Ollama / LM Studio / proxy.
+   - Response parser accepts a JSON completion, or SSE `chat.completion.chunk` bodies if a local server streams anyway.
+3. **Offline Rule-Based Grammar Analysis Engine:**
+   - Activated when Gemini has no API key, or OpenAI Standard has no model entered.
+   - Analyzes clauses, part-of-speech structure, and grammar patterns locally on your device without sending any network requests.
+
+### The 7 User-Facing AI Intents & 1 Background Intent (`src/types/index.ts`)
+
+| Intent ID | Toolbar Label | Icon | Description | Output Format |
+|---|---|---|---|---|
+| `default` | **Main AI** | 📖 | Oxford Learner-style definition, numbered **Senses & Meanings**, sense-aware translation glosses, usage notes, bilingual examples, and collapsible etymology. | Structured Markdown |
+| `explain_in_context` | **Context Explain** | 🔍 | Pinpoints exact in-sentence meaning, direct grammatical substitutions, and nuance-lost notes. | Structured Markdown |
+| `grammar` | **Grammar & Nuance** | 📐 | Analyzes syntactic slots, grammatical dependencies, formality register, and surfaces a Common Learner Mistakes card. | Markdown + Learner Mistakes Card |
+| `collocations` | **Phrase & Collocations** | 💡 | Core idiom meaning, preposition patterns, and categorized collocations. | Markdown + Collocations Card |
+| `sentence_breakdown` | **Sentence Breakdown** | 🧩 | Clause-by-clause structural decomposition into clauses, roles, and clickable phrase chips. | Structured JSON (`structure` + `phrases`) |
+| `confusables` | **Compare Confusables** | ⚖️ | Side-by-side distinction, comparison matrix, collocation divergence, and minimal-pair sentences. | Structured Markdown |
+| `rephrase` | **Rephrase** | ✨ | Three stylistic rewrites (Simplified, Academic & Formal, Native Idiomatic) with explanations. | Structured Markdown |
+| `phrase_fallback` | *(Automatic)* | — | Multi-word phrase explanation invoked automatically when no dictionary backend has definitions. | Concise Markdown |
 
 ---
 
-## 5. Pronunciation & Speech Practice Subsystem
+## 4. Audio & Voice Control Subsystem (`src/composables/composable.dictionary.ts`)
 
-### Audio Playback Hierarchy (`src/ui/audio.js`)
+### Reactive Audio Management
+- **State:** Reactive `isAudioPlayingRef` (`signal<boolean>`) and `playingKeyRef` (`signal<string | null>`).
+- **Global Control:** `stopAllAudio()` instantly cancels `window.speechSynthesis` and pauses/destroys any active `HTMLAudioElement`.
+- **Playback Pipeline (`playAudio`):**
+  1. High-quality dictionary MP3 recordings (`audioUrl`).
+  2. Free Google Translate audio synthesis fallback (`getFreeTtsUrl`).
+  3. Browser Web Speech Synthesis (`speakTTS`).
+- **Speech Practice Engine (`startSpeechPractice`):**
+  - Captures microphone speech with `webkitSpeechRecognition`.
+  - Normalizes and compares input using Levenshtein distance metrics.
+  - Emits real-time grade badges (`excellent`, `good`, `almost`, `retry`).
+- **Global UI Button:** Prominent red button (`⏹️ STOP VOICE` / `🔇`) in `AppHeader` for 1-click speech cancellation.
+- **Keyboard Shortcut:** `Esc` key cancels active speech playback immediately.
 
-1. **Remote Audio:** Plays provider-returned MP3/WAV URLs.
-2. **Web Speech Synthesis Fallback:** If remote audio is missing or fails, calls `window.speechSynthesis.speak()`.
-3. **Playback Parameters:** Applies user-configured `pronunciationRate` (`0.5`–`1.5`) and `pronunciationVoiceURI`.
-4. **Equalizer Animation:** Visual 3-bar equalizer wave animates strictly while audio is actively playing.
-5. **Zero Memory Caching:** Audio blobs and binary metadata are never cached to prevent memory bloat.
+---
 
-### Speech Practice Evaluator
+## 5. Fallback, Timeouts, and Protocol Routing
 
-1. Listens via Chrome's `SpeechRecognition` / `webkitSpeechRecognition`.
-2. Normalizes spoken transcript and target query.
-3. Calculates similarity using Levenshtein distance string matching:
-   $$\text{Score} = \left(1 - \frac{\text{LevenshteinDistance}(\text{target}, \text{spoken})}{\max(\text{len}(\text{target}), \text{len}(\text{spoken}))}\right) \times 100$$
-4. Assigns standardized grade badges:
-   - `90%–100%`: **Excellent** (emerald)
-   - `70%–89%`: **Good** (teal)
-   - `50%–69%`: **Almost there** (amber)
-   - `<50%`: **Try again** (rose)
-5. Active practice scores survive Phase 2 lazy enrichment re-renders via `audio.restorePracticeResult()`.
+### Dictionary fallback
+Primary lookup uses the configured `dictionaryProvider` (`wiktionary` by default). Remaining keyless backends run after first paint in concurrent batches of 2:
+
+```text
+wiktionary ➔ free_dictionary ➔ datamuse ➔ rhymebrain ➔ wikipedia ➔ urban_dictionary ➔ wiktionary_etymology ➔ wiktionary_bilingual ➔ tatoeba
+```
+
+`NotFoundError` and transient network/5xx/429/timeout continue to the next provider. Dictionary HTTP timeout is 60s.
+
+### Translation fallback
+`lookupTranslationResult()` tries the configured `translateProvider` first (`google`, `libretranslate`, or `mymemory`). If the primary is Google or LibreTranslate and it fails, MyMemory is attempted automatically. Translation HTTP timeout is 60s.
+
+### AI protocol routing
+- **Native Gemini REST:** When `aiProvider` is `gemini`, `fetchAiAnalysis` calls `models/{model}:generateContent` with `gemini-3.5-flash-lite`.
+- **OpenAI Standard:** When `aiProvider` is `openai`, POSTs to `{aiBaseUrl}/chat/completions` with `stream: false`. Authorization `Bearer` is sent only when a key is present. Default base URL is `http://localhost:20128/v1`. Model is user-entered.
+- Transient Gemini 429/500/503 errors retry once with backoff before failing.
+- When Gemini has no API key, or OpenAI Standard has no model, the offline rule-based grammar engine returns a local `AiResult` instead of calling the network.
