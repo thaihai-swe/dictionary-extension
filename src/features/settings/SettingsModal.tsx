@@ -5,13 +5,13 @@ import {
   serializePublicSettings,
   useStorage,
   whenSettingsReady,
-} from '../composables/composable.storage';
-import { SECRET_SETTING_KEYS } from '../shared/settings-export';
-import { requestProviderValidation } from '../shared/runtime-client';
-import { DEFAULT_AI_PROMPTS } from '../shared/ai-prompts';
-import { KNOWN_LANGUAGE_MAPPINGS } from '../shared/languages';
-import { AppSettings } from '../types';
-import { cx } from '../ui/cx';
+} from '@/composables/composable.storage';
+import { SECRET_SETTING_KEYS } from '@/shared/settings-export';
+import { requestProviderValidation } from '@/shared/runtime-client';
+import { DEFAULT_AI_PROMPTS } from '@/shared/ai-prompts';
+import { KNOWN_LANGUAGE_MAPPINGS } from '@/shared/languages';
+import { AppSettings } from '@/types';
+import { cx } from '@/ui/cx';
 import {
   IconBook,
   IconCheck,
@@ -19,11 +19,11 @@ import {
   IconSettings,
   IconSparkles,
   IconSun,
-} from './icons';
+} from '@/components/icons';
 
-const TabAppearance = lazy(() => import('./settings/tab.appearance'));
-const TabSources = lazy(() => import('./settings/tab.sources'));
-const TabAi = lazy(() => import('./settings/tab.ai'));
+const TabAppearance = lazy(() => import('./tabs/TabAppearance'));
+const TabSources = lazy(() => import('./tabs/TabSources'));
+const TabAi = lazy(() => import('./tabs/TabAi'));
 
 type SettingsTab = 'general' | 'appearance' | 'sources' | 'ai';
 

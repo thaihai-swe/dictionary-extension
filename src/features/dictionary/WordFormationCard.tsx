@@ -1,6 +1,6 @@
 import React from 'react';
-import MarkdownRenderer from './component.markdown-renderer';
-import { IconDna } from './icons';
+import MarkdownRenderer from '@/components/component.markdown-renderer';
+import { IconDna } from '@/components/icons';
 
 interface WordFormationCardProps {
   formation?: string;

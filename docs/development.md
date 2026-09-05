@@ -48,8 +48,8 @@ When introducing a new configuration option:
    - If the key is a secret credential (API key), add it to `SECRET_SETTING_KEYS` in `src/shared/settings-export.ts` so it is stored strictly in `chrome.storage.local`.
    - If the key is a public preference, it is automatically included in `PUBLIC_SETTING_KEYS`.
    - Update `normalizeSettings(settings)` with type validation and numeric/string clamping.
-2. **Settings Interface (`src/components/modal.settings.tsx` and `src/components/settings/tab.*.tsx`):**
-   - Add the input/select control to the appropriate settings surface (`modal.settings.tsx` for General, `tab.appearance.tsx`, `tab.sources.tsx`, or `tab.ai.tsx`).
+2. **Settings Interface (`src/features/settings/SettingsModal.tsx` and `src/features/settings/tabs/Tab*.tsx`):**
+   - Add the input/select control to the appropriate settings surface (`SettingsModal.tsx` for General, `TabAppearance.tsx`, `TabSources.tsx`, or `TabAi.tsx`).
    - Add help text and accessible labels.
 3. **Documentation:**
    - Document the new option in `docs/settings.md`.
@@ -63,10 +63,10 @@ When introducing a new configuration option:
    - If the requested term has no definitions, throw `new NotFoundError()`.
    - If the provider encounters an auth/network/rate-limit error, allow the error to throw.
    - Return a `ProviderLookupDto` (word + providerId + any of: meanings, examples, synonyms, antonyms, phonetics, lexical metadata). The facade converts it with `toDictionaryEntry()` before merge.
-2. **Register in Facade (`src/providers/provider.index.ts`):**
-   - Import the lookup function and add it to `lookupSingleProvider()`.
-   - Add the provider ID to `DICTIONARY_FALLBACK_ORDER` if it should participate in Phase 2 enrichment.
-3. **Update Settings Interface (`src/components/settings/`):**
+2. **Register in Registry (`src/providers/register-adapters.ts`):**
+   - Call `providerRegistry.registerDictionary({ id, name, lookup })`. Do not add a `switch` case.
+   - Add the provider ID to `DICTIONARY_FALLBACK_ORDER` in `src/shared/text-utils.ts` if it should participate in Phase 2 enrichment.
+3. **Update Settings Interface (`src/features/settings/tabs/TabSources.tsx`):**
    - Add an `<option>` entry to the dictionary provider select.
    - Add a non-destructive connection test button using `VALIDATE_PROVIDER`.
 4. **Update Documentation:** Add provider details to `docs/providers.md`.
@@ -77,9 +77,9 @@ When introducing a new configuration option:
 
 1. **Implement Translation Adapter (`src/providers/provider.<name>.ts`):**
    - Export a lookup function returning `TranslationResult`.
-2. **Register in Facade (`src/providers/provider.index.ts`):**
-   - Add a case in `lookupTranslationResult()`.
-3. **Update Settings Interface:**
+2. **Register in Registry (`src/providers/register-adapters.ts`):**
+   - Call `providerRegistry.registerTranslation({ id, name, lookup })`.
+3. **Update Settings Interface (`src/features/settings/tabs/TabSources.tsx`):**
    - Add an `<option>` to the translation provider select.
    - Add a non-destructive connection test button.
 4. **Update Documentation:** Add specifications to `docs/providers.md`.

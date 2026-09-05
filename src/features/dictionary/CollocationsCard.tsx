@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { Collocations } from '../types';
-import { IconLink } from './icons';
+import { Collocations } from '@/types';
+import { IconLink } from '@/components/icons';
 
 interface CollocationsCardProps {
   word?: string;

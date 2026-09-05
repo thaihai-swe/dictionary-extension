@@ -1,6 +1,6 @@
 import React from 'react';
-import { AppSettings } from '../../types';
-import { IconBook, IconSpeaker, IconSpinner, IconTranslate } from '../icons';
+import { AppSettings } from '@/types';
+import { IconBook, IconSpeaker, IconSpinner, IconTranslate } from '@/components/icons';
 
 interface TabSourcesProps {
   localSettings: AppSettings;

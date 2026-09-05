@@ -89,7 +89,7 @@ export interface AiResult {
 
 ## 2. Dictionary & Translation Providers
 
-The dictionary provider facade (`src/providers/provider.index.ts`) routes requests across definition, lexical-enrichment, and translation adapters. All dictionary backends are keyless. Remaining sources always run in Phase B enrichment after the primary result paints.
+The dictionary provider facade (`src/providers/provider.index.ts`) routes requests through `ProviderRegistry` (`src/providers/registry.ts`) across definition, lexical-enrichment, and translation adapters. Pipeline orchestration lives in `src/providers/pipeline.ts`. All dictionary backends are keyless. Remaining sources always run in Phase B enrichment after the primary result paints.
 
 | Provider ID | Provider Module | Authentication | Description |
 |---|---|---|---|

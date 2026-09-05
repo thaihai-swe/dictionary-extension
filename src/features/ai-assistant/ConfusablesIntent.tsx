@@ -1,8 +1,8 @@
 import React from 'react';
-import { AiResult } from '../types';
-import MarkdownRenderer from './component.markdown-renderer';
-import { useDictionaryAudio } from '../composables/composable.dictionary';
-import { IconScale, IconSpeaker } from './icons';
+import { AiResult } from '@/types';
+import MarkdownRenderer from '@/components/component.markdown-renderer';
+import { useDictionaryAudio } from '@/composables/composable.dictionary';
+import { IconScale, IconSpeaker } from '@/components/icons';
 
 interface ConfusablesIntentProps {
   result: AiResult;

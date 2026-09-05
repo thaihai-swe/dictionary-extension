@@ -6,20 +6,20 @@ import {
   useDictionaryPractice,
   useDictionaryQuery,
   useDictionaryResult,
-} from '../composables/composable.dictionary';
-import { AttributedItem, Phonetic } from '../types';
-import SenseMatrixCard from './card.sense-matrix';
-import MarkdownRenderer from './component.markdown-renderer';
+} from '@/composables/composable.dictionary';
+import { AttributedItem, Phonetic } from '@/types';
+import SenseMatrixCard from './SenseMatrixCard';
+import MarkdownRenderer from '@/components/component.markdown-renderer';
 import {
   CollocationsCard,
   LearnerMistakesCard,
   UsageNotesCard,
   WordFamilyCard,
   WordFormationCard,
-} from './async-views';
-import { cx } from '../ui/cx';
-import { IconMic, IconQuote, IconSparkles, IconSpeaker } from './icons';
-import RelatedWords from './component.related-words';
+} from '@/components/async-views';
+import { cx } from '@/ui/cx';
+import { IconMic, IconQuote, IconSparkles, IconSpeaker } from '@/components/icons';
+import RelatedWords from '@/components/component.related-words';
 
 interface WordLookupResultProps {
   onSelectWord?: (word: string) => void;
@@ -40,7 +40,7 @@ function normalizeTerm(term?: string): string {
 }
 
 export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord }) => {
-  const { result } = useDictionaryResult();
+  const { result, isEnriching } = useDictionaryResult();
   const query = useDictionaryQuery();
   const { playingKey } = useDictionaryAudio();
   const { practiceResult, isPracticing, supportsSpeechPractice } = useDictionaryPractice();
@@ -170,10 +170,26 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
       {/* Headword Plate: Clean title, phonetics, audio triggers */}
       <div className="pb-3 border-b border-border space-y-2">
         <div className="flex items-start justify-between gap-3">
-          <div className="space-y-1">
-            <h2 className="text-2xl sm:text-[28px] font-semibold text-content font-heading tracking-tight leading-tight dark:text-[#f8f4ea]">
-              {displayHeadword}
-            </h2>
+          <div className="space-y-1 min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <h2 className="text-2xl sm:text-[28px] font-semibold text-content font-heading tracking-tight leading-tight dark:text-[#f8f4ea] min-w-0">
+                {displayHeadword}
+              </h2>
+              <span
+                className={cx(
+                  'mt-1 shrink-0 h-[18px] px-1.5 rounded text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1 whitespace-nowrap',
+                  isEnriching
+                    ? 'bg-teal-500/10 text-teal-700 dark:text-gold-200 border border-teal-500/25'
+                    : 'invisible border border-transparent',
+                )}
+                aria-live="polite"
+                aria-atomic="true"
+                aria-hidden={!isEnriching}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-teal-600 dark:bg-gold-300 animate-pulse" aria-hidden="true" />
+                Enriching
+              </span>
+            </div>
 
             {/* Phonetic & Accent Audio Buttons */}
             <div className="flex flex-wrap items-center gap-2 pt-0.5">

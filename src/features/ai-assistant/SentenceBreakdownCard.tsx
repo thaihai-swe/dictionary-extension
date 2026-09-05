@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { SentenceStructureItem } from '../types';
-import { useDictionaryAudio } from '../composables/composable.dictionary';
-import { IconCheck, IconCopy, IconPuzzle, IconSpeaker } from './icons';
+import { SentenceStructureItem } from '@/types';
+import { useDictionaryAudio } from '@/composables/composable.dictionary';
+import { IconCheck, IconCopy, IconPuzzle, IconSpeaker } from '@/components/icons';
 
 interface SentenceBreakdownCardProps {
   structure?: SentenceStructureItem[];

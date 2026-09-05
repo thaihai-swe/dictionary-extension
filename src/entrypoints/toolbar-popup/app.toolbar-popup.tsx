@@ -7,10 +7,10 @@ import { cx } from '../../ui/cx';
 import { useAppTheme } from '../../ui/theme';
 import AppHeader from '../../components/component.app-header';
 import TabNavigation from '../../components/component.tab-navigation';
-import WordLookupView from '../../components/view.word-lookup';
+import WordLookupView from '@/features/dictionary/WordLookupView';
 
-const AiAssistantView = lazy(() => import('../../components/view.ai-assistant'));
-const ShortcutsModal = lazy(() => import('../../components/modal.shortcuts'));
+const AiAssistantView = lazy(() => import('@/features/ai-assistant/AiAssistantView'));
+const ShortcutsModal = lazy(() => import('@/features/settings/ShortcutsModal'));
 
 export const ToolbarPopupApp: React.FC = () => {
   const { activeTab, settings, saveSettings } = useStorage();

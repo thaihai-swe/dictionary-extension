@@ -1,7 +1,7 @@
 import React from 'react';
-import { AppSettings } from '../../types';
-import { cx } from '../../ui/cx';
-import { IconMoon, IconSun } from '../icons';
+import { AppSettings } from '@/types';
+import { cx } from '@/ui/cx';
+import { IconMoon, IconSun } from '@/components/icons';
 
 interface TabAppearanceProps {
   localSettings: AppSettings;

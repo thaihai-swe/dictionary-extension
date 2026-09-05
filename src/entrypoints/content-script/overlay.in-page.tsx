@@ -1,17 +1,16 @@
-import React, { lazy, Suspense, useEffect, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { useStorage } from '@/composables/composable.storage';
 import { useLookupSession } from '@/composables/composable.lookup-session';
 import AppHeader from '@/components/component.app-header';
 import TabNavigation from '@/components/component.tab-navigation';
-import WordLookupView from '@/components/view.word-lookup';
+import WordLookupView from '@/features/dictionary/WordLookupView';
 import { TabId } from '@/types';
 import { isDistinctContext } from '@/shared/page-context';
 import { cx } from '@/ui/cx';
 import { useAppTheme } from '@/ui/theme';
-import { IconClose } from '@/components/icons';
 
-const AiAssistantView = lazy(() => import('@/components/view.ai-assistant'));
-const ShortcutsModal = lazy(() => import('@/components/modal.shortcuts'));
+const AiAssistantView = lazy(() => import('@/features/ai-assistant/AiAssistantView'));
+const ShortcutsModal = lazy(() => import('@/features/settings/ShortcutsModal'));
 
 interface InPageOverlayProps {
   selectedText?: string;
@@ -58,6 +57,7 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
   const [currentLang, setCurrentLang] = useState(
     targetLang || settings.translateTargetLanguage || 'Vietnamese',
   );
+  const overlayRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (settings.dictionaryProvider) setCurrentProvider(settings.dictionaryProvider);
@@ -140,47 +140,77 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
     if (targetLang) setCurrentLang(targetLang);
   }, [targetLang]);
 
+  useEffect(() => {
+    const root = overlayRef.current;
+    if (!root) return;
+    const searchField = root.querySelector<HTMLElement>('input[type="text"], textarea');
+    searchField?.focus();
+  }, [lookupRequestId, selectedText]);
+
+  function handleOverlayKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key === 'Escape') {
+      event.stopPropagation();
+      if (showShortcuts) {
+        setShowShortcuts(false);
+        return;
+      }
+      handleClose();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const root = overlayRef.current;
+    if (!root) return;
+    const nodes = Array.from(
+      root.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    ).filter((node) => !node.hasAttribute('disabled') && node.getAttribute('aria-hidden') !== 'true');
+    if (!nodes.length) return;
+    const first = nodes[0];
+    const last = nodes[nodes.length - 1];
+    const active = root.ownerDocument.activeElement as HTMLElement | null;
+    if (event.shiftKey && active === first) {
+      last.focus();
+      event.preventDefault();
+    } else if (!event.shiftKey && active === last) {
+      first.focus();
+      event.preventDefault();
+    }
+  }
+
   return (
     <div
+      ref={overlayRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Dictionary lookup"
+      tabIndex={-1}
       className={cx(
-        'bg-paper border border-border rounded-xl shadow-card-elevated overflow-hidden flex flex-col select-none text-content text-sm relative inpage-popup-card w-full h-full transition-colors dark:border-gold-300/20',
+        'bg-paper border border-border rounded-xl shadow-card-elevated overflow-hidden flex flex-col select-none text-content text-sm relative inpage-popup-card w-full h-full transition-colors dark:border-gold-300/20 outline-none',
         isDarkMode ? 'dark' : 'light-theme light',
         settings.fontFamily === 'editorial' ? 'font-serif' : 'font-sans',
         isMaximized ? 'max-w-5xl max-h-[90vh]' : '',
       )}
       data-theme={isDarkMode ? 'dark' : 'light'}
       onClick={(e) => e.stopPropagation()}
+      onKeyDown={handleOverlayKeyDown}
     >
-      {/* Draggable Header Handle Container with Close Button */}
+      {/* Draggable Header Handle */}
       <div
         className="relative cursor-grab active:cursor-grabbing select-none"
         onMouseDown={handleHeaderMouseDown}
       >
-        <div className="flex items-center">
-          <div className="flex-1">
-            <AppHeader
-              showShortcuts={showShortcuts}
-              isMaximized={isMaximized}
-              isDarkMode={isDarkMode}
-              onToggleShortcuts={() => setShowShortcuts((v) => !v)}
-              onToggleMaximize={onToggleMaximize}
-              onToggleTheme={toggleTheme}
-              onUpdateProvider={(v) => setCurrentProvider(v as typeof currentProvider)}
-              onUpdateTargetLang={(v) => setCurrentLang(v)}
-            />
-          </div>
-          <div className="pr-2 bg-surface border-b border-border py-2 flex items-center">
-            <button
-              type="button"
-              onClick={handleClose}
-              title="Close window (Esc)"
-              aria-label="Close window"
-              className="w-7 h-7 rounded-md bg-surface hover:bg-rose-500/15 text-content-muted hover:text-rose-600 dark:hover:text-rose-300 border border-border flex items-center justify-center transition-colors cursor-pointer"
-            >
-              <IconClose className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+        <AppHeader
+          showShortcuts={showShortcuts}
+          isMaximized={isMaximized}
+          isDarkMode={isDarkMode}
+          onToggleShortcuts={() => setShowShortcuts((v) => !v)}
+          onToggleMaximize={onToggleMaximize}
+          onToggleTheme={toggleTheme}
+          onClose={handleClose}
+          onUpdateProvider={(v) => setCurrentProvider(v as typeof currentProvider)}
+          onUpdateTargetLang={(v) => setCurrentLang(v)}
+        />
       </div>
 
       {/* Navigation Bar */}

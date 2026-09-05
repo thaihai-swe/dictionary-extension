@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { AiResult } from '../types';
-import MarkdownRenderer from './component.markdown-renderer';
-import { useDictionaryAudio } from '../composables/composable.dictionary';
-import { IconCheck, IconCopy, IconEdit, IconSpeaker } from './icons';
-import { cx } from '../ui/cx';
+import { AiResult } from '@/types';
+import MarkdownRenderer from '@/components/component.markdown-renderer';
+import { useDictionaryAudio } from '@/composables/composable.dictionary';
+import { IconCheck, IconCopy, IconEdit, IconSpeaker } from '@/components/icons';
+import { cx } from '@/ui/cx';
 
 interface RephraseIntentProps {
   result: AiResult;

@@ -1,19 +1,19 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
-import { useAiAssistant, AI_INTENTS, AiIntentStatus } from '../composables/composable.ai-assistant';
-import { searchWord, stopAllAudio, useDictionaryQuery } from '../composables/composable.dictionary';
-import { useStorage } from '../composables/composable.storage';
-import { AiIntentId, TabId } from '../types';
-import { IconClose, IconSearch } from './icons';
-import TokenizedContext from './component.tokenized-context';
-import PresetChips from './component.preset-chips';
-import type { DemoPreset } from '../shared/presets';
+import { useAiAssistant, AI_INTENTS, AiIntentStatus } from '@/composables/composable.ai-assistant';
+import { searchWord, stopAllAudio, useDictionaryQuery } from '@/composables/composable.dictionary';
+import { useStorage } from '@/composables/composable.storage';
+import { AiIntentId, TabId } from '@/types';
+import { IconClose, IconSearch } from '@/components/icons';
+import TokenizedContext from '@/components/component.tokenized-context';
+import PresetChips from '@/components/component.preset-chips';
+import type { DemoPreset } from '@/shared/presets';
 import {
   AiMarkdownIntent,
   ConfusablesIntent,
   RephraseIntent,
   SentenceBreakdownIntent,
-} from './async-views';
-import { cx } from '../ui/cx';
+} from '@/components/async-views';
+import { cx } from '@/ui/cx';
 
 interface AiAssistantViewProps {
   initialQuery?: string;

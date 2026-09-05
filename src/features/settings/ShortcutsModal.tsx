@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { IconClose, IconKeyboard } from './icons';
+import React, { useEffect, useRef } from 'react';
+import { IconClose, IconKeyboard } from '@/components/icons';
 
 interface ShortcutsModalProps {
   show?: boolean;
@@ -16,12 +16,18 @@ const shortcuts = [
 ];
 
 export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ show, onClose }) => {
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose?.();
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose?.();
+      }
     }
     if (!show) return;
     window.addEventListener('keydown', handleKeyDown);
+    dialogRef.current?.focus();
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [show, onClose]);
 
@@ -34,14 +40,21 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ show, onClose })
         if (e.target === e.currentTarget) onClose?.();
       }}
     >
-      <div className="w-full max-w-sm rounded-2xl border border-border bg-surface p-5 space-y-4 shadow-card-elevated select-none">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="shortcuts-title"
+        tabIndex={-1}
+        className="w-full max-w-sm rounded-2xl border border-border bg-surface p-5 space-y-4 shadow-card-elevated select-none outline-none"
+      >
         <div className="flex items-center justify-between border-b border-border/60 pb-3">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-600 dark:text-teal-400">
               <IconKeyboard className="w-4 h-4 text-teal-600 dark:text-teal-400" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-content font-heading">
+              <h3 id="shortcuts-title" className="text-sm font-bold text-content font-heading">
                 Keyboard Shortcuts
               </h3>
               <p className="text-[11px] text-content-muted">Quick keys to navigate the workbench</p>

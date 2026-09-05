@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
-import { Meaning } from '../types';
-import { useDictionaryAudio } from '../composables/composable.dictionary';
-import { mergeMeanings } from '../shared/enrichment';
-import { cx } from '../ui/cx';
-import { IconSpeaker } from './icons';
-import RelatedWords from './component.related-words';
+import { Meaning } from '@/types';
+import { useDictionaryAudio } from '@/composables/composable.dictionary';
+import { mergeMeanings } from '@/shared/enrichment';
+import { cx } from '@/ui/cx';
+import { IconSpeaker } from '@/components/icons';
+import RelatedWords from '@/components/component.related-words';
 
 interface SenseMatrixCardProps {
   meanings: Meaning[];

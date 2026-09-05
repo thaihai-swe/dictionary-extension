@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { WordFamily } from '../types';
-import { IconTree } from './icons';
+import { WordFamily } from '@/types';
+import { IconTree } from '@/components/icons';
 
 interface WordFamilyCardProps {
   word?: string;

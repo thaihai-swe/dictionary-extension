@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { ConfusablePair } from '../types';
-import { IconAlertTriangle } from './icons';
+import { ConfusablePair } from '@/types';
+import { IconAlertTriangle } from '@/components/icons';
 
 interface UsageNotesCardProps {
   notes?: string;

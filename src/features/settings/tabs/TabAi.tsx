@@ -1,13 +1,13 @@
 import React from 'react';
-import { AppSettings } from '../../types';
-import { cx } from '../../ui/cx';
-import { IconEdit, IconExternalLink, IconSparkles, IconSpinner } from '../icons';
+import { AppSettings } from '@/types';
+import { cx } from '@/ui/cx';
+import { IconEdit, IconExternalLink, IconSparkles, IconSpinner } from '@/components/icons';
 import {
   DEFAULT_GEMINI_BASE_URL,
   DEFAULT_GEMINI_MODEL,
   DEFAULT_OPENAI_BASE_URL,
   isOpenAiStandard,
-} from '../../shared/settings';
+} from '@/shared/settings';
 
 interface TabAiProps {
   localSettings: AppSettings;

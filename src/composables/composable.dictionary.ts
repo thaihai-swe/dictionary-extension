@@ -12,6 +12,7 @@ import { AppSettings, DictionaryEntry, PracticeResult } from '../types';
 const queryRef = signal<string>('');
 const resultRef = signal<DictionaryEntry | null>(null);
 const isLoadingRef = signal<boolean>(false);
+const isEnrichingRef = signal<boolean>(false);
 const errorRef = signal<string | null>(null);
 const practiceResultRef = signal<PracticeResult | null>(null);
 const isPracticingRef = signal<boolean>(false);
@@ -199,6 +200,7 @@ export function abortActiveDictRequest() {
   dictPendingMap.clear();
   dictPendingRequestIds.clear();
   isLoadingRef.value = false;
+  isEnrichingRef.value = false;
 }
 
 function maybePreloadAi(text: string, targetLang: string, context?: string, generation = dictPreloadGeneration) {
@@ -465,7 +467,11 @@ export async function searchWord(
   const cached = dictCache.read(cacheKey);
   resultRef.value = cached || null;
   isLoadingRef.value = !cached;
-  if (cached?.enriched && !attachedRequestId) return;
+  isEnrichingRef.value = Boolean(cached) && !cached?.enriched;
+  if (cached?.enriched && !attachedRequestId) {
+    isEnrichingRef.value = false;
+    return;
+  }
 
   let enrichmentTimeout: ReturnType<typeof setTimeout> | null = null;
   let pendingUpdate: DictionaryEntry | null = null;
@@ -478,8 +484,10 @@ export async function searchWord(
     if ((resultRef.value?.revision || 0) > (enriched.revision || 0)) return;
     resultRef.value = enriched;
     isLoadingRef.value = false;
+    isEnrichingRef.value = !enriched.enriched;
     dictCache.write(cacheKey, enriched);
     if (enriched.enriched) {
+      isEnrichingRef.value = false;
       if (enrichmentTimeout) clearTimeout(enrichmentTimeout);
       unsubscribe();
     }
@@ -532,20 +540,26 @@ export async function searchWord(
       dictPendingMap.delete(cacheKey);
       dictPendingRequestIds.delete(cacheKey);
       isLoadingRef.value = false;
+      if (!resultRef.value || resultRef.value.enriched) isEnrichingRef.value = false;
+      else isEnrichingRef.value = true;
       if (activeDictRequestId === requestId) activeDictRequestId = null;
     }
   }
 
   enrichmentTimeout = setTimeout(() => {
-    if (generation === lookupGeneration) unsubscribe();
+    if (generation === lookupGeneration) {
+      isEnrichingRef.value = false;
+      unsubscribe();
+    }
   }, 20000);
 }
 
 export function useDictionaryResult() {
   const result = useSignal(resultRef);
   const isLoading = useSignal(isLoadingRef);
+  const isEnriching = useSignal(isEnrichingRef);
   const error = useSignal(errorRef);
-  return { result, isLoading, error };
+  return { result, isLoading, isEnriching, error };
 }
 
 export function useDictionaryAudio() {

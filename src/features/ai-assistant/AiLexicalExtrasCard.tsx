@@ -1,13 +1,13 @@
 import React, { Suspense, useMemo } from 'react';
-import { lexicalExtrasForIntent } from '../shared/ai-prompts';
-import { LexicalProfile } from '../types';
+import { lexicalExtrasForIntent } from '@/shared/ai-prompts';
+import { LexicalProfile } from '@/types';
 import {
   CollocationsCard,
   LearnerMistakesCard,
   UsageNotesCard,
   WordFamilyCard,
   WordFormationCard,
-} from './async-views';
+} from '@/components/async-views';
 
 interface AiLexicalExtrasProps {
   query?: string;

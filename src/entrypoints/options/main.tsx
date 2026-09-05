@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import SettingsModal from '@/components/modal.settings';
+import SettingsModal from '@/features/settings/SettingsModal';
 import '@/assets/main.css';
 
 const container = document.getElementById('app');

@@ -1,7 +1,7 @@
 import React from 'react';
-import { AiResult } from '../types';
-import SentenceBreakdownCard from './card.sentence-breakdown';
-import MarkdownRenderer from './component.markdown-renderer';
+import { AiResult } from '@/types';
+import SentenceBreakdownCard from './SentenceBreakdownCard';
+import MarkdownRenderer from '@/components/component.markdown-renderer';
 
 interface SentenceBreakdownIntentProps {
   result: AiResult;

@@ -1,7 +1,7 @@
 import React from 'react';
-import { AiResult } from '../types';
-import MarkdownRenderer from './component.markdown-renderer';
-import AiLexicalExtras from './card.ai-lexical-extras';
+import { AiResult } from '@/types';
+import MarkdownRenderer from '@/components/component.markdown-renderer';
+import AiLexicalExtras from './AiLexicalExtrasCard';
 
 interface AiMarkdownIntentProps {
   result: AiResult;

@@ -130,6 +130,7 @@ async function startBootstrap() {
   popupLayer.className = 'dictionary-popup-layer';
   popupLayer.style.display = 'none';
   const overlayMount = document.createElement('div');
+  overlayMount.setAttribute('role', 'presentation');
   popupLayer.appendChild(overlayMount);
   shadow.appendChild(popupLayer);
 
@@ -521,7 +522,10 @@ async function startBootstrap() {
         return;
       }
     }
-    if (event.key === 'Escape') closePopup();
+    if (event.key === 'Escape' && showPopup) {
+      event.preventDefault();
+      closePopup();
+    }
   });
 
   window.addEventListener('click', (event) => {

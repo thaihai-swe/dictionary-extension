@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { searchWord, stopAllAudio, useDictionaryQuery, useDictionaryResult } from '../composables/composable.dictionary';
-import { useStorage } from '../composables/composable.storage';
-import { IconClose } from './icons';
-import WordLookupResult from './view.word-lookup-result';
-import PresetChips from './component.preset-chips';
-import type { DemoPreset } from '../shared/presets';
+import { searchWord, stopAllAudio, useDictionaryQuery, useDictionaryResult } from '@/composables/composable.dictionary';
+import { useStorage } from '@/composables/composable.storage';
+import { IconClose } from '@/components/icons';
+import WordLookupResult from './WordLookupResult';
+import PresetChips from '@/components/component.preset-chips';
+import type { DemoPreset } from '@/shared/presets';
 
 interface WordLookupViewProps {
   initialQuery?: string;
@@ -92,7 +92,8 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
             }}
             type="text"
             placeholder="Look up a word or sentence…"
-            className="w-full h-[38px] bg-surface border border-border rounded-md px-3 pr-8 text-[13.5px] text-content placeholder:text-content-muted outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/15 transition-all font-sans"
+            aria-label="Look up a word or sentence"
+            className="w-full h-[38px] bg-surface border border-border rounded-md px-3 pr-8 text-[13.5px] text-content placeholder:text-content-muted outline-none focus-visible:border-teal-500 focus-visible:ring-2 focus-visible:ring-teal-500/15 transition-all font-sans"
           />
 
           {searchInput ? (
@@ -119,14 +120,16 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
 
       <div className="p-4 space-y-3.5">
         {error ? (
-          <div className="p-3 rounded-lg bg-rose-500/8 border border-rose-500/25 text-[13px] text-rose-700 dark:text-rose-400 flex items-start gap-2">
+          <div role="alert" className="p-3 rounded-lg bg-rose-500/8 border border-rose-500/25 text-[13px] text-rose-700 dark:text-rose-400 flex items-start gap-2">
             <span className="mt-0.5 text-rose-500" aria-hidden="true">●</span>
             <span>{error}</span>
           </div>
         ) : result ? (
-          <WordLookupResult onSelectWord={handleSearch} />
+          <div aria-busy={isLoading || undefined}>
+            <WordLookupResult onSelectWord={handleSearch} />
+          </div>
         ) : isLoading ? (
-          <div className="p-4 space-y-3 rounded-xl border border-border bg-surface animate-pulse">
+          <div className="p-4 space-y-3 rounded-xl border border-border bg-surface animate-pulse" aria-busy="true" aria-live="polite">
             <div className="flex items-center justify-between">
               <div className="h-7 bg-muted rounded w-1/3"></div>
               <div className="h-5 bg-muted rounded-full w-16"></div>

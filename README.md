@@ -53,10 +53,15 @@ npm run build
   - `background/` — Background Service Worker (`service-worker.ts`)
   - `content-script/` — In-page selection listener & floating overlay UI (`bootstrap.ts`, `overlay-app.tsx`, `overlay.in-page.tsx`)
   - `toolbar-popup/` — Extension action toolbar popup (`app.toolbar-popup.tsx`, `main.tsx`)
-- `src/components/` — React 18 shared UI components, cards, and modals
+  - `options/` — Extension full options tab entry point (`main.tsx`)
+- `src/features/` — Domain-driven feature slices:
+  - `dictionary/` — Word lookup UI views, SenseMatrix, WordFamily, Collocations, UsageNotes
+  - `ai-assistant/` — AI assistant view, 7 contextual intent cards & sentence breakdown
+  - `settings/` — SettingsModal, ShortcutsModal, and settings tabs
+- `src/components/` — Shared primitive UI components (Header, TabNavigation, Markdown, Chips, Icons)
 - `src/composables/` — Custom hooks and reactive external stores (dictionary, AI, storage & audio/voice management)
-- `src/providers/` — Multi-source dictionary & Gemini AI providers
-- `src/types/` — TypeScript interfaces and schemas
+- `src/providers/` — Pluggable multi-source dictionary, translation, and Gemini AI providers with `ProviderRegistry`
+- `src/types/` — Segregated TypeScript interfaces (`models.ts`, `settings.ts`, `providers.ts`)
 - `docs/` — Canonical project documentation
 
 ## Documentation

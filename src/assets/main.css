@@ -143,6 +143,7 @@ html.light {
 .btn-control-icon {
   width: 30px;
   height: 30px;
+  min-width: 30px;
   padding: 5px;
   display: flex;
   align-items: center;
@@ -151,9 +152,10 @@ html.light {
   border: 1px solid var(--border-color);
   background-color: var(--bg-surface);
   color: var(--text-secondary);
-  transition: all 160ms ease;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
   cursor: pointer;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+  flex-shrink: 0;
 }
 .btn-control-icon:hover {
   background-color: var(--bg-elevated);
@@ -162,6 +164,16 @@ html.light {
 }
 .btn-control-icon:active {
   transform: scale(0.94);
+}
+.btn-control-icon:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-control-icon:active {
+    transform: none;
+  }
 }
 
 /* Editorial Related Words (Synonyms & Antonyms) */

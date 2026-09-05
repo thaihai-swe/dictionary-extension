@@ -1,7 +1,7 @@
 import React from 'react';
-import { useDictionaryAudio } from '../composables/composable.dictionary';
-import { cx } from '../ui/cx';
-import { IconAlertTriangle, IconSpeaker } from './icons';
+import { useDictionaryAudio } from '@/composables/composable.dictionary';
+import { cx } from '@/ui/cx';
+import { IconAlertTriangle, IconSpeaker } from '@/components/icons';
 
 interface MistakeItem {
   mistake: string;
