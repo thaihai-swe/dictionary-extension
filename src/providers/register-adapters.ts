@@ -5,7 +5,6 @@ import { fetchGoogleTranslate, lookupGoogleTranslation } from './provider.google
 import { fetchLibreTranslate, lookupLibreTranslation } from './provider.libre-translate';
 import { lookupMyMemoryTranslation } from './provider.mymemory';
 import { fetchRhymeBrain } from './provider.rhymebrain';
-import { fetchUrbanDictionary } from './provider.urban-dictionary';
 import { fetchWikipediaSummary } from './provider.wikipedia';
 import { fetchWiktionary } from './provider.wiktionary';
 import { fetchWiktionaryEtymology } from './provider.wiktionary-etymology';
@@ -34,12 +33,6 @@ providerRegistry.registerDictionary({
   id: 'rhymebrain',
   name: 'RhymeBrain',
   lookup: (word, opts) => fetchRhymeBrain(word, opts.targetLang, opts.signal),
-});
-
-providerRegistry.registerDictionary({
-  id: 'urban_dictionary',
-  name: 'Urban Dictionary',
-  lookup: (word, opts) => fetchUrbanDictionary(word, opts.targetLang, opts.signal),
 });
 
 providerRegistry.registerDictionary({

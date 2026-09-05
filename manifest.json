@@ -49,7 +49,6 @@
     "https://generativelanguage.googleapis.com/*",
     "https://libretranslate.com/*",
     "https://api.datamuse.com/*",
-    "https://api.urbandictionary.com/*",
     "https://en.wikipedia.org/*",
     "https://rhymebrain.com/*",
     "https://tatoeba.org/*",

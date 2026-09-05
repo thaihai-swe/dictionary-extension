@@ -13,7 +13,6 @@ export type DictionaryProviderId =
   | 'wiktionary_etymology'
   | 'wiktionary_bilingual'
   | 'datamuse'
-  | 'urban_dictionary'
   | 'wikipedia'
   | 'rhymebrain'
   | 'tatoeba';

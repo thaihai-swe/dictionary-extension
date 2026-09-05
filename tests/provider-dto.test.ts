@@ -78,21 +78,13 @@ test('mergePhonetics preserves distinct IPAs and collates matching regions/audio
   assert.equal(ukItem?.region, 'uk');
 });
 
-test('mergeDictionaryEntries keeps Urban Dictionary slang and Wikipedia encyclopedia as distinct POS', () => {
+test('mergeDictionaryEntries keeps Wikipedia encyclopedia as a distinct POS', () => {
   const wiktionary: ProviderLookupDto = {
     word: 'goat',
     providerId: 'wiktionary',
     meanings: [{
       partOfSpeech: 'noun',
       definitions: [{ definition: 'A mammal of the genus Capra.' }],
-    }],
-  };
-  const urbanDict: ProviderLookupDto = {
-    word: 'goat',
-    providerId: 'urban_dictionary',
-    meanings: [{
-      partOfSpeech: 'slang',
-      definitions: [{ definition: 'Greatest Of All Time.' }],
     }],
   };
   const wikipedia: ProviderLookupDto = {
@@ -104,13 +96,11 @@ test('mergeDictionaryEntries keeps Urban Dictionary slang and Wikipedia encyclop
     }],
   };
 
-  let combined = mergeDictionaryEntries(wiktionary, urbanDict);
-  combined = mergeDictionaryEntries(combined, wikipedia);
+  const combined = mergeDictionaryEntries(wiktionary, wikipedia);
 
-  assert.equal(combined.meanings.length, 3);
+  assert.equal(combined.meanings.length, 2);
   const posList = combined.meanings.map((m) => m.partOfSpeech);
   assert.ok(posList.includes('noun'));
-  assert.ok(posList.includes('slang'));
   assert.ok(posList.includes('encyclopedia'));
 });
 
