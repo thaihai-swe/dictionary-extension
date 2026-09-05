@@ -1045,7 +1045,7 @@
             sections.forEach((section) => navObserver.observe(section));
 
             if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-                $$(".section-header, .card, .interactive-stage, .arch-diagram-card, .table-card, .code-showcase, .doc-link-card, .cta-card, .user-journey-step, .install-step, .benefit-card, .ai-action-card, .faq-item").forEach((element) => {
+                $$(".section-header, .panel, .interactive-stage, .table-card, .cta-card, .install-step, .faq-item").forEach((element) => {
                     element.classList.add("reveal");
                 });
                 const revealObserver = new IntersectionObserver((entries, observer) => {
