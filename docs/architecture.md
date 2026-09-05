@@ -14,7 +14,7 @@ The runtime architecture is organized into clean, decoupled layers following mod
    - `composable.dictionary.ts`: Handles caching, dictionary lookups, audio playback & reactive `isAudioPlayingRef` state with global `stopAllAudio()`.
    - `composable.ai-assistant.ts`: Handles Gemini AI prompts, 7 intent pipelines, Dictionary-tab Main AI preload, AI-tab visit sequencing, and hover prefetching.
    - `composable.storage.ts`: Reactive `chrome.storage` settings synchronization.
-5. **Provider Adapters** (`src/providers/`) — Keyless vendor adapters registered through `ProviderRegistry` (`src/providers/registry.ts` + `register-adapters.ts`). Dictionary providers (`free_dictionary`, `wiktionary`, `datamuse`, `wikipedia`, `urban_dictionary`, `rhymebrain`), translation (`google_translate`, `mymemory`, `libre_translate`), and Gemini AI (`gemini-3.5-flash-lite`). Lookup orchestration lives in `pipeline.ts`; L1/L2 caches live in `cache.ts`.
+5. **Provider Adapters** (`src/providers/`) — Keyless vendor adapters registered through `ProviderRegistry` (`src/providers/registry.ts` + `register-adapters.ts`). Dictionary providers (`free_dictionary`, `wiktionary`, `wiktionary_etymology`, `wiktionary_bilingual`, `datamuse`, `wikipedia`, `urban_dictionary`, `rhymebrain`, `tatoeba`), translation (`google_translate`, `mymemory`, `libre_translate`), and Gemini AI (`gemini-3.5-flash-lite`). Lookup orchestration lives in `pipeline.ts`; L1/L2 caches live in `cache.ts`.
 6. **Feature UI** (`src/features/`) — Domain-sliced React views: dictionary cards (`src/features/dictionary/`), AI intents (`src/features/ai-assistant/`), and settings (`src/features/settings/`). Shared primitives (`AppHeader`, `TabNavigation`, `MarkdownRenderer`, `RelatedWords`, `TokenizedContext`) remain in `src/components/`.
 
 ---
@@ -99,7 +99,7 @@ User selects text on webpage OR types query in toolbar popup
 2. **Primary Provider Selection:** The configured `dictionaryProvider` (`wiktionary` by default) is attempted first.
 3. **Provider Fallback Chain:** All remaining dictionary backends are keyless. `NotFoundError` and transient network/5xx/429/timeout continue to the next provider. The fallback chain evaluates in order:
    ```text
-   wiktionary ➔ free_dictionary ➔ datamuse ➔ rhymebrain ➔ wikipedia ➔ urban_dictionary
+   wiktionary ➔ free_dictionary ➔ datamuse ➔ rhymebrain ➔ wikipedia ➔ urban_dictionary ➔ wiktionary_etymology ➔ wiktionary_bilingual ➔ tatoeba
    ```
    *(The primary provider is prioritized at the front of this sequence.)*
 4. **Primary Exact Query:** The primary provider looks up the selected text as-is. Inflections and phrases are not rewritten to a root lemma.

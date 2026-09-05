@@ -142,6 +142,9 @@ export const TabSources: React.FC<TabSourcesProps> = ({
           <option value="datamuse" className="bg-surface text-content">Datamuse (Keyless collocations)</option>
           <option value="wikipedia" className="bg-surface text-content">Wikipedia Summary</option>
           <option value="urban_dictionary" className="bg-surface text-content">Urban Dictionary (Slang &amp; Idioms)</option>
+          <option value="wiktionary_etymology" className="bg-surface text-content">Wiktionary Etymology (Origins)</option>
+          <option value="wiktionary_bilingual" className="bg-surface text-content">Wiktionary Bilingual Gloss</option>
+          <option value="tatoeba" className="bg-surface text-content">Tatoeba Sentence Corpus</option>
           <option value="google_translate" className="bg-surface text-content">Google Translate API</option>
         </select>
       </div>
@@ -160,6 +163,9 @@ export const TabSources: React.FC<TabSourcesProps> = ({
               ['wikipedia', 'Wikipedia'],
               ['urban_dictionary', 'Urban Dictionary'],
               ['rhymebrain', 'RhymeBrain'],
+              ['wiktionary_etymology', 'Wiktionary Etymology'],
+              ['wiktionary_bilingual', 'Wiktionary Bilingual'],
+              ['tatoeba', 'Tatoeba Sentences'],
             ] as const
           ).map(([id, label]) => (
             <button

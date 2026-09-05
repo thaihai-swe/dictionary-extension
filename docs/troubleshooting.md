@@ -55,7 +55,7 @@ This guide provides actionable solutions for common issues across extension relo
 - Transient 5xx/timeout from a free provider continues to the next free provider. Dictionary HTTP runs in the background service worker (inspect that worker's Network tab, not the page).
 
 ### Symptom: Secondary providers don't enrich results.
-- **Check 1 — Network Connectivity:** All dictionary providers (`free_dictionary`, `wiktionary`, `datamuse`, `rhymebrain`, `wikipedia`, `urban_dictionary`) are keyless and require open network access.
+- **Check 1 — Network Connectivity:** All dictionary providers (`free_dictionary`, `wiktionary`, `wiktionary_etymology`, `wiktionary_bilingual`, `datamuse`, `rhymebrain`, `wikipedia`, `urban_dictionary`, `tatoeba`) are keyless and require open network access.
 - **Check 2 — Enrichment Diagnostics:** In Settings, click the test buttons under **Test dictionary connection** to verify reachability and latency.
 - **Check 3 — Graceful Degradation:** When an upstream endpoint is temporarily unavailable or returns 5xx/timeout, enrichment silently skips that provider without breaking the displayed Free Dictionary or Wiktionary results.
 

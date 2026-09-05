@@ -45,13 +45,14 @@
     "https://api.dictionaryapi.dev/*",
     "https://translate.googleapis.com/*",
     "https://clients5.google.com/*",
-    "https://en.wiktionary.org/*",
+    "https://*.wiktionary.org/*",
     "https://generativelanguage.googleapis.com/*",
     "https://libretranslate.com/*",
     "https://api.datamuse.com/*",
     "https://api.urbandictionary.com/*",
     "https://en.wikipedia.org/*",
     "https://rhymebrain.com/*",
+    "https://tatoeba.org/*",
     "https://api.mymemory.translated.net/*"
   ],
   "commands": {

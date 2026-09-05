@@ -10,10 +10,13 @@ export type DictionaryProviderId =
   | 'free_dictionary'
   | 'google_translate'
   | 'wiktionary'
+  | 'wiktionary_etymology'
+  | 'wiktionary_bilingual'
   | 'datamuse'
   | 'urban_dictionary'
   | 'wikipedia'
   | 'rhymebrain'
+  | 'tatoeba'
   | 'gemini_ai';
 
 export interface AppSettings {

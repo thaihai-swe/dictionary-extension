@@ -8,6 +8,9 @@ import { fetchRhymeBrain } from './provider.rhymebrain';
 import { fetchUrbanDictionary } from './provider.urban-dictionary';
 import { fetchWikipediaSummary } from './provider.wikipedia';
 import { fetchWiktionary } from './provider.wiktionary';
+import { fetchWiktionaryEtymology } from './provider.wiktionary-etymology';
+import { fetchWiktionaryBilingual } from './provider.wiktionary-bilingual';
+import { fetchTatoeba } from './provider.tatoeba';
 import { fetchAiAnalysis } from './provider.gemini-ai';
 
 providerRegistry.registerDictionary({
@@ -44,6 +47,24 @@ providerRegistry.registerDictionary({
   id: 'wikipedia',
   name: 'Wikipedia',
   lookup: (word, opts) => fetchWikipediaSummary(word, opts.targetLang, opts.signal),
+});
+
+providerRegistry.registerDictionary({
+  id: 'wiktionary_etymology',
+  name: 'Wiktionary Etymology',
+  lookup: (word, opts) => fetchWiktionaryEtymology(word, opts.targetLang, opts.signal),
+});
+
+providerRegistry.registerDictionary({
+  id: 'wiktionary_bilingual',
+  name: 'Wiktionary Bilingual',
+  lookup: (word, opts) => fetchWiktionaryBilingual(word, opts.targetLang, opts.signal),
+});
+
+providerRegistry.registerDictionary({
+  id: 'tatoeba',
+  name: 'Tatoeba',
+  lookup: (word, opts) => fetchTatoeba(word, opts.targetLang, opts.signal),
 });
 
 providerRegistry.registerDictionary({
