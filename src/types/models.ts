@@ -1,4 +1,4 @@
-export type TabId = 'dictionary' | 'ai_assistant';
+export type TabId = 'dictionary' | 'ai_assistant' | 'rewriter';
 
 export type AiIntentId =
   | 'default'

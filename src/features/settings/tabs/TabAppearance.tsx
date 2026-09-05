@@ -66,10 +66,10 @@ export const TabAppearance: React.FC<TabAppearanceProps> = ({ localSettings, onC
           className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-accent cursor-pointer shadow-xs"
         >
           <option value="learner" className="bg-surface text-content">
-            Modern Academic (Plus Jakarta Sans)
+            System Sans
           </option>
           <option value="editorial" className="bg-surface text-content">
-            Classic Editorial (Newsreader)
+            System Serif
           </option>
         </select>
       </section>

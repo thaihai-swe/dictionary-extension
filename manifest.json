@@ -31,7 +31,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["overlay.js", "overlay.css", "overlay-*.js", "overlay-*.css", "fonts/*"],
+      "resources": ["overlay.js", "overlay.css", "overlay-*.js", "overlay-*.css"],
       "matches": ["<all_urls>"]
     }
   ],

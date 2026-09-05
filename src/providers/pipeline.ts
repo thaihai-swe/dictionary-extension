@@ -246,12 +246,7 @@ export async function runDictionaryEnrichment(
   const secondaryProviders = DICTIONARY_FALLBACK_ORDER.filter((id) => id !== primaryProviderId);
   const collected: DictionaryEntry[] = [];
 
-  for (let index = 0; index < secondaryProviders.length; index += ENRICHMENT_CONCURRENCY) {
-    if (signal?.aborted) break;
-    const batch = secondaryProviders.slice(index, index + ENRICHMENT_CONCURRENCY);
-    const settled = await Promise.allSettled(
-      batch.map((providerId) => lookupSingleProvider(providerId, queryTerm, targetLang, signal, settings)),
-    );
+  const collectSettled = (settled: PromiseSettledResult<ProviderLookupDto>[]) => {
     const batchResults: DictionaryEntry[] = [];
     for (const item of settled) {
       if (item.status !== 'fulfilled' || !item.value) continue;
@@ -262,8 +257,27 @@ export async function runDictionaryEnrichment(
       collected.push(...batchResults);
       applyResults(batchResults);
     }
+  };
+
+  // Isolate free_dictionary (api.dictionaryapi.dev): it is often slow and must not stall other sources.
+  const isolatedId = 'free_dictionary';
+  const isolatedPromise = secondaryProviders.includes(isolatedId)
+    ? lookupSingleProvider(isolatedId, queryTerm, targetLang, signal, settings)
+      .then((value) => collectSettled([{ status: 'fulfilled', value }]))
+      .catch(() => undefined)
+    : Promise.resolve();
+
+  const queuedProviders = secondaryProviders.filter((id) => id !== isolatedId);
+  for (let index = 0; index < queuedProviders.length; index += ENRICHMENT_CONCURRENCY) {
+    if (signal?.aborted) break;
+    const batch = queuedProviders.slice(index, index + ENRICHMENT_CONCURRENCY);
+    const settled = await Promise.allSettled(
+      batch.map((providerId) => lookupSingleProvider(providerId, queryTerm, targetLang, signal, settings)),
+    );
+    collectSettled(settled);
   }
 
+  await isolatedPromise;
   if (collected.length) await writeSessionEnrichment(cacheKey, collected);
 }
 

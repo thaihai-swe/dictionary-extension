@@ -11,6 +11,7 @@ import { useAppTheme } from '@/ui/theme';
 import ToastContainer from '@/components/component.toast';
 
 const AiAssistantView = lazy(() => import('@/features/ai-assistant/AiAssistantView'));
+const ContextualRewriter = lazy(() => import('@/features/rewriter/ContextualRewriter'));
 const ShortcutsModal = lazy(() => import('@/features/settings/ShortcutsModal'));
 
 interface InPageOverlayProps {
@@ -50,6 +51,7 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
   const { isDarkMode, toggleTheme } = useAppTheme(settings.theme, { saveSettings });
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [aiVisited, setAiVisited] = useState(activeTab === 'ai_assistant');
+  const [rewriterVisited, setRewriterVisited] = useState(activeTab === 'rewriter');
   const [currentProvider, setCurrentProvider] = useState(settings.dictionaryProvider || 'wiktionary');
   const [currentText, setCurrentText] = useState(selectedText || '');
   const [currentContext, setCurrentContext] = useState(
@@ -72,6 +74,7 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
 
   useEffect(() => {
     if (activeTab === 'ai_assistant') setAiVisited(true);
+    if (activeTab === 'rewriter') setRewriterVisited(true);
   }, [activeTab]);
 
   useEffect(() => {
@@ -282,6 +285,17 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
                 targetLang={currentLang}
                 isVisible={activeTab === 'ai_assistant'}
                 onSwitchTab={handleTabChange}
+              />
+            </Suspense>
+          </div>
+        ) : null}
+        {rewriterVisited ? (
+          <div style={{ display: activeTab === 'rewriter' ? undefined : 'none' }}>
+            <Suspense fallback={<div className="p-4 text-[13px] text-content-muted">Loading rewriter…</div>}>
+              <ContextualRewriter
+                initialText={currentText}
+                contextSentence={currentContext}
+                targetLang={currentLang}
               />
             </Suspense>
           </div>

@@ -109,10 +109,7 @@ function buildExtensionScriptsPlugin(): Plugin {
         }
       }
       if (overlayCssParts.length) {
-        // Root-absolute /fonts/ URLs resolve against the host page, not the extension.
-        // Overlay CSS is loaded from chrome-extension://id/overlay.css, so relative fonts/ works.
-        const combinedCss = overlayCssParts.join('\n').replace(/url\((['"]?)\/fonts\//g, 'url($1fonts/');
-        writeFileSync(resolve(distDir, 'overlay.css'), combinedCss);
+        writeFileSync(resolve(distDir, 'overlay.css'), overlayCssParts.join('\n'));
       }
 
       if (existsSync('manifest.json')) {
