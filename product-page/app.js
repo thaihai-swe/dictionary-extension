@@ -650,6 +650,31 @@
                 </div>
                 <p class="demo-translation">${escapeHtml(result.translation)}</p>
             </section>
+            ${renderLexicalAccordion(entry)}
+        `;
+    }
+
+    function renderLexicalAccordion(entry) {
+        const result = entry.dictionary || {};
+        const family = renderWordFamily(result.wordFamily);
+        const related = entry.ai?.phrase_explorer?.phraseCards || [];
+        const relatedItems = related
+            .map(([phrase, explanation]) => `<li><strong>${escapeHtml(phrase)}</strong> — ${escapeHtml(explanation)}</li>`)
+            .join("");
+        const notes = renderUsageNotes(result);
+        if (!family && !relatedItems && !notes) return "";
+        return `
+            <details class="demo-lexical-accordion">
+                <summary>
+                    <span>More lexical detail</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </summary>
+                <div class="demo-lexical-body">
+                    ${family}
+                    ${relatedItems ? `<section class="demo-ai-block"><h4>Collocations</h4><ul class="demo-study-list">${relatedItems}</ul></section>` : ""}
+                    ${notes}
+                </div>
+            </details>
         `;
     }
 
@@ -1065,9 +1090,46 @@
         if (year) year.textContent = String(new Date().getFullYear());
     }
 
+    function setupCopyInstall() {
+        const button = $("#copy-install-btn");
+        const code = $("#install-commands");
+        const feedback = $("#copy-feedback");
+        if (!button || !code) return;
+
+        button.addEventListener("click", async () => {
+            const text = code.textContent || "";
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(text);
+                } else {
+                    const textarea = document.createElement("textarea");
+                    textarea.value = text;
+                    textarea.style.position = "fixed";
+                    textarea.style.opacity = "0";
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand("copy");
+                    textarea.remove();
+                }
+                button.classList.add("is-copied");
+                const copyText = button.querySelector(".copy-text");
+                if (copyText) copyText.textContent = "Copied!";
+                if (feedback) feedback.textContent = "Commands copied to clipboard";
+                window.setTimeout(() => {
+                    button.classList.remove("is-copied");
+                    if (copyText) copyText.textContent = "Copy";
+                    if (feedback) feedback.textContent = "";
+                }, 2200);
+            } catch (err) {
+                if (feedback) feedback.textContent = "Failed to copy text";
+            }
+        });
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
         setupNavigation();
         setupDemo();
+        setupCopyInstall();
         setupObservers();
         setupYear();
     });

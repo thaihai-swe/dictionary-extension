@@ -1,22 +1,50 @@
 <!doctype html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Dictionary — Look it up. Hear it. Keep reading.</title>
-    <meta name="description" content="A free Chrome extension for instant definitions, translation, pronunciation, speech practice, and sentence-aware AI. Look up words where you read without leaving the page.">
+    <meta name="description"
+        content="A free Chrome extension for instant definitions, translation, pronunciation, speech practice, and sentence-aware AI. Look up words where you read without leaving the page.">
     <meta name="theme-color" content="#fbfaf7">
     <link rel="canonical" href="https://thaihai-swe.github.io/dictionary-extension/">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <meta property="og:title" content="Dictionary — Look it up. Hear it. Keep reading.">
-    <meta property="og:description" content="Look up words where you read. Get definitions, translation, pronunciation practice, and sentence-aware AI without opening a new tab. Free and open source.">
+    <meta property="og:description"
+        content="Look up words where you read. Get definitions, translation, pronunciation practice, and sentence-aware AI without opening a new tab. Free and open source.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://thaihai-swe.github.io/dictionary-extension/">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Dictionary — Look it up. Hear it. Keep reading.">
-    <meta name="twitter:description" content="A free Chrome extension for dictionary lookup, translation, pronunciation, speech practice, and contextual AI learning.">
+    <meta name="twitter:description"
+        content="A free Chrome extension for dictionary lookup, translation, pronunciation, speech practice, and contextual AI learning.">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Dictionary",
+      "operatingSystem": "Chrome, Chromium, Brave, Edge",
+      "applicationCategory": "BrowserExtension",
+      "applicationSubCategory": "Language Learning & Productivity",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "description": "A free Chrome extension for instant definitions, translation, pronunciation, speech practice, and sentence-aware AI without leaving the page.",
+      "author": {
+        "@type": "Person",
+        "name": "thaihai-swe",
+        "url": "https://github.com/thaihai-swe"
+      },
+      "url": "https://thaihai-swe.github.io/dictionary-extension/",
+      "downloadUrl": "https://github.com/thaihai-swe/dictionary-extension/archive/refs/heads/main.zip"
+    }
+    </script>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <a href="#main" class="skip-link">Skip to main content</a>
 
@@ -25,14 +53,14 @@
             <a href="#hero" class="brand" aria-label="Dictionary home">
                 <span class="brand-icon" aria-hidden="true">
                     <svg width="22" height="22" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="48" height="48" rx="6" fill="#2563EB"/>
-                        <rect x="9" y="9" width="9" height="30" fill="white"/>
-                        <rect x="21" y="9" width="6" height="30" fill="white"/>
-                        <rect x="30" y="9" width="9" height="30" fill="white"/>
-                        <line x1="24" y1="15" x2="27" y2="15" stroke="#2563EB" stroke-width="1.5"/>
-                        <line x1="24" y1="21" x2="27" y2="21" stroke="#2563EB" stroke-width="1.5"/>
-                        <line x1="24" y1="27" x2="27" y2="27" stroke="#2563EB" stroke-width="1.5"/>
-                        <line x1="24" y1="33" x2="27" y2="33" stroke="#2563EB" stroke-width="1.5"/>
+                        <rect width="48" height="48" rx="6" fill="#2563EB" />
+                        <rect x="9" y="9" width="9" height="30" fill="white" />
+                        <rect x="21" y="9" width="6" height="30" fill="white" />
+                        <rect x="30" y="9" width="9" height="30" fill="white" />
+                        <line x1="24" y1="15" x2="27" y2="15" stroke="#2563EB" stroke-width="1.5" />
+                        <line x1="24" y1="21" x2="27" y2="21" stroke="#2563EB" stroke-width="1.5" />
+                        <line x1="24" y1="27" x2="27" y2="27" stroke="#2563EB" stroke-width="1.5" />
+                        <line x1="24" y1="33" x2="27" y2="33" stroke="#2563EB" stroke-width="1.5" />
                     </svg>
                 </span>
                 <span class="brand-text">Dictionary <span class="brand-badge">Free · Chrome</span></span>
@@ -43,6 +71,7 @@
                     <li><a href="#overview" class="nav-link">Why Dictionary</a></li>
                     <li><a href="#interactive-preview" class="nav-link">Try the demo</a></li>
                     <li><a href="#ai-actions" class="nav-link">AI actions</a></li>
+                    <li><a href="#compare" class="nav-link">Compare</a></li>
                     <li><a href="#install" class="nav-link">Install</a></li>
                     <li><a href="#faq" class="nav-link">FAQ</a></li>
                 </ul>
@@ -50,7 +79,8 @@
 
             <div class="header-actions">
                 <a href="#install" class="btn btn-primary btn-sm">Install free</a>
-                <button type="button" class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+                <button type="button" class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="site-nav"
+                    aria-label="Open menu">
                     <span class="nav-toggle-bar"></span>
                     <span class="nav-toggle-bar"></span>
                     <span class="nav-toggle-bar"></span>
@@ -70,35 +100,53 @@
                     </div>
                     <h1 class="hero-title">Look it up. Hear it. Keep reading.</h1>
                     <p class="hero-lead">
-                        Dictionary puts multi-source definitions, translations, pronunciation, and speech practice directly beside the sentence you are reading. When a definition is not enough, seven intent-driven AI actions explain grammar, nuance, confusables, and rewrites—without switching tabs or losing your place.
+                        Dictionary puts multi-source definitions, translations, pronunciation, and speech practice
+                        directly beside the sentence you are reading. When a definition is not enough, seven
+                        intent-driven AI actions explain grammar, nuance, confusables, and rewrites—without switching
+                        tabs or losing your place.
                     </p>
                     <div class="hero-ctas">
                         <a href="#install" class="btn btn-primary">
                             <span>Install free from GitHub</span>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
                         </a>
                         <a href="#interactive-preview" class="btn btn-secondary">Try the interactive demo</a>
                     </div>
                     <div class="hero-proof" aria-label="Key highlights">
-                        <div class="proof-item"><span class="proof-mark">01</span><span>Select on the page · no tab switching</span></div>
-                        <div class="proof-item"><span class="proof-mark">02</span><span>Listen &amp; practice with spoken scoring</span></div>
-                        <div class="proof-item"><span class="proof-mark">03</span><span>Keys stay local · no page script leaks</span></div>
+                        <div class="proof-item"><span class="proof-mark">01</span><span>Select on the page · no tab
+                                switching</span></div>
+                        <div class="proof-item"><span class="proof-mark">02</span><span>Listen &amp; practice with
+                                spoken scoring</span></div>
+                        <div class="proof-item"><span class="proof-mark">03</span><span>Keys stay local · no page script
+                                leaks</span></div>
                     </div>
                 </div>
 
                 <div class="hero-mockup-wrapper" aria-label="Dictionary in-page popup preview">
                     <div class="browser-window">
                         <div class="browser-header">
-                            <div class="window-controls" aria-hidden="true"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                            <div class="window-controls" aria-hidden="true"><span class="dot red"></span><span
+                                    class="dot yellow"></span><span class="dot green"></span></div>
                             <div class="browser-address-bar">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" aria-hidden="true">
+                                    <rect x="3" y="11" width="18" height="11" rx="2"></rect>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
                                 <span>article.example / language-and-learning</span>
                             </div>
                         </div>
                         <div class="browser-content">
                             <div class="article-snippet">
                                 <p class="article-label">Reading a technical article</p>
-                                <p class="article-para">When learners encounter idiomatic phrases, they can struggle with <mark class="text-selection">ambiguity in context</mark><span class="selection-indicator" aria-hidden="true">+</span> because the same words may carry different meanings in different situations.</p>
+                                <p class="article-para">When learners encounter idiomatic phrases, they can struggle
+                                    with <mark class="text-selection">ambiguity in context</mark><span
+                                        class="selection-indicator" aria-hidden="true">+</span> because the same words
+                                    may carry different meanings in different situations.</p>
                             </div>
                             <div class="mini-popup-preview">
                                 <div class="mini-popup-header">
@@ -106,9 +154,14 @@
                                     <span class="mini-badge-primary">Dictionary</span>
                                     <span class="mini-badge-sub">Wiktionary</span>
                                 </div>
-                                <div class="mini-popup-ipa"><span>/ˌæm.bɪˈɡjuː.ə.ti/</span><span class="mini-audio-btn">Listen</span><span class="mini-audio-btn">Practice</span></div>
-                                <div class="mini-popup-def"><strong>noun</strong> · More than one possible meaning in this sentence.</div>
-                                <div class="mini-popup-enrichment"><span class="enrichment-pill">Used in context</span><span class="enrichment-pill">Compare</span><span class="enrichment-pill">Rephrase</span></div>
+                                <div class="mini-popup-ipa"><span>/ˌæm.bɪˈɡjuː.ə.ti/</span><span
+                                        class="mini-audio-btn">Listen</span><span class="mini-audio-btn">Practice</span>
+                                </div>
+                                <div class="mini-popup-def"><strong>noun</strong> · More than one possible meaning in
+                                    this sentence.</div>
+                                <div class="mini-popup-enrichment"><span class="enrichment-pill">Used in
+                                        context</span><span class="enrichment-pill">Word family</span><span
+                                        class="enrichment-pill">Rephrase</span></div>
                             </div>
                         </div>
                     </div>
@@ -121,39 +174,64 @@
                 <div class="section-header">
                     <p class="section-kicker">Built for the moment a word slows you down</p>
                     <h2 class="section-title">A fast lookup studio. Not another pile of tabs.</h2>
-                    <p class="section-lead">Most tools make you choose: a basic dictionary that stops at one sense, or a generic chatbot where you have to craft the prompt. Dictionary bridges both—instant keyless lookups on first paint, then deep sentence-level learning on demand.</p>
+                    <p class="section-lead">Most tools make you choose: a basic dictionary that stops at one sense, or a
+                        generic chatbot where you have to craft the prompt. Dictionary bridges both—instant keyless
+                        lookups on first paint, then deep sentence-level learning on demand.</p>
                 </div>
                 <div class="grid cols-3">
                     <article class="panel">
                         <h3>Stay on the page</h3>
-                        <p>Highlight text, double-click a word, tap your modifier hotkey, or use the context menu. The resizable in-page card keeps the answer beside the sentence that prompted the question.</p>
+                        <p>Highlight text, double-click a word, tap your modifier hotkey, or use the context menu. The
+                            resizable in-page card keeps the answer beside the sentence that prompted the question.</p>
                     </article>
                     <article class="panel">
                         <h3>Real multi-source depth</h3>
-                        <p>Phase 1 delivers the primary definition and translation in under a second. Phase 2 enriches senses, examples, and etymology from keyless providers without blocking first paint.</p>
+                        <p>Phase 1 delivers the primary definition and translation in under a second. Phase 2 enriches
+                            senses, examples, and etymology from keyless providers without blocking first paint.</p>
                     </article>
                     <article class="panel">
                         <h3>Intent-driven AI, not chat</h3>
-                        <p>No prompt engineering required. Seven dedicated actions answer exact linguistic questions: sense-in-context, grammar nuance, confusable pairs, and three rewrite styles in one click.</p>
+                        <p>No prompt engineering required. Seven dedicated actions answer exact linguistic questions:
+                            sense-in-context, grammar nuance, confusable pairs, and three rewrite styles in one click.
+                        </p>
+                    </article>
+                </div>
+                <div class="grid cols-2 journey">
+                    <article class="panel">
+                        <span class="index">New</span>
+                        <h3>Collapsible lexical profile</h3>
+                        <p>Word family, collocations, usage notes, and confusable pairs sit behind a chevron accordion
+                            so the first definition stays uncluttered. Toggle it off entirely in Preferences.</p>
+                        <span class="meta">Word Family · Collocations · Common mistakes</span>
+                    </article>
+                    <article class="panel">
+                        <span class="index">New</span>
+                        <h3>Full-page preferences studio</h3>
+                        <p>A two-column settings page with sticky navigation, Cmd/Ctrl+S save, and grouped tabs for
+                            General, Appearance, Sources, and AI—without a cramped inner modal.</p>
+                        <span class="meta">General · Appearance · Sources · AI</span>
                     </article>
                 </div>
                 <div class="grid cols-3 journey">
                     <article class="panel">
                         <span class="index">01</span>
                         <h3>Find the word</h3>
-                        <p>Highlight any word or multi-word expression on the page, or search directly from the toolbar popup.</p>
+                        <p>Highlight any word or multi-word expression on the page, or search directly from the toolbar
+                            popup.</p>
                         <span class="meta">Selection · Double-click · Context menu · Toolbar</span>
                     </article>
                     <article class="panel">
                         <span class="index">02</span>
                         <h3>Get the quick answer</h3>
-                        <p>Instant definitions, translation, phonetic audio, and spoken pronunciation practice with accuracy scoring.</p>
+                        <p>Instant definitions, translation, phonetic audio, and spoken pronunciation practice with
+                            accuracy scoring.</p>
                         <span class="meta">Free Dictionary · Wiktionary · Tatoeba · Google TTS</span>
                     </article>
                     <article class="panel">
                         <span class="index">03</span>
                         <h3>Learn what the sentence means</h3>
-                        <p>Trigger sentence breakdown, confusable contrast, or rephrase styles when the quick answer is not enough.</p>
+                        <p>Trigger sentence breakdown, confusable contrast, or rephrase styles when the quick answer is
+                            not enough.</p>
                         <span class="meta">Context · Compare · Rephrase · Grammar</span>
                     </article>
                 </div>
@@ -165,53 +243,90 @@
                 <div class="section-header text-center">
                     <p class="section-kicker">Interactive product walkthrough</p>
                     <h2 class="section-title">Try the decision a learner makes in the moment.</h2>
-                    <p class="section-lead">Choose a word, idiom, sentence, or confusable pair. Experience how the extension moves from a quick lookup to structured sentence analysis.</p>
+                    <p class="section-lead">Choose a word, idiom, sentence, or confusable pair. Experience how the
+                        extension moves from a quick lookup to structured sentence analysis.</p>
                 </div>
 
                 <div class="interactive-stage">
                     <div class="interactive-controls" role="group" aria-label="Choose a preview scenario">
-                        <button type="button" class="preset-btn active" data-query="resilience" data-tab="dictionary"><span class="preset-tag">Word</span><strong>resilience</strong></button>
-                        <button type="button" class="preset-btn" data-query="resilience" data-tab="ai" data-intent="default"><span class="preset-tag">Main AI</span><strong>senses in context</strong></button>
-                        <button type="button" class="preset-btn" data-query="spill the beans" data-tab="ai" data-intent="collocations"><span class="preset-tag">Idiom</span><strong>spill the beans</strong></button>
-                        <button type="button" class="preset-btn" data-query="The algorithm adapts dynamically to high traffic." data-tab="ai" data-intent="sentence_breakdown"><span class="preset-tag">Sentence</span><strong>The algorithm adapts…</strong></button>
-                        <button type="button" class="preset-btn" data-query="affect vs effect" data-tab="ai" data-intent="confusables"><span class="preset-tag">Compare</span><strong>affect vs effect</strong></button>
-                        <button type="button" class="preset-btn" data-query="resilience" data-tab="ai" data-intent="rephrase"><span class="preset-tag">Rephrase</span><strong>three rewrite styles</strong></button>
+                        <button type="button" class="preset-btn active" data-query="resilience"
+                            data-tab="dictionary"><span
+                                class="preset-tag">Word</span><strong>resilience</strong></button>
+                        <button type="button" class="preset-btn" data-query="resilience" data-tab="ai"
+                            data-intent="default"><span class="preset-tag">Main AI</span><strong>senses in
+                                context</strong></button>
+                        <button type="button" class="preset-btn" data-query="spill the beans" data-tab="ai"
+                            data-intent="collocations"><span class="preset-tag">Idiom</span><strong>spill the
+                                beans</strong></button>
+                        <button type="button" class="preset-btn"
+                            data-query="The algorithm adapts dynamically to high traffic." data-tab="ai"
+                            data-intent="sentence_breakdown"><span class="preset-tag">Sentence</span><strong>The
+                                algorithm adapts…</strong></button>
+                        <button type="button" class="preset-btn" data-query="affect vs effect" data-tab="ai"
+                            data-intent="confusables"><span class="preset-tag">Compare</span><strong>affect vs
+                                effect</strong></button>
+                        <button type="button" class="preset-btn" data-query="resilience" data-tab="ai"
+                            data-intent="rephrase"><span class="preset-tag">Rephrase</span><strong>three rewrite
+                                styles</strong></button>
                     </div>
 
                     <div class="popup-device">
                         <div class="popup-device-header">
                             <div>
                                 <div class="popup-eyebrow">Dictionary · interactive preview</div>
-                                <div class="popup-demo-caption">Curated sample results. This page does not call dictionary or AI APIs.</div>
+                                <div class="popup-demo-caption">Curated sample results. This page does not call
+                                    dictionary or AI APIs.</div>
                             </div>
-                            <div class="popup-header-controls"><span class="popup-provider-badge">Multi-source</span><span class="popup-lang-badge">Vietnamese</span></div>
+                            <div class="popup-header-controls"><span
+                                    class="popup-provider-badge">Multi-source</span><span
+                                    class="popup-lang-badge">Vietnamese</span></div>
                         </div>
                         <div class="popup-search-bar">
-                            <input type="text" id="demo-search-input" value="resilience" readonly aria-label="Demo lookup text">
+                            <input type="text" id="demo-search-input" value="resilience" readonly
+                                aria-label="Demo lookup text">
                             <button type="button" class="demo-search-btn" id="demo-search-btn">Look up</button>
                         </div>
                         <p class="demo-search-feedback" id="demo-search-feedback" hidden role="status"></p>
                         <div class="popup-tabs-nav" role="tablist" aria-label="Lookup mode">
-                            <button type="button" class="popup-tab is-active" id="tab-btn-dict" role="tab" aria-selected="true" aria-controls="demo-tab-panel">Dictionary</button>
-                            <button type="button" class="popup-tab" id="tab-btn-ai" role="tab" aria-selected="false" aria-controls="demo-tab-panel">AI explanation</button>
+                            <button type="button" class="popup-tab is-active" id="tab-btn-dict" role="tab"
+                                aria-selected="true" aria-controls="demo-tab-panel">Dictionary</button>
+                            <button type="button" class="popup-tab" id="tab-btn-ai" role="tab" aria-selected="false"
+                                aria-controls="demo-tab-panel">AI explanation</button>
                         </div>
                         <div class="popup-context-bar" id="demo-context-bar" hidden>
                             <div class="context-pill">Context is editable before use</div>
                             <label class="sr-only" for="demo-context-input">Demo sentence context</label>
-                            <textarea class="context-textarea" id="demo-context-input" rows="2">Their resilience under pressure allowed the engineering team to ship on time.</textarea>
+                            <textarea class="context-textarea" id="demo-context-input"
+                                rows="2">Their resilience under pressure allowed the engineering team to ship on time.</textarea>
                             <div class="context-action-buttons">
-                                <button type="button" class="context-action-btn active" data-intent="default"><span class="context-action-btn-label">Main AI</span><span class="demo-progress-dot is-active" aria-hidden="true"></span></button>
-                                <button type="button" class="context-action-btn" data-intent="explain_in_context"><span class="context-action-btn-label">Context Explain</span><span class="demo-progress-dot is-ready" aria-hidden="true"></span></button>
-                                <button type="button" class="context-action-btn" data-intent="grammar"><span class="context-action-btn-label">Grammar &amp; Nuance</span><span class="demo-progress-dot is-ready" aria-hidden="true"></span></button>
-                                <button type="button" class="context-action-btn" data-intent="collocations"><span class="context-action-btn-label">Phrase &amp; Collocations</span><span class="demo-progress-dot is-ready" aria-hidden="true"></span></button>
-                                <button type="button" class="context-action-btn" data-intent="sentence_breakdown"><span class="context-action-btn-label">Sentence Breakdown</span><span class="demo-progress-dot is-ready" aria-hidden="true"></span></button>
-                                <button type="button" class="context-action-btn" data-intent="confusables"><span class="context-action-btn-label">Compare Confusables</span><span class="demo-progress-dot is-ready" aria-hidden="true"></span></button>
-                                <button type="button" class="context-action-btn" data-intent="rephrase"><span class="context-action-btn-label">Rephrase</span><span class="demo-progress-dot is-ready" aria-hidden="true"></span></button>
+                                <button type="button" class="context-action-btn active" data-intent="default"><span
+                                        class="context-action-btn-label">Main AI</span><span
+                                        class="demo-progress-dot is-active" aria-hidden="true"></span></button>
+                                <button type="button" class="context-action-btn" data-intent="explain_in_context"><span
+                                        class="context-action-btn-label">Context Explain</span><span
+                                        class="demo-progress-dot is-ready" aria-hidden="true"></span></button>
+                                <button type="button" class="context-action-btn" data-intent="grammar"><span
+                                        class="context-action-btn-label">Grammar &amp; Nuance</span><span
+                                        class="demo-progress-dot is-ready" aria-hidden="true"></span></button>
+                                <button type="button" class="context-action-btn" data-intent="collocations"><span
+                                        class="context-action-btn-label">Phrase &amp; Collocations</span><span
+                                        class="demo-progress-dot is-ready" aria-hidden="true"></span></button>
+                                <button type="button" class="context-action-btn" data-intent="sentence_breakdown"><span
+                                        class="context-action-btn-label">Sentence Breakdown</span><span
+                                        class="demo-progress-dot is-ready" aria-hidden="true"></span></button>
+                                <button type="button" class="context-action-btn" data-intent="confusables"><span
+                                        class="context-action-btn-label">Compare Confusables</span><span
+                                        class="demo-progress-dot is-ready" aria-hidden="true"></span></button>
+                                <button type="button" class="context-action-btn" data-intent="rephrase"><span
+                                        class="context-action-btn-label">Rephrase</span><span
+                                        class="demo-progress-dot is-ready" aria-hidden="true"></span></button>
                             </div>
                         </div>
-                        <div class="popup-body-panel" id="demo-tab-panel" role="tabpanel" aria-live="polite" aria-labelledby="tab-btn-dict"></div>
+                        <div class="popup-body-panel" id="demo-tab-panel" role="tabpanel" aria-live="polite"
+                            aria-labelledby="tab-btn-dict"></div>
                     </div>
-                    <p class="demo-footnote">The demo mirrors the extension’s workflow. Live provider and AI requests happen only inside the installed extension, and only after your action.</p>
+                    <p class="demo-footnote">The demo mirrors the extension’s workflow. Live provider and AI requests
+                        happen only inside the installed extension, and only after your action.</p>
                 </div>
             </div>
         </section>
@@ -221,66 +336,78 @@
                 <div class="section-header">
                     <p class="section-kicker">Seven dedicated intents · not a blank chat box</p>
                     <h2 class="section-title">Ask the exact language question you have.</h2>
-                    <p class="section-lead">Dictionary, translation, and pronunciation work completely free without an API key. When you need deeper comprehension, connect Google Gemini or any OpenAI-compatible endpoint for structured, sentence-level analysis.</p>
+                    <p class="section-lead">Dictionary, translation, and pronunciation work completely free without an
+                        API key. When you need deeper comprehension, connect Google Gemini or any OpenAI-compatible
+                        endpoint for structured, sentence-level analysis.</p>
                 </div>
                 <div class="grid cols-3">
                     <article class="panel">
                         <span class="index">A</span>
                         <h3>Keyless multi-source core</h3>
-                        <p>Wiktionary, Free Dictionary, Datamuse, Wikipedia, Urban Dictionary, etymology, and Tatoeba sentence examples work out of the box with zero configuration.</p>
+                        <p>Wiktionary, Free Dictionary, Datamuse, Wikipedia, Urban Dictionary, etymology, and Tatoeba
+                            sentence examples work out of the box with zero configuration.</p>
                     </article>
                     <article class="panel">
                         <span class="index">B</span>
                         <h3>Listen and spoken practice</h3>
-                        <p>Hear authentic pronunciations, then speak the word back into your microphone to receive a real-time Levenshtein accuracy grade.</p>
+                        <p>Hear authentic pronunciations, then speak the word back into your microphone to receive a
+                            real-time Levenshtein accuracy grade.</p>
                     </article>
                     <article class="panel">
                         <span class="index">C</span>
                         <h3>Phrase-aware fallback</h3>
-                        <p>Highlights use exact selected text. Multi-word idioms and irregular inflections automatically trigger intelligent recovery when dictionary entries are sparse.</p>
+                        <p>Highlights use exact selected text. Multi-word idioms and irregular inflections automatically
+                            trigger intelligent recovery when dictionary entries are sparse.</p>
                     </article>
                 </div>
                 <div class="grid cols-3 ai-grid">
                     <article class="panel">
                         <span class="index">01</span>
                         <h3>Main AI</h3>
-                        <p>Oxford-style definition, numbered senses with a <strong>Used in context</strong> badge, bilingual examples, and interactive word-family chips.</p>
+                        <p>Oxford-style definition, numbered senses with a <strong>Used in context</strong> badge,
+                            bilingual examples, and interactive word-family chips.</p>
                         <span class="meta">Optional context</span>
                     </article>
                     <article class="panel">
                         <span class="index">02</span>
                         <h3>Context Explain</h3>
-                        <p>Explains the exact role in this sentence, one-line substitution test, and syntactic replacements that preserve your sentence structure.</p>
+                        <p>Explains the exact role in this sentence, one-line substitution test, and syntactic
+                            replacements that preserve your sentence structure.</p>
                         <span class="meta">Requires sentence context</span>
                     </article>
                     <article class="panel">
                         <span class="index">03</span>
                         <h3>Grammar &amp; Nuance</h3>
-                        <p>Syntactic slot, collocation pattern rules, register guidance, and a Common Learner Mistakes card with Avoid / Prefer pairs.</p>
+                        <p>Syntactic slot, collocation pattern rules, register guidance, and a Common Learner Mistakes
+                            card with Avoid / Prefer pairs.</p>
                         <span class="meta">Requires sentence context</span>
                     </article>
                     <article class="panel">
                         <span class="index">04</span>
                         <h3>Phrase &amp; Collocations</h3>
-                        <p>Deconstructs idioms, phrasal verbs, and natural preposition partnerships so you learn how native speakers actually use the term.</p>
+                        <p>Deconstructs idioms, phrasal verbs, and natural preposition partnerships so you learn how
+                            native speakers actually use the term.</p>
                         <span class="meta">Optional context</span>
                     </article>
                     <article class="panel">
                         <span class="index">05</span>
                         <h3>Sentence Breakdown</h3>
-                        <p>Parses complex sentences into grammatical clauses with role badges, clickable phrase chips, and clear clause explanations.</p>
+                        <p>Parses complex sentences into grammatical clauses with role badges, clickable phrase chips,
+                            and clear clause explanations.</p>
                         <span class="meta">Sentence query or context</span>
                     </article>
                     <article class="panel">
                         <span class="index">06</span>
                         <h3>Compare Confusables</h3>
-                        <p>Side-by-side distinction matrix and minimal-pair sentences for easily mixed terms like <em>affect vs effect</em> or <em>adapt vs adopt</em>.</p>
+                        <p>Side-by-side distinction matrix and minimal-pair sentences for easily mixed terms like
+                            <em>affect vs effect</em> or <em>adapt vs adopt</em>.</p>
                         <span class="meta">Comparison queries</span>
                     </article>
                     <article class="panel panel-featured">
                         <span class="index">07</span>
                         <h3>Rephrase</h3>
-                        <p>One action returns three rewrite styles in parallel: Simplified, Academic &amp; Formal, and Native Idiom—with explanatory notes.</p>
+                        <p>One action returns three rewrite styles in parallel: Simplified, Academic &amp; Formal, and
+                            Native Idiom—with explanatory notes.</p>
                         <span class="meta">Optional context</span>
                     </article>
                 </div>
@@ -292,7 +419,9 @@
                 <div class="section-header">
                     <p class="section-kicker">Evaluator &amp; Product Owner Comparison</p>
                     <h2 class="section-title">Why choose Dictionary over generic tools?</h2>
-                    <p class="section-lead">Basic extensions leave you stranded on idioms and complex sentences. Generic AI chat pulls you away to another tab and exposes credentials. Dictionary is designed specifically as an in-situ reading companion.</p>
+                    <p class="section-lead">Basic extensions leave you stranded on idioms and complex sentences. Generic
+                        AI chat pulls you away to another tab and exposes credentials. Dictionary is designed
+                        specifically as an in-situ reading companion.</p>
                 </div>
                 <div class="table-card">
                     <table class="compare-table">
@@ -334,7 +463,8 @@
                                 <th scope="row">Senses, grammar, rewrites</th>
                                 <td>No</td>
                                 <td>Unstructured chat</td>
-                                <td>Named intents, sense cards, compare matrix, one Rephrase action with three styles</td>
+                                <td>Named intents, sense cards, compare matrix, one Rephrase action with three styles
+                                </td>
                             </tr>
                             <tr>
                                 <th scope="row">Your providers and keys</th>
@@ -345,14 +475,19 @@
                         </tbody>
                     </table>
                 </div>
-                <p class="install-note">Dictionary is a page-native lookup studio, not an Anki or spaced-repetition replacement. Lookups stay in the reading moment; there is no cloud vocabulary account.</p>
+                <p class="install-note">Dictionary is a page-native lookup studio, not an Anki or spaced-repetition
+                    replacement. Lookups stay in the reading moment; there is no cloud vocabulary account.</p>
+            </div>
+        </section>
 
         <section class="section section-dark" id="install">
             <div class="container">
                 <div class="section-header">
                     <p class="section-kicker">Free and open source · Load in under 2 minutes</p>
                     <h2 class="section-title">Install locally in Chrome. No account or payment required.</h2>
-                    <p class="section-lead">Dictionary is fully open source. You install it directly using Chrome’s unpacked extension workflow. Perfect for personal learning, student labs, and team deployments without store wait times or subscriptions.</p>
+                    <p class="section-lead">Dictionary is fully open source. You install it directly using Chrome’s
+                        unpacked extension workflow. Perfect for personal learning, student labs, and team deployments
+                        without store wait times or subscriptions.</p>
                 </div>
                 <ol class="install-steps">
                     <li class="install-step">
@@ -360,38 +495,58 @@
                         <div>
                             <h3>Get the source</h3>
                             <p>Clone the repository or download the ZIP, then install and build:</p>
-                            <pre class="install-code"><code>git clone https://github.com/thaihai-swe/dictionary-extension.git
+                            <div class="install-code-wrapper">
+                                <pre class="install-code"><code id="install-commands">git clone https://github.com/thaihai-swe/dictionary-extension.git
 cd dictionary-extension
 npm install &amp;&amp; npm run build</code></pre>
+                                <button type="button" class="copy-code-btn" id="copy-install-btn"
+                                    aria-label="Copy install commands to clipboard">
+                                    <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" aria-hidden="true">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                    <span class="copy-text">Copy</span>
+                                </button>
+                                <span class="copy-feedback sr-only" id="copy-feedback" role="status"
+                                    aria-live="polite"></span>
+                            </div>
                         </div>
                     </li>
                     <li class="install-step">
                         <span class="install-num">2</span>
                         <div>
                             <h3>Open Chrome extensions</h3>
-                            <p>Navigate to <code>chrome://extensions</code> in your address bar and turn on <strong>Developer mode</strong> in the top-right corner.</p>
+                            <p>Navigate to <code>chrome://extensions</code> in your address bar and turn on
+                                <strong>Developer mode</strong> in the top-right corner.</p>
                         </div>
                     </li>
                     <li class="install-step">
                         <span class="install-num">3</span>
                         <div>
                             <h3>Load unpacked</h3>
-                            <p>Click <strong>Load unpacked</strong> and select the built <code>dist</code> directory in the repository.</p>
+                            <p>Click <strong>Load unpacked</strong> and select the built <code>dist</code> directory in
+                                the repository.</p>
                         </div>
                     </li>
                     <li class="install-step">
                         <span class="install-num">4</span>
                         <div>
                             <h3>Try it on any webpage</h3>
-                            <p>Select any word, click the floating icon, or use the right-click menu. For local HTML files and PDFs, enable <strong>Allow access to file URLs</strong> in extension details.</p>
+                            <p>Select any word, click the floating icon, or use the right-click menu. For local HTML
+                                files and PDFs, enable <strong>Allow access to file URLs</strong> in extension details.
+                            </p>
                         </div>
                     </li>
                 </ol>
                 <div class="install-actions">
-                    <a class="btn btn-primary" href="https://github.com/thaihai-swe/dictionary-extension/tree/main" target="_blank" rel="noopener noreferrer">View source on GitHub</a>
-                    <a class="btn btn-secondary" href="https://github.com/thaihai-swe/dictionary-extension/archive/refs/heads/main.zip">Download ZIP</a>
+                    <a class="btn btn-primary" href="https://github.com/thaihai-swe/dictionary-extension/tree/main"
+                        target="_blank" rel="noopener noreferrer">View source on GitHub</a>
                 </div>
-                <p class="install-note">Core dictionary lookup, Google translation, audio pronunciation, and speech practice require no API keys or accounts. Optional AI features can use free Google Gemini or any local/cloud OpenAI-compatible endpoint.</p>
+                <p class="install-note">Core dictionary lookup, Google translation, audio pronunciation, and speech
+                    practice require no API keys or accounts. Optional AI features can use free Google Gemini or any
+                    local/cloud OpenAI-compatible endpoint.</p>
             </div>
         </section>
 
@@ -400,28 +555,35 @@ npm install &amp;&amp; npm run build</code></pre>
                 <div class="section-header">
                     <p class="section-kicker">Security &amp; Privacy Architecture</p>
                     <h2 class="section-title">Your reading data and credentials never leave your control.</h2>
-                    <p class="section-lead">Designed to meet strict privacy standards: zero background telemetry, strictly local credentials, and explicit sentence context boundaries. Safe for workplace and academic use.</p>
+                    <p class="section-lead">Designed to meet strict privacy standards: zero background telemetry,
+                        strictly local credentials, and explicit sentence context boundaries. Safe for workplace and
+                        academic use.</p>
                 </div>
                 <div class="grid cols-2">
                     <article class="panel">
                         <span class="badge badge-success">Explicit context</span>
                         <h3>Sentence-level, user-approved context</h3>
-                        <p>Only the immediate sentence (capped at 800 characters) is extracted when you explicitly invoke a contextual AI action. Ordinary dictionary lookups never transmit sentence context.</p>
+                        <p>Only the immediate sentence (capped at 800 characters) is extracted when you explicitly
+                            invoke a contextual AI action. Ordinary dictionary lookups never transmit sentence context.
+                        </p>
                     </article>
                     <article class="panel">
                         <span class="badge badge-info">Isolated credentials</span>
                         <h3>API keys stay in service worker memory</h3>
-                        <p>API keys reside exclusively in <code>chrome.storage.local</code> and background worker memory. Webpage content scripts and popup frames never receive secret keys.</p>
+                        <p>API keys reside exclusively in <code>chrome.storage.local</code> and background worker
+                            memory. Webpage content scripts and popup frames never receive secret keys.</p>
                     </article>
                     <article class="panel">
                         <span class="badge badge-warning">Provider choice</span>
                         <h3>Open models &amp; local endpoints</h3>
-                        <p>Point to Google Gemini, Ollama, Groq, OpenRouter, or a local server. You own the endpoint, the model parameters, and the prompt templates.</p>
+                        <p>Point to Google Gemini, Ollama, Groq, OpenRouter, or a local server. You own the endpoint,
+                            the model parameters, and the prompt templates.</p>
                     </article>
                     <article class="panel">
                         <span class="badge badge-success">Zero tracking</span>
                         <h3>No analytics, databases, or surveillance</h3>
-                        <p>Lookups exist transiently in the active reading session. The extension does not record reading history, track visited URLs, or phone home.</p>
+                        <p>Lookups exist transiently in the active reading session. The extension does not record
+                            reading history, track visited URLs, or phone home.</p>
                     </article>
                 </div>
             </div>
@@ -432,36 +594,52 @@ npm install &amp;&amp; npm run build</code></pre>
                 <div class="section-header">
                     <p class="section-kicker">Frequently Asked Questions</p>
                     <h2 class="section-title">Answers for learners, teachers, and evaluators.</h2>
-                    <p class="section-lead">Everything you need to know about keys, triggers, data flow, and product scope.</p>
+                    <p class="section-lead">Everything you need to know about keys, triggers, data flow, and product
+                        scope.</p>
                 </div>
                 <div class="faq-list">
                     <details class="faq-item" open>
                         <summary>Do I need an API key to use Dictionary?</summary>
-                        <p>No. Dictionary lookups (Wiktionary, Free Dictionary, Datamuse, Tatoeba, Wikipedia), Google translation, and spoken pronunciation practice work 100% free with no keys. An API key is only needed if you want generative AI explanations (Gemini or OpenAI-compatible).</p>
+                        <p>No. Dictionary lookups (Wiktionary, Free Dictionary, Datamuse, Tatoeba, Wikipedia), Google
+                            translation, and spoken pronunciation practice work 100% free with no keys. An API key is
+                            only needed if you want generative AI explanations (Gemini or OpenAI-compatible).</p>
                     </details>
                     <details class="faq-item">
                         <summary>Does Dictionary send the webpage I am reading to AI providers?</summary>
-                        <p>No. Standard dictionary lookups send only the queried word. When you click a contextual AI action (like Context Explain or Grammar Nuance), only the single surrounding sentence (capped at 800 characters) is sent. The rest of the page is never read or transmitted.</p>
+                        <p>No. Standard dictionary lookups send only the queried word. When you click a contextual AI
+                            action (like Context Explain or Grammar Nuance), only the single surrounding sentence
+                            (capped at 800 characters) is sent. The rest of the page is never read or transmitted.</p>
                     </details>
                     <details class="faq-item">
                         <summary>Is Dictionary an Anki replacement or spaced-repetition (SRS) system?</summary>
-                        <p>No. Dictionary is built specifically as an in-situ reading companion: fast lookups, audio practice, and contextual AI on the active page. It keeps you in your reading flow rather than managing flashcard decks or cloud vocabulary lists.</p>
+                        <p>No. Dictionary is built specifically as an in-situ reading companion: fast lookups, audio
+                            practice, and contextual AI on the active page. It keeps you in your reading flow rather
+                            than managing flashcard decks or cloud vocabulary lists.</p>
                     </details>
                     <details class="faq-item">
                         <summary>Where are API keys stored and are they safe?</summary>
-                        <p>API keys are saved in <code>chrome.storage.local</code> on your device and are accessible only by the extension’s background service worker. They are never synced across devices, never exported in settings backups, and never injected into webpage content scripts.</p>
+                        <p>API keys are saved in <code>chrome.storage.local</code> on your device and are accessible
+                            only by the extension’s background service worker. They are never synced across devices,
+                            never exported in settings backups, and never injected into webpage content scripts.</p>
                     </details>
                     <details class="faq-item">
                         <summary>How do I trigger a lookup on a webpage?</summary>
-                        <p>You can highlight text or double-click to show a floating lookup icon (default), tap a modifier hotkey (Shift, Alt, or Ctrl), open the card directly on selection, right-click to choose “Look up in Dictionary”, or search from the toolbar popup. Triggers are automatically suppressed inside form inputs so they never interrupt typing.</p>
+                        <p>You can highlight text or double-click to show a floating lookup icon (default), tap a
+                            modifier hotkey (Shift, Alt, or Ctrl), open the card directly on selection, right-click to
+                            choose “Look up in Dictionary”, or search from the toolbar popup. Triggers are automatically
+                            suppressed inside form inputs so they never interrupt typing.</p>
                     </details>
                     <details class="faq-item">
                         <summary>What makes the Rephrase feature unique?</summary>
-                        <p>Unlike generic AI prompts, a single click on Rephrase returns three targeted rewrite styles in parallel: Simplified, Academic &amp; Formal, and Native Idiom—each paired with explanatory notes in your target language.</p>
+                        <p>Unlike generic AI prompts, a single click on Rephrase returns three targeted rewrite styles
+                            in parallel: Simplified, Academic &amp; Formal, and Native Idiom—each paired with
+                            explanatory notes in your target language.</p>
                     </details>
                     <details class="faq-item">
                         <summary>Is there a Chrome Web Store listing?</summary>
-                        <p>Not yet. Install from GitHub with Chrome’s unpacked-extension workflow: clone the repository, run <code>npm install &amp;&amp; npm run build</code>, enable Developer mode, and choose <strong>Load unpacked</strong> on the built <code>dist</code> folder.</p>
+                        <p>Not yet. Install from GitHub with Chrome’s unpacked-extension workflow: clone the repository,
+                            run <code>npm install &amp;&amp; npm run build</code>, enable Developer mode, and choose
+                            <strong>Load unpacked</strong> on the built <code>dist</code> folder.</p>
                     </details>
                 </div>
             </div>
@@ -473,10 +651,13 @@ npm install &amp;&amp; npm run build</code></pre>
                     <div class="cta-content">
                         <span class="cta-kicker">Open source &amp; free</span>
                         <h2 class="cta-title">Understand unfamiliar English without breaking your flow.</h2>
-                        <p class="cta-lead">Install Dictionary in Chrome, configure your target language, and test it on the next challenging article that slows you down.</p>
+                        <p class="cta-lead">Install Dictionary in Chrome, configure your target language, and test it on
+                            the next challenging article that slows you down.</p>
                         <div class="cta-buttons">
                             <a href="#install" class="btn btn-primary">Install free</a>
-                            <a href="https://github.com/thaihai-swe/dictionary-extension/tree/main" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">View source on GitHub</a>
+                            <a href="https://github.com/thaihai-swe/dictionary-extension/tree/main"
+                                class="btn btn-secondary" target="_blank" rel="noopener noreferrer">View source on
+                                GitHub</a>
                         </div>
                     </div>
                 </div>
@@ -487,17 +668,21 @@ npm install &amp;&amp; npm run build</code></pre>
     <footer class="site-footer">
         <div class="container footer-inner">
             <div class="footer-copy">
-                <p>&copy; <span id="year">2026</span> Dictionary. A free Chrome Manifest V3 extension by <a href="https://github.com/thaihai-swe" target="_blank" rel="noopener noreferrer">thaihai-swe</a>.</p>
+                <p>&copy; <span id="year">2026</span> Dictionary. A free Chrome Manifest V3 extension by <a
+                        href="https://github.com/thaihai-swe" target="_blank" rel="noopener noreferrer">thaihai-swe</a>.
+                </p>
             </div>
             <div class="footer-links">
                 <a href="#hero">Back to top</a>
                 <a href="#install">Install</a>
                 <a href="#faq">FAQ</a>
-                <a href="https://github.com/thaihai-swe/dictionary-extension/tree/main" target="_blank" rel="noopener noreferrer">Source</a>
+                <a href="https://github.com/thaihai-swe/dictionary-extension/tree/main" target="_blank"
+                    rel="noopener noreferrer">Source</a>
             </div>
         </div>
     </footer>
 
     <script src="app.js"></script>
 </body>
+
 </html>

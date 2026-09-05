@@ -37,6 +37,19 @@ export function defaultAiBaseUrlFor(provider: AppSettings['aiProvider']): string
   return provider === 'openai' ? DEFAULT_OPENAI_BASE_URL : DEFAULT_GEMINI_BASE_URL;
 }
 
+const DICTIONARY_PROVIDERS = new Set<string>([
+  'free_dictionary',
+  'google_translate',
+  'wiktionary',
+  'wiktionary_etymology',
+  'wiktionary_bilingual',
+  'datamuse',
+  'urban_dictionary',
+  'wikipedia',
+  'rhymebrain',
+  'tatoeba',
+]);
+
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'dark',
   fontFamily: 'learner',
@@ -140,10 +153,10 @@ export function normalizeSettings(input?: Partial<AppSettings> | Record<string, 
     merged.aiModel = defaultAiModelFor(merged.aiProvider);
   }
 
-  const removedDictionaryIds = new Set(['merriam_webster', 'wordnik', 'words_api', 'conceptnet']);
-  if (removedDictionaryIds.has(String(merged.dictionaryProvider || ''))) {
-    merged.dictionaryProvider = DEFAULT_SETTINGS.dictionaryProvider;
-  }
+  const provider = String(merged.dictionaryProvider || '').trim();
+  merged.dictionaryProvider = DICTIONARY_PROVIDERS.has(provider)
+    ? (provider as AppSettings['dictionaryProvider'])
+    : DEFAULT_SETTINGS.dictionaryProvider;
 
   for (const key of Object.keys(DEFAULT_AI_PROMPTS) as Array<keyof typeof DEFAULT_AI_PROMPTS>) {
     if (!String(merged[key] || '').trim()) merged[key] = DEFAULT_AI_PROMPTS[key];

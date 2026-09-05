@@ -74,7 +74,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <option value="wiktionary_bilingual" className="bg-surface text-content">Bilingual</option>
         <option value="tatoeba" className="bg-surface text-content">Tatoeba</option>
         <option value="google_translate" className="bg-surface text-content">Translate</option>
-        <option value="gemini_ai" className="bg-surface text-content">AI Assistant</option>
       </select>
       <IconChevronDown className="w-3 h-3 text-content-muted pointer-events-none absolute right-1.5" />
     </div>

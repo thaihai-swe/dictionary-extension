@@ -11,7 +11,6 @@ import { fetchWiktionary } from './provider.wiktionary';
 import { fetchWiktionaryEtymology } from './provider.wiktionary-etymology';
 import { fetchWiktionaryBilingual } from './provider.wiktionary-bilingual';
 import { fetchTatoeba } from './provider.tatoeba';
-import { fetchAiAnalysis } from './provider.gemini-ai';
 
 providerRegistry.registerDictionary({
   id: 'wiktionary',
@@ -77,28 +76,6 @@ providerRegistry.registerDictionary({
   id: 'libre_translate',
   name: 'LibreTranslate',
   lookup: (word, opts) => fetchLibreTranslate(word, opts.targetLang, opts.signal),
-});
-
-providerRegistry.registerDictionary({
-  id: 'gemini_ai',
-  name: 'AI Explanation',
-  lookup: async (word, opts) => {
-    const aiRes = await fetchAiAnalysis(
-      'default',
-      word,
-      opts.targetLang,
-      opts.settings?.aiApiKey,
-      opts.settings?.aiModel,
-      opts.signal,
-      undefined,
-      opts.settings,
-    );
-    return {
-      word,
-      meanings: [{ partOfSpeech: 'AI Explanation', definitions: [{ definition: aiRes.summary || aiRes.translation || word }] }],
-      providerId: 'gemini_ai',
-    };
-  },
 });
 
 providerRegistry.registerTranslation({

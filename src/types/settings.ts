@@ -16,8 +16,7 @@ export type DictionaryProviderId =
   | 'urban_dictionary'
   | 'wikipedia'
   | 'rhymebrain'
-  | 'tatoeba'
-  | 'gemini_ai';
+  | 'tatoeba';
 
 export interface AppSettings {
   theme: AppTheme;

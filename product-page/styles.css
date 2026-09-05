@@ -20,7 +20,10 @@
     --text-muted: #405363;
     --text-dim: #687985;
 
-    --green: #087f6e;
+    --color-primary: #0d9488;
+    --color-primary-hover: #0f766e;
+    --color-primary-light: rgba(13, 148, 136, 0.08);
+    --green: #0d9488;
     --green-ink: #ffffff;
     --blue: #4f46a5;
     --blue-strong: #3f378f;
@@ -853,6 +856,41 @@ button:disabled { cursor: not-allowed; }
 
 .demo-footnote { margin-top: 14px; text-align: center; color: var(--text-dim); font-size: 0.78rem; }
 
+.demo-lexical-accordion {
+    margin-top: 12px;
+    border: 1px solid #e5e0d2;
+    border-radius: 10px;
+    background: #fffefa;
+}
+.demo-lexical-accordion > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    list-style: none;
+    min-height: 44px;
+    padding: 10px 14px;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+.demo-lexical-accordion > summary::-webkit-details-marker { display: none; }
+.demo-lexical-accordion > summary svg {
+    flex: 0 0 auto;
+    transition: transform 160ms var(--ease);
+}
+.demo-lexical-accordion[open] > summary svg { transform: rotate(180deg); }
+.demo-lexical-body {
+    display: grid;
+    gap: 12px;
+    padding: 0 14px 14px;
+    border-top: 1px solid #e5e0d2;
+    padding-top: 12px;
+}
+
 /* 7. Comparison Table */
 .table-card {
     overflow-x: auto;
@@ -933,9 +971,13 @@ button:disabled { cursor: not-allowed; }
     font-family: var(--mono);
     font-size: 0.84em;
 }
+.install-code-wrapper {
+    position: relative;
+    margin-top: 10px;
+}
 .install-code {
-    margin: 10px 0 0;
-    padding: 12px 14px;
+    margin: 0;
+    padding: 12px 88px 12px 14px;
     overflow-x: auto;
     color: #334155;
     border: 1px solid var(--border);
@@ -944,6 +986,35 @@ button:disabled { cursor: not-allowed; }
     font-family: var(--mono);
     font-size: 0.78rem;
     line-height: 1.5;
+}
+.copy-code-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 6px 12px;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    font-family: var(--sans);
+    font-size: 0.72rem;
+    font-weight: 700;
+    transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease;
+}
+.copy-code-btn:hover,
+.copy-code-btn:focus-visible {
+    color: var(--green);
+    border-color: rgba(13, 148, 136, 0.35);
+    background: var(--color-primary-light);
+}
+.copy-code-btn.is-copied {
+    color: var(--green-ink);
+    border-color: var(--green);
+    background: var(--green);
 }
 .install-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
 .install-note {

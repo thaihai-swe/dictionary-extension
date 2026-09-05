@@ -140,7 +140,7 @@ export async function fetchDictionaryResult(
     enableDictionary: true,
   } as AppSettings;
 
-  if (provider === 'google_translate' || provider === 'libre_translate' || provider === 'gemini_ai') {
+  if (provider === 'google_translate' || provider === 'libre_translate') {
     const normalized = normalizeDictionaryResult(
       await lookupSingleProvider(provider, cleanWord, targetLang, signal, settingsWithKeys),
       settingsWithKeys,
