@@ -2,7 +2,7 @@ import { DICTIONARY_FETCH_TIMEOUT_MS, safeFetch } from './provider.http';
 import {
   AttributedItem,
   Collocations,
-  DictionaryEntry,
+  ProviderLookupDto,
   LexicalProfile,
   Meaning,
 } from '../types';
@@ -47,7 +47,7 @@ export async function fetchDatamuse(
   word: string,
   _targetLang = 'vi',
   signal?: AbortSignal,
-): Promise<DictionaryEntry> {
+): Promise<ProviderLookupDto> {
   const clean = normalizeDictionaryTerm(word);
   if (!clean) {
     throw new NotFoundError(`No definition found for '${word}'`);
@@ -123,6 +123,5 @@ export async function fetchDatamuse(
     antonyms,
     lexicalProfile: lexicalProfile.collocations ? lexicalProfile : undefined,
     providerId: 'datamuse',
-    sourceBadges: [{ label: 'Datamuse', kind: 'dictionary', providerId: 'datamuse' }],
   };
 }

@@ -46,8 +46,6 @@ export interface RephraseStyleItem {
 export interface Phonetic {
   text?: string;
   audio?: string;
-  audioUrl?: string;
-  phonetic?: string;
   language?: string;
   label?: string;
   region?: 'uk' | 'us' | 'all';
@@ -172,24 +170,33 @@ export interface TranslationResult {
 
 export interface DictionaryEntry {
   word: string;
-  phonetic?: string;
   phonetics?: Phonetic[];
-  pronunciations?: Phonetic[];
   meanings: Meaning[];
   examples?: AttributedItem[];
   synonyms?: AttributedItem[];
   antonyms?: AttributedItem[];
-  sourceUrl?: string;
   lexicalProfile?: LexicalProfile;
-  subtitle?: string;
-  sourceBadges?: SourceBadge[];
-  providerId?: string;
   translation?: TranslationResult;
   originalText?: string;
   phraseExplanation?: PhraseExplanationSection[];
-  syllables?: string;
   enriched?: boolean;
   revision?: number;
+}
+
+/**
+ * Standard DTO returned by dictionary/enrichment providers before consolidation & merging.
+ */
+export interface ProviderLookupDto {
+  word: string;
+  providerId: DictionaryProviderId | string;
+  phonetics?: Phonetic[];
+  meanings?: Meaning[];
+  examples?: AttributedItem[];
+  synonyms?: AttributedItem[];
+  antonyms?: AttributedItem[];
+  lexicalProfile?: LexicalProfile;
+  translation?: TranslationResult;
+  phraseExplanation?: PhraseExplanationSection[];
 }
 
 export type SelectionTriggerMode = 'off' | 'icon' | 'direct';

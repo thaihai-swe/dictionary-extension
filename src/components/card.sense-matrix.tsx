@@ -40,11 +40,6 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSe
             >
               {meaning.partOfSpeech}
             </span>
-            {meaning.source ? (
-              <span className="text-[10.5px] text-content-muted font-mono">
-                {meaning.source}
-              </span>
-            ) : null}
           </div>
 
           <ol className="space-y-3 text-content">
@@ -112,6 +107,24 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSe
               );
             })}
           </ol>
+
+          {meaning.synonyms && meaning.synonyms.length > 0 ? (
+            <RelatedWords
+              label="Synonyms"
+              tone="synonym"
+              words={meaning.synonyms}
+              onSelectWord={onSelectWord}
+            />
+          ) : null}
+
+          {meaning.antonyms && meaning.antonyms.length > 0 ? (
+            <RelatedWords
+              label="Antonyms"
+              tone="antonym"
+              words={meaning.antonyms}
+              onSelectWord={onSelectWord}
+            />
+          ) : null}
         </div>
       ))}
     </div>

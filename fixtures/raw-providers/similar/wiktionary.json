@@ -1,0 +1,83 @@
+{
+  "en": [
+    {
+      "partOfSpeech": "Adjective",
+      "language": "English",
+      "definitions": [
+        {
+          "definition": "Having <a rel=\"mw:WikiLink\" href=\"/wiki/trait\" title=\"trait\">traits</a> or <a rel=\"mw:WikiLink\" href=\"/wiki/characteristic\" title=\"characteristic\">characteristics</a> in <a rel=\"mw:WikiLink\" href=\"/wiki/common\" title=\"common\">common</a>; <a rel=\"mw:WikiLink\" href=\"/wiki/alike\" title=\"alike\">alike</a>, <a rel=\"mw:WikiLink\" href=\"/wiki/allied\" title=\"allied\">allied</a>, <a rel=\"mw:WikiLink\" href=\"/wiki/comparable\" title=\"comparable\">comparable</a>.",
+          "parsedExamples": [
+            {
+              "example": "My new car is quite <b>similar</b> to my old one, except it has a bit more space in the back."
+            }
+          ],
+          "examples": [
+            "My new car is quite <b>similar</b> to my old one, except it has a bit more space in the back."
+          ]
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt21\" typeof=\"mw:Transclusion\"></span> Having the same <a rel=\"mw:WikiLink\" href=\"/wiki/shape\" title=\"shape\">shape</a>, in particular, having corresponding <a rel=\"mw:WikiLink\" href=\"/wiki/angle\" title=\"angle\">angles</a> <a rel=\"mw:WikiLink\" href=\"/wiki/equal\" title=\"equal\">equal</a> and corresponding <a rel=\"mw:WikiLink\" href=\"/wiki/line_segment\" title=\"line segment\">line segments</a> proportional."
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt22\" typeof=\"mw:Transclusion\"></span> Of two <a rel=\"mw:WikiLink\" href=\"/wiki/square_matrices\" title=\"square matrices\">square matrices</a>; being such that a <a rel=\"mw:WikiLink\" href=\"/wiki/conjugation\" title=\"conjugation\">conjugation</a> sends one <a rel=\"mw:WikiLink\" href=\"/wiki/matrix\" title=\"matrix\">matrix</a> to the other."
+        }
+      ]
+    },
+    {
+      "partOfSpeech": "Noun",
+      "language": "English",
+      "definitions": [
+        {
+          "definition": "That which is similar to, or resembles, something else, as in quality, form, etc."
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt213\" typeof=\"mw:Transclusion\"></span> A material that produces an effect that resembles the <a rel=\"mw:WikiLink\" href=\"/wiki/symptom\" title=\"symptom\">symptoms</a> of a particular <a rel=\"mw:WikiLink\" href=\"/wiki/disease\" title=\"disease\">disease</a>."
+        }
+      ]
+    }
+  ],
+  "ca": [
+    {
+      "partOfSpeech": "Adjective",
+      "language": "Catalan",
+      "definitions": [
+        {
+          "definition": "<span class=\"Latn\" lang=\"en\" about=\"#mwt222\" typeof=\"mw:Transclusion\"><a rel=\"mw:WikiLink\" href=\"/wiki/similar#English\" class=\"mw-selflink-fragment\">similar</a></span>"
+        }
+      ]
+    }
+  ],
+  "pt": [
+    {
+      "partOfSpeech": "Adjective",
+      "language": "Portuguese",
+      "definitions": [
+        {
+          "definition": "<span class=\"Latn\" lang=\"en\" about=\"#mwt229\" typeof=\"mw:Transclusion\"><a rel=\"mw:WikiLink\" href=\"/wiki/similar#English\" class=\"mw-selflink-fragment\">similar</a></span> <span class=\"mention-gloss-paren\" about=\"#mwt230\" typeof=\"mw:Transclusion\">(</span><span class=\"mention-gloss\" about=\"#mwt230\">having traits or characteristics in common</span><span class=\"mention-gloss-paren\" about=\"#mwt230\">)</span> <style data-mw-deduplicate=\"TemplateStyles:r90144471\" typeof=\"mw:Extension/templatestyles mw:Transclusion\" about=\"#mwt231\">.mw-parser-output .object-usage-tag{font-style:italic}.mw-parser-output .deprecated{color:var(--wikt-palette-grey-lime-8,olivedrab)}</style><span about=\"#mwt231\">[</span><i about=\"#mwt231\">with</i><span about=\"#mwt231\"> </span><b class=\"Latn\" lang=\"pt\" about=\"#mwt231\"><a rel=\"mw:WikiLink\" href=\"/wiki/a/languages_M_to_Z#Portuguese\" title=\"a/languages M to Z\">a</a></b><span about=\"#mwt231\"> </span><small about=\"#mwt231\">‘to someone/something’</small><span about=\"#mwt231\">]</span>"
+        }
+      ]
+    }
+  ],
+  "ro": [
+    {
+      "partOfSpeech": "Adjective",
+      "language": "Romanian",
+      "definitions": [
+        {
+          "definition": "<span class=\"Latn\" lang=\"en\" about=\"#mwt238\" typeof=\"mw:Transclusion\"><a rel=\"mw:WikiLink\" href=\"/wiki/similar#English\" class=\"mw-selflink-fragment\">similar</a></span>"
+        }
+      ]
+    }
+  ],
+  "es": [
+    {
+      "partOfSpeech": "Adjective",
+      "language": "Spanish",
+      "definitions": [
+        {
+          "definition": "<span class=\"Latn\" lang=\"en\" about=\"#mwt242\" typeof=\"mw:Transclusion\"><a rel=\"mw:WikiLink\" href=\"/wiki/similar#English\" class=\"mw-selflink-fragment\">similar</a></span>"
+        }
+      ]
+    }
+  ]
+}

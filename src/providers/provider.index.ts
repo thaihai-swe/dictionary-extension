@@ -1,4 +1,4 @@
-import { AppSettings, DictionaryEntry, PhraseExplanationSection, TranslationResult } from '../types';
+import { AppSettings, DictionaryEntry, PhraseExplanationSection, ProviderLookupDto, TranslationResult } from '../types';
 import { NotFoundError, isFatalDictionaryError } from './errors';
 import {
   DICTIONARY_FALLBACK_ORDER,
@@ -9,7 +9,7 @@ import {
   parseLexicalProfile,
   splitPhraseExplanation,
 } from '../shared/query-utils';
-import { cloneDictionaryEntry, mergeDictionaryEntries, mergeMeanings, mergeSourceBadges } from '../shared/enrichment';
+import { cloneDictionaryEntry, mergeDictionaryEntries, mergeMeanings, toDictionaryEntry } from '../shared/enrichment';
 import { fetchAiAnalysis } from './provider.gemini-ai';
 import { fetchDatamuse } from './provider.datamuse';
 import { fetchFreeDictionary } from './provider.free-dictionary';
@@ -120,31 +120,34 @@ function hasEnrichmentPayload(entry?: DictionaryEntry | null): boolean {
   if (!entry) return false;
   return Boolean(
     hasUsableDefinitions(entry)
-    || entry.phonetics?.some((item) => item.phonetic || item.text || item.audioUrl || item.audio)
-    || entry.pronunciations?.some((item) => item.phonetic || item.text || item.audioUrl || item.audio)
+    || entry.phonetics?.some((item) => item.text || item.audio)
     || entry.synonyms?.length
     || entry.antonyms?.length
     || entry.examples?.length
-    || entry.syllables
     || entry.lexicalProfile
   );
 }
 
-function normalizeDictionaryResult(result: DictionaryEntry, settings?: AppSettings, originalText?: string): DictionaryEntry {
-  let lexicalProfile = settings?.enableLexicalProfile === false ? undefined : parseLexicalProfile(result.lexicalProfile) || result.lexicalProfile;
+function normalizeDictionaryResult(
+  result: ProviderLookupDto | DictionaryEntry,
+  settings?: AppSettings,
+  originalText?: string,
+): DictionaryEntry {
+  const entry = toDictionaryEntry(result);
+  let lexicalProfile = settings?.enableLexicalProfile === false ? undefined : parseLexicalProfile(entry.lexicalProfile) || entry.lexicalProfile;
   if (settings?.enableLexicalProfile !== false) {
     const blob = [
-      ...(result.meanings || []).flatMap((meaning) => meaning.definitions.map((item) => item.definition)),
-      ...(result.examples || []).map((item) => item.text),
+      ...(entry.meanings || []).flatMap((meaning) => meaning.definitions.map((item) => item.definition)),
+      ...(entry.examples || []).map((item) => item.text),
     ].join('\n');
     const extracted = extractLexicalProfileFromMarkdown(blob);
     if (extracted) lexicalProfile = mergeLexicalProfiles(lexicalProfile, extracted);
   }
   return {
-    ...result,
+    ...entry,
     lexicalProfile,
-    originalText: originalText || result.originalText,
-    meanings: mergeMeanings(result.meanings || [], []),
+    originalText: originalText || entry.originalText,
+    meanings: mergeMeanings(entry.meanings || [], []),
   };
 }
 
@@ -154,36 +157,46 @@ async function lookupSingleProvider(
   targetLang: string,
   signal?: AbortSignal,
   settings?: AppSettings,
-): Promise<DictionaryEntry> {
+): Promise<ProviderLookupDto> {
+  let result: ProviderLookupDto;
   switch (providerId) {
     case 'google_translate':
-      return fetchGoogleTranslate(query, targetLang, signal);
+      result = await fetchGoogleTranslate(query, targetLang, signal);
+      break;
     case 'wiktionary':
-      return fetchWiktionary(query, targetLang, signal);
+      result = await fetchWiktionary(query, targetLang, signal);
+      break;
     case 'libre_translate':
-      return fetchLibreTranslate(query, targetLang, signal);
+      result = await fetchLibreTranslate(query, targetLang, signal);
+      break;
     case 'datamuse':
-      return fetchDatamuse(query, targetLang, signal);
+      result = await fetchDatamuse(query, targetLang, signal);
+      break;
     case 'urban_dictionary':
-      return fetchUrbanDictionary(query, targetLang, signal);
+      result = await fetchUrbanDictionary(query, targetLang, signal);
+      break;
     case 'wikipedia':
-      return fetchWikipediaSummary(query, targetLang, signal);
+      result = await fetchWikipediaSummary(query, targetLang, signal);
+      break;
     case 'rhymebrain':
-      return fetchRhymeBrain(query, targetLang, signal);
+      result = await fetchRhymeBrain(query, targetLang, signal);
+      break;
     case 'gemini_ai': {
       const aiRes = await fetchAiAnalysis('default', query, targetLang, settings?.aiApiKey, settings?.aiModel, signal, undefined, settings);
-      return {
+      result = {
         word: query,
-        phonetic: `AI Assistant (${settings?.aiModel || 'default'})`,
         meanings: [{ partOfSpeech: 'AI Explanation', definitions: [{ definition: aiRes.summary || aiRes.translation || query }] }],
         providerId: 'gemini_ai',
-        sourceBadges: [{ label: 'AI Assistant', kind: 'dictionary', providerId: 'gemini_ai' }],
       };
+      break;
     }
     case 'free_dictionary':
     default:
-      return fetchFreeDictionary(query, targetLang, signal);
+      result = await fetchFreeDictionary(query, targetLang, signal);
+      break;
   }
+  console.log(`[Dictionary] Raw provider result (${providerId}):`, result);
+  return result;
 }
 
 export async function lookupTranslationResult(
@@ -234,11 +247,12 @@ export async function fetchDictionaryResult(
   } as AppSettings;
 
   if (provider === 'google_translate' || provider === 'libre_translate' || provider === 'gemini_ai') {
-    return normalizeDictionaryResult(
+    const normalized = normalizeDictionaryResult(
       await lookupSingleProvider(provider, cleanWord, targetLang, signal, settingsWithKeys),
       settingsWithKeys,
       cleanWord,
     );
+    return normalized;
   }
 
   const primaryId = resolvePrimaryProviderId(provider, settingsWithKeys);
@@ -353,7 +367,7 @@ export async function runDictionaryEnrichment(
   onEnrichUpdate: (enriched: DictionaryEntry) => void,
   signal?: AbortSignal,
 ) {
-  const primaryProviderId = baseResult.providerId || settings.dictionaryProvider || 'wiktionary';
+  const primaryProviderId = settings.dictionaryProvider || 'wiktionary';
   const queryTerm = word.trim();
   const targetLang = settings.translateTargetLanguage || 'Vietnamese';
   const cacheKey = enrichmentCacheKey(word, settings, primaryProviderId, queryTerm);
@@ -365,12 +379,14 @@ export async function runDictionaryEnrichment(
     for (const item of results) {
       currentCombined = mergeDictionaryEntries(currentCombined, item);
       currentCombined.lexicalProfile = mergeLexicalProfiles(currentCombined.lexicalProfile, item.lexicalProfile);
+      console.log('[Dictionary] Merged model after provider:', currentCombined);
     }
     currentCombined.translation = currentCombined.translation || baseResult.translation;
     currentCombined.phraseExplanation = currentCombined.phraseExplanation?.length
       ? currentCombined.phraseExplanation
       : baseResult.phraseExplanation;
-    currentCombined.enriched = true;
+    // ponytail: enriched stays false until fetchCombinedDictionaryResult finishes all tasks
+    currentCombined.enriched = false;
     onEnrichUpdate(currentCombined);
   };
 
@@ -443,7 +459,7 @@ export async function fetchCombinedDictionaryResult(
     );
 
   const dictionary = await dictionaryPromise;
-  const primaryProviderId = dictionary?.providerId || provider;
+  const primaryProviderId = provider;
   const canEnrich = settings.enableDictionary !== false
     && DICTIONARY_FALLBACK_ORDER.some((id) => id !== primaryProviderId);
 
@@ -463,7 +479,6 @@ export async function fetchCombinedDictionaryResult(
         meanings: [],
         originalText: cleanWord,
         translation: settledTranslation || undefined,
-        sourceBadges: settledTranslation?.sourceBadges,
         revision: 0,
       };
 
@@ -474,17 +489,18 @@ export async function fetchCombinedDictionaryResult(
   const pendingTranslation = Boolean(translationPromise && !translationState.outcome);
   const needsPhraseFallback = isPhraseLike(cleanWord) && !hasUsableDefinitions(dictionary);
   let latest = current;
+  console.log('[Dictionary] Initial merged model (revision 0):', latest);
   emitUpdate(onEnrichUpdate, latest, latest.revision || 0);
 
-  const applyLiveUpdate = (updated: DictionaryEntry, revision: number) => {
+  const applyLiveUpdate = (updated: DictionaryEntry, revision?: number) => {
     latest = {
       ...updated,
       translation: updated.translation || latest.translation,
       phraseExplanation: updated.phraseExplanation?.length ? updated.phraseExplanation : latest.phraseExplanation,
-      sourceBadges: mergeSourceBadges(latest.sourceBadges, updated.sourceBadges),
-      revision: Math.max(latest.revision || 0, revision),
+      revision: Math.max((latest.revision || 0) + 1, revision || 0),
     };
-    emitUpdate(onEnrichUpdate, latest, latest.revision || revision);
+    console.log(`[Dictionary] Merged model (revision ${latest.revision}):`, latest);
+    emitUpdate(onEnrichUpdate, latest, latest.revision || 0);
   };
 
   const backgroundSignal = enrichSignal || signal;
@@ -496,8 +512,7 @@ export async function fetchCombinedDictionaryResult(
         ...latest,
         translation: lateTranslation,
         originalText: dictionary ? latest.originalText : cleanWord,
-        sourceBadges: mergeSourceBadges(latest.sourceBadges, lateTranslation.sourceBadges),
-      }, 1);
+      });
     }).catch((error) => {
       if (error instanceof Error && error.name === 'AbortError') return;
     })
@@ -506,7 +521,7 @@ export async function fetchCombinedDictionaryResult(
   const shouldEnrichSecondaries = canEnrich;
   const enrichmentTask = shouldEnrichSecondaries
     ? runDictionaryEnrichment(cleanWord, latest, settings, (updated) => {
-      applyLiveUpdate({ ...updated, enriched: true }, 3);
+      applyLiveUpdate(updated);
     }, backgroundSignal)
     : Promise.resolve();
 
@@ -516,9 +531,7 @@ export async function fetchCombinedDictionaryResult(
       applyLiveUpdate({
         ...latest,
         phraseExplanation: phraseSections,
-        sourceBadges: mergeSourceBadges(latest.sourceBadges, [{ label: 'AI · Phrase explanation', kind: 'ai', providerId: 'ai' }]),
-        enriched: true,
-      }, 2);
+      });
     }).catch((error) => {
       if (error instanceof Error && error.name === 'AbortError') return;
     })
@@ -528,9 +541,10 @@ export async function fetchCombinedDictionaryResult(
     latest = {
       ...latest,
       enriched: true,
-      revision: Math.max(latest.revision || 0, pendingTranslation || shouldEnrichSecondaries || needsPhraseFallback ? 3 : 0),
+      revision: (latest.revision || 0) + 1,
     };
     writeCombinedResultCache(combinedKey, latest);
+    console.log(`[Dictionary] Final merged model (revision ${latest.revision}):`, latest);
     emitUpdate(onEnrichUpdate, latest, latest.revision || 0);
     return latest;
   }).catch((error) => {
@@ -538,10 +552,6 @@ export async function fetchCombinedDictionaryResult(
     throw error;
   });
 
-  if (onEnrichUpdate) {
-    void backgroundWork;
-    return latest;
-  }
   return backgroundWork;
 }
 

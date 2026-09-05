@@ -1,22 +1,22 @@
 import { safeFetch } from './provider.http';
-import { DictionaryEntry, Meaning, Phonetic, AttributedItem } from '../types';
+import { Meaning, Phonetic, AttributedItem, ProviderLookupDto } from '../types';
 import { normalizeDictionaryTerm } from '../shared/query-utils';
 import { NotFoundError, throwForHttpStatus } from './errors';
 
 function accentFromAudio(audio?: string): Phonetic['region'] {
   const value = String(audio || '').toLowerCase();
-  if (value.includes('-uk') || value.includes('_uk') || value.includes('-gb')) return 'uk';
-  if (value.includes('-us') || value.includes('_us')) return 'us';
+  if (value.includes('-uk') || value.includes('_uk') || value.includes('-gb') || value.includes('/uk/')) return 'uk';
+  if (value.includes('-us') || value.includes('_us') || value.includes('/us/')) return 'us';
   return 'all';
 }
 
-function languageFromRegion(region?: Phonetic['region']): string {
+function languageFromRegion(region?: Phonetic['region']): string | undefined {
   if (region === 'uk') return 'en-GB';
   if (region === 'us') return 'en-US';
-  return 'en-US';
+  return undefined;
 }
 
-export async function fetchFreeDictionary(word: string, _targetLang: string = 'vi', signal?: AbortSignal): Promise<DictionaryEntry> {
+export async function fetchFreeDictionary(word: string, _targetLang: string = 'vi', signal?: AbortSignal): Promise<ProviderLookupDto> {
   const term = normalizeDictionaryTerm(word);
   const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(term)}`;
   const res = await safeFetch(url, { signal });
@@ -38,9 +38,7 @@ export async function fetchFreeDictionary(word: string, _targetLang: string = 'v
       const region = accentFromAudio(p.audio);
       return {
         text: p.text || '',
-        phonetic: p.text || '',
         audio: p.audio || '',
-        audioUrl: p.audio || '',
         region,
         language: languageFromRegion(region),
         label: region === 'uk' ? 'Listen (UK)' : region === 'us' ? 'Listen (US)' : 'Listen',
@@ -88,14 +86,10 @@ export async function fetchFreeDictionary(word: string, _targetLang: string = 'v
   return {
     word: (entry.word as string) || term,
     phonetics,
-    pronunciations: phonetics,
-    phonetic: phonetics.find((p) => p.text)?.text || '',
     meanings,
     examples,
     synonyms,
     antonyms,
-    sourceUrl: entry.sourceUrls ? (entry.sourceUrls as string[])[0] : undefined,
     providerId: 'free_dictionary',
-    sourceBadges: [{ label: 'Free Dictionary API', kind: 'dictionary', providerId: 'free_dictionary' }],
   };
 }

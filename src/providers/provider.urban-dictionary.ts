@@ -1,10 +1,9 @@
 import { DICTIONARY_FETCH_TIMEOUT_MS, safeFetch } from './provider.http';
-import { DictionaryEntry, Meaning } from '../types';
+import { Meaning, ProviderLookupDto } from '../types';
 import { normalizeDictionaryTerm } from '../shared/query-utils';
 import { NotFoundError, throwForHttpStatus } from './errors';
 
-const MAX_SLANG_DEFINITIONS = 3;
-const MIN_THUMBS_UP = 5;
+const MAX_SLANG_DEFINITIONS = 8;
 
 interface UrbanListItem {
   word?: string;
@@ -26,7 +25,7 @@ export async function fetchUrbanDictionary(
   word: string,
   _targetLang = 'vi',
   signal?: AbortSignal,
-): Promise<DictionaryEntry> {
+): Promise<ProviderLookupDto> {
   const clean = normalizeDictionaryTerm(word) || String(word || '').trim();
   if (!clean) throw new NotFoundError('Urban Dictionary: empty query');
 
@@ -42,6 +41,7 @@ export async function fetchUrbanDictionary(
 
   const data = await res.json() as { list?: UrbanListItem[] };
   const list = Array.isArray(data?.list) ? data.list : [];
+  const query = clean.toLowerCase();
   const ranked = list
     .map((item) => ({
       word: String(item.word || clean).trim() || clean,
@@ -49,18 +49,28 @@ export async function fetchUrbanDictionary(
       example: stripUrbanMarkup(item.example || ''),
       thumbsUp: Number(item.thumbs_up) || 0,
     }))
-    .filter((item) => item.definition && item.thumbsUp >= MIN_THUMBS_UP)
-    .sort((a, b) => b.thumbsUp - a.thumbsUp)
-    .slice(0, MAX_SLANG_DEFINITIONS);
+    .filter((item) => {
+      if (!item.definition) return false;
+      // Keep exact-term slang; skip nearby phrases like "successful poo"
+      return item.word.toLowerCase() === query;
+    })
+    .sort((a, b) => b.thumbsUp - a.thumbsUp);
 
-  if (!ranked.length) {
+  const unique: typeof ranked = [];
+  for (const item of ranked) {
+    if (unique.some((row) => row.definition.toLowerCase() === item.definition.toLowerCase())) continue;
+    unique.push(item);
+    if (unique.length >= MAX_SLANG_DEFINITIONS) break;
+  }
+
+  if (!unique.length) {
     throw new NotFoundError(`Urban Dictionary: No entry found for '${clean}'`);
   }
 
   const meanings: Meaning[] = [{
     partOfSpeech: 'slang',
     source: 'Urban Dictionary',
-    definitions: ranked.map((item) => ({
+    definitions: unique.map((item) => ({
       definition: item.definition,
       example: item.example || undefined,
       source: 'Urban Dictionary',
@@ -68,13 +78,12 @@ export async function fetchUrbanDictionary(
   }];
 
   return {
-    word: ranked[0].word || clean,
+    word: unique[0].word || clean,
     phonetics: [],
     meanings,
-    examples: ranked
+    examples: unique
       .filter((item) => item.example)
       .map((item) => ({ text: item.example, source: 'Urban Dictionary' })),
     providerId: 'urban_dictionary',
-    sourceBadges: [{ label: 'Urban Dictionary', kind: 'dictionary', providerId: 'urban_dictionary' }],
   };
 }

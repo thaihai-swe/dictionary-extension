@@ -1,0 +1,39 @@
+{
+  "type": "disambiguation",
+  "title": "Similarity",
+  "displaytitle": "<span lang=\"en\" dir=\"ltr\"><span class=\"mw-page-title-main\">Similarity</span></span>",
+  "namespace": {
+    "id": 0,
+    "text": ""
+  },
+  "wikibase_item": "Q254390",
+  "titles": {
+    "canonical": "Similarity",
+    "normalized": "Similarity",
+    "display": "<span lang=\"en\" dir=\"ltr\"><span class=\"mw-page-title-main\">Similarity</span></span>"
+  },
+  "pageid": 532523,
+  "lang": "en",
+  "dir": "ltr",
+  "revision": "1261248012",
+  "tid": "64f90768-b2aa-11ef-9f72-08c1e406a0ed",
+  "timestamp": "2024-12-05T01:43:58Z",
+  "description": "Topics referred to by the same term",
+  "description_source": "local",
+  "content_urls": {
+    "desktop": {
+      "page": "https://en.wikipedia.org/wiki/Similarity",
+      "revisions": "https://en.wikipedia.org/wiki/Similarity?action=history",
+      "edit": "https://en.wikipedia.org/wiki/Similarity?action=edit",
+      "talk": "https://en.wikipedia.org/wiki/Talk:Similarity"
+    },
+    "mobile": {
+      "page": "https://en.wikipedia.org/wiki/Similarity",
+      "revisions": "https://en.wikipedia.org/wiki/Special:History/Similarity",
+      "edit": "https://en.wikipedia.org/wiki/Similarity?action=edit",
+      "talk": "https://en.wikipedia.org/wiki/Talk:Similarity"
+    }
+  },
+  "extract": "Similarity may refer to:",
+  "extract_html": "<p><b>Similarity</b> may refer to:</p>"
+}

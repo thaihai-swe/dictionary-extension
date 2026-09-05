@@ -31,7 +31,6 @@ The table below summarizes what data each provider yields when invoked directly 
   - Provides direct URLs to authentic audio recordings (e.g. `https://api.dictionaryapi.dev/media/pronunciations/en/...-us.mp3`).
 * **RhymeBrain (`rhymebrain`)**:
   - Returns raw phonetic notation converted to standardized IPA transcriptions.
-  - Returns numeric syllable counts (e.g. `"3 syllables"`).
 * **Wiktionary, Datamuse, Wikipedia, Urban Dictionary**:
   - Do not provide direct audio URLs. If Wiktionary or Datamuse is used as the primary provider, the UI triggers Phase B enrichment to backfill phonetics from Free Dictionary or RhymeBrain.
 

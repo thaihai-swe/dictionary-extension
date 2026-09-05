@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useMemo } from 'react';
 import {
   playPronunciation,
   startSpeechPractice,
@@ -44,67 +44,38 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
   const query = useDictionaryQuery();
   const { playingKey } = useDictionaryAudio();
   const { practiceResult, isPracticing, supportsSpeechPractice } = useDictionaryPractice();
-  const [extrasReady, setExtrasReady] = useState(false);
-
-  useEffect(() => {
-    setExtrasReady(false);
-    const frame = requestAnimationFrame(() => setExtrasReady(true));
-    return () => cancelAnimationFrame(frame);
-  }, [result?.word, query]);
 
   const displayHeadword = useMemo(() => {
     const entry = result;
     return String(entry?.originalText || query || entry?.word || '').trim();
   }, [result, query]);
 
-  const pronunciations = useMemo<Phonetic[]>(() => {
-    if (result?.pronunciations?.length) return result.pronunciations;
-    return result?.phonetics || [];
+  const phoneticsList = useMemo<Phonetic[]>(() => {
+    const list = result?.phonetics || [];
+    const seen = new Set<string>();
+    return list.filter((item) => {
+      const text = String(item.text || '').trim();
+      const audio = String(item.audio || '').trim();
+      const key = `${text}|${audio}|${item.region || ''}|${item.language || ''}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return Boolean(text || audio);
+    });
   }, [result]);
-
-  function pronunciationFor(lang: 'en-GB' | 'en-US'): Phonetic | undefined {
-    return (
-      pronunciations.find((item) => String(item.language || '').toLowerCase() === lang.toLowerCase()) ||
-      pronunciations.find((item) => (lang === 'en-GB' ? item.region === 'uk' : item.region === 'us'))
-    );
-  }
 
   function phoneticText(item?: Phonetic): string {
     const word = String(result?.word || '').trim().toLowerCase();
-    const phonetic = String(item?.phonetic || '').trim();
-    if (phonetic && phonetic.toLowerCase() !== word) return phonetic;
     const text = String(item?.text || '').trim();
     if (text && text.toLowerCase() !== word) return text;
     return '';
   }
 
-  function audioUrlOf(item?: Phonetic): string {
-    return String(item?.audioUrl || item?.audio || '').trim();
+  function phoneticLabel(item: Phonetic): string {
+    if (item.label) return item.label;
+    if (item.region === 'uk' || item.language?.toLowerCase().includes('gb')) return 'UK';
+    if (item.region === 'us' || item.language?.toLowerCase().includes('us')) return 'US';
+    return item.region?.toUpperCase() || 'Audio';
   }
-
-  function hasAccentData(item?: Phonetic): boolean {
-    return Boolean(phoneticText(item) || audioUrlOf(item));
-  }
-
-  const ukPronunciation = useMemo(() => {
-    const item = pronunciationFor('en-GB');
-    return hasAccentData(item) ? item : undefined;
-  }, [pronunciations]);
-
-  const usPronunciation = useMemo(() => {
-    const item = pronunciationFor('en-US');
-    return hasAccentData(item) ? item : undefined;
-  }, [pronunciations]);
-
-  const genericPronunciation = useMemo(() => {
-    if (ukPronunciation || usPronunciation) return undefined;
-    const found = pronunciations.find((item) => hasAccentData(item) || item?.fallbackOnly);
-    if (found) return found;
-    if (result?.word) {
-      return { text: result.word, language: 'en-US', fallbackOnly: true };
-    }
-    return undefined;
-  }, [ukPronunciation, usPronunciation, pronunciations, result]);
 
   const usageWarnings = result?.lexicalProfile?.usageWarnings || [];
   const formationText = useMemo(() => {
@@ -206,80 +177,36 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
 
             {/* Phonetic & Accent Audio Buttons */}
             <div className="flex flex-wrap items-center gap-2 pt-0.5">
-              {usPronunciation ? (
-                <button
-                  type="button"
-                  onClick={() =>
-                    playPronunciation({
-                      text: displayHeadword,
-                      audioUrl: audioUrlOf(usPronunciation),
-                      language: 'en-US',
-                      key: 'en-US',
-                    })
-                  }
-                  className={cx(
-                    'h-[26px] px-2 rounded-md border text-[11.5px] font-medium transition-all flex items-center gap-1 cursor-pointer font-mono',
-                    playingKey === 'en-US'
-                      ? 'bg-teal-500/20 text-teal-700 dark:text-teal-300 border-teal-500/40'
-                      : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
-                  )}
-                  aria-pressed={playingKey === 'en-US'}
-                  title="Listen (US)"
-                >
-                  <IconSpeaker className="w-3 h-3 text-teal-600 dark:text-teal-400" />
-                  <span>US {phoneticText(usPronunciation) ? `${phoneticText(usPronunciation)}` : ''}</span>
-                </button>
-              ) : null}
-
-              {ukPronunciation ? (
-                <button
-                  type="button"
-                  onClick={() =>
-                    playPronunciation({
-                      text: displayHeadword,
-                      audioUrl: audioUrlOf(ukPronunciation),
-                      language: 'en-GB',
-                      key: 'en-GB',
-                    })
-                  }
-                  className={cx(
-                    'h-[26px] px-2 rounded-md border text-[11.5px] font-medium transition-all flex items-center gap-1 cursor-pointer font-mono',
-                    playingKey === 'en-GB'
-                      ? 'bg-teal-500/20 text-teal-700 dark:text-teal-300 border-teal-500/40'
-                      : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
-                  )}
-                  aria-pressed={playingKey === 'en-GB'}
-                  title="Listen (UK)"
-                >
-                  <IconSpeaker className="w-3 h-3 text-teal-600 dark:text-teal-400" />
-                  <span>UK {phoneticText(ukPronunciation) ? `${phoneticText(ukPronunciation)}` : ''}</span>
-                </button>
-              ) : null}
-
-              {genericPronunciation ? (
-                <button
-                  type="button"
-                  onClick={() =>
-                    playPronunciation({
-                      text: displayHeadword,
-                      audioUrl: audioUrlOf(genericPronunciation),
-                      language: genericPronunciation.language || 'en-US',
-                      key: 'generic',
-                    })
-                  }
-                  className={cx(
-                    'h-[26px] px-2 rounded-md border text-[11.5px] font-medium transition-all flex items-center gap-1 cursor-pointer font-mono',
-                    playingKey === 'generic'
-                      ? 'bg-teal-500/20 text-teal-700 dark:text-teal-300 border-teal-500/40'
-                      : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
-                  )}
-                  aria-pressed={playingKey === 'generic'}
-                  title="Listen pronunciation"
-                >
-                  <IconSpeaker className="w-3 h-3 text-teal-600 dark:text-teal-400" />
-                  <span>{phoneticText(genericPronunciation) || 'Audio'}</span>
-                </button>
-              ) : null}
+              {phoneticsList.map((item, index) => {
+                const listenKey = `phonetic-${item.region || item.language || index}`;
+                const ipa = phoneticText(item);
+                const lang = item.language || (item.region === 'uk' ? 'en-GB' : 'en-US');
+                return (
+                  <button
+                    key={listenKey}
+                    type="button"
+                    onClick={() =>
+                      playPronunciation({
+                        text: displayHeadword,
+                        audioUrl: item.audio,
+                        language: lang,
+                        key: listenKey,
+                      })
+                    }
+                    className={cx(
+                      'h-[26px] px-2 rounded-md border text-[11.5px] font-medium transition-all flex items-center gap-1 cursor-pointer font-mono',
+                      playingKey === listenKey
+                        ? 'bg-teal-500/20 text-teal-700 dark:text-teal-300 border-teal-500/40'
+                        : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
+                    )}
+                    aria-pressed={playingKey === listenKey}
+                    title={`Listen (${phoneticLabel(item)})`}
+                  >
+                    <IconSpeaker className="w-3 h-3 text-teal-600 dark:text-teal-400" />
+                    <span>{phoneticLabel(item)}{ipa ? ` ${ipa}` : ''}</span>
+                  </button>
+                );
+              })}
 
               {supportsSpeechPractice ? (
                 <button
@@ -461,35 +388,34 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
         </section>
       ) : null}
 
-      {/* 7. Structured Lexical Profile Cards (Lazy loaded) */}
-      {extrasReady ? (
-        <Suspense fallback={null}>
-          <WordFamilyCard
-            word={displayHeadword}
-            family={result.lexicalProfile?.wordFamily}
-            onSelectWord={handleSearch}
-          />
+      {/* 7. Structured Lexical Profile Cards */}
+      <Suspense fallback={null}>
+        <WordFamilyCard
+          word={displayHeadword}
+          family={result.lexicalProfile?.wordFamily}
+          onSelectWord={handleSearch}
+        />
 
-          <CollocationsCard
-            word={displayHeadword}
-            collocations={result.lexicalProfile?.collocations}
-            onSelectWord={handleSearch}
-          />
+        <CollocationsCard
+          word={displayHeadword}
+          collocations={result.lexicalProfile?.collocations}
+          onSelectWord={handleSearch}
+        />
 
-          <UsageNotesCard
-            warnings={usageWarnings}
-            pairs={result.lexicalProfile?.confusablePairs}
-          />
+        <UsageNotesCard
+          notes={result.lexicalProfile?.usageNotes}
+          warnings={usageWarnings}
+          pairs={result.lexicalProfile?.confusablePairs}
+        />
 
-          <WordFormationCard
-            formation={formationText}
-            prefixes={formationPrefixes}
-            suffixes={formationSuffixes}
-          />
+        <WordFormationCard
+          formation={formationText}
+          prefixes={formationPrefixes}
+          suffixes={formationSuffixes}
+        />
 
-          <LearnerMistakesCard mistakes={result.lexicalProfile?.learnerMistakes} />
-        </Suspense>
-      ) : null}
+        <LearnerMistakesCard mistakes={result.lexicalProfile?.learnerMistakes} />
+      </Suspense>
     </div>
   );
 };

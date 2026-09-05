@@ -6,27 +6,35 @@ This document provides the complete technical specification for all external and
 
 ## 1. Common Normalized Result Contracts
 
-All dictionary, translation, and AI providers produce or normalize into canonical TypeScript models (`src/types/index.ts`):
+All dictionary, translation, and AI providers produce or normalize into canonical TypeScript models (`src/types/index.ts`).
+
+Dictionary backends return a sparse `ProviderLookupDto`. `toDictionaryEntry()` (`src/shared/enrichment.ts`) converts that into a complete `DictionaryEntry` so `mergeDictionaryEntries()` can consolidate Phase A + Phase B results without provider-specific branches.
 
 ```typescript
+export interface ProviderLookupDto {
+  word: string;
+  providerId: DictionaryProviderId | string;
+  phonetics?: Phonetic[];
+  meanings?: Meaning[];
+  examples?: AttributedItem[];
+  synonyms?: AttributedItem[];
+  antonyms?: AttributedItem[];
+  lexicalProfile?: LexicalProfile;
+  translation?: TranslationResult;
+  phraseExplanation?: PhraseExplanationSection[];
+}
+
 export interface DictionaryEntry {
   word: string;
-  phonetic?: string;
   phonetics?: Phonetic[];
-  pronunciations?: Phonetic[];
   meanings: Meaning[];
   examples?: AttributedItem[];
   synonyms?: AttributedItem[];
   antonyms?: AttributedItem[];
-  sourceUrl?: string;
   lexicalProfile?: LexicalProfile;
-  subtitle?: string;
-  sourceBadges?: SourceBadge[];
-  providerId?: string;
   translation?: TranslationResult;
   originalText?: string;
   phraseExplanation?: PhraseExplanationSection[];
-  syllables?: string;
   enriched?: boolean;
   revision?: number;
 }
@@ -34,8 +42,6 @@ export interface DictionaryEntry {
 export interface Phonetic {
   text?: string;
   audio?: string;
-  audioUrl?: string;
-  phonetic?: string;
   language?: string;
   label?: string;
   region?: 'uk' | 'us' | 'all';

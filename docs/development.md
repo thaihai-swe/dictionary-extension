@@ -62,7 +62,7 @@ When introducing a new configuration option:
    - Import `NotFoundError` from `./errors`.
    - If the requested term has no definitions, throw `new NotFoundError()`.
    - If the provider encounters an auth/network/rate-limit error, allow the error to throw.
-   - Return a normalized `DictionaryEntry` with definitions, examples, synonyms, antonyms, pronunciations, and lexical metadata.
+   - Return a `ProviderLookupDto` (word + providerId + any of: meanings, examples, synonyms, antonyms, phonetics, lexical metadata). The facade converts it with `toDictionaryEntry()` before merge.
 2. **Register in Facade (`src/providers/provider.index.ts`):**
    - Import the lookup function and add it to `lookupSingleProvider()`.
    - Add the provider ID to `DICTIONARY_FALLBACK_ORDER` if it should participate in Phase 2 enrichment.
@@ -94,7 +94,7 @@ Run this comprehensive verification protocol before submitting code changes:
 1. Look up a polysemous word like `run` with translation enabled:
    - Confirm initial definitions render in under a second (`revision: 0`). Translation may be present immediately or arrive as `revision: 1`.
    - Confirm Phase 2 secondary providers lazily enrich additional definitions, examples, and synonyms (`revision: 2`).
-   - Confirm contributing provider badges appear without duplicate subtitle labels.
+   - Confirm the merged result paints without leftover source/provider labels under the headword.
 2. Look up a term whose primary provider lacks IPA:
    - Confirm Phase 2 enrichment backfills phonetic IPA into the pronunciation row when a secondary provider returns it.
 3. Rapid query switching:

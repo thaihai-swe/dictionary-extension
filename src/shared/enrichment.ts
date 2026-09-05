@@ -3,6 +3,7 @@ import type {
   DictionaryEntry,
   Meaning,
   Phonetic,
+  ProviderLookupDto,
   SourceBadge,
   TranslationResult,
 } from '../types';
@@ -10,8 +11,8 @@ import { mergeLexicalProfiles } from './query-utils.ts';
 
 export const MAX_DEFINITIONS_PER_POS = 8;
 export const MAX_MEANINGS = 6;
-export const MAX_PHONETICS = 4;
-export const MAX_ITEMS_PER_SECTION = 8;
+export const MAX_PHONETICS = 8;
+export const MAX_ITEMS_PER_SECTION = 16;
 
 const POS_ALIASES: Record<string, string> = {
   n: 'noun',
@@ -63,6 +64,22 @@ function normalizeText(str: string): string {
   return normalizeComparableText(str).replace(/\s+/g, '');
 }
 
+function areDefinitionsEquivalent(a: string, b: string): boolean {
+  const normA = normalizeComparableText(a);
+  const normB = normalizeComparableText(b);
+  if (!normA || !normB) return false;
+  if (normA === normB) return true;
+  if (normA.length <= 20 || normB.length <= 20) return false;
+  if (normA.startsWith(normB) || normB.startsWith(normA)) return true;
+  if (normA.endsWith(normB) || normB.endsWith(normA)) return true;
+  const tokensA = normA.split(' ');
+  const tokensB = normB.split(' ');
+  const [shorter, longer] = tokensA.length <= tokensB.length ? [tokensA, tokensB] : [tokensB, tokensA];
+  if (shorter.length / longer.length < 0.6) return false;
+  const longerSet = new Set(longer);
+  return shorter.every((token) => longerSet.has(token));
+}
+
 export function isTranslationPartOfSpeech(pos: string): boolean {
   const value = String(pos || '').toLowerCase();
   return value.includes('translation') || value.includes('phrase /');
@@ -88,13 +105,11 @@ export function canonicalPartOfSpeech(pos: string): string {
   return raw;
 }
 
-export function displayPartOfSpeech(pos: string): string {
-  const canonical = canonicalPartOfSpeech(pos);
-  if (canonical === 'translation') return 'translation';
-  return canonical;
+function displayPartOfSpeech(pos: string): string {
+  return canonicalPartOfSpeech(pos);
 }
 
-export function joinSourceLabels(...labels: Array<string | undefined>): string | undefined {
+function joinSourceLabels(...labels: Array<string | undefined>): string | undefined {
   const parts: string[] = [];
   for (const label of labels) {
     for (const piece of String(label || '').split(/\s*[+|•]\s*/)) {
@@ -153,18 +168,15 @@ export function mergeMeanings(existing: Meaning[], incoming: Meaning[]): Meaning
     let target = merged.find((meaning) => canonicalPartOfSpeech(meaning.partOfSpeech) === pos);
 
     if (!target) {
-      if (merged.length >= MAX_MEANINGS) {
-        target = merged[0];
-      } else {
-        target = {
-          partOfSpeech: displayPartOfSpeech(incMeaning.partOfSpeech || pos),
-          definitions: [],
-          synonyms: [],
-          antonyms: [],
-          source: incMeaning.source,
-        };
-        merged.push(target);
-      }
+      if (merged.length >= MAX_MEANINGS) return;
+      target = {
+        partOfSpeech: displayPartOfSpeech(incMeaning.partOfSpeech || pos),
+        definitions: [],
+        synonyms: [],
+        antonyms: [],
+        source: incMeaning.source,
+      };
+      merged.push(target);
     }
 
     if (!target) return;
@@ -175,10 +187,16 @@ export function mergeMeanings(existing: Meaning[], incoming: Meaning[]): Meaning
     for (const incDef of incMeaning.definitions || []) {
       const defText = (incDef.definition || '').trim();
       if (!defText) continue;
-      const exists = target.definitions.some((definition) => (
-        normalizeComparableText(definition.definition) === normalizeComparableText(defText)
+      const existingDef = target.definitions.find((definition) => (
+        areDefinitionsEquivalent(definition.definition, defText)
       ));
-      if (!exists && target.definitions.length < MAX_DEFINITIONS_PER_POS) {
+      if (existingDef) {
+        if (!existingDef.example && incDef.example) {
+          existingDef.example = incDef.example;
+        }
+        continue;
+      }
+      if (target.definitions.length < MAX_DEFINITIONS_PER_POS) {
         target.definitions.push({
           ...incDef,
           definition: defText,
@@ -197,49 +215,63 @@ export function mergeMeanings(existing: Meaning[], incoming: Meaning[]): Meaning
   return merged;
 }
 
+function phoneticRegion(item: Phonetic): Phonetic['region'] | undefined {
+  if (item.region && item.region !== 'all') return item.region;
+  const language = String(item.language || '').toLowerCase();
+  if (language.includes('gb')) return 'uk';
+  if (language.includes('us')) return 'us';
+  return undefined;
+}
+
 export function mergePhonetics(existing: Phonetic[] = [], incoming: Phonetic[] = []): Phonetic[] {
   const merged = existing.map((item) => ({ ...item }));
   for (const item of incoming || []) {
-    const phonetic = String(item.phonetic || item.text || '').trim();
-    const audioUrl = String(item.audioUrl || item.audio || '').trim();
+    const text = String(item.text || '').trim();
+    const audio = String(item.audio || '').trim();
     const language = String(item.language || '').trim();
-    if (!phonetic && !audioUrl) continue;
+    if (!text && !audio) continue;
 
+    const incomingRegion = phoneticRegion(item);
+    const incomingIpa = normalizeText(text);
     const matchIndex = merged.findIndex((entry) => {
-      const entryLanguage = String(entry.language || '').trim();
-      if (language && entryLanguage) return entryLanguage === language;
-      return normalizeText(String(entry.phonetic || entry.text || '')) === normalizeText(phonetic);
+      const entryIpa = normalizeText(String(entry.text || ''));
+      if (incomingIpa && entryIpa) return incomingIpa === entryIpa;
+      const entryRegion = phoneticRegion(entry);
+      if (incomingRegion && entryRegion) return incomingRegion === entryRegion;
+      if (!incomingIpa && incomingRegion && entryRegion === incomingRegion) return true;
+      if (!entryIpa && incomingIpa && incomingRegion && entryRegion === incomingRegion) return true;
+      return false;
     });
 
     if (matchIndex >= 0) {
       const current = merged[matchIndex];
-      if (phonetic && !String(current.phonetic || current.text || '').trim()) {
-        current.phonetic = phonetic;
-        current.text = phonetic;
-      }
-      if (audioUrl && !String(current.audioUrl || current.audio || '').trim()) {
-        current.audioUrl = audioUrl;
-        current.audio = audioUrl;
+      if (text && !String(current.text || '').trim()) current.text = text;
+      if (audio && !String(current.audio || '').trim()) {
+        current.audio = audio;
         current.fallbackOnly = false;
       }
       if (language && !current.language) current.language = language;
+      if (incomingRegion && (!current.region || current.region === 'all')) {
+        current.region = incomingRegion;
+        current.language = incomingRegion === 'uk' ? 'en-GB' : incomingRegion === 'us' ? 'en-US' : current.language;
+        current.label = incomingRegion === 'uk' ? 'Listen (UK)' : incomingRegion === 'us' ? 'Listen (US)' : current.label;
+      }
       continue;
     }
 
     if (merged.length >= MAX_PHONETICS) break;
     merged.push({
       ...item,
-      phonetic,
-      text: phonetic || item.text,
-      audioUrl,
-      audio: audioUrl || item.audio,
-      language,
+      text,
+      audio,
+      language: language || (incomingRegion === 'uk' ? 'en-GB' : incomingRegion === 'us' ? 'en-US' : language),
+      region: incomingRegion || item.region,
     });
   }
   return merged;
 }
 
-export function mergeSourceBadges(existing: SourceBadge[] = [], incoming: SourceBadge[] = []): SourceBadge[] {
+function mergeSourceBadges(existing: SourceBadge[] = [], incoming: SourceBadge[] = []): SourceBadge[] {
   const merged = [...existing];
   for (const badge of incoming) {
     if (!badge?.label) continue;
@@ -280,55 +312,51 @@ function extractTranslationFromMeanings(meanings: Meaning[]): TranslationResult 
   return undefined;
 }
 
-export function mergeDictionaryEntries(base: DictionaryEntry, incoming: DictionaryEntry): DictionaryEntry {
-  const translation = mergeTranslations(
-    base.translation,
-    incoming.translation,
-  ) || extractTranslationFromMeanings([...(base.meanings || []), ...(incoming.meanings || [])]);
-
+/** Canonical provider payload used by mergeDictionaryEntries. */
+export function toDictionaryEntry(dto: ProviderLookupDto | DictionaryEntry): DictionaryEntry {
+  const extra = dto as Partial<DictionaryEntry> & Partial<ProviderLookupDto>;
+  const phonetics = mergePhonetics(dto.phonetics);
+  const meanings = dto.meanings || [];
   return {
-    ...base,
-    phonetic: base.phonetic || incoming.phonetic,
-    phonetics: mergePhonetics(base.phonetics || base.pronunciations, incoming.phonetics || incoming.pronunciations),
-    pronunciations: mergePhonetics(base.pronunciations || base.phonetics, incoming.pronunciations || incoming.phonetics),
-    meanings: mergeMeanings(base.meanings || [], incoming.meanings || []),
-    examples: mergeAttributed(base.examples, incoming.examples),
-    synonyms: mergeAttributed(base.synonyms, incoming.synonyms),
-    antonyms: mergeAttributed(base.antonyms, incoming.antonyms),
-    lexicalProfile: mergeLexicalProfiles(base.lexicalProfile, incoming.lexicalProfile),
-    sourceBadges: mergeSourceBadges(base.sourceBadges, incoming.sourceBadges),
-    subtitle: base.subtitle || incoming.subtitle,
-    translation,
-    phraseExplanation: base.phraseExplanation?.length ? base.phraseExplanation : incoming.phraseExplanation,
-    syllables: base.syllables || incoming.syllables,
-    enriched: true,
+    word: String(dto.word || '').trim(),
+    phonetics,
+    meanings,
+    examples: dto.examples,
+    synonyms: dto.synonyms,
+    antonyms: dto.antonyms,
+    lexicalProfile: dto.lexicalProfile,
+    translation: dto.translation || extractTranslationFromMeanings(meanings),
+    originalText: extra.originalText,
+    phraseExplanation: dto.phraseExplanation,
+    enriched: extra.enriched,
+    revision: extra.revision,
   };
 }
 
-export function hasUsableDefinitions(entry?: DictionaryEntry | null): boolean {
-  return Boolean(entry?.meanings?.some((meaning) => meaning.definitions?.some((item) => item.definition?.trim())));
-}
+export function mergeDictionaryEntries(
+  base: ProviderLookupDto | DictionaryEntry,
+  incoming: ProviderLookupDto | DictionaryEntry,
+): DictionaryEntry {
+  const left = toDictionaryEntry(base);
+  const right = toDictionaryEntry(incoming);
+  const translation = mergeTranslations(
+    left.translation,
+    right.translation,
+  ) || extractTranslationFromMeanings([...(left.meanings || []), ...(right.meanings || [])]);
 
-function hasPhoneticText(entry?: DictionaryEntry | null): boolean {
-  const word = String(entry?.word || '').trim().toLowerCase();
-  const phonetics = [...(entry?.pronunciations || []), ...(entry?.phonetics || [])];
-  if (String(entry?.phonetic || '').trim() && String(entry?.phonetic || '').trim().toLowerCase() !== word) {
-    return true;
-  }
-  return phonetics.some((item) => {
-    const phonetic = String(item?.phonetic || item?.text || '').trim();
-    return Boolean(phonetic && phonetic.toLowerCase() !== word);
-  });
-}
-
-function hasExampleSentences(entry?: DictionaryEntry | null): boolean {
-  if (entry?.examples?.some((item) => item.text?.trim())) return true;
-  return Boolean(entry?.meanings?.some((meaning) => meaning.definitions?.some((item) => item.example?.trim())));
-}
-
-export function isThinDictionaryEntry(entry?: DictionaryEntry | null): boolean {
-  if (!entry) return true;
-  return !hasUsableDefinitions(entry) || !hasPhoneticText(entry) || !hasExampleSentences(entry);
+  return {
+    ...left,
+    phonetics: mergePhonetics(left.phonetics, right.phonetics),
+    meanings: mergeMeanings(left.meanings || [], right.meanings || []),
+    examples: mergeAttributed(left.examples, right.examples),
+    synonyms: mergeAttributed(left.synonyms, right.synonyms),
+    antonyms: mergeAttributed(left.antonyms, right.antonyms),
+    lexicalProfile: mergeLexicalProfiles(left.lexicalProfile, right.lexicalProfile),
+    translation,
+    phraseExplanation: left.phraseExplanation?.length ? left.phraseExplanation : right.phraseExplanation,
+    originalText: left.originalText || right.originalText,
+    enriched: left.enriched,
+  };
 }
 
 export function cloneDictionaryEntry(entry: DictionaryEntry): DictionaryEntry {
@@ -336,11 +364,9 @@ export function cloneDictionaryEntry(entry: DictionaryEntry): DictionaryEntry {
     ...entry,
     meanings: mergeMeanings(entry.meanings || [], []),
     phonetics: entry.phonetics ? entry.phonetics.map((item) => ({ ...item })) : undefined,
-    pronunciations: entry.pronunciations ? entry.pronunciations.map((item) => ({ ...item })) : undefined,
     examples: entry.examples ? entry.examples.map((item) => ({ ...item })) : undefined,
     synonyms: entry.synonyms ? entry.synonyms.map((item) => ({ ...item })) : undefined,
     antonyms: entry.antonyms ? entry.antonyms.map((item) => ({ ...item })) : undefined,
-    sourceBadges: entry.sourceBadges ? [...entry.sourceBadges] : undefined,
     phraseExplanation: entry.phraseExplanation ? entry.phraseExplanation.map((item) => ({ ...item })) : undefined,
     translation: entry.translation ? { ...entry.translation } : undefined,
   };

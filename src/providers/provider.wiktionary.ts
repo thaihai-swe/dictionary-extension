@@ -1,14 +1,14 @@
 import { safeFetch } from './provider.http';
-import { DictionaryEntry } from '../types';
+import { ProviderLookupDto } from '../types';
 import { normalizeDictionaryTerm } from '../shared/query-utils';
 import { NotFoundError, throwForHttpStatus } from './errors';
 import { stripHtml } from './parser-helpers';
 
 const MAX_MEANINGS = 6;
-const MAX_DEFINITIONS = 4;
-const MAX_EXAMPLES = 6;
+const MAX_DEFINITIONS = 8;
+const MAX_EXAMPLES = 8;
 
-export async function fetchWiktionary(word: string, _targetLang = 'vi', signal?: AbortSignal): Promise<DictionaryEntry> {
+export async function fetchWiktionary(word: string, _targetLang = 'vi', signal?: AbortSignal): Promise<ProviderLookupDto> {
   const clean = normalizeDictionaryTerm(word);
   const url = `https://en.wiktionary.org/api/rest_v1/page/definition/${encodeURIComponent(clean)}`;
 
@@ -23,7 +23,7 @@ export async function fetchWiktionary(word: string, _targetLang = 'vi', signal?:
       throw new NotFoundError(`Wiktionary: No entry found for '${clean}'`);
     }
 
-    const examples: NonNullable<DictionaryEntry['examples']> = [];
+    const examples: NonNullable<ProviderLookupDto['examples']> = [];
     const meanings = enSections.slice(0, MAX_MEANINGS).map((sec: {
       partOfSpeech?: string;
       definitions?: Array<{ definition?: string; parsedExamples?: Array<{ example?: string }> }>;
@@ -31,9 +31,13 @@ export async function fetchWiktionary(word: string, _targetLang = 'vi', signal?:
       partOfSpeech: sec.partOfSpeech || 'general',
       source: 'Wiktionary',
       definitions: (sec.definitions || []).slice(0, MAX_DEFINITIONS).map((d) => {
+        let definitionExample: string | undefined;
         if (Array.isArray(d.parsedExamples)) {
           for (const exObj of d.parsedExamples) {
             const exText = stripHtml(exObj.example || '');
+            if (exText && !definitionExample) {
+              definitionExample = exText;
+            }
             if (exText && examples.length < MAX_EXAMPLES && !examples.some((item) => item.text === exText)) {
               examples.push({ text: exText, source: 'Wiktionary' });
             }
@@ -41,6 +45,7 @@ export async function fetchWiktionary(word: string, _targetLang = 'vi', signal?:
         }
         return {
           definition: stripHtml(d.definition || ''),
+          example: definitionExample,
           source: 'Wiktionary',
         };
       }).filter((d: { definition: string }) => d.definition.length > 0),
@@ -56,7 +61,6 @@ export async function fetchWiktionary(word: string, _targetLang = 'vi', signal?:
       meanings,
       examples,
       providerId: 'wiktionary',
-      sourceBadges: [{ label: 'Wiktionary', kind: 'dictionary', providerId: 'wiktionary' }],
     };
   } catch (e: unknown) {
     if (e instanceof Error && e.name === 'AbortError') throw e;

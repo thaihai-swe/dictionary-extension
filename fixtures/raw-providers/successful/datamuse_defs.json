@@ -1,0 +1,22 @@
+[
+  {
+    "word": "successful",
+    "score": 299105,
+    "tags": [
+      "adj"
+    ],
+    "defs": [
+      "adj\tResulting in success; assuring or promoting success; accomplishing what was proposed; having the desired effect. "
+    ]
+  },
+  {
+    "word": "unsuccessful",
+    "score": 8029,
+    "tags": [
+      "adj"
+    ],
+    "defs": [
+      "adj\tFailed, not successful. "
+    ]
+  }
+]

@@ -1,13 +1,14 @@
 import { TRANSLATION_FETCH_TIMEOUT_MS, safeFetch } from './provider.http';
-import { DictionaryEntry, TranslationResult } from '../types';
+import { ProviderLookupDto, TranslationResult } from '../types';
 import { resolveLanguageCode } from '../shared/languages';
 
-export async function fetchGoogleTranslate(text: string, targetLang = 'vi', signal?: AbortSignal): Promise<DictionaryEntry> {
+export async function fetchGoogleTranslate(text: string, targetLang = 'vi', signal?: AbortSignal): Promise<ProviderLookupDto> {
   const translation = await lookupGoogleTranslation(text, targetLang, signal);
   const clean = text.trim();
 
   return {
     word: clean,
+    providerId: 'google_translate',
     phonetics: [],
     meanings: [
       {
@@ -20,7 +21,6 @@ export async function fetchGoogleTranslate(text: string, targetLang = 'vi', sign
       }
     ],
     translation,
-    sourceBadges: translation.sourceBadges,
   };
 }
 

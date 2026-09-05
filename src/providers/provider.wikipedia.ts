@@ -1,5 +1,5 @@
 import { DICTIONARY_FETCH_TIMEOUT_MS, safeFetch } from './provider.http';
-import { DictionaryEntry } from '../types';
+import { ProviderLookupDto } from '../types';
 import { normalizeDictionaryTerm } from '../shared/query-utils';
 import { NotFoundError, throwForHttpStatus } from './errors';
 
@@ -17,7 +17,7 @@ export async function fetchWikipediaSummary(
   word: string,
   _targetLang = 'vi',
   signal?: AbortSignal,
-): Promise<DictionaryEntry> {
+): Promise<ProviderLookupDto> {
   const clean = normalizeDictionaryTerm(word) || String(word || '').trim();
   if (!clean) throw new NotFoundError('Wikipedia: empty query');
 
@@ -55,7 +55,6 @@ export async function fetchWikipediaSummary(
     : extract;
   const description = String(data?.description || '').trim();
   const title = String(data?.title || clean).trim() || clean;
-  const sourceUrl = data?.content_urls?.desktop?.page;
 
   return {
     word: title,
@@ -68,8 +67,6 @@ export async function fetchWikipediaSummary(
         source: 'Wikipedia',
       }],
     }],
-    sourceUrl,
     providerId: 'wikipedia',
-    sourceBadges: [{ label: 'Wikipedia', kind: 'dictionary', providerId: 'wikipedia' }],
   };
 }

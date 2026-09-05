@@ -16,6 +16,7 @@ export function stripHtml(html: string): string {
   WS_RE.lastIndex = 0;
   return String(html || '')
     .replace(HTML_TAG_RE, '')
+    .replace(/&nbsp;|&#160;/gi, ' ')
     .replace(QUOT_RE, '"')
     .replace(AMP_RE, '&')
     .replace(APOS_RE, "'")

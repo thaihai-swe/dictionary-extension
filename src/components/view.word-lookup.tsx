@@ -118,7 +118,14 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
       </div>
 
       <div className="p-4 space-y-3.5">
-        {isLoading ? (
+        {error ? (
+          <div className="p-3 rounded-lg bg-rose-500/8 border border-rose-500/25 text-[13px] text-rose-700 dark:text-rose-400 flex items-start gap-2">
+            <span className="mt-0.5 text-rose-500" aria-hidden="true">●</span>
+            <span>{error}</span>
+          </div>
+        ) : result ? (
+          <WordLookupResult onSelectWord={handleSearch} />
+        ) : isLoading ? (
           <div className="p-4 space-y-3 rounded-xl border border-border bg-surface animate-pulse">
             <div className="flex items-center justify-between">
               <div className="h-7 bg-muted rounded w-1/3"></div>
@@ -128,13 +135,6 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
             <div className="h-3 bg-muted rounded w-1/2"></div>
             <div className="h-16 bg-muted rounded-lg"></div>
           </div>
-        ) : error ? (
-          <div className="p-3 rounded-lg bg-rose-500/8 border border-rose-500/25 text-[13px] text-rose-700 dark:text-rose-400 flex items-start gap-2">
-            <span className="mt-0.5 text-rose-500" aria-hidden="true">●</span>
-            <span>{error}</span>
-          </div>
-        ) : result ? (
-          <WordLookupResult onSelectWord={handleSearch} />
         ) : !searchInput.trim() && !query.trim() ? (
           <PresetChips onSelect={handlePresetSelect} />
         ) : null}

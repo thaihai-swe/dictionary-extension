@@ -1,5 +1,5 @@
 import { DICTIONARY_FETCH_TIMEOUT_MS, safeFetch } from './provider.http';
-import { DictionaryEntry, Phonetic } from '../types';
+import { Phonetic, ProviderLookupDto } from '../types';
 import { normalizeDictionaryTerm } from '../shared/query-utils';
 import { NotFoundError, throwForHttpStatus } from './errors';
 
@@ -9,7 +9,6 @@ interface RhymeBrainWordInfo {
   ipa?: string;
   freq?: number;
   flags?: string;
-  syllables?: string | number;
 }
 
 function stripHttpArtifact(value: string): string {
@@ -24,7 +23,7 @@ export async function fetchRhymeBrain(
   word: string,
   _targetLang = 'vi',
   signal?: AbortSignal,
-): Promise<DictionaryEntry> {
+): Promise<ProviderLookupDto> {
   const clean = normalizeDictionaryTerm(word);
   if (!clean) throw new NotFoundError('RhymeBrain: empty query');
 
@@ -41,33 +40,22 @@ export async function fetchRhymeBrain(
 
   const data = await res.json() as RhymeBrainWordInfo;
   const ipa = stripHttpArtifact(String(data?.ipa || ''));
-  const syllableCount = Number(data?.syllables);
-  const syllables = Number.isFinite(syllableCount) && syllableCount > 0
-    ? `${syllableCount} syllable${syllableCount === 1 ? '' : 's'}`
-    : undefined;
 
-  if (!ipa && !syllables) {
+  if (!ipa) {
     throw new NotFoundError(`RhymeBrain: No pronunciation for '${clean}'`);
   }
 
-  const phonetics: Phonetic[] = ipa
-    ? [{
-        text: ipa,
-        phonetic: ipa,
-        language: 'en-US',
-        label: 'Speak',
-        fallbackOnly: true,
-      }]
-    : [];
+  const phonetics: Phonetic[] = [{
+    text: ipa,
+    language: 'en-US',
+    label: 'Speak',
+    fallbackOnly: true,
+  }];
 
   return {
     word: clean,
-    phonetic: ipa || undefined,
     phonetics,
-    pronunciations: phonetics,
     meanings: [],
-    syllables,
     providerId: 'rhymebrain',
-    sourceBadges: [{ label: 'RhymeBrain', kind: 'dictionary', providerId: 'rhymebrain' }],
   };
 }
