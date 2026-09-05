@@ -52,16 +52,17 @@ const TRIGGER_CSS = `
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 10px 24px rgba(13, 148, 136, 0.35);
-  transition: transform 160ms ease;
+  box-shadow: 0 10px 24px rgba(13, 148, 136, 0.25);
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 220ms ease;
   animation: dictionary-trigger-enter 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.dictionary-trigger-icon-btn:hover { transform: scale(1.1); }
+.dictionary-trigger-icon-btn:hover { transform: scale(1.08); }
+.dictionary-trigger-icon-btn:active { transform: scale(0.95); }
 .dictionary-trigger-icon-btn.dark {
-  background: #0d9488;
-  color: #fff;
-  border: 2px solid #1e293b;
-  box-shadow: 0 10px 24px rgba(13, 148, 136, 0.4);
+  background: #d4af37;
+  color: #090a0d;
+  border: 2px solid #171b23;
+  box-shadow: 0 10px 24px rgba(212, 175, 55, 0.4);
 }
 .dictionary-trigger-icon-btn.light {
   background: #0d9488;
@@ -170,6 +171,15 @@ async function startBootstrap() {
   await loadBootSettings();
   applyTheme();
 
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    media.addEventListener?.('change', () => {
+      if (settings.theme === 'system') {
+        applyTheme();
+      }
+    });
+  }
+
   function isDarkMode() {
     if (settings.theme === 'system') {
       return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? true;
@@ -184,6 +194,12 @@ async function startBootstrap() {
     host.setAttribute('data-theme', dark ? 'dark' : 'light');
     host.classList.toggle('dark', dark);
     host.classList.toggle('light', !dark);
+    popupLayer.setAttribute('data-theme', dark ? 'dark' : 'light');
+    popupLayer.classList.toggle('dark', dark);
+    popupLayer.classList.toggle('light', !dark);
+    overlayMount.setAttribute('data-theme', dark ? 'dark' : 'light');
+    overlayMount.classList.toggle('dark', dark);
+    overlayMount.classList.toggle('light', !dark);
   }
 
   function isHostnamePaused() {
@@ -282,6 +298,7 @@ async function startBootstrap() {
     if (isHostnamePaused()) return;
     const cleanText = String(text || '').trim();
     if (!cleanText) return;
+    applyTheme();
     triggerBtn.style.display = 'none';
     selectedText = cleanText;
     lastOpenedText = cleanText;

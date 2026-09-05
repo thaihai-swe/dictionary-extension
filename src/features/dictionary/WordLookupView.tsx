@@ -93,7 +93,7 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
             type="text"
             placeholder="Look up a word or sentence…"
             aria-label="Look up a word or sentence"
-            className="w-full h-[38px] bg-surface border border-border rounded-md px-3 pr-8 text-[13.5px] text-content placeholder:text-content-muted outline-none focus-visible:border-teal-500 focus-visible:ring-2 focus-visible:ring-teal-500/15 transition-all font-sans"
+            className="w-full h-[38px] bg-surface border border-border rounded-md px-3 pr-8 text-[13.5px] text-content placeholder:text-content-muted outline-none focus-visible:border-teal-500 focus-visible:ring-2 focus-visible:ring-teal-500/15 dark:focus-visible:border-gold-300 dark:focus-visible:ring-gold-300/20 transition-all font-sans"
           />
 
           {searchInput ? (
@@ -129,14 +129,18 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
             <WordLookupResult onSelectWord={handleSearch} />
           </div>
         ) : isLoading ? (
-          <div className="p-4 space-y-3 rounded-xl border border-border bg-surface animate-pulse" aria-busy="true" aria-live="polite">
-            <div className="flex items-center justify-between">
-              <div className="h-7 bg-muted rounded w-1/3"></div>
-              <div className="h-5 bg-muted rounded-full w-16"></div>
+          <div className="p-4 space-y-3.5 rounded-xl border border-border bg-surface shadow-xs" aria-busy="true" aria-live="polite">
+            <div className="flex items-center justify-between pb-2 border-b border-border/60">
+              <div className="h-7 skeleton-shimmer rounded-md w-2/5"></div>
+              <div className="h-5 skeleton-shimmer rounded-full w-20"></div>
             </div>
-            <div className="h-4 bg-muted rounded w-2/3"></div>
-            <div className="h-3 bg-muted rounded w-1/2"></div>
-            <div className="h-16 bg-muted rounded-lg"></div>
+            <div className="flex gap-2">
+              <div className="h-6 skeleton-shimmer rounded-md w-16"></div>
+              <div className="h-6 skeleton-shimmer rounded-md w-20"></div>
+            </div>
+            <div className="h-4 skeleton-shimmer rounded w-4/5"></div>
+            <div className="h-4 skeleton-shimmer rounded w-3/5"></div>
+            <div className="h-20 skeleton-shimmer rounded-lg mt-2"></div>
           </div>
         ) : !searchInput.trim() && !query.trim() ? (
           <PresetChips onSelect={handlePresetSelect} />

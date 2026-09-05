@@ -136,7 +136,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             onClick={onToggleShortcuts}
             className={cx(
               'btn-control-icon !w-[27px] !h-[27px] !p-1',
-              showShortcuts ? 'bg-teal-500/15 text-teal-600 dark:text-teal-300 border-teal-500/30' : '',
+              showShortcuts ? 'bg-teal-500/15 text-teal-600 border-teal-500/30 dark:bg-gold-300/15 dark:text-gold-200 dark:border-gold-300/30' : '',
             )}
             title="Keyboard Shortcuts (Shift+Q)"
             aria-label="Keyboard Shortcuts"

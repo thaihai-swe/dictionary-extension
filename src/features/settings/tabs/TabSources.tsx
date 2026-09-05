@@ -44,7 +44,7 @@ export const TabSources: React.FC<TabSourcesProps> = ({
             type="checkbox"
             checked={localSettings.enableTranslate !== false}
             onChange={(e) => onChange({ enableTranslate: e.target.checked })}
-            className="accent-teal-500 w-4 h-4 cursor-pointer"
+            className="accent-teal-500 dark:accent-gold-400 w-4 h-4 cursor-pointer"
           />
         </label>
         <label className="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-muted transition-colors">
@@ -56,7 +56,7 @@ export const TabSources: React.FC<TabSourcesProps> = ({
             type="checkbox"
             checked={localSettings.enableDictionary !== false}
             onChange={(e) => onChange({ enableDictionary: e.target.checked })}
-            className="accent-teal-500 w-4 h-4 cursor-pointer"
+            className="accent-teal-500 dark:accent-gold-400 w-4 h-4 cursor-pointer"
           />
         </label>
       </div>
@@ -69,7 +69,7 @@ export const TabSources: React.FC<TabSourcesProps> = ({
         <select
           value={localSettings.translateTargetLanguage || 'Vietnamese'}
           onChange={(e) => onChange({ translateTargetLanguage: e.target.value })}
-          className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-teal-500 cursor-pointer shadow-xs"
+          className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-teal-500 dark:focus:border-gold-300 cursor-pointer shadow-xs"
         >
           {languageOptions.map((lang) => (
             <option key={lang} value={lang} className="bg-surface text-content">
@@ -89,7 +89,7 @@ export const TabSources: React.FC<TabSourcesProps> = ({
           onChange={(e) => onChange({ customLanguages: e.target.value })}
           type="text"
           placeholder="Vietnamese, English, Japanese, French"
-          className="w-full bg-muted border border-border rounded-xl px-3 py-2 text-xs text-content placeholder:text-content-muted outline-none focus:border-teal-500 shadow-xs"
+          className="w-full bg-muted border border-border rounded-xl px-3 py-2 text-xs text-content placeholder:text-content-muted outline-none focus:border-teal-500 dark:focus:border-gold-300 shadow-xs"
         />
       </div>
 
@@ -101,7 +101,7 @@ export const TabSources: React.FC<TabSourcesProps> = ({
         <select
           value={localSettings.translateProvider || 'google'}
           onChange={(e) => onChange({ translateProvider: e.target.value as AppSettings['translateProvider'] })}
-          className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-teal-500 cursor-pointer shadow-xs"
+          className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-teal-500 dark:focus:border-gold-300 cursor-pointer shadow-xs"
         >
           <option value="google" className="bg-surface text-content">Google Translate (Default)</option>
           <option value="libretranslate" className="bg-surface text-content">LibreTranslate</option>
@@ -110,15 +110,15 @@ export const TabSources: React.FC<TabSourcesProps> = ({
         <div className="flex items-center gap-2 pt-1">
           <button
             type="button"
-            className="px-3 py-1.5 rounded-lg bg-muted hover:bg-elevated border border-border text-xs font-semibold text-content-secondary hover:text-teal-600 dark:hover:text-teal-300 cursor-pointer shadow-xs flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-lg bg-muted hover:bg-elevated border border-border text-xs font-semibold text-content-secondary hover:text-teal-600 dark:hover:text-gold-200 cursor-pointer shadow-xs flex items-center gap-1.5"
             disabled={connectionBusy[translationKey]}
             onClick={onTestTranslation}
           >
-            {connectionBusy[translationKey] ? <IconSpinner className="w-3.5 h-3.5 text-teal-500 dark:text-teal-400" /> : <IconTranslate className="w-3.5 h-3.5 text-teal-500 dark:text-teal-400" />}
+            {connectionBusy[translationKey] ? <IconSpinner className="w-3.5 h-3.5 text-teal-500 dark:text-gold-300" /> : <IconTranslate className="w-3.5 h-3.5 text-teal-500 dark:text-gold-300" />}
             <span>Test Translation Connection</span>
           </button>
           {connectionStatus[translationKey] && (
-            <span className="text-[11px] px-2 py-0.5 rounded-md bg-muted border border-border text-teal-600 dark:text-teal-300 font-mono">
+            <span className="text-[11px] px-2 py-0.5 rounded-md bg-muted border border-border text-teal-600 dark:text-gold-300 font-mono">
               {connectionStatus[translationKey]}
             </span>
           )}
@@ -135,7 +135,7 @@ export const TabSources: React.FC<TabSourcesProps> = ({
           onChange={(e) =>
             onChange({ dictionaryProvider: e.target.value as AppSettings['dictionaryProvider'] })
           }
-          className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-teal-500 cursor-pointer shadow-xs"
+          className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-teal-500 dark:focus:border-gold-300 cursor-pointer shadow-xs"
         >
           <option value="wiktionary" className="bg-surface text-content">Wiktionary Open API (Default)</option>
           <option value="free_dictionary" className="bg-surface text-content">Free Dictionary API</option>
@@ -171,30 +171,30 @@ export const TabSources: React.FC<TabSourcesProps> = ({
             <button
               key={id}
               type="button"
-              className="px-2.5 py-1.5 rounded-lg bg-muted hover:bg-elevated border border-border text-xs font-semibold text-content-secondary hover:text-teal-600 dark:hover:text-teal-300 cursor-pointer shadow-xs flex items-center justify-center gap-1 active:scale-95"
+              className="px-2.5 py-1.5 rounded-lg bg-muted hover:bg-elevated border border-border text-xs font-semibold text-content-secondary hover:text-teal-600 dark:hover:text-gold-200 cursor-pointer shadow-xs flex items-center justify-center gap-1 active:scale-95"
               disabled={connectionBusy[id]}
               onClick={() => onTestDictionary(id)}
             >
-              {connectionBusy[id] ? <IconSpinner className="w-3 h-3 text-teal-500 dark:text-teal-400" /> : <IconBook className="w-3 h-3 text-teal-500 dark:text-teal-400" />}
+              {connectionBusy[id] ? <IconSpinner className="w-3 h-3 text-teal-500 dark:text-gold-300" /> : <IconBook className="w-3 h-3 text-teal-500 dark:text-gold-300" />}
               <span>{label}</span>
             </button>
           ))}
         </div>
         {lastDictStatus ? (
-          <p className="text-[11px] text-teal-600 dark:text-teal-300/90 font-mono mt-1">{lastDictStatus}</p>
+          <p className="text-[11px] text-teal-600 dark:text-gold-300 font-mono mt-1">{lastDictStatus}</p>
         ) : null}
       </div>
 
       {/* Voice & Speech Synthesis */}
       <div className="space-y-2 pt-3 border-t border-border/60">
         <label className="font-bold text-content-secondary block uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-          <IconSpeaker className="w-3.5 h-3.5 text-teal-500 dark:text-teal-400" />
+          <IconSpeaker className="w-3.5 h-3.5 text-teal-500 dark:text-gold-300" />
           <span>Speech Synthesis (TTS Voice)</span>
         </label>
         <select
           value={localSettings.pronunciationVoiceURI || ''}
           onChange={(e) => onChange({ pronunciationVoiceURI: e.target.value })}
-          className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-teal-500 cursor-pointer shadow-xs"
+          className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-teal-500 dark:focus:border-gold-300 cursor-pointer shadow-xs"
         >
           <option value="" className="bg-surface text-content">Auto-select system default voice</option>
           {availableVoices.map((voice) => (
@@ -218,9 +218,9 @@ export const TabSources: React.FC<TabSourcesProps> = ({
                 step="0.05"
                 value={localSettings.pronunciationRate ?? 1}
                 onChange={(e) => onChange({ pronunciationRate: parseFloat(e.target.value) })}
-                className="accent-teal-500 cursor-pointer w-28"
+                className="accent-teal-500 dark:accent-gold-400 cursor-pointer w-28"
               />
-              <span className="font-mono text-teal-600 dark:text-teal-300 text-xs w-10 text-right">
+              <span className="font-mono text-teal-600 dark:text-gold-300 text-xs w-10 text-right">
                 {localSettings.pronunciationRate ?? 1}x
               </span>
             </div>

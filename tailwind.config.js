@@ -1,3 +1,15 @@
+function withOpacity(cssVar, rgbVar) {
+  return ({ opacityVariable, opacityValue }) => {
+    if (opacityValue !== undefined) {
+      return `rgba(var(${rgbVar}), ${opacityValue})`;
+    }
+    if (opacityVariable !== undefined) {
+      return `rgba(var(${rgbVar}), var(${opacityVariable}, 1))`;
+    }
+    return `var(${cssVar})`;
+  };
+}
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -29,55 +41,61 @@ export default {
           400: '#c9a227',
           500: '#b8860b',
         },
-        paper: 'var(--bg-paper, #fafaf7)',
-        surface: 'var(--bg-surface, #ffffff)',
-        elevated: 'var(--bg-elevated, #f4f4ef)',
-        muted: 'var(--bg-muted, #ebebe4)',
-        hover: 'var(--bg-hover, #e2e2d9)',
+        paper: withOpacity('--bg-paper', '--bg-paper-rgb'),
+        surface: withOpacity('--bg-surface', '--bg-surface-rgb'),
+        elevated: withOpacity('--bg-elevated', '--bg-elevated-rgb'),
+        muted: withOpacity('--bg-muted', '--bg-muted-rgb'),
+        hover: withOpacity('--bg-hover', '--bg-hover-rgb'),
         border: {
-          DEFAULT: 'var(--border-color, #e2e2d9)',
-          subtle: 'var(--border-subtle, #ecece5)',
+          DEFAULT: withOpacity('--border-color', '--border-color-rgb'),
+          subtle: withOpacity('--border-subtle', '--border-subtle-rgb'),
         },
         content: {
-          DEFAULT: 'var(--text-primary, #18181b)',
-          secondary: 'var(--text-secondary, #52525b)',
-          muted: 'var(--text-muted, #71717a)',
-          disabled: 'var(--text-disabled, #a1a1aa)',
+          DEFAULT: withOpacity('--text-primary', '--text-primary-rgb'),
+          secondary: withOpacity('--text-secondary', '--text-secondary-rgb'),
+          muted: withOpacity('--text-muted', '--text-muted-rgb'),
+          disabled: withOpacity('--text-disabled', '--text-disabled-rgb'),
         },
-        dark: {
-          paper: 'var(--bg-paper, #090a0d)',
-          surface: 'var(--bg-surface, #101319)',
-          elevated: 'var(--bg-elevated, #171b23)',
-          muted: 'var(--bg-muted, #1e232e)',
-          border: 'var(--border-color, #222735)',
-        }
+        accent: {
+          DEFAULT: withOpacity('--color-primary', '--color-primary-rgb'),
+          hover: 'var(--color-primary-hover, #0f766e)',
+          light: 'var(--color-primary-light, rgba(13, 148, 136, 0.12))',
+          subtle: 'var(--color-primary-light, rgba(13, 148, 136, 0.08))',
+        },
       },
       textColor: {
-        content: 'var(--text-primary, #18181b)',
-        primary: 'var(--text-primary, #18181b)',
-        secondary: 'var(--text-secondary, #52525b)',
-        muted: 'var(--text-muted, #71717a)',
+        content: withOpacity('--text-primary', '--text-primary-rgb'),
+        primary: withOpacity('--text-primary', '--text-primary-rgb'),
+        secondary: withOpacity('--text-secondary', '--text-secondary-rgb'),
+        muted: withOpacity('--text-muted', '--text-muted-rgb'),
+        accent: withOpacity('--color-primary', '--color-primary-rgb'),
       },
       backgroundColor: {
-        paper: 'var(--bg-paper)',
-        surface: 'var(--bg-surface)',
-        elevated: 'var(--bg-elevated)',
-        muted: 'var(--bg-muted)',
-        hover: 'var(--bg-hover)',
+        paper: withOpacity('--bg-paper', '--bg-paper-rgb'),
+        surface: withOpacity('--bg-surface', '--bg-surface-rgb'),
+        elevated: withOpacity('--bg-elevated', '--bg-elevated-rgb'),
+        muted: withOpacity('--bg-muted', '--bg-muted-rgb'),
+        hover: withOpacity('--bg-hover', '--bg-hover-rgb'),
+        accent: withOpacity('--color-primary', '--color-primary-rgb'),
       },
       borderColor: {
-        DEFAULT: 'var(--border-color)',
-        subtle: 'var(--border-subtle)',
+        DEFAULT: withOpacity('--border-color', '--border-color-rgb'),
+        subtle: withOpacity('--border-subtle', '--border-subtle-rgb'),
+        accent: withOpacity('--color-primary', '--color-primary-rgb'),
       },
       fontFamily: {
         sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
-        heading: ['Georgia', '"Times New Roman"', 'serif'],
-        serif: ['Georgia', '"Times New Roman"', 'serif'],
+        heading: ['Newsreader', 'Charter', '"Bitstream Charter"', '"Sitka Text"', 'Cambria', 'Georgia', 'serif'],
+        serif: ['Newsreader', 'Charter', '"Bitstream Charter"', '"Sitka Text"', 'Cambria', 'Georgia', 'serif'],
         mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
       },
+      transitionTimingFunction: {
+        spring: 'cubic-bezier(0.16, 1, 0.3, 1)',
+      },
       boxShadow: {
-        'glow-gold': '0 0 20px -3px rgba(212, 175, 55, 0.28)',
-        'inner-light': 'inset 0 1px 1px 0 rgba(255, 255, 255, 0.05)',
+        'glow-gold': '0 0 24px -2px rgba(212, 175, 55, 0.3)',
+        'glow-teal': '0 0 24px -2px rgba(13, 148, 136, 0.25)',
+        'inner-light': 'inset 0 1px 1px 0 rgba(255, 255, 255, 0.08)',
         'card': 'var(--shadow-card, 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -12px rgba(15, 23, 42, 0.08))',
         'card-elevated': 'var(--shadow-elevated, 0 2px 8px -2px rgba(15, 23, 42, 0.08), 0 12px 32px -16px rgba(15, 23, 42, 0.16))',
       }

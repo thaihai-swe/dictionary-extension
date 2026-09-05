@@ -8,6 +8,7 @@ import { TabId } from '@/types';
 import { isDistinctContext } from '@/shared/page-context';
 import { cx } from '@/ui/cx';
 import { useAppTheme } from '@/ui/theme';
+import ToastContainer from '@/components/component.toast';
 
 const AiAssistantView = lazy(() => import('@/features/ai-assistant/AiAssistantView'));
 const ShortcutsModal = lazy(() => import('@/features/settings/ShortcutsModal'));
@@ -72,6 +73,29 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
   useEffect(() => {
     if (activeTab === 'ai_assistant') setAiVisited(true);
   }, [activeTab]);
+
+  useEffect(() => {
+    if (!overlayRef.current) return;
+    const layer = overlayRef.current.closest('.dictionary-popup-layer') as HTMLElement | null;
+    if (layer) {
+      layer.classList.toggle('dark', isDarkMode);
+      layer.classList.toggle('light', !isDarkMode);
+      layer.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+    }
+    const mount = overlayRef.current.parentElement as HTMLElement | null;
+    if (mount) {
+      mount.classList.toggle('dark', isDarkMode);
+      mount.classList.toggle('light', !isDarkMode);
+      mount.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+    }
+    const rootNode = overlayRef.current.getRootNode() as ShadowRoot | null;
+    const hostEl = rootNode?.host as HTMLElement | null;
+    if (hostEl) {
+      hostEl.classList.toggle('dark', isDarkMode);
+      hostEl.classList.toggle('light', !isDarkMode);
+      hostEl.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+    }
+  }, [isDarkMode]);
 
   function syncTextFromSelection(text?: string, context?: string) {
     if (!text?.trim()) return;
@@ -157,6 +181,28 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
       handleClose();
       return;
     }
+
+    const target = event.target as HTMLElement | null;
+    const isTyping = target?.matches('input, textarea, select, [contenteditable="true"]');
+
+    if (!isTyping) {
+      if (event.key === '1' || (event.altKey && event.key === '1')) {
+        event.preventDefault();
+        handleTabChange('dictionary');
+        return;
+      }
+      if (event.key === '2' || (event.altKey && event.key === '2')) {
+        event.preventDefault();
+        handleTabChange('ai_assistant');
+        return;
+      }
+      if (event.key === '?' || (event.shiftKey && event.key === '/')) {
+        event.preventDefault();
+        setShowShortcuts((prev) => !prev);
+        return;
+      }
+    }
+
     if (event.key !== 'Tab') return;
     const root = overlayRef.current;
     if (!root) return;
@@ -186,7 +232,7 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
       aria-label="Dictionary lookup"
       tabIndex={-1}
       className={cx(
-        'bg-paper border border-border rounded-xl shadow-card-elevated overflow-hidden flex flex-col select-none text-content text-sm relative inpage-popup-card w-full h-full transition-colors dark:border-gold-300/20 outline-none',
+        'bg-paper/95 dark:bg-paper/90 backdrop-blur-xl border border-border/80 rounded-xl shadow-card-elevated overflow-hidden flex flex-col select-none text-content text-sm relative inpage-popup-card w-full h-full transition-colors dark:border-gold-300/25 outline-none',
         isDarkMode ? 'dark' : 'light-theme light',
         settings.fontFamily === 'editorial' ? 'font-serif' : 'font-sans',
         isMaximized ? 'max-w-5xl max-h-[90vh]' : '',
@@ -250,7 +296,7 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
             e.preventDefault();
             onStartResize?.(e.nativeEvent);
           }}
-          className="absolute right-1 bottom-1 w-4 h-4 cursor-nwse-resize text-content-muted hover:text-teal-600 dark:hover:text-teal-400 select-none flex items-center justify-center opacity-50 hover:opacity-100 transition-colors z-30"
+          className="absolute right-1 bottom-1 w-4 h-4 cursor-nwse-resize text-content-muted hover:text-teal-600 dark:hover:text-gold-300 select-none flex items-center justify-center opacity-50 hover:opacity-100 transition-colors z-30"
           title="Drag to resize popup window"
         >
           <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
@@ -263,6 +309,9 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
       <Suspense fallback={null}>
         <ShortcutsModal show={showShortcuts} onClose={() => setShowShortcuts(false)} />
       </Suspense>
+
+      {/* Floating Micro-Toast Feedback */}
+      <ToastContainer />
     </div>
   );
 };

@@ -28,8 +28,8 @@ function formatInlineMarkdown(text: string): string {
     .replace(/\*\*(?:used in this context|in context)\*\*/gi, IN_CONTEXT_BADGE)
     .replace(/\[(?:used in this context|in context)\]/gi, IN_CONTEXT_BADGE)
     .replace(/\*\*(.*?)\*\*/g, '<strong class="text-content font-bold">$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em class="text-teal-600 dark:text-teal-300 italic">$1</em>')
-    .replace(/`(.*?)`/g, '<code class="px-1.5 py-0.5 rounded bg-muted border border-border text-teal-600 dark:text-teal-300 font-mono text-[12px]">$1</code>');
+    .replace(/\*(.*?)\*/g, '<em class="text-teal-600 dark:text-gold-300 italic">$1</em>')
+    .replace(/`(.*?)`/g, '<code class="px-1.5 py-0.5 rounded bg-muted border border-border text-teal-600 dark:text-gold-300 font-mono text-[12px]">$1</code>');
 }
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, targetLang }) => {
@@ -94,8 +94,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, tar
           className="space-y-2.5 pb-3.5 border-b border-border/40 last:border-b-0 last:pb-0"
         >
           {block.title && (
-            <h4 className="font-extrabold text-[12px] flex items-center gap-1.5 text-teal-600 dark:text-teal-400 uppercase tracking-wider pb-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
+            <h4 className="font-extrabold text-[12px] flex items-center gap-1.5 text-teal-600 dark:text-gold-300 uppercase tracking-wider pb-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-teal-500 dark:bg-gold-400" />
               <span>{block.title}</span>
             </h4>
           )}
@@ -110,8 +110,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, tar
                     key={lIdx}
                     className="rounded-xl border border-border overflow-hidden bg-surface my-2 shadow-xs"
                   >
-                    <div className="flex items-start gap-3 px-3.5 py-2.5 bg-teal-500/5 border-l-2 border-teal-500">
-                      <span className="mt-0.5 px-1.5 py-0.5 rounded text-[11px] font-extrabold tracking-wider bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30 flex-shrink-0">
+                    <div className="flex items-start gap-3 px-3.5 py-2.5 bg-teal-500/5 dark:bg-gold-300/5 border-l-2 border-teal-500 dark:border-l-gold-300">
+                      <span className="mt-0.5 px-1.5 py-0.5 rounded text-[11px] font-extrabold tracking-wider bg-teal-500/15 text-teal-600 dark:bg-gold-300/15 dark:text-gold-200 border border-teal-500/30 dark:border-gold-300/30 flex-shrink-0">
                         EN
                       </span>
                       <p className="flex-1 text-[14px] leading-relaxed text-content font-medium">
@@ -123,12 +123,12 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, tar
                         title="Listen to English example"
                         className={`h-[28px] px-2.5 rounded-lg border text-[12px] font-semibold flex-shrink-0 cursor-pointer transition-colors flex items-center gap-1.5 not-italic shadow-xs ${
                           isPlaying
-                            ? 'bg-teal-500/25 text-teal-600 dark:text-teal-200 border-teal-500/50'
+                            ? 'bg-teal-500/25 text-teal-600 dark:bg-gold-300/20 dark:text-gold-200 border-teal-500/50 dark:border-gold-300/40'
                             : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border'
                         }`}
                         aria-pressed={isPlaying}
                       >
-                        <IconSpeaker className="w-3.5 h-3.5 text-teal-500 dark:text-teal-400" />
+                        <IconSpeaker className="w-3.5 h-3.5 text-teal-500 dark:text-gold-300" />
                         <span>Listen</span>
                       </button>
                     </div>
@@ -150,7 +150,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, tar
                 return (
                   <blockquote
                     key={lIdx}
-                    className="pl-3.5 py-1.5 border-l-2 border-teal-500/60 text-content-secondary text-[14px] my-1 bg-teal-500/5 rounded-r-lg"
+                    className="pl-3.5 py-1.5 border-l-2 border-teal-500/60 dark:border-l-gold-300/60 text-content-secondary text-[14px] my-1 bg-teal-500/5 dark:bg-gold-300/5 rounded-r-lg"
                     dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(item.text) }}
                   />
                 );
@@ -159,7 +159,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, tar
               if (item.kind === 'bullet') {
                 return (
                   <div key={lIdx} className="flex items-start gap-2 text-[14px] text-content">
-                    <span className="text-teal-600 dark:text-teal-400 font-bold mt-0.5">•</span>
+                    <span className="text-teal-600 dark:text-gold-300 font-bold mt-0.5">•</span>
                     <span dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(item.text) }} />
                   </div>
                 );

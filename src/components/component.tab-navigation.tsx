@@ -36,7 +36,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
         aria-selected={currentActive === 'dictionary'}
         onClick={() => selectTab('dictionary')}
         className={cx(
-          'relative h-10 px-3.5 flex items-center gap-1.5 text-[13px] font-bold transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40 cursor-pointer',
+          'relative h-10 px-3.5 flex items-center gap-1.5 text-[13px] font-bold transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40 dark:focus-visible:ring-gold-300/40 cursor-pointer',
           currentActive === 'dictionary'
             ? 'text-teal-700 dark:text-gold-200'
             : 'text-content-muted hover:text-content',
@@ -57,7 +57,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
           aria-selected={currentActive === 'ai_assistant'}
           onClick={() => selectTab('ai_assistant')}
           className={cx(
-            'relative h-10 px-3.5 flex items-center gap-1.5 text-[13px] font-bold transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40 cursor-pointer',
+            'relative h-10 px-3.5 flex items-center gap-1.5 text-[13px] font-bold transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40 dark:focus-visible:ring-gold-300/40 cursor-pointer',
             currentActive === 'ai_assistant'
               ? 'text-teal-700 dark:text-gold-200'
               : 'text-content-muted hover:text-content',

@@ -19,7 +19,7 @@ function getStyleBadgeClass(style: string): string {
     case 'idiomatic':
       return 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30';
     default:
-      return 'bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-500/30';
+      return 'bg-teal-500/15 text-teal-700 dark:bg-gold-300/15 dark:text-gold-200 border-teal-500/30 dark:border-gold-300/30';
   }
 }
 
@@ -46,8 +46,8 @@ export const RephraseIntent: React.FC<RephraseIntentProps> = ({ result, targetLa
       {styles?.length ? (
         <div className="space-y-3">
           <div className="flex items-center justify-between pb-1 border-b border-border/40">
-            <span className="flex items-center gap-1.5 text-[12px] font-extrabold uppercase tracking-wider text-teal-600 dark:text-teal-400">
-              <IconEdit className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+            <span className="flex items-center gap-1.5 text-[12px] font-extrabold uppercase tracking-wider text-teal-600 dark:text-gold-300">
+              <IconEdit className="w-3.5 h-3.5 text-teal-600 dark:text-gold-300" />
               <span>Three Rewrite Styles</span>
             </span>
             <span className="text-[11px] text-content-muted font-mono">1 Click · 3 Tones</span>
@@ -60,7 +60,7 @@ export const RephraseIntent: React.FC<RephraseIntentProps> = ({ result, targetLa
               return (
                 <article
                   key={`${item.style}-${idx}`}
-                  className="rounded-xl border border-border bg-surface p-3 space-y-2 text-[13.5px] shadow-xs hover:border-teal-500/35 transition-all"
+                  className="rounded-xl border border-border bg-surface p-3 space-y-2 text-[13.5px] shadow-xs hover:border-teal-500/35 dark:hover:border-gold-300/35 transition-all"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span
@@ -77,7 +77,7 @@ export const RephraseIntent: React.FC<RephraseIntentProps> = ({ result, targetLa
                         type="button"
                         onClick={() => speak(item.text, speakKey)}
                         title="Read aloud"
-                        className="h-6 w-6 text-content-muted hover:text-teal-600 dark:hover:text-teal-300 cursor-pointer flex items-center justify-center rounded hover:bg-muted"
+                        className="h-6 w-6 text-content-muted hover:text-teal-600 dark:hover:text-gold-200 cursor-pointer flex items-center justify-center rounded hover:bg-muted"
                       >
                         <IconSpeaker className="w-3.5 h-3.5" />
                       </button>
@@ -96,7 +96,7 @@ export const RephraseIntent: React.FC<RephraseIntentProps> = ({ result, targetLa
                     </div>
                   </div>
 
-                  <p className="text-content font-medium leading-relaxed pl-2.5 border-l-2 border-teal-500/60 bg-muted/25 py-1 rounded-r">
+                  <p className="text-content font-medium leading-relaxed pl-2.5 border-l-2 border-teal-500/60 dark:border-l-gold-300/60 bg-muted/25 py-1 rounded-r">
                     "{item.text}"
                   </p>
 

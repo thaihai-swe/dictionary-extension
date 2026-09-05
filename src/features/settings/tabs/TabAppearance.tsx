@@ -25,8 +25,8 @@ export const TabAppearance: React.FC<TabAppearanceProps> = ({ localSettings, onC
                 className={cx(
                   'p-3 rounded-xl border text-center cursor-pointer transition-all font-semibold flex items-center justify-center gap-2 shadow-xs',
                   isSelected
-                    ? 'bg-teal-500/15 border-teal-500/50 text-teal-600 dark:text-teal-300 font-bold'
-                    : 'bg-muted border-border text-content-secondary hover:border-teal-500/40',
+                    ? 'bg-teal-500/15 border-teal-500/50 text-teal-600 dark:text-gold-200 dark:bg-gold-300/15 dark:border-gold-300/50 font-bold'
+                    : 'bg-muted border-border text-content-secondary hover:border-teal-500/40 dark:hover:border-gold-300/40',
                 )}
               >
                 <input
@@ -59,7 +59,7 @@ export const TabAppearance: React.FC<TabAppearanceProps> = ({ localSettings, onC
         <select
           value={localSettings.fontFamily || 'learner'}
           onChange={(e) => onChange({ fontFamily: e.target.value as AppSettings['fontFamily'] })}
-          className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-teal-500 cursor-pointer shadow-xs"
+          className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-teal-500 dark:focus:border-gold-300 cursor-pointer shadow-xs"
         >
           <option value="learner" className="bg-surface text-content">Modern Academic Font (Plus Jakarta Sans / Clean Sans-Serif)</option>
           <option value="editorial" className="bg-surface text-content">Classic Editorial Font (Newsreader / Elegant Serif)</option>
@@ -81,7 +81,7 @@ export const TabAppearance: React.FC<TabAppearanceProps> = ({ localSettings, onC
             type="checkbox"
             checked={localSettings.enableLexicalProfile !== false}
             onChange={(e) => onChange({ enableLexicalProfile: e.target.checked })}
-            className="accent-teal-500 w-4 h-4 cursor-pointer"
+            className="accent-teal-500 dark:accent-gold-400 w-4 h-4 cursor-pointer"
           />
         </label>
       </div>
@@ -98,7 +98,7 @@ export const TabAppearance: React.FC<TabAppearanceProps> = ({ localSettings, onC
             min={360}
             max={1000}
             onChange={(e) => onChange({ popupWidth: Number(e.target.value) || 480 })}
-            className="w-full bg-muted border border-border rounded-xl px-3 py-2 text-xs text-content outline-none focus:border-teal-500 font-mono shadow-xs"
+            className="w-full bg-muted border border-border rounded-xl px-3 py-2 text-xs text-content outline-none focus:border-teal-500 dark:focus:border-gold-300 font-mono shadow-xs"
           />
         </div>
 
@@ -112,7 +112,7 @@ export const TabAppearance: React.FC<TabAppearanceProps> = ({ localSettings, onC
             min={380}
             max={900}
             onChange={(e) => onChange({ popupHeight: Number(e.target.value) || 580 })}
-            className="w-full bg-muted border border-border rounded-xl px-3 py-2 text-xs text-content outline-none focus:border-teal-500 font-mono shadow-xs"
+            className="w-full bg-muted border border-border rounded-xl px-3 py-2 text-xs text-content outline-none focus:border-teal-500 dark:focus:border-gold-300 font-mono shadow-xs"
           />
         </div>
       </div>

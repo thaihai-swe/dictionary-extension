@@ -7,11 +7,12 @@ interface ShortcutsModalProps {
 }
 
 const shortcuts = [
-  { label: 'Look up Selected Text', sub: 'Content Script In-Page Trigger', keys: ['Alt', 'L'] },
-  { label: 'Dictionary Tab', sub: 'Switch directly to Dictionary view', keys: ['Alt', '1'] },
-  { label: 'AI Assistant Tab', sub: 'Switch directly to AI learning assistant', keys: ['Alt', '2'] },
-  { label: 'Show Shortcuts Modal', sub: 'Toggle this keyboard shortcut helper', keys: ['Shift', 'Q'] },
-  { label: 'Stop Audio / Close Modal', sub: 'Immediately stops voice synthesis or closes dialogs', keys: ['Esc'] },
+  { label: 'Look up Selected Text', sub: 'In-page text selection trigger', keys: ['Alt', 'L'] },
+  { label: 'Switch to Dictionary', sub: 'Direct view switch (when not typing)', keys: ['1', 'or', 'Alt+1'] },
+  { label: 'Switch to AI Assistant', sub: 'Direct view switch (when not typing)', keys: ['2', 'or', 'Alt+2'] },
+  { label: 'Copy Markdown Flashcard', sub: 'Export formatted definition to clipboard', keys: ['Copy MD'] },
+  { label: 'Show Shortcuts Modal', sub: 'Toggle this keyboard shortcut helper', keys: ['?'] },
+  { label: 'Stop Audio / Close Modal', sub: 'Stops speech playback or dismisses modal', keys: ['Esc'] },
   { label: 'Perform Search / Action', sub: 'Submits lookup query or runs AI analysis', keys: ['Enter'] },
 ];
 
@@ -50,8 +51,8 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ show, onClose })
       >
         <div className="flex items-center justify-between border-b border-border/60 pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-600 dark:text-teal-400">
-              <IconKeyboard className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+            <div className="w-8 h-8 rounded-xl bg-teal-500/15 dark:bg-gold-300/15 border border-teal-500/30 dark:border-gold-300/30 flex items-center justify-center text-teal-600 dark:text-gold-300">
+              <IconKeyboard className="w-4 h-4 text-teal-600 dark:text-gold-300" />
             </div>
             <div>
               <h3 id="shortcuts-title" className="text-sm font-bold text-content font-heading">
@@ -84,7 +85,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ show, onClose })
                 {item.keys.map((k, kIdx) => (
                   <kbd
                     key={kIdx}
-                    className="px-2 py-1 rounded-md bg-surface text-teal-600 dark:text-teal-300 font-mono font-bold border border-border text-[11px] shadow-xs"
+                    className="px-2 py-1 rounded-md bg-surface text-teal-600 dark:text-gold-300 font-mono font-bold border border-border text-[11px] shadow-xs"
                   >
                     {k}
                   </kbd>
@@ -97,7 +98,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ show, onClose })
         <button
           type="button"
           onClick={onClose}
-          className="w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95"
+          className="w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 dark:bg-gold-400 dark:hover:bg-gold-300 dark:text-neutral-950 text-white text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95"
         >
           Got it
         </button>

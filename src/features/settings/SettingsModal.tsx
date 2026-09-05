@@ -11,6 +11,7 @@ import { requestProviderValidation } from '@/shared/runtime-client';
 import { DEFAULT_AI_PROMPTS } from '@/shared/ai-prompts';
 import { KNOWN_LANGUAGE_MAPPINGS } from '@/shared/languages';
 import { AppSettings } from '@/types';
+import { syncDocumentTheme, useAppTheme } from '@/ui/theme';
 import { cx } from '@/ui/cx';
 import {
   IconBook,
@@ -256,20 +257,7 @@ export const SettingsModal: React.FC = () => {
     }
   }
 
-  const isDarkMode =
-    localSettings.theme === 'dark' ||
-    (localSettings.theme !== 'light' &&
-      typeof window !== 'undefined' &&
-      Boolean(window.matchMedia?.('(prefers-color-scheme: dark)').matches));
-
-  useEffect(() => {
-    if (typeof document !== 'undefined') {
-      document.documentElement.classList.toggle('dark', isDarkMode);
-      document.documentElement.classList.toggle('light', !isDarkMode);
-      document.documentElement.classList.toggle('light-theme', !isDarkMode);
-      document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
-    }
-  }, [isDarkMode]);
+  const { isDarkMode } = useAppTheme(localSettings.theme, { syncDocument: true });
 
   return (
     <div
@@ -283,8 +271,8 @@ export const SettingsModal: React.FC = () => {
         {/* Settings Header */}
         <div className="flex items-center justify-between border-b border-border/60 pb-4 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-600 dark:text-teal-400 shadow-xs">
-              <IconSettings className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+            <div className="w-9 h-9 rounded-xl bg-teal-500/15 dark:bg-gold-300/15 border border-teal-500/30 dark:border-gold-300/30 flex items-center justify-center text-teal-600 dark:text-gold-300 shadow-xs">
+              <IconSettings className="w-5 h-5 text-teal-600 dark:text-gold-300" />
             </div>
             <div>
               <h2 className="font-bold text-lg sm:text-xl text-content font-heading">
@@ -312,11 +300,11 @@ export const SettingsModal: React.FC = () => {
               className={cx(
                 'flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs',
                 activeTab === id
-                  ? 'bg-teal-500/15 text-teal-600 dark:text-teal-300 border border-teal-500/30 font-extrabold'
+                  ? 'bg-teal-500/15 text-teal-600 dark:text-gold-200 dark:bg-gold-300/15 border border-teal-500/30 dark:border-gold-300/30 font-extrabold'
                   : 'text-content-muted hover:text-content hover:bg-elevated border border-transparent',
               )}
             >
-              <IconComponent className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+              <IconComponent className="w-4 h-4 text-teal-600 dark:text-gold-300" />
               <span>{label}</span>
             </button>
           ))}
@@ -336,8 +324,8 @@ export const SettingsModal: React.FC = () => {
                     className={cx(
                       'p-3 rounded-xl border cursor-pointer transition-all flex items-center gap-3 shadow-xs',
                       localSettings.selectionTriggerMode === 'icon'
-                        ? 'bg-teal-500/10 border-teal-500/50 text-teal-600 dark:text-teal-300 font-bold'
-                        : 'bg-muted border-border text-content-secondary hover:border-teal-500/40',
+                        ? 'bg-teal-500/10 border-teal-500/50 text-teal-600 dark:text-gold-200 dark:bg-gold-300/10 dark:border-gold-300/50 font-bold'
+                        : 'bg-muted border-border text-content-secondary hover:border-teal-500/40 dark:hover:border-gold-300/40',
                     )}
                   >
                     <input
@@ -348,7 +336,7 @@ export const SettingsModal: React.FC = () => {
                       onChange={() => patchLocalSettings({ selectionTriggerMode: 'icon' })}
                       className="hidden"
                     />
-                    <IconSearch className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                    <IconSearch className="w-4 h-4 text-teal-600 dark:text-gold-300" />
                     <div>
                       <div className="font-semibold text-xs">Floating Action Icon</div>
                       <div className="text-[11px] text-content-muted font-normal">Show small icon near highlighted text</div>
@@ -359,8 +347,8 @@ export const SettingsModal: React.FC = () => {
                     className={cx(
                       'p-3 rounded-xl border cursor-pointer transition-all flex items-center gap-3 shadow-xs',
                       localSettings.selectionTriggerMode === 'direct'
-                        ? 'bg-teal-500/10 border-teal-500/50 text-teal-600 dark:text-teal-300 font-bold'
-                        : 'bg-muted border-border text-content-secondary hover:border-teal-500/40',
+                        ? 'bg-teal-500/10 border-teal-500/50 text-teal-600 dark:text-gold-200 dark:bg-gold-300/10 dark:border-gold-300/50 font-bold'
+                        : 'bg-muted border-border text-content-secondary hover:border-teal-500/40 dark:hover:border-gold-300/40',
                     )}
                   >
                     <input
@@ -371,7 +359,7 @@ export const SettingsModal: React.FC = () => {
                       onChange={() => patchLocalSettings({ selectionTriggerMode: 'direct' })}
                       className="hidden"
                     />
-                    <IconSparkles className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                    <IconSparkles className="w-4 h-4 text-teal-600 dark:text-gold-300" />
                     <div>
                       <div className="font-semibold text-xs">Auto-open Popup</div>
                       <div className="text-[11px] text-content-muted font-normal">Directly open floating dictionary window</div>
@@ -392,7 +380,7 @@ export const SettingsModal: React.FC = () => {
                       postSelectionModifier: e.target.value as AppSettings['postSelectionModifier'],
                     })
                   }
-                  className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-teal-500 cursor-pointer shadow-xs"
+                  className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-teal-500 dark:focus:border-gold-300 cursor-pointer shadow-xs"
                 >
                   <option value="shift">Hold Shift + Press Q (Shift+Q)</option>
                   <option value="alt">Hold Alt + Press Q (Alt+Q)</option>
@@ -410,8 +398,8 @@ export const SettingsModal: React.FC = () => {
                     className={cx(
                       'p-2.5 rounded-xl border cursor-pointer transition-all text-center font-bold flex items-center justify-center gap-2 shadow-xs',
                       localSettings.defaultTab === 'dictionary'
-                        ? 'bg-teal-500/10 border-teal-500/50 text-teal-600 dark:text-teal-300'
-                        : 'bg-muted border-border text-content-secondary hover:border-teal-500/40',
+                        ? 'bg-teal-500/10 border-teal-500/50 text-teal-600 dark:text-gold-200 dark:bg-gold-300/10 dark:border-gold-300/50'
+                        : 'bg-muted border-border text-content-secondary hover:border-teal-500/40 dark:hover:border-gold-300/40',
                     )}
                   >
                     <input
@@ -422,7 +410,7 @@ export const SettingsModal: React.FC = () => {
                       onChange={() => patchLocalSettings({ defaultTab: 'dictionary' })}
                       className="hidden"
                     />
-                    <IconBook className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                    <IconBook className="w-4 h-4 text-teal-600 dark:text-gold-300" />
                     <span>Dictionary</span>
                   </label>
 
@@ -430,8 +418,8 @@ export const SettingsModal: React.FC = () => {
                     className={cx(
                       'p-2.5 rounded-xl border cursor-pointer transition-all text-center font-bold flex items-center justify-center gap-2 shadow-xs',
                       localSettings.defaultTab === 'ai_assistant'
-                        ? 'bg-teal-500/10 border-teal-500/50 text-teal-600 dark:text-teal-300'
-                        : 'bg-muted border-border text-content-secondary hover:border-teal-500/40',
+                        ? 'bg-teal-500/10 border-teal-500/50 text-teal-600 dark:text-gold-200 dark:bg-gold-300/10 dark:border-gold-300/50'
+                        : 'bg-muted border-border text-content-secondary hover:border-teal-500/40 dark:hover:border-gold-300/40',
                     )}
                   >
                     <input
@@ -442,7 +430,7 @@ export const SettingsModal: React.FC = () => {
                       onChange={() => patchLocalSettings({ defaultTab: 'ai_assistant' })}
                       className="hidden"
                     />
-                    <IconSparkles className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                    <IconSparkles className="w-4 h-4 text-teal-600 dark:text-gold-300" />
                     <span>AI Assistant</span>
                   </label>
                 </div>
@@ -463,7 +451,7 @@ export const SettingsModal: React.FC = () => {
                     type="checkbox"
                     checked={Boolean(localSettings.enableContextMenuTrigger)}
                     onChange={(e) => patchLocalSettings({ enableContextMenuTrigger: e.target.checked })}
-                    className="accent-teal-500 w-4 h-4 cursor-pointer"
+                    className="accent-teal-500 dark:accent-gold-400 w-4 h-4 cursor-pointer"
                   />
                 </label>
               </div>
@@ -483,7 +471,7 @@ export const SettingsModal: React.FC = () => {
                     type="checkbox"
                     checked={Boolean(localSettings.disablePageContextExtraction)}
                     onChange={(e) => patchLocalSettings({ disablePageContextExtraction: e.target.checked })}
-                    className="accent-teal-500 w-4 h-4 cursor-pointer"
+                    className="accent-teal-500 dark:accent-gold-400 w-4 h-4 cursor-pointer"
                   />
                 </label>
               </div>
@@ -498,7 +486,7 @@ export const SettingsModal: React.FC = () => {
                   onChange={(e) => setPausedSitesInput(e.target.value)}
                   rows={3}
                   placeholder={'example.com\ndocs.google.com'}
-                  className="w-full bg-muted border border-border rounded-xl p-2.5 text-xs text-content placeholder:text-content-muted outline-none focus:border-teal-500 font-mono shadow-xs"
+                  className="w-full bg-muted border border-border rounded-xl p-2.5 text-xs text-content placeholder:text-content-muted outline-none focus:border-teal-500 dark:focus:border-gold-300 font-mono shadow-xs"
                 />
                 <p className="text-[11px] text-content-muted">
                   The floating lookup icon will be disabled on these domain names.
@@ -586,11 +574,11 @@ export const SettingsModal: React.FC = () => {
             <button
               type="button"
               onClick={handleSave}
-              className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95"
+              className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 dark:bg-gold-400 dark:hover:bg-gold-300 dark:text-neutral-950 text-white text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95"
             >
               {isSavedNotice ? (
                 <>
-                  <IconCheck className="w-4 h-4 text-white" />
+                  <IconCheck className="w-4 h-4 text-white dark:text-neutral-950" />
                   <span>Saved!</span>
                 </>
               ) : (

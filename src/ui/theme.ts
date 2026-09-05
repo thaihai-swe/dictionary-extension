@@ -16,11 +16,13 @@ export function syncDocumentTheme(isDark: boolean): void {
   document.documentElement.classList.toggle('light', !isDark);
   document.documentElement.classList.toggle('light-theme', !isDark);
   document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
   if (document.body) {
     document.body.classList.toggle('dark', isDark);
     document.body.classList.toggle('light', !isDark);
     document.body.classList.toggle('light-theme', !isDark);
     document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    document.body.style.colorScheme = isDark ? 'dark' : 'light';
   }
 }
 

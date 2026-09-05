@@ -217,7 +217,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
           }}
           type="text"
           placeholder="Analyze word or complete sentence…"
-          className="w-full h-[38px] bg-surface border border-border rounded-lg pl-9 pr-24 text-[13px] text-content placeholder:text-content-muted outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/15 transition-all font-sans"
+          className="w-full h-[38px] bg-surface border border-border rounded-lg pl-9 pr-24 text-[13px] text-content placeholder:text-content-muted outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/15 dark:focus:border-gold-300 dark:focus:ring-gold-300/20 transition-all font-sans"
         />
 
         {queryInput ? (
@@ -250,7 +250,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
           <button
             type="button"
             onClick={() => setIsEditingContext(true)}
-            className="text-[11.5px] text-teal-700 dark:text-teal-400 hover:underline font-medium cursor-pointer"
+            className="text-[11.5px] text-teal-700 dark:text-gold-300 hover:underline font-medium cursor-pointer"
           >
             + Add context sentence
           </button>
@@ -277,7 +277,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
               onBlur={() => setIsEditingContext(!contextInput.trim())}
               rows={2}
               placeholder="Paste the sentence that contains this word..."
-              className="w-full bg-muted/50 border border-border rounded-md px-2.5 py-1.5 text-[12.5px] text-content placeholder:text-content-muted outline-none focus:border-teal-500 resize-y min-h-[44px]"
+              className="w-full bg-muted/50 border border-border rounded-md px-2.5 py-1.5 text-[12.5px] text-content placeholder:text-content-muted outline-none focus:border-teal-500 dark:focus:border-gold-300 resize-y min-h-[44px]"
             />
           ) : (
             <TokenizedContext
@@ -320,10 +320,17 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
       {/* Results */}
       <div className="space-y-3 pt-1">
         {isAiLoading ? (
-          <div className="p-4 rounded-xl border border-border bg-surface animate-pulse space-y-2.5">
-            <div className="h-3 bg-muted rounded w-1/4"></div>
-            <div className="h-12 bg-muted rounded w-full"></div>
-            <div className="h-12 bg-muted rounded w-full"></div>
+          <div className="p-4 rounded-xl border border-border bg-surface shadow-xs space-y-3" aria-busy="true" aria-live="polite">
+            <div className="flex items-center justify-between pb-1.5 border-b border-border/60">
+              <div className="h-3.5 skeleton-shimmer rounded w-1/3"></div>
+              <div className="h-3 skeleton-shimmer rounded w-16"></div>
+            </div>
+            <div className="space-y-2">
+              <div className="h-3.5 skeleton-shimmer rounded w-11/12"></div>
+              <div className="h-3.5 skeleton-shimmer rounded w-full"></div>
+              <div className="h-3.5 skeleton-shimmer rounded w-4/5"></div>
+            </div>
+            <div className="h-16 skeleton-shimmer rounded-lg mt-2"></div>
           </div>
         ) : aiError ? (
           <div className="p-3 rounded-lg bg-rose-500/8 border border-rose-500/25 text-[12.5px] text-rose-700 dark:text-rose-400">

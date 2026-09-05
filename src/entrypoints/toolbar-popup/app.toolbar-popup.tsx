@@ -8,6 +8,7 @@ import { useAppTheme } from '../../ui/theme';
 import AppHeader from '../../components/component.app-header';
 import TabNavigation from '../../components/component.tab-navigation';
 import WordLookupView from '@/features/dictionary/WordLookupView';
+import ToastContainer from '@/components/component.toast';
 
 const AiAssistantView = lazy(() => import('@/features/ai-assistant/AiAssistantView'));
 const ShortcutsModal = lazy(() => import('@/features/settings/ShortcutsModal'));
@@ -78,6 +79,26 @@ export const ToolbarPopupApp: React.FC = () => {
   }
 
   function handleKeydown(event: React.KeyboardEvent) {
+    const target = event.target as HTMLElement | null;
+    const isTyping = target?.matches('input, textarea, select, [contenteditable="true"]');
+
+    if (!isTyping) {
+      if (event.key === '1' || (event.altKey && event.key === '1')) {
+        handleTabChange('dictionary');
+        event.preventDefault();
+        return;
+      }
+      if (event.key === '2' || (event.altKey && event.key === '2')) {
+        handleTabChange('ai_assistant');
+        event.preventDefault();
+        return;
+      }
+      if (event.key === '?' || (event.shiftKey && (event.key === 'Q' || event.key === 'q'))) {
+        setShowShortcuts((v) => !v);
+        return;
+      }
+    }
+
     if (event.altKey && event.key === '1') {
       handleTabChange('dictionary');
       event.preventDefault();
@@ -145,6 +166,9 @@ export const ToolbarPopupApp: React.FC = () => {
       <Suspense fallback={null}>
         <ShortcutsModal show={showShortcuts} onClose={() => setShowShortcuts(false)} />
       </Suspense>
+
+      {/* Floating Micro-Toast Feedback */}
+      <ToastContainer />
     </div>
   );
 };

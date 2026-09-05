@@ -21,9 +21,9 @@ export const ConfusablesIntent: React.FC<ConfusablesIntentProps> = ({ result, ta
   return (
     <div className="space-y-4">
       {comparison?.coreDistinction ? (
-        <div className="rounded-xl border border-teal-500/30 bg-teal-500/8 p-3.5 space-y-1.5 shadow-xs">
-          <div className="flex items-center gap-1.5 text-[11px] font-bold text-teal-700 dark:text-teal-300 uppercase tracking-wider">
-            <IconScale className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+        <div className="rounded-xl border border-teal-500/30 dark:border-gold-300/30 bg-teal-500/8 dark:bg-gold-300/8 p-3.5 space-y-1.5 shadow-xs">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-teal-700 dark:text-gold-300 uppercase tracking-wider">
+            <IconScale className="w-3.5 h-3.5 text-teal-600 dark:text-gold-300" />
             <span>Core Distinction</span>
           </div>
           <p className="text-[13.5px] leading-relaxed text-content font-medium">
@@ -42,10 +42,10 @@ export const ConfusablesIntent: React.FC<ConfusablesIntentProps> = ({ result, ta
               <thead className="bg-muted text-content font-bold">
                 <tr>
                   <th className="px-3 py-2.5 font-bold">Feature</th>
-                  <th className="px-3 py-2.5 font-bold text-teal-700 dark:text-teal-300">
+                  <th className="px-3 py-2.5 font-bold text-teal-700 dark:text-gold-300">
                     {comparison.leftTerm || 'Term A'}
                   </th>
-                  <th className="px-3 py-2.5 font-bold text-teal-700 dark:text-teal-300">
+                  <th className="px-3 py-2.5 font-bold text-teal-700 dark:text-gold-300">
                     {comparison.rightTerm || 'Term B'}
                   </th>
                 </tr>
@@ -79,13 +79,13 @@ export const ConfusablesIntent: React.FC<ConfusablesIntentProps> = ({ result, ta
                   className="rounded-xl border border-border bg-surface p-3 space-y-2 text-[13px] shadow-xs"
                 >
                   <div className="space-y-1.5">
-                    <div className="flex items-start justify-between gap-2 pl-2.5 py-1 border-l-2 border-teal-500 bg-teal-500/5 rounded-r">
+                    <div className="flex items-start justify-between gap-2 pl-2.5 py-1 border-l-2 border-teal-500 dark:border-l-gold-300 bg-teal-500/5 dark:bg-gold-300/5 rounded-r">
                       <p className="flex-1 text-content font-medium">"{pair.sentenceA}"</p>
                       <button
                         type="button"
                         onClick={() => speak(pair.sentenceA, keyA)}
                         title="Listen to first sentence"
-                        className="h-6 w-6 text-content-muted hover:text-teal-600 dark:hover:text-teal-300 cursor-pointer flex items-center justify-center rounded hover:bg-muted"
+                        className="h-6 w-6 text-content-muted hover:text-teal-600 dark:hover:text-gold-200 cursor-pointer flex items-center justify-center rounded hover:bg-muted"
                       >
                         <IconSpeaker className="w-3.5 h-3.5" />
                       </button>

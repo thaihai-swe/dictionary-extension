@@ -18,8 +18,9 @@ import {
   WordFormationCard,
 } from '@/components/async-views';
 import { cx } from '@/ui/cx';
-import { IconMic, IconQuote, IconSparkles, IconSpeaker } from '@/components/icons';
+import { IconCheck, IconCopy, IconMic, IconQuote, IconSparkles, IconSpeaker } from '@/components/icons';
 import RelatedWords from '@/components/component.related-words';
+import { showToast } from '@/composables/composable.toast';
 
 interface WordLookupResultProps {
   onSelectWord?: (word: string) => void;
@@ -99,6 +100,36 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
     onSelectWord?.(wordToSearch);
   }
 
+  function copyAsMarkdown() {
+    if (!result) return;
+    const ipa = phoneticsList[0] ? phoneticText(phoneticsList[0]) : '';
+    const ipaStr = ipa ? ` \`/${ipa.replace(/^\/+|\/+$/g, '')}/\`` : '';
+
+    let md = `### ${displayHeadword}${ipaStr}\n\n`;
+
+    if (result.meanings && result.meanings.length > 0) {
+      result.meanings.slice(0, 3).forEach((meaning) => {
+        const pos = meaning.partOfSpeech ? `*(${meaning.partOfSpeech})* ` : '';
+        const firstDef = meaning.definitions?.[0];
+        if (firstDef?.definition) {
+          md += `> ${pos}${firstDef.definition}\n`;
+          if (firstDef.example) {
+            md += `- *Example:* "${firstDef.example}"\n`;
+          }
+          md += `\n`;
+        }
+      });
+    }
+
+    if (result.translation) {
+      md += `*Translation:* ${result.translation}\n`;
+    }
+
+    void navigator.clipboard.writeText(md.trim()).then(() => {
+      showToast('Copied definition to clipboard');
+    });
+  }
+
   const { filteredExamples, filteredSynonyms, filteredAntonyms } = useMemo(() => {
     if (!result) {
       return { filteredExamples: [], filteredSynonyms: [], filteredAntonyms: [] };
@@ -175,26 +206,38 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
               <h2 className="text-2xl sm:text-[28px] font-semibold text-content font-heading tracking-tight leading-tight dark:text-[#f8f4ea] min-w-0">
                 {displayHeadword}
               </h2>
-              <span
-                className={cx(
-                  'mt-1 shrink-0 h-[18px] px-1.5 rounded text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1 whitespace-nowrap',
-                  isEnriching
-                    ? 'bg-teal-500/10 text-teal-700 dark:text-gold-200 border border-teal-500/25'
-                    : 'invisible border border-transparent',
-                )}
-                aria-live="polite"
-                aria-atomic="true"
-                aria-hidden={!isEnriching}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-teal-600 dark:bg-gold-300 animate-pulse" aria-hidden="true" />
-                Enriching
-              </span>
+              <div className="flex items-center gap-1.5 shrink-0 mt-1">
+                <button
+                  type="button"
+                  onClick={copyAsMarkdown}
+                  title="Copy as Markdown flashcard"
+                  aria-label="Copy as Markdown flashcard"
+                  className="h-[22px] px-2 rounded-md bg-muted hover:bg-elevated border border-border text-[11px] font-semibold text-content-secondary hover:text-content transition-all cursor-pointer flex items-center gap-1 shadow-2xs active:scale-95 select-none"
+                >
+                  <IconCopy className="w-3 h-3 text-content-muted hover:text-content" />
+                  <span className="hidden sm:inline">Copy MD</span>
+                </button>
+                <span
+                  className={cx(
+                    'h-[18px] px-1.5 rounded text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1 whitespace-nowrap',
+                    isEnriching
+                      ? 'bg-teal-500/10 text-teal-700 dark:text-gold-200 border border-teal-500/25'
+                      : 'invisible border border-transparent',
+                  )}
+                  aria-live="polite"
+                  aria-atomic="true"
+                  aria-hidden={!isEnriching}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-teal-600 dark:bg-gold-300 animate-pulse" aria-hidden="true" />
+                  Enriching
+                </span>
+              </div>
             </div>
 
             {/* Phonetic & Accent Audio Buttons */}
             <div className="flex flex-wrap items-center gap-2 pt-0.5">
               {phoneticsList.map((item, index) => {
-                const listenKey = `phonetic-${item.region || item.language || index}`;
+                const listenKey = `phonetic-${index}-${item.region || item.language || 'audio'}`;
                 const ipa = phoneticText(item);
                 const lang = item.language || (item.region === 'uk' ? 'en-GB' : 'en-US');
                 return (
@@ -212,14 +255,14 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                     className={cx(
                       'h-[26px] px-2 rounded-md border text-[11.5px] font-medium transition-all flex items-center gap-1 cursor-pointer font-mono',
                       playingKey === listenKey
-                        ? 'bg-teal-500/20 text-teal-700 dark:text-teal-300 border-teal-500/40'
+                        ? 'bg-teal-500/20 text-teal-700 dark:bg-gold-300/15 dark:text-gold-200 border-teal-500/40 dark:border-gold-300/40 audio-playing-indicator'
                         : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
                     )}
                     aria-pressed={playingKey === listenKey}
                     title={`Listen (${phoneticLabel(item)})`}
                   >
-                    <IconSpeaker className="w-3 h-3 text-teal-600 dark:text-teal-400" />
-                    <span>{phoneticLabel(item)}{ipa ? ` ${ipa}` : ''}</span>
+                    <IconSpeaker className="w-3 h-3 text-teal-600 dark:text-gold-300" />
+                    <span>{phoneticLabel(item)}{ipa ? ` /${ipa.replace(/^\/+|\/+$/g, '')}/` : ''}</span>
                   </button>
                 );
               })}
@@ -249,7 +292,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
       {result.translation?.translatedText ? (
         <section className="p-3 rounded-lg border border-border bg-surface flex items-baseline justify-between gap-3">
           <div className="space-y-0.5">
-            <span className="text-[10.5px] font-bold text-teal-700 dark:text-teal-400 uppercase tracking-wider">
+            <span className="text-[10.5px] font-bold text-teal-700 dark:text-gold-300 uppercase tracking-wider">
               Translation
             </span>
             <p className="text-[14.5px] text-content font-medium leading-relaxed">
@@ -270,7 +313,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
             practiceResult.grade === 'excellent'
               ? 'border-emerald-500/30 bg-emerald-500/8 text-emerald-700 dark:text-emerald-300'
               : practiceResult.grade === 'good'
-                ? 'border-teal-500/30 bg-teal-500/8 text-teal-700 dark:text-teal-300'
+                ? 'border-teal-500/30 bg-teal-500/8 text-teal-700 dark:border-gold-300/30 dark:bg-gold-300/10 dark:text-gold-200'
                 : practiceResult.grade === 'almost'
                   ? 'border-amber-500/30 bg-amber-500/8 text-amber-700 dark:text-amber-300'
                   : 'border-rose-500/30 bg-rose-500/8 text-rose-700 dark:text-rose-300',
@@ -336,7 +379,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                     className={cx(
                       'h-6 px-2 rounded-full border text-[10.5px] font-semibold flex items-center gap-1 cursor-pointer transition-colors flex-shrink-0',
                       isPlaying
-                        ? 'bg-teal-500/20 text-teal-700 dark:text-gold-100 border-teal-500/40'
+                        ? 'bg-teal-500/20 text-teal-700 dark:bg-gold-300/15 dark:text-gold-100 border-teal-500/40 dark:border-gold-300/40 audio-playing-indicator'
                         : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
                     )}
                     aria-pressed={isPlaying}
@@ -381,7 +424,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
       {/* 6. Phrase Fallback Explanation */}
       {result.phraseExplanation?.length ? (
         <section className="p-3 rounded-lg border border-border bg-surface space-y-2">
-          <p className="text-[10px] font-bold uppercase tracking-wider font-mono text-teal-700 dark:text-teal-300">
+          <p className="text-[10px] font-bold uppercase tracking-wider font-mono text-teal-700 dark:text-gold-300">
             Phrase Explanation
           </p>
           {result.phraseExplanation.map((section, index) => (
