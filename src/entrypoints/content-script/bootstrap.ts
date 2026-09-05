@@ -60,8 +60,8 @@ const TRIGGER_CSS = `
 .dictionary-trigger-icon-btn:active { transform: scale(0.95); }
 .dictionary-trigger-icon-btn.dark {
   background: #d4af37;
-  color: #090a0d;
-  border: 2px solid #171b23;
+  color: #0f172a;
+  border: 2px solid #1e293b;
   box-shadow: 0 10px 24px rgba(212, 175, 55, 0.4);
 }
 .dictionary-trigger-icon-btn.light {

@@ -54,7 +54,7 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSe
   return (
     <div className="space-y-4 pt-0.5">
       {distinctPosList.length > 1 ? (
-        <div className="sticky top-0 z-10 -mx-1 px-1 py-1.5 bg-paper/95 dark:bg-paper/90 backdrop-blur-md border-b border-border/70 flex items-center gap-1.5 overflow-x-auto select-none">
+        <div className="sticky top-0 z-10 -mx-1 px-1 py-1.5 bg-surface/95 dark:bg-surface/90 backdrop-blur-md border-b border-border flex items-center gap-1.5 overflow-x-auto select-none">
           <button
             type="button"
             onClick={() => setSelectedPos('all')}
@@ -62,7 +62,7 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSe
               'h-6 px-2.5 rounded-full text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1',
               selectedPos === 'all'
                 ? 'bg-teal-700 text-white dark:bg-gold-300 dark:text-neutral-950 shadow-2xs'
-                : 'bg-muted/70 hover:bg-muted text-content-secondary hover:text-content border border-border/60',
+                : 'bg-muted hover:bg-elevated text-content-secondary hover:text-content border border-border',
             )}
           >
             <span>All</span>
@@ -79,7 +79,7 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSe
                   'h-6 px-2.5 rounded-full text-[11px] font-semibold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap flex items-center gap-1',
                   isActive
                     ? 'bg-teal-700 text-white dark:bg-gold-300 dark:text-neutral-950 shadow-2xs'
-                    : 'bg-muted/70 hover:bg-muted text-content-secondary hover:text-content border border-border/60',
+                    : 'bg-muted hover:bg-elevated text-content-secondary hover:text-content border border-border',
                 )}
               >
                 <span>{item.pos}</span>
@@ -93,7 +93,7 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSe
       {filteredMeanings.map((meaning, mIdx) => (
         <div
           key={meaning.partOfSpeech || mIdx}
-          className="space-y-3 border-b border-border/70 pb-4 last:border-b-0 last:pb-0"
+          className="space-y-3 border-b border-border pb-4 last:border-b-0 last:pb-0"
         >
           <div className="flex items-center justify-between">
             <span

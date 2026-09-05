@@ -48,7 +48,7 @@ export const LearnerMistakesCard: React.FC<LearnerMistakesCardProps> = ({ mistak
   }
 
   return (
-    <div className="pt-3 border-t border-border space-y-2">
+    <div className="p-3.5 rounded-lg border border-border bg-surface space-y-2.5 shadow-card font-sans">
       <div className="flex items-center gap-1.5 text-[11px] font-bold text-content-muted uppercase tracking-wider">
         <IconAlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
         <span>Common Learner Mistakes</span>

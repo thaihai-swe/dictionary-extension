@@ -346,13 +346,13 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
       ) : null}
 
       {result.meanings?.length ? (
-        <section className="p-3.5 rounded-lg border border-border bg-surface space-y-3">
+        <section className="p-3.5 rounded-lg border border-border bg-surface space-y-3 shadow-card">
           <SenseMatrixCard meanings={result.meanings} onSelectWord={handleSearch} />
         </section>
       ) : null}
 
       {filteredExamples.length ? (
-        <section className="p-3.5 rounded-lg border border-border bg-surface space-y-2.5">
+        <section className="p-3.5 rounded-lg border border-border bg-surface space-y-2.5 shadow-card">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-content-muted uppercase tracking-wider">
             <IconQuote className="w-3.5 h-3.5 text-teal-600 dark:text-gold-200" />
             <span>Examples</span>
@@ -397,7 +397,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
 
       {/* 5. Additional Synonyms & Antonyms */}
       {filteredSynonyms.length || filteredAntonyms.length ? (
-        <section className="p-3 rounded-lg border border-border bg-surface/60 space-y-2">
+        <section className="p-3.5 rounded-lg border border-border bg-surface space-y-2 shadow-card">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-content-muted uppercase tracking-wider">
             <IconSparkles className="w-3.5 h-3.5 text-teal-600 dark:text-gold-200" />
             <span>Related</span>
@@ -423,7 +423,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
 
       {/* 6. Phrase Fallback Explanation */}
       {result.phraseExplanation?.length ? (
-        <section className="p-3 rounded-lg border border-border bg-surface space-y-2">
+        <section className="p-3.5 rounded-lg border border-border bg-surface space-y-2 shadow-card">
           <p className="text-[10px] font-bold uppercase tracking-wider font-mono text-teal-700 dark:text-gold-300">
             Phrase Explanation
           </p>

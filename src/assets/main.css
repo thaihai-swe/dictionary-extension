@@ -15,22 +15,22 @@
 :host([data-theme="dark"]),
 .dark,
 [data-theme="dark"] {
-  /* Dark Mode: Obsidian Velvet & Champagne Gold */
-  --bg-paper: #090a0d;
-  --bg-paper-rgb: 9, 10, 13;
-  --bg-surface: #101319;
-  --bg-surface-rgb: 16, 19, 25;
-  --bg-elevated: #171b23;
-  --bg-elevated-rgb: 23, 27, 35;
-  --bg-muted: #1e232e;
-  --bg-muted-rgb: 30, 35, 46;
-  --bg-hover: #262c3a;
-  --bg-hover-rgb: 38, 44, 58;
+  /* Dark Mode: Deep Midnight Slate & Champagne Gold */
+  --bg-paper: #0f172a;
+  --bg-paper-rgb: 15, 23, 42;
+  --bg-surface: #1e293b;
+  --bg-surface-rgb: 30, 41, 59;
+  --bg-elevated: #334155;
+  --bg-elevated-rgb: 51, 65, 85;
+  --bg-muted: #263346;
+  --bg-muted-rgb: 38, 51, 70;
+  --bg-hover: #334155;
+  --bg-hover-rgb: 51, 65, 85;
 
-  --border-color: #2a3040;
-  --border-color-rgb: 42, 48, 64;
-  --border-subtle: #1a1e28;
-  --border-subtle-rgb: 26, 30, 40;
+  --border-color: #475569;
+  --border-color-rgb: 71, 85, 105;
+  --border-subtle: #334155;
+  --border-subtle-rgb: 51, 65, 85;
 
   --text-primary: #f7f6f2;
   --text-primary-rgb: 247, 246, 242;
@@ -83,10 +83,10 @@ html.light {
   --bg-hover: #e2e2d9;
   --bg-hover-rgb: 226, 226, 217;
 
-  --border-color: #e2e2d9;
-  --border-color-rgb: 226, 226, 217;
-  --border-subtle: #ecece5;
-  --border-subtle-rgb: 236, 236, 229;
+  --border-color: #17212e;
+  --border-color-rgb: 23, 33, 46;
+  --border-subtle: #454e56;
+  --border-subtle-rgb: 69, 78, 86;
 
   --text-primary: #18181b;
   --text-primary-rgb: 24, 24, 27;
@@ -362,8 +362,8 @@ html.light {
 .dark .inpage-popup-card,
 [data-theme="dark"].inpage-popup-card,
 [data-theme="dark"] .inpage-popup-card {
-  background-color: rgba(9, 10, 13, 0.94);
-  border-color: rgba(212, 175, 55, 0.24);
+  background-color: rgba(15, 23, 42, 0.95);
+  border-color: #475569;
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.08) inset,
     0 24px 64px -20px rgba(0, 0, 0, 0.85),
