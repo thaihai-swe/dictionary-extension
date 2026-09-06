@@ -6,19 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Dictionary — Look it up. Hear it. Keep reading.</title>
     <meta name="description"
-        content="A free Chrome extension for instant definitions, translation, pronunciation, speech practice, and sentence-aware AI. Look up words where you read without leaving the page.">
+        content="A free Chrome extension for instant definitions, translation, pronunciation, speech practice, sentence-aware AI, and an in-page Rewriter. Look up words where you read without leaving the page.">
     <meta name="theme-color" content="#fbfaf7">
     <link rel="canonical" href="https://thaihai-swe.github.io/dictionary-extension/">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <meta property="og:title" content="Dictionary — Look it up. Hear it. Keep reading.">
     <meta property="og:description"
-        content="Look up words where you read. Get definitions, translation, pronunciation practice, and sentence-aware AI without opening a new tab. Free and open source.">
+        content="Look up words where you read. Get definitions, translation, pronunciation practice, sentence-aware AI, and an in-page Rewriter without opening a new tab. Free and open source.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://thaihai-swe.github.io/dictionary-extension/">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Dictionary — Look it up. Hear it. Keep reading.">
     <meta name="twitter:description"
-        content="A free Chrome extension for dictionary lookup, translation, pronunciation, speech practice, and contextual AI learning.">
+        content="A free Chrome extension for dictionary lookup, translation, pronunciation, speech practice, contextual AI, and an in-page Rewriter.">
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -32,7 +32,7 @@
         "price": "0",
         "priceCurrency": "USD"
       },
-      "description": "A free Chrome extension for instant definitions, translation, pronunciation, speech practice, and sentence-aware AI without leaving the page.",
+      "description": "A free Chrome extension for instant definitions, translation, pronunciation, speech practice, sentence-aware AI, and an in-page Rewriter without leaving the page.",
       "author": {
         "@type": "Person",
         "name": "thaihai-swe",
@@ -102,8 +102,8 @@
                     <p class="hero-lead">
                         Dictionary puts multi-source definitions, translations, pronunciation, and speech practice
                         directly beside the sentence you are reading. When a definition is not enough, seven
-                        intent-driven AI actions explain grammar, nuance, confusables, and rewrites—without switching
-                        tabs or losing your place.
+                        intent-driven AI actions explain grammar, nuance, and confusables. A separate Rewriter tab
+                        polishes drafts in place—without switching tabs or losing your place.
                     </p>
                     <div class="hero-ctas">
                         <a href="#install" class="btn btn-primary">
@@ -191,12 +191,21 @@
                     </article>
                     <article class="panel">
                         <h3>Intent-driven AI, not chat</h3>
-                        <p>No prompt engineering required. Seven dedicated actions answer exact linguistic questions:
-                            sense-in-context, grammar nuance, confusable pairs, and three rewrite styles in one click.
+                        <p>No prompt engineering required. Seven dedicated AI Assistant actions answer exact linguistic
+                            questions: sense-in-context, grammar nuance, confusable pairs, and three Rephrase styles in
+                            one click.
                         </p>
                     </article>
                 </div>
-                <div class="grid cols-2 journey">
+                <div class="grid cols-3 journey">
+                    <article class="panel">
+                        <span class="index">New</span>
+                        <h3>Rewriter studio</h3>
+                        <p>A third tab for drafting, not lookup. Paste a sentence, email, or short paragraph, pick one
+                            of four tones, and get a polished rewrite plus diagnostic coaching notes—without leaving the
+                            page.</p>
+                        <span class="meta">Formal · Natural · Concise · Casual</span>
+                    </article>
                     <article class="panel">
                         <span class="index">New</span>
                         <h3>Collapsible lexical profile</h3>
@@ -230,9 +239,9 @@
                     <article class="panel">
                         <span class="index">03</span>
                         <h3>Learn what the sentence means</h3>
-                        <p>Trigger sentence breakdown, confusable contrast, or rephrase styles when the quick answer is
-                            not enough.</p>
-                        <span class="meta">Context · Compare · Rephrase · Grammar</span>
+                        <p>Trigger sentence breakdown, confusable contrast, or Rephrase when the quick answer is not
+                            enough. Switch to Rewriter when you want to polish the draft itself.</p>
+                        <span class="meta">Context · Compare · Rephrase · Rewriter</span>
                     </article>
                 </div>
             </div>
@@ -243,8 +252,8 @@
                 <div class="section-header text-center">
                     <p class="section-kicker">Interactive product walkthrough</p>
                     <h2 class="section-title">Try the decision a learner makes in the moment.</h2>
-                    <p class="section-lead">Choose a word, idiom, sentence, or confusable pair. Experience how the
-                        extension moves from a quick lookup to structured sentence analysis.</p>
+                    <p class="section-lead">Choose a word, idiom, sentence, confusable pair, or a draft to polish.
+                        Experience how the extension moves from a quick lookup to structured analysis or Rewriter.</p>
                 </div>
 
                 <div class="interactive-stage">
@@ -268,6 +277,8 @@
                         <button type="button" class="preset-btn" data-query="resilience" data-tab="ai"
                             data-intent="rephrase"><span class="preset-tag">Rephrase</span><strong>three rewrite
                                 styles</strong></button>
+                        <button type="button" class="preset-btn" data-query="resilience" data-tab="rewriter"><span
+                                class="preset-tag">Rewriter</span><strong>tone &amp; polish</strong></button>
                     </div>
 
                     <div class="popup-device">
@@ -291,7 +302,9 @@
                             <button type="button" class="popup-tab is-active" id="tab-btn-dict" role="tab"
                                 aria-selected="true" aria-controls="demo-tab-panel">Dictionary</button>
                             <button type="button" class="popup-tab" id="tab-btn-ai" role="tab" aria-selected="false"
-                                aria-controls="demo-tab-panel">AI explanation</button>
+                                aria-controls="demo-tab-panel">AI Assistant</button>
+                            <button type="button" class="popup-tab" id="tab-btn-rewriter" role="tab"
+                                aria-selected="false" aria-controls="demo-tab-panel">Rewriter</button>
                         </div>
                         <div class="popup-context-bar" id="demo-context-bar" hidden>
                             <div class="context-pill">Context is editable before use</div>
@@ -463,8 +476,15 @@
                                 <th scope="row">Senses, grammar, rewrites</th>
                                 <td>No</td>
                                 <td>Unstructured chat</td>
-                                <td>Named intents, sense cards, compare matrix, one Rephrase action with three styles
+                                <td>Named AI intents, sense cards, compare matrix, Rephrase (three styles) plus a
+                                    dedicated Rewriter tab
                                 </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Polish a draft in place</th>
+                                <td>No</td>
+                                <td>New tab, you write the prompt</td>
+                                <td>Rewriter tab: four tones, diagnostic notes, polished output beside the page</td>
                             </tr>
                             <tr>
                                 <th scope="row">Your providers and keys</th>
@@ -630,10 +650,13 @@ npm install &amp;&amp; npm run build</code></pre>
                             suppressed inside form inputs so they never interrupt typing.</p>
                     </details>
                     <details class="faq-item">
-                        <summary>What makes the Rephrase feature unique?</summary>
-                        <p>Unlike generic AI prompts, a single click on Rephrase returns three targeted rewrite styles
-                            in parallel: Simplified, Academic &amp; Formal, and Native Idiom—each paired with
-                            explanatory notes in your target language.</p>
+                        <summary>What is the difference between Rephrase and Rewriter?</summary>
+                        <p><strong>Rephrase</strong> is one of seven AI Assistant intents. One click returns three
+                            parallel rewrite styles of the reading sentence: Simplified, Academic &amp; Formal, and
+                            Native Idiom—each with a short note. <strong>Rewriter</strong> is a separate tab for
+                            drafting: paste a sentence, email, or short paragraph, pick one of four tones (Formal,
+                            Natural, Concise, Casual), and get a polished rewrite plus diagnostic coaching notes. They
+                            are not the same feature.</p>
                     </details>
                     <details class="faq-item">
                         <summary>Is there a Chrome Web Store listing?</summary>
