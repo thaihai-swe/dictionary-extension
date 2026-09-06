@@ -1,4 +1,13 @@
-import React, { Suspense, useMemo } from 'react';
+import {
+  CollocationsCard,
+  LearnerMistakesCard,
+  UsageNotesCard,
+  WordFamilyCard,
+  WordFormationCard,
+} from '@/components/async-views';
+import MarkdownRenderer from '@/components/component.markdown-renderer';
+import RelatedWords from '@/components/component.related-words';
+import { IconCheck, IconChevronDown, IconCopy, IconMic, IconQuote, IconSparkles, IconSpeaker } from '@/components/icons';
 import {
   playPronunciation,
   startSpeechPractice,
@@ -7,21 +16,12 @@ import {
   useDictionaryQuery,
   useDictionaryResult,
 } from '@/composables/composable.dictionary';
-import { AttributedItem, Phonetic } from '@/types';
-import SenseMatrixCard from './SenseMatrixCard';
-import MarkdownRenderer from '@/components/component.markdown-renderer';
-import {
-  CollocationsCard,
-  LearnerMistakesCard,
-  UsageNotesCard,
-  WordFamilyCard,
-  WordFormationCard,
-} from '@/components/async-views';
-import { cx } from '@/ui/cx';
 import { useStorage } from '@/composables/composable.storage';
-import { IconCheck, IconChevronDown, IconCopy, IconMic, IconQuote, IconSparkles, IconSpeaker } from '@/components/icons';
-import RelatedWords from '@/components/component.related-words';
 import { showToast } from '@/composables/composable.toast';
+import { AttributedItem, Phonetic } from '@/types';
+import { cx } from '@/ui/cx';
+import React, { Suspense, useMemo } from 'react';
+import SenseMatrixCard from './SenseMatrixCard';
 
 interface WordLookupResultProps {
   onSelectWord?: (word: string) => void;
@@ -325,12 +325,15 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
           ) : null}
         </div>
 
-        {showContextBanner ? (
-          <p className="text-[18px] text-content-muted leading-snug line-clamp-2">
-            “{pageContext}”
-          </p>
-        ) : null}
       </div>
+
+      {showContextBanner ? (
+        <section className="p-3.5 rounded-lg border border-border bg-surface">
+          <p className="text-[18px] text-content-secondary leading-relaxed">
+            {pageContext}
+          </p>
+        </section>
+      ) : null}
 
       {result.translation?.translatedText ? (
         <section className="px-3 py-2.5 rounded-lg border border-border bg-muted flex items-baseline justify-between gap-3">
