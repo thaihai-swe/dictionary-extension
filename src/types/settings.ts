@@ -57,4 +57,5 @@ export interface AppSettings {
   aiPhraseExplorerPromptTemplate: string;
   aiComparePromptTemplate: string;
   aiRephrasePromptTemplate: string;
+  aiRewritePromptTemplate: string;
 }

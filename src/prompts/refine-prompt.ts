@@ -1,5 +1,5 @@
-import rawPrompt from './English Refine.md?raw';
+import { DEFAULT_AI_REWRITE_PROMPT_TEMPLATE } from './prompt-templates';
 
 export function getEnglishRefinePrompt(): string {
-  return String(rawPrompt || '').trim();
+  return DEFAULT_AI_REWRITE_PROMPT_TEMPLATE;
 }

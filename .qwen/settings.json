@@ -8,7 +8,8 @@
       "Skill(ui-styling)",
       "Bash(python3 *)",
       "Bash(node *)",
-      "Bash(npx *)"
+      "Bash(npx *)",
+      "Bash(git checkout *)"
     ]
   },
   "$version": 4

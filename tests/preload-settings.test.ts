@@ -11,6 +11,11 @@ test('normalizePreloadedAiIntents preserves only valid preloadable intents and d
   assert.deepEqual(result, ['default', 'grammar', 'rephrase']);
 });
 
+test('normalizePreloadedAiIntents drops rewrite — Rewriter is never preloaded', () => {
+  assert.deepEqual(normalizePreloadedAiIntents(['default', 'rewrite', 'rephrase']), ['default', 'rephrase']);
+  assert.equal(isAiIntentPreloadEnabled({ preloadedAiIntents: ['rewrite'] }, 'rewrite'), false);
+});
+
 test('normalizePreloadedAiIntents returns empty array for non-array input', () => {
   assert.deepEqual(normalizePreloadedAiIntents(null), []);
   assert.deepEqual(normalizePreloadedAiIntents(undefined), []);

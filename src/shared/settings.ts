@@ -1,6 +1,9 @@
-import { DEFAULT_AI_PROMPTS, resolvePreloadedAiIntents } from './ai-prompts';
+import { resolvePreloadedAiIntents } from './ai-prompts';
+import { DEFAULT_AI_PROMPTS } from '../prompts/prompt-templates';
 import type { AppSettings } from '../types';
 import {
+  LOCAL_ONLY_KEYS,
+  LOCAL_SETTING_KEYS,
   SECRET_KEYS,
   SECRET_SETTING_KEYS,
   hasConfiguredAiApiKey,
@@ -10,6 +13,8 @@ import {
 } from './settings-export';
 
 export {
+  LOCAL_ONLY_KEYS,
+  LOCAL_SETTING_KEYS,
   SECRET_KEYS,
   SECRET_SETTING_KEYS,
   hasConfiguredAiApiKey,
@@ -82,7 +87,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
 };
 
 export const PUBLIC_SETTING_KEYS = (Object.keys(DEFAULT_SETTINGS) as Array<keyof AppSettings>)
-  .filter((key) => !SECRET_KEYS.has(key));
+  .filter((key) => !LOCAL_ONLY_KEYS.has(key));
 
 const SYNC_SETTING_KEYS = [...PUBLIC_SETTING_KEYS];
 
@@ -206,7 +211,7 @@ export async function loadFullSettings(): Promise<AppSettings> {
   }
   const [syncData, localData] = await Promise.all([
     chrome.storage.sync.get([...SYNC_SETTING_KEYS, ...SECRET_SETTING_KEYS]),
-    chrome.storage.local.get([...SECRET_SETTING_KEYS, 'hasAiApiKey']),
+    chrome.storage.local.get([...LOCAL_SETTING_KEYS, 'hasAiApiKey']),
   ]);
   const merged = mergeStoredSettings(syncData || {}, localData || {});
   const recoveredSecrets: Record<string, unknown> = {};
@@ -248,7 +253,7 @@ export async function loadPublicSettings(): Promise<AppSettings> {
   }
   const [syncData, localFlags] = await Promise.all([
     chrome.storage.sync.get(PUBLIC_SETTING_KEYS as unknown as string[]),
-    chrome.storage.local.get(['hasAiApiKey']),
+    chrome.storage.local.get(['hasAiApiKey', 'aiRewritePromptTemplate']),
   ]);
   return normalizeSettings(mergePublicSettings(syncData || {}, localFlags || {}));
 }
@@ -259,7 +264,7 @@ export async function saveSettingsPartial(partial: Partial<AppSettings>): Promis
   const localData: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(partial)) {
     if (!(key in DEFAULT_SETTINGS)) continue;
-    if (SECRET_KEYS.has(key)) localData[key] = value;
+    if (LOCAL_ONLY_KEYS.has(key)) localData[key] = value;
     else syncData[key] = value;
   }
   if (Object.prototype.hasOwnProperty.call(localData, 'aiApiKey')) {

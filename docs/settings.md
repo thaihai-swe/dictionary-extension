@@ -31,6 +31,7 @@ To guarantee that private credentials can never leak across browser sync channel
 ├────────────────────────────────────────────────────────────────────────┤
 │ • aiApiKey (Gemini / OpenAI API Key)                                   │
 │ • libreTranslateApiKey (LibreTranslate Private Key)                    │
+│ • aiRewritePromptTemplate (Rewriter Master Prompt - local due to size) │
 │ • hasAiApiKey (Mirrored local boolean flag)                            │
 │ ➔ NEVER synced to the cloud. Stored strictly on this physical device.  │
 │ ➔ ISOLATED TO BACKGROUND SERVICE WORKER AND SECURE OPTIONS MODAL.      │
@@ -112,6 +113,7 @@ To guarantee that private credentials can never leak across browser sync channel
 | `aiSentencePromptTemplate` | `string` | `sync` | *(Built-in)* | Prompt template for **Sentence Breakdown** (`sentence_breakdown`). |
 | `aiComparePromptTemplate` | `string` | `sync` | *(Built-in)* | Prompt template for **Compare Confusables** (`confusables`). |
 | `aiRephrasePromptTemplate` | `string` | `sync` | *(Built-in)* | Prompt template for **Rephrase** (`rephrase`). |
+| `aiRewritePromptTemplate` | `string` | `local` | *(Built-in)* | Prompt template for **Rewriter** (`rewrite`). Stored in `local` because prompt size exceeds `sync` 8KB item quota. |
 
 ---
 

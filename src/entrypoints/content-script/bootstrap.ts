@@ -62,16 +62,16 @@ const TRIGGER_CSS = `
 .dictionary-trigger-icon-btn:hover { transform: scale(1.08); }
 .dictionary-trigger-icon-btn:active { transform: scale(0.95); }
 .dictionary-trigger-icon-btn.dark {
-  background: #22c55e;
-  color: #052e16;
-  border: 2px solid #2d333b;
-  box-shadow: 0 10px 24px rgba(34, 197, 94, 0.4);
+  background: #2aa198;
+  color: #002b36;
+  border: 2px solid #073642;
+  box-shadow: 0 10px 24px rgba(42, 161, 152, 0.4);
 }
 .dictionary-trigger-icon-btn.light {
-  background: #16a34a;
+  background: #0d9488;
   color: #fff;
   border: 2px solid #ffffff;
-  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.28);
+  box-shadow: 0 10px 24px rgba(13, 148, 136, 0.28);
 }
 .dictionary-popup-layer {
   position: fixed;

@@ -44,6 +44,7 @@ const CACHE_INVALIDATION_KEYS = new Set([
   'aiPhraseExplorerPromptTemplate',
   'aiComparePromptTemplate',
   'aiRephrasePromptTemplate',
+  'aiRewritePromptTemplate',
 ]);
 
 function shouldInvalidateLookupCache(keys: string[]): boolean {

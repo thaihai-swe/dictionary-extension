@@ -2,14 +2,6 @@ import { AiIntentId, AiResult, AppSettings } from '../types';
 import { lookupGoogleTranslation } from './provider.google-translate';
 import { AI_FETCH_TIMEOUT_MS, safeFetch } from './provider.http';
 import {
-  DEFAULT_AI_COMPARE_PROMPT_TEMPLATE,
-  DEFAULT_AI_CONTEXT_PROMPT_TEMPLATE,
-  DEFAULT_AI_GRAMMAR_PROMPT_TEMPLATE,
-  DEFAULT_AI_PHRASE_EXPLORER_PROMPT_TEMPLATE,
-  DEFAULT_AI_PHRASE_FALLBACK_PROMPT_TEMPLATE,
-  DEFAULT_AI_PROMPT_TEMPLATE,
-  DEFAULT_AI_REPHRASE_PROMPT_TEMPLATE,
-  DEFAULT_AI_SENTENCE_PROMPT_TEMPLATE,
   appendInputContract,
   applyTemplate,
   canonicalAiIntent,
@@ -17,7 +9,19 @@ import {
   lexicalExtrasForIntent,
   shouldRequestLexicalProfile,
 } from '../shared/ai-prompts';
-import { getEnglishRefinePrompt } from '../prompts/refine-prompt';
+import {
+  DEFAULT_AI_COMPARE_PROMPT_TEMPLATE,
+  DEFAULT_AI_CONTEXT_PROMPT_TEMPLATE,
+  DEFAULT_AI_GRAMMAR_PROMPT_TEMPLATE,
+  DEFAULT_AI_PHRASE_EXPLORER_PROMPT_TEMPLATE,
+  DEFAULT_AI_PHRASE_FALLBACK_PROMPT_TEMPLATE,
+  DEFAULT_AI_PROMPT_TEMPLATE,
+  DEFAULT_AI_REPHRASE_PROMPT_TEMPLATE,
+  DEFAULT_AI_REWRITE_PROMPT_TEMPLATE,
+  DEFAULT_AI_SENTENCE_PROMPT_TEMPLATE,
+  PROMPT_LANGUAGE_POLICY,
+  SHARED_PROMPT_PARTIALS,
+} from '../prompts/prompt-templates';
 import {
   normalizeComparisonData,
   normalizeRephraseStyles,
@@ -85,7 +89,7 @@ function templateForIntent(intent: AiIntentId, settings?: AppSettings): string {
     case 'rephrase':
       return pick(settings?.aiRephrasePromptTemplate, DEFAULT_AI_REPHRASE_PROMPT_TEMPLATE);
     case 'rewrite':
-      return getEnglishRefinePrompt();
+      return pick(settings?.aiRewritePromptTemplate, DEFAULT_AI_REWRITE_PROMPT_TEMPLATE);
     case 'phrase_fallback':
       return DEFAULT_AI_PHRASE_FALLBACK_PROMPT_TEMPLATE;
     default:
@@ -115,7 +119,11 @@ export function buildPrompt(
       ? lexicalExtrasForIntent(canonical)
       : [],
   };
-  return appendInputContract(applyTemplate(templateForIntent(canonical, settings), variables), variables);
+  return appendInputContract(
+    applyTemplate(templateForIntent(canonical, settings), variables, SHARED_PROMPT_PARTIALS),
+    variables,
+    PROMPT_LANGUAGE_POLICY,
+  );
 }
 
 async function requestGeminiText(prompt: string, apiKey: string, model: string, signal?: AbortSignal): Promise<string> {

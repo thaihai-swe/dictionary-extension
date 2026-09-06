@@ -2,6 +2,7 @@ import React from 'react';
 import { AppSettings, AiIntentId } from '@/types';
 import { cx } from '@/ui/cx';
 import { IconEdit, IconExternalLink, IconSparkles, IconSpinner } from '@/components/icons';
+import { PRELOADABLE_AI_INTENTS } from '@/shared/ai-prompts';
 import {
   DEFAULT_GEMINI_BASE_URL,
   DEFAULT_GEMINI_MODEL,
@@ -266,6 +267,7 @@ export const TabAi: React.FC<TabAiProps> = ({
           {promptEditors.map(({ key, label, intent }) => {
             const preloaded = localSettings.preloadedAiIntents || [];
             const preloadOn = preloaded.includes(intent);
+            const canPreload = (PRELOADABLE_AI_INTENTS as readonly string[]).includes(intent);
             return (
               <details key={key} className="rounded-xl border border-border bg-muted/20">
                 <summary className="px-3 py-2.5 cursor-pointer flex items-center justify-between gap-2 list-none">
@@ -274,26 +276,28 @@ export const TabAi: React.FC<TabAiProps> = ({
                     {label}
                   </span>
                   <span className="flex items-center gap-3 shrink-0">
-                    <label
-                      className="flex items-center gap-1.5 cursor-pointer"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={preloadOn}
-                        onChange={(e) => {
-                          const next = e.target.checked
-                            ? [...preloaded.filter((id) => id !== intent), intent]
-                            : preloaded.filter((id) => id !== intent);
-                          onChange({
-                            preloadedAiIntents: next,
-                            enableAiPreload: next.length > 0,
-                          });
-                        }}
-                        className="w-3.5 h-3.5 cursor-pointer"
-                      />
-                      <span className="text-[11px] font-semibold text-content-secondary">Preload</span>
-                    </label>
+                    {canPreload ? (
+                      <label
+                        className="flex items-center gap-1.5 cursor-pointer"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={preloadOn}
+                          onChange={(e) => {
+                            const next = e.target.checked
+                              ? [...preloaded.filter((id) => id !== intent), intent]
+                              : preloaded.filter((id) => id !== intent);
+                            onChange({
+                              preloadedAiIntents: next,
+                              enableAiPreload: next.length > 0,
+                            });
+                          }}
+                          className="w-3.5 h-3.5 cursor-pointer"
+                        />
+                        <span className="text-[11px] font-semibold text-content-secondary">Preload</span>
+                      </label>
+                    ) : null}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -310,12 +314,14 @@ export const TabAi: React.FC<TabAiProps> = ({
                   <p className="text-[11px] text-content-muted">
                     {intent === 'default'
                       ? 'Preload fetches this intent after selection so Dictionary → AI feels instant.'
-                      : 'Preload fetches this intent in the background when you open the AI tab, or on hover if enabled.'}
+                      : intent === 'rewrite'
+                        ? 'Used by the Rewriter tab. Stored on this device only. Not preloaded — runs only when you click Rewrite.'
+                        : 'Preload fetches this intent in the background when you open the AI tab, or on hover if enabled.'}
                   </p>
                   <textarea
                     value={String(localSettings[key] || '')}
                     onChange={(e) => onChange({ [key]: e.target.value })}
-                    rows={5}
+                    rows={intent === 'rewrite' ? 12 : 5}
                     className="w-full bg-muted border border-border rounded-lg p-2.5 text-xs text-content font-mono outline-none focus:border-accent leading-relaxed"
                   />
                 </div>

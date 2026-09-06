@@ -1,0 +1,1 @@
+Do not add Word Family, Related Forms, Derived Forms, Word Formation, Usage Warnings, Confusables, Common Learner Mistakes, Collocations, or Natural Collocations headings; reliable data for those categories belongs in the structured lexical profile.

@@ -3,9 +3,9 @@
 @tailwind utilities;
 
 /* ==========================================================================
-   Design System Tokens (OLED Dark Mode & Clean Emerald Accent)
-   Light: Clean slate paper & emerald green.
-   Dark: Deep obsidian OLED velvet, slate foreground, radiant emerald neon.
+   Design System Tokens
+   Light: product-page warm paper, ink text, restrained teal.
+   Dark: Solarized Dark deep teal-navy, warm base3/base1 text, cyan accent.
    ========================================================================== */
 
 :root,
@@ -18,50 +18,50 @@
 .light-theme,
 [data-theme="light"],
 html.light {
-  /* Light Mode: Crisp Slate Paper & Precision Emerald */
-  --bg-paper: #fafaf9;
-  --bg-paper-rgb: 250, 250, 249;
+  /* Light Mode: Warm Paper Surfaces & Restrained Teal (product-page) */
+  --bg-paper: #fbfaf7;
+  --bg-paper-rgb: 251, 250, 247;
   --bg-surface: #ffffff;
   --bg-surface-rgb: 255, 255, 255;
-  --bg-elevated: #f1f5f9;
-  --bg-elevated-rgb: 241, 245, 249;
-  --bg-muted: #e2e8f0;
-  --bg-muted-rgb: 226, 232, 240;
-  --bg-hover: #cbd5e1;
-  --bg-hover-rgb: 203, 213, 225;
+  --bg-elevated: #f4efe4;
+  --bg-elevated-rgb: 244, 239, 228;
+  --bg-muted: #f3f0e9;
+  --bg-muted-rgb: 243, 240, 233;
+  --bg-hover: #e6e1d7;
+  --bg-hover-rgb: 230, 225, 215;
 
-  --border-color: #cbd5e1;
-  --border-color-rgb: 203, 213, 225;
-  --border-subtle: #e2e8f0;
-  --border-subtle-rgb: 226, 232, 240;
+  --border-color: #dedbd3;
+  --border-color-rgb: 222, 219, 211;
+  --border-subtle: #e8e5dc;
+  --border-subtle-rgb: 232, 229, 220;
 
-  --text-primary: #0f172a;
-  --text-primary-rgb: 15, 23, 42;
-  --text-main: #0f172a;
-  --text-secondary: #475569;
-  --text-secondary-rgb: 71, 85, 105;
-  --text-muted: #64748b;
-  --text-muted-rgb: 100, 116, 139;
-  --text-disabled: #94a3b8;
-  --text-disabled-rgb: 148, 163, 184;
+  --text-primary: #172534;
+  --text-primary-rgb: 23, 37, 52;
+  --text-main: #172534;
+  --text-secondary: #405363;
+  --text-secondary-rgb: 64, 83, 99;
+  --text-muted: #687985;
+  --text-muted-rgb: 104, 121, 133;
+  --text-disabled: #9aa8b2;
+  --text-disabled-rgb: 154, 168, 178;
 
-  --color-primary: #16a34a;
-  --color-primary-rgb: 22, 163, 74;
-  --color-primary-hover: #15803d;
-  --color-primary-light: rgba(22, 163, 74, 0.09);
-  --color-accent: #16a34a;
-  --color-accent-rgb: 22, 163, 74;
-  --color-accent-light: rgba(22, 163, 74, 0.09);
-  --ring-focus: rgba(22, 163, 74, 0.35);
+  --color-primary: #0d9488;
+  --color-primary-rgb: 13, 148, 136;
+  --color-primary-hover: #0f766e;
+  --color-primary-light: rgba(13, 148, 136, 0.08);
+  --color-accent: #0d9488;
+  --color-accent-rgb: 13, 148, 136;
+  --color-accent-light: rgba(13, 148, 136, 0.08);
+  --ring-focus: rgba(13, 148, 136, 0.35);
 
-  --accent-ink: #16a34a;
-  --accent-warm: #d97706;
-  --accent-rose: #e11d48;
+  --accent-ink: #0d9488;
+  --accent-warm: #b45309;
+  --accent-rose: #991b1b;
 
-  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -12px rgba(15, 23, 42, 0.08);
-  --shadow-elevated: 0 2px 8px -2px rgba(15, 23, 42, 0.08), 0 12px 32px -16px rgba(15, 23, 42, 0.16);
-  --hairline-gold: rgba(22, 163, 74, 0.25);
-  --hairline-accent: rgba(22, 163, 74, 0.25);
+  --shadow-card: 0 1px 3px rgb(23 37 52 / 0.06), 0 1px 2px rgb(23 37 52 / 0.04);
+  --shadow-elevated: 0 5px 16px -3px rgb(23 37 52 / 0.08), 0 2px 6px -2px rgb(23 37 52 / 0.05);
+  --hairline-gold: rgba(13, 148, 136, 0.22);
+  --hairline-accent: rgba(13, 148, 136, 0.22);
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
 
   color-scheme: light;
@@ -73,51 +73,51 @@ html.light {
 :host([data-theme="dark"]),
 .dark,
 [data-theme="dark"] {
-  /* Dark Mode: Premium Dimmed Charcoal & Radiant Emerald Accent */
-  --bg-paper: #22272e;
-  --bg-paper-rgb: 34, 39, 46;
-  --bg-surface: #2d333b;
-  --bg-surface-rgb: 45, 51, 59;
-  --bg-elevated: #373e47;
-  --bg-elevated-rgb: 55, 62, 71;
-  --bg-muted: #31363f;
-  --bg-muted-rgb: 49, 54, 63;
-  --bg-hover: #444c56;
-  --bg-hover-rgb: 68, 76, 86;
+  /* Dark Mode: Solarized Dark (base03/base02 deep teal-navy & Solarized Cyan) */
+  --bg-paper: #002b36;
+  --bg-paper-rgb: 0, 43, 54;
+  --bg-surface: #073642;
+  --bg-surface-rgb: 7, 54, 66;
+  --bg-elevated: #0e4453;
+  --bg-elevated-rgb: 14, 68, 83;
+  --bg-muted: #063744;
+  --bg-muted-rgb: 6, 55, 68;
+  --bg-hover: #134e5e;
+  --bg-hover-rgb: 19, 78, 94;
 
-  --border-color: #545d68;
-  --border-color-rgb: 84, 93, 104;
-  --border-subtle: #3e444e;
-  --border-subtle-rgb: 62, 68, 78;
+  --border-color: #1e5a6b;
+  --border-color-rgb: 30, 90, 107;
+  --border-subtle: #0f4452;
+  --border-subtle-rgb: 15, 68, 82;
 
-  /* High contrast, luminous typography with premium comfort */
-  --text-primary: #f0f6fc;
-  --text-primary-rgb: 240, 246, 252;
-  --text-main: #f0f6fc;
-  --text-secondary: #cdd9e5;
-  --text-secondary-rgb: 205, 217, 229;
-  --text-muted: #909dab;
-  --text-muted-rgb: 144, 157, 171;
-  --text-disabled: #636e7b;
-  --text-disabled-rgb: 99, 110, 123;
+  /* Solarized Dark typography: warm base3 primary, base1 secondary, base00 muted */
+  --text-primary: #fdf6e3;
+  --text-primary-rgb: 253, 246, 227;
+  --text-main: #fdf6e3;
+  --text-secondary: #93a1a1;
+  --text-secondary-rgb: 147, 161, 161;
+  --text-muted: #839496;
+  --text-muted-rgb: 131, 148, 150;
+  --text-disabled: #586e75;
+  --text-disabled-rgb: 88, 110, 117;
 
-  --color-primary: #22c55e;
-  --color-primary-rgb: 34, 197, 94;
-  --color-primary-hover: #4ade80;
-  --color-primary-light: rgba(34, 197, 94, 0.14);
-  --color-accent: #22c55e;
-  --color-accent-rgb: 34, 197, 94;
-  --color-accent-light: rgba(34, 197, 94, 0.14);
-  --ring-focus: rgba(34, 197, 94, 0.45);
+  --color-primary: #2aa198;
+  --color-primary-rgb: 42, 161, 152;
+  --color-primary-hover: #35b5ab;
+  --color-primary-light: rgba(42, 161, 152, 0.16);
+  --color-accent: #2aa198;
+  --color-accent-rgb: 42, 161, 152;
+  --color-accent-light: rgba(42, 161, 152, 0.16);
+  --ring-focus: rgba(42, 161, 152, 0.45);
 
-  --accent-ink: #22c55e;
-  --accent-warm: #f59e0b;
-  --accent-rose: #fb7185;
+  --accent-ink: #2aa198;
+  --accent-warm: #b58900;
+  --accent-rose: #dc322f;
 
-  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 6px 18px -4px rgba(0, 0, 0, 0.35);
-  --shadow-elevated: 0 1px 0 rgba(255, 255, 255, 0.1) inset, 0 16px 36px -8px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(34, 197, 94, 0.2);
-  --hairline-gold: rgba(34, 197, 94, 0.35);
-  --hairline-accent: rgba(34, 197, 94, 0.35);
+  --shadow-card: 0 1px 0 rgba(253, 246, 227, 0.06) inset, 0 8px 22px -4px rgba(0, 0, 0, 0.45);
+  --shadow-elevated: 0 1px 0 rgba(253, 246, 227, 0.08) inset, 0 16px 36px -8px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(42, 161, 152, 0.22);
+  --hairline-gold: rgba(42, 161, 152, 0.35);
+  --hairline-accent: rgba(42, 161, 152, 0.35);
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
 
   color-scheme: dark;
@@ -364,7 +364,7 @@ input[type="range"] {
 }
 .dark .related-word-link {
   color: var(--text-primary);
-  text-decoration-color: rgba(34, 197, 94, 0.35);
+  text-decoration-color: rgba(42, 161, 152, 0.35);
 }
 .dark .related-word-link:hover {
   color: var(--color-primary-hover);
@@ -389,11 +389,11 @@ input[type="range"] {
 
 .dark ::-webkit-scrollbar-thumb,
 [data-theme="dark"] ::-webkit-scrollbar-thumb {
-  background: rgba(34, 197, 94, 0.28);
+  background: rgba(42, 161, 152, 0.32);
 }
 .dark ::-webkit-scrollbar-thumb:hover,
 [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
-  background: rgba(34, 197, 94, 0.48);
+  background: rgba(42, 161, 152, 0.5);
 }
 
 /* Part of Speech Badges */
@@ -404,21 +404,21 @@ input[type="range"] {
 }
 .dark .badge-pos-noun,
 [data-theme="dark"] .badge-pos-noun {
-  background-color: rgba(196, 181, 253, 0.12);
-  color: #ddd6fe;
-  border: 1px solid rgba(196, 181, 253, 0.28);
+  background-color: rgba(108, 113, 196, 0.16);
+  color: #6c71c4;
+  border: 1px solid rgba(108, 113, 196, 0.35);
 }
 
 .badge-pos-verb {
-  background-color: rgba(22, 163, 74, 0.12);
-  color: #15803d;
-  border: 1px solid rgba(22, 163, 74, 0.25);
+  background-color: rgba(13, 148, 136, 0.12);
+  color: #0f766e;
+  border: 1px solid rgba(13, 148, 136, 0.25);
 }
 .dark .badge-pos-verb,
 [data-theme="dark"] .badge-pos-verb {
-  background-color: rgba(34, 197, 94, 0.14);
-  color: #86efac;
-  border: 1px solid rgba(34, 197, 94, 0.32);
+  background-color: rgba(42, 161, 152, 0.16);
+  color: #2aa198;
+  border: 1px solid rgba(42, 161, 152, 0.35);
 }
 
 .badge-pos-adj {
@@ -428,9 +428,9 @@ input[type="range"] {
 }
 .dark .badge-pos-adj,
 [data-theme="dark"] .badge-pos-adj {
-  background-color: rgba(245, 158, 11, 0.12);
-  color: #fcd34d;
-  border: 1px solid rgba(245, 158, 11, 0.28);
+  background-color: rgba(181, 137, 0, 0.16);
+  color: #b58900;
+  border: 1px solid rgba(181, 137, 0, 0.32);
 }
 
 .badge-pos-adv {
@@ -440,9 +440,9 @@ input[type="range"] {
 }
 .dark .badge-pos-adv,
 [data-theme="dark"] .badge-pos-adv {
-  background-color: rgba(251, 113, 133, 0.12);
-  color: #fecdd3;
-  border: 1px solid rgba(251, 113, 133, 0.28);
+  background-color: rgba(220, 50, 47, 0.16);
+  color: #dc322f;
+  border: 1px solid rgba(220, 50, 47, 0.32);
 }
 
 .badge-pos-other {
@@ -468,32 +468,32 @@ input[type="range"] {
 .dark header,
 [data-theme="dark"] header {
   background:
-    linear-gradient(180deg, rgba(34, 197, 94, 0.08) 0%, transparent 100%),
+    linear-gradient(180deg, rgba(42, 161, 152, 0.1) 0%, transparent 100%),
     var(--bg-surface);
 }
 
 .inpage-popup-card {
-  background-color: rgba(250, 250, 247, 0.96);
+  background-color: rgba(251, 250, 247, 0.98);
   box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.04),
-    0 16px 36px -12px rgba(15, 23, 42, 0.12);
+    0 1px 3px rgb(23 37 52 / 0.06),
+    0 16px 36px -12px rgb(23 37 52 / 0.12);
 }
 
 .dark.inpage-popup-card,
 .dark .inpage-popup-card,
 [data-theme="dark"].inpage-popup-card,
 [data-theme="dark"] .inpage-popup-card {
-  background-color: rgba(45, 51, 59, 0.97);
+  background-color: rgba(7, 54, 66, 0.97);
   border-color: var(--border-color);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.1) inset,
-    0 24px 48px -16px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(34, 197, 94, 0.18);
+    0 1px 0 rgba(253, 246, 227, 0.08) inset,
+    0 24px 48px -16px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(42, 161, 152, 0.22);
 }
 
 .dark .btn-control-icon:hover,
 [data-theme="dark"] .btn-control-icon:hover {
-  border-color: rgba(34, 197, 94, 0.4);
+  border-color: rgba(42, 161, 152, 0.45);
 }
 
 .dark input:focus,
@@ -508,30 +508,30 @@ input[type="range"] {
 /* Audio Pronunciation Wave Pulse Indicator */
 @keyframes audio-pulse-ring-emerald {
   0% {
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);
+    box-shadow: 0 0 0 0 rgba(42, 161, 152, 0.5);
   }
   70% {
-    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+    box-shadow: 0 0 0 6px rgba(42, 161, 152, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    box-shadow: 0 0 0 0 rgba(42, 161, 152, 0);
   }
 }
 
-@keyframes audio-pulse-ring-green {
+@keyframes audio-pulse-ring-teal {
   0% {
-    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.42);
+    box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.4);
   }
   70% {
-    box-shadow: 0 0 0 6px rgba(22, 163, 74, 0);
+    box-shadow: 0 0 0 6px rgba(13, 148, 136, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
+    box-shadow: 0 0 0 0 rgba(13, 148, 136, 0);
   }
 }
 
 .audio-playing-indicator {
-  animation: audio-pulse-ring-green 1.25s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  animation: audio-pulse-ring-teal 1.25s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }
 
 .dark .audio-playing-indicator,
@@ -570,8 +570,14 @@ input[type="range"] {
 /* Settings page — restyle existing cards without rewriting tab forms */
 .settings-shell {
   background-image:
-    radial-gradient(1200px 420px at 12% -10%, rgba(34, 197, 94, 0.1), transparent 55%),
-    radial-gradient(900px 360px at 100% 0%, rgba(240, 246, 252, 0.04), transparent 50%);
+    radial-gradient(1000px 520px at 88% -6%, rgba(79, 70, 165, 0.06), transparent 56%),
+    radial-gradient(740px 460px at 3% 29%, rgba(8, 127, 110, 0.05), transparent 60%);
+}
+.dark .settings-shell,
+[data-theme="dark"] .settings-shell {
+  background-image:
+    radial-gradient(1200px 420px at 12% -10%, rgba(42, 161, 152, 0.12), transparent 55%),
+    radial-gradient(900px 360px at 100% 0%, rgba(253, 246, 227, 0.04), transparent 50%);
 }
 .settings-shell section.bg-surface {
   border-radius: 1rem;

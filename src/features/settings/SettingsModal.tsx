@@ -8,7 +8,7 @@ import {
 } from '@/composables/composable.storage';
 import { SECRET_SETTING_KEYS } from '@/shared/settings-export';
 import { requestProviderValidation } from '@/shared/runtime-client';
-import { DEFAULT_AI_PROMPTS } from '@/shared/ai-prompts';
+import { DEFAULT_AI_PROMPTS } from '@/prompts/prompt-templates';
 import { KNOWN_LANGUAGE_MAPPINGS } from '@/shared/languages';
 import { AppSettings } from '@/types';
 import { useAppTheme } from '@/ui/theme';
@@ -37,6 +37,7 @@ const promptEditors: Array<{ key: keyof AppSettings; label: string; intent: AppS
   { key: 'aiSentencePromptTemplate', label: 'Sentence Breakdown', intent: 'sentence_breakdown' },
   { key: 'aiComparePromptTemplate', label: 'Compare Confusables', intent: 'confusables' },
   { key: 'aiRephrasePromptTemplate', label: 'Rephrase', intent: 'rephrase' },
+  { key: 'aiRewritePromptTemplate', label: 'Rewriter', intent: 'rewrite' },
 ];
 
 const presetModels = ['gemini-3.5-flash-lite'];
