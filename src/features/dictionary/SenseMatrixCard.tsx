@@ -93,7 +93,7 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSe
       {filteredMeanings.map((meaning, mIdx) => (
         <div
           key={meaning.partOfSpeech || mIdx}
-          className="space-y-3 border-b border-border pb-4 last:border-b-0 last:pb-0"
+          className="space-y-3 rounded-lg border border-border bg-surface p-3.5"
         >
           <div className="flex items-center justify-between">
             <span

@@ -326,14 +326,14 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
         </div>
 
         {showContextBanner ? (
-          <p className="text-[12px] text-content-muted italic leading-snug line-clamp-2">
+          <p className="text-[18px] text-content-muted leading-snug line-clamp-2">
             “{pageContext}”
           </p>
         ) : null}
       </div>
 
       {result.translation?.translatedText ? (
-        <section className="px-3 py-2.5 rounded-lg border border-accent/25 bg-accent-subtle flex items-baseline justify-between gap-3 shadow-2xs">
+        <section className="px-3 py-2.5 rounded-lg border border-border bg-muted flex items-baseline justify-between gap-3">
           <div className="space-y-0.5 min-w-0 flex-1">
             <span className="text-[10px] font-bold text-accent uppercase tracking-wider font-mono">
               Translation
@@ -389,14 +389,12 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
       ) : null}
 
       {result.meanings?.length ? (
-        <section className="p-3.5 rounded-lg border border-border bg-surface space-y-3 shadow-card">
-          <SenseMatrixCard meanings={result.meanings} onSelectWord={handleSearch} />
-        </section>
+        <SenseMatrixCard meanings={result.meanings} onSelectWord={handleSearch} />
       ) : null}
 
       {/* 6. Phrase Fallback Explanation */}
       {result.phraseExplanation?.length ? (
-        <section className="p-3.5 rounded-lg border border-border bg-surface space-y-2 shadow-card">
+        <section className="p-3.5 rounded-lg border border-border bg-surface space-y-2">
           <p className="text-[11px] font-bold uppercase tracking-wider font-mono text-accent">
             Phrase Explanation
           </p>
@@ -422,7 +420,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
 
       {/* Progressive Disclosure: Collapsible Secondary Details */}
       {hasMoreDetails ? (
-        <details className="lexical-accordion rounded-lg border border-border bg-surface shadow-card">
+        <details className="lexical-accordion rounded-lg border border-border bg-surface">
           <summary className="px-3.5 py-2.5 text-[11px] font-bold text-content-muted uppercase tracking-wider flex items-center justify-between gap-2 cursor-pointer select-none">
             <span>More details & context</span>
             <IconChevronDown className="w-3.5 h-3.5" />
