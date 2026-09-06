@@ -31,6 +31,7 @@ const intentTitleMap: Record<AiIntentId, string> = {
   sentence_breakdown: 'Sentence Breakdown',
   confusables: 'Compare Confusables',
   rephrase: 'Rephrase',
+  rewrite: 'Rewriter',
   phrase_fallback: 'Phrase Explanation',
 };
 

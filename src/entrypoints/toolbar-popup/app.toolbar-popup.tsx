@@ -11,6 +11,7 @@ import WordLookupView from '@/features/dictionary/WordLookupView';
 import ToastContainer from '@/components/component.toast';
 
 const AiAssistantView = lazy(() => import('@/features/ai-assistant/AiAssistantView'));
+const ContextualRewriter = lazy(() => import('@/features/rewriter/ContextualRewriter'));
 const ShortcutsModal = lazy(() => import('@/features/settings/ShortcutsModal'));
 
 export const ToolbarPopupApp: React.FC = () => {
@@ -23,6 +24,7 @@ export const ToolbarPopupApp: React.FC = () => {
   });
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [aiVisited, setAiVisited] = useState(activeTab === 'ai_assistant');
+  const [rewriterVisited, setRewriterVisited] = useState(activeTab === 'rewriter');
   const [targetLang, setTargetLang] = useState(settings.translateTargetLanguage || 'Vietnamese');
   const [currentProvider, setCurrentProvider] = useState(settings.dictionaryProvider || 'wiktionary');
   const [isFullTab, setIsFullTab] = useState(false);
@@ -37,6 +39,7 @@ export const ToolbarPopupApp: React.FC = () => {
 
   useEffect(() => {
     if (activeTab === 'ai_assistant') setAiVisited(true);
+    if (activeTab === 'rewriter') setRewriterVisited(true);
   }, [activeTab]);
 
   function updateResponsiveMode() {
@@ -156,6 +159,16 @@ export const ToolbarPopupApp: React.FC = () => {
                 targetLang={targetLang}
                 isVisible={activeTab === 'ai_assistant'}
                 onSwitchTab={handleTabChange}
+              />
+            </Suspense>
+          </div>
+        ) : null}
+        {rewriterVisited ? (
+          <div style={{ display: activeTab === 'rewriter' ? undefined : 'none' }}>
+            <Suspense fallback={<div className="p-4 text-[12.5px] text-content-muted">Loading rewriter…</div>}>
+              <ContextualRewriter
+                initialText={query}
+                targetLang={targetLang}
               />
             </Suspense>
           </div>

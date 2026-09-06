@@ -1,22 +1,15 @@
 import React, { useMemo } from 'react';
 import { useDictionaryAudio } from '../composables/composable.dictionary';
 import {
-  ExampleRenderItem,
-  groupMarkdownLines,
-  isExampleSectionTitle,
+  MarkdownSectionBlock,
   languageBadge,
+  parseMarkdownSections,
 } from '../shared/ai-example-blocks';
 import { IconSpeaker } from './icons';
 
 interface MarkdownRendererProps {
   content?: string;
   targetLang?: string;
-}
-
-interface SectionBlock {
-  title?: string;
-  exampleSection: boolean;
-  items: ExampleRenderItem[];
 }
 
 const IN_CONTEXT_BADGE =
@@ -35,43 +28,8 @@ function formatInlineMarkdown(text: string): string {
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, targetLang }) => {
   const { playPronunciation, playingKey } = useDictionaryAudio();
 
-  const parsedBlocks = useMemo<SectionBlock[]>(() => {
-    if (!content) return [];
-    const text = content.trim();
-    const rawLines = text.split('\n');
-
-    const blocks: Array<{ title?: string; lines: string[] }> = [];
-    let currentTitle = '';
-    let currentLines: string[] = [];
-
-    for (const line of rawLines) {
-      const trimmedLine = line.trim();
-      if (trimmedLine.startsWith('### ') || trimmedLine.startsWith('## ')) {
-        if (currentLines.length > 0 || currentTitle) {
-          blocks.push({ title: currentTitle, lines: currentLines });
-        }
-        currentTitle = trimmedLine.replace(/^#+\s*/, '');
-        currentLines = [];
-      } else {
-        currentLines.push(line);
-      }
-    }
-
-    if (currentLines.length > 0 || currentTitle) {
-      blocks.push({ title: currentTitle, lines: currentLines });
-    }
-
-    return blocks.map((block) => {
-      const exampleSection = isExampleSectionTitle(block.title);
-      return {
-        title: block.title,
-        exampleSection,
-        items: groupMarkdownLines(block.lines, {
-          exampleSection,
-          targetLang,
-        }),
-      };
-    });
+  const parsedBlocks = useMemo<MarkdownSectionBlock[]>(() => {
+    return parseMarkdownSections(content || '', targetLang);
   }, [content, targetLang]);
 
   function listenKey(blockIndex: number, itemIndex: number): string {
@@ -102,6 +60,71 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, tar
 
           <div className="space-y-2 text-content leading-relaxed text-[14px]">
             {block.items.map((item, lIdx) => {
+              if (item.kind === 'pattern_rule') {
+                const key = listenKey(bIdx, lIdx);
+                const isPlaying = item.example ? playingKey === key : false;
+                return (
+                  <div
+                    key={lIdx}
+                    className="rounded-xl border border-border overflow-hidden bg-surface my-2.5 shadow-xs transition-colors"
+                  >
+                    <div className="p-3.5 bg-surface space-y-1.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="px-2 py-0.5 rounded text-[10.5px] font-bold uppercase tracking-wider bg-accent-subtle text-accent border border-accent/25 font-mono">
+                          Pattern {lIdx + 1}
+                        </span>
+                        {item.title ? (
+                          <span className="font-bold text-[13.5px] text-content">
+                            {item.title}
+                          </span>
+                        ) : null}
+                      </div>
+                      <p
+                        className="text-[13px] text-content-secondary leading-relaxed"
+                        dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(item.description) }}
+                      />
+                    </div>
+
+                    {item.example ? (
+                      <div className="border-t border-border/60 bg-muted/20">
+                        <div className="flex items-start gap-3 px-3.5 py-2.5 bg-accent-subtle/40 border-l-2 border-accent">
+                          <span className="mt-0.5 px-1.5 py-0.5 rounded text-[11px] font-extrabold tracking-wider bg-accent-subtle text-accent border border-accent/30 flex-shrink-0">
+                            EN
+                          </span>
+                          <p className="flex-1 text-[13.5px] leading-relaxed text-content font-medium">
+                            "{item.example.english}"
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => listenExample(item.example!.english, bIdx, lIdx)}
+                            title="Listen to English example"
+                            className={`h-[28px] px-2.5 rounded-lg border text-[12px] font-semibold flex-shrink-0 cursor-pointer transition-colors flex items-center gap-1.5 not-italic shadow-xs ${
+                              isPlaying
+                                ? 'bg-accent-subtle text-accent border-accent/40'
+                                : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border'
+                            }`}
+                            aria-pressed={isPlaying}
+                          >
+                            <IconSpeaker className="w-3.5 h-3.5 text-accent" />
+                            <span>Listen</span>
+                          </button>
+                        </div>
+                        {item.example.translation ? (
+                          <div className="flex items-start gap-3 px-3.5 py-2 bg-muted/30 border-t border-border/50 border-l-2 border-border">
+                            <span className="mt-0.5 px-1.5 py-0.5 rounded text-[11px] font-extrabold tracking-wider bg-muted text-content-secondary border border-border flex-shrink-0">
+                              {languageBadge(targetLang)}
+                            </span>
+                            <p className="flex-1 text-[13px] leading-relaxed text-content-secondary font-normal">
+                              {item.example.translation}
+                            </p>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              }
+
               if (item.kind === 'example') {
                 const key = listenKey(bIdx, lIdx);
                 const isPlaying = playingKey === key;

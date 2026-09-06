@@ -5,6 +5,12 @@ interface IconProps extends React.SVGProps<SVGSVGElement> {
   size?: number | string;
 }
 
+export const IconBookmark: React.FC<IconProps> = ({ className = 'w-4 h-4', ...props }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true" {...props}>
+    <path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+  </svg>
+);
+
 export const IconBook: React.FC<IconProps> = ({ className = 'w-4 h-4', ...props }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true" {...props}>
     <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />

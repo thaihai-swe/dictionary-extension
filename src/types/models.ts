@@ -1,4 +1,4 @@
-export type TabId = 'dictionary' | 'ai_assistant';
+export type TabId = 'dictionary' | 'ai_assistant' | 'rewriter';
 
 export type AiIntentId =
   | 'default'
@@ -8,6 +8,7 @@ export type AiIntentId =
   | 'sentence_breakdown'
   | 'confusables'
   | 'rephrase'
+  | 'rewrite'
   | 'phrase_fallback';
 
 export interface SentenceStructureItem {

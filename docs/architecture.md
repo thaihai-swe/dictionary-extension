@@ -157,7 +157,6 @@ Check L2 Session Storage (chrome.storage.session with "enrich_" prefix)
 - **Cache Key Serialization:** Formed from normalized query text, primary provider ID, translation parameters, and provider API key availability flags.
 - **In-flight Deduplication:** `enrichmentInFlight` tracks active enrichment promises by cache key, ensuring duplicate rapid queries share the same network execution.
 - **Cache Invalidation:** Any change in `chrome.storage.sync` or `chrome.storage.local` to provider selection, enabled features, target language, or API keys triggers `clearEnrichmentSessionCache()`, clearing both L1 and L2 session storage.
-- **Schema Migrations:** `migrateEnrichmentCacheSchema()` tracks `ENRICHMENT_CACHE_SCHEMA_VERSION = 2` to purge incompatible serialized cache shapes across extension updates.
 
 ---
 
@@ -178,15 +177,15 @@ The AI subsystem (`src/composables/composable.ai-assistant.ts` and `src/provider
 
 ### AI Concurrency & Preload Architecture
 
-1. **Dictionary-tab Main AI preload (600ms debounce):**
-   - When text is selected, `maybePreloadAi()` waits 600ms, then `preloadIntents()` fetches **only** the `default` (Main AI) intent.
-   - Follow-up intents do **not** make network calls while the user stays on the Dictionary tab.
-   - Rapid selection changes or overlay dismissal clear the timer (`cancelAiPreload()`), so no LLM tokens are spent on discarded words.
+1. **Per-Intent Preload Allowlist (`preloadedAiIntents`):**
+   - Users choose which intents may preload under Settings → AI → Prompt templates.
+   - If `default` (Main AI) is not in `preloadedAiIntents`, selection on the Dictionary tab never triggers background LLM requests.
+   - Rapid selection changes or overlay dismissal clear any pending timer (`cancelAiPreload()`), preventing wasted API tokens.
 2. **AI-tab visit sequencing (`preloadFollowUpIntentsOnTabVisit`):**
-   - When `<AiAssistantView />` becomes visible (`isVisible === true`), remaining intents (`explain_in_context`, `grammar`, `collocations`, `sentence_breakdown`, `confusables`, `rephrase`) queue sequentially via `requestIdleCallback` or 250ms timeouts.
+   - When `<AiAssistantView />` becomes visible, only intents enabled in `preloadedAiIntents` queue sequentially in the background.
    - Cached or already-pending intents are skipped.
 3. **Intent Hover/Focus Prefetching & Live Status Indicators:**
-   - In the AI assistant view, hovering over or focusing any secondary intent button triggers `preloadSpecificIntent()`.
+   - In the AI assistant view, hovering over an intent triggers `preloadSpecificIntent()` only if that intent is enabled in `preloadedAiIntents`.
    - Each intent button features a live status indicator dot:
      - **Emerald (Ready):** Response is cached and displays instantly on click.
      - **Amber Pulse (Loading):** Request is actively in-flight.
@@ -358,7 +357,6 @@ The extension implements strict data boundaries to guarantee that API credential
 
 - **Zero-Leak UI Settings Loader (`loadPublicSettings`):** Toolbar popup and content scripts query public settings exclusively. API keys are physically excluded from unprivileged memory spaces.
 - **Local Secret Storage (`chrome.storage.local`):** Secret keys (`aiApiKey`, `libreTranslateApiKey`) are saved to local device storage, never synced to Google cloud accounts. A public boolean flag (`hasAiApiKey`) in sync storage indicates key presence without exposing the token.
-- **Schema Migrations (`migrateSettingsSchema` — Schema v12):** Automatically synchronizes `hasAiApiKey` flags and ensures prompt templates remain up-to-date while preserving user customizations.
 - **Granular Host Permissions:** Custom AI base URLs and self-hosted LibreTranslate instances trigger dynamic `chrome.permissions.request({ origins: [...] })` prompts from Settings.
 - **Sanitized Import/Export (`src/shared/settings-export.ts`):** Settings export generates a public JSON document omitting all secret keys (`SECRET_KEYS`). Settings import strictly ignores secret keys if present.
 

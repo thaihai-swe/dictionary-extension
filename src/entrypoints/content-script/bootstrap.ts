@@ -4,6 +4,7 @@ import { createRequestId, startDictionaryLookup } from '../../shared/dictionary-
 
 type BootSettings = {
   theme: string;
+  dockPosition: 'none' | 'left' | 'right';
   selectionTriggerMode: 'off' | 'icon' | 'direct';
   postSelectionModifier: 'shift' | 'alt' | 'ctrl';
   pausedHostnames: string[];
@@ -25,6 +26,7 @@ type OverlayModule = {
     handlers: {
       onClose: () => void;
       onToggleMaximize: () => void;
+      onToggleDock?: () => void;
       onStartDrag: (event: MouseEvent) => void;
       onStartResize: (event: MouseEvent) => void;
     },
@@ -33,6 +35,7 @@ type OverlayModule = {
 
 const BOOT_DEFAULTS: BootSettings = {
   theme: 'dark',
+  dockPosition: 'none',
   selectionTriggerMode: 'icon',
   postSelectionModifier: 'shift',
   pausedHostnames: [],
@@ -52,23 +55,23 @@ const TRIGGER_CSS = `
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 10px 24px rgba(13, 148, 136, 0.25);
+  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.28);
   transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 220ms ease;
   animation: dictionary-trigger-enter 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .dictionary-trigger-icon-btn:hover { transform: scale(1.08); }
 .dictionary-trigger-icon-btn:active { transform: scale(0.95); }
 .dictionary-trigger-icon-btn.dark {
-  background: #d4af37;
-  color: #0f172a;
-  border: 2px solid #1e293b;
-  box-shadow: 0 10px 24px rgba(212, 175, 55, 0.4);
+  background: #2aa198;
+  color: #002b36;
+  border: 2px solid #073642;
+  box-shadow: 0 10px 24px rgba(42, 161, 152, 0.4);
 }
 .dictionary-trigger-icon-btn.light {
   background: #0d9488;
   color: #fff;
   border: 2px solid #ffffff;
-  box-shadow: 0 10px 24px rgba(13, 148, 136, 0.25);
+  box-shadow: 0 10px 24px rgba(13, 148, 136, 0.28);
 }
 .dictionary-popup-layer {
   position: fixed;
@@ -140,6 +143,7 @@ function startBootstrap() {
   let overlayModulePromise: Promise<OverlayModule> | null = null;
   let showPopup = false;
   let isMaximized = false;
+  let dockPosition: 'none' | 'left' | 'right' = 'none';
   let selectedText = '';
   let contextSentence = '';
   let lookupRequestId = '';
@@ -293,6 +297,7 @@ function startBootstrap() {
       contextSentence,
       lookupRequestId: lookupRequestId || undefined,
       isMaximized,
+      dockPosition,
     };
   }
 
@@ -339,6 +344,7 @@ function startBootstrap() {
       overlayApi = mod.mountOverlay(shadow, overlayMount, overlayProps(), {
         onClose: closePopup,
         onToggleMaximize: toggleMaximize,
+        onToggleDock: toggleDock,
         onStartDrag: handleStartDrag,
         onStartResize: handleStartResize,
       });
@@ -350,6 +356,8 @@ function startBootstrap() {
   function closePopup() {
     showPopup = false;
     isMaximized = false;
+    dockPosition = 'none';
+    popupLayer.classList.remove('docked-left', 'docked-right');
     lookupRequestId = '';
     triggerBtn.style.display = 'none';
     popupLayer.style.display = 'none';
@@ -357,8 +365,30 @@ function startBootstrap() {
     popupLayer.classList.remove('maximized');
   }
 
+  function toggleDock() {
+    if (dockPosition === 'none') {
+      dockPosition = 'right';
+      popupLayer.classList.add('docked-right');
+      popupLayer.classList.remove('docked-left', 'maximized');
+      popupLayer.style.left = '';
+      popupLayer.style.top = '0';
+      popupLayer.style.width = '420px';
+      popupLayer.style.height = '100vh';
+      isMaximized = false;
+    } else {
+      dockPosition = 'none';
+      popupLayer.classList.remove('docked-left', 'docked-right');
+      positionPopup(window.innerWidth - (customWidth || 480) - 24, 60);
+    }
+    overlayApi?.update(overlayProps());
+  }
+
   function toggleMaximize() {
     isMaximized = !isMaximized;
+    if (isMaximized) {
+      dockPosition = 'none';
+      popupLayer.classList.remove('docked-left', 'docked-right');
+    }
     popupLayer.classList.toggle('maximized', isMaximized);
     popupLayer.style.left = isMaximized ? '' : `${popupX}px`;
     popupLayer.style.top = isMaximized ? '' : `${popupY}px`;
@@ -600,6 +630,7 @@ function startBootstrap() {
     try {
       const stored = await chrome.storage.sync.get({
         theme: BOOT_DEFAULTS.theme,
+        dockPosition: BOOT_DEFAULTS.dockPosition,
         selectionTriggerMode: BOOT_DEFAULTS.selectionTriggerMode,
         postSelectionModifier: BOOT_DEFAULTS.postSelectionModifier,
         pausedHostnames: BOOT_DEFAULTS.pausedHostnames,
@@ -609,8 +640,10 @@ function startBootstrap() {
       });
       const mode = stored.selectionTriggerMode;
       const modifier = stored.postSelectionModifier;
+      const dock = stored.dockPosition;
       settings = {
         theme: String(stored.theme || BOOT_DEFAULTS.theme),
+        dockPosition: dock === 'left' || dock === 'right' ? dock : 'none',
         selectionTriggerMode: mode === 'off' || mode === 'direct' || mode === 'icon' ? mode : BOOT_DEFAULTS.selectionTriggerMode,
         postSelectionModifier: modifier === 'alt' || modifier === 'ctrl' || modifier === 'shift' ? modifier : BOOT_DEFAULTS.postSelectionModifier,
         pausedHostnames: normalizeHostnames(stored.pausedHostnames),

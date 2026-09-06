@@ -135,7 +135,7 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
           </div>
         ) : result ? (
           <div aria-busy={isLoading || undefined}>
-            <WordLookupResult onSelectWord={handleSearch} />
+            <WordLookupResult onSelectWord={handleSearch} contextSentence={initialContext} />
           </div>
         ) : isLoading ? (
           <div className="p-4 space-y-3.5 rounded-xl border border-border bg-surface shadow-xs" aria-busy="true" aria-live="polite">

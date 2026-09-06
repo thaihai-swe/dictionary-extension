@@ -27,7 +27,7 @@ import {
   validateDictionaryProvider,
   validateTranslationProvider,
 } from '../../providers/provider.index';
-import { loadFullSettings, migrateSettingsSchema, normalizeSettings } from '../../shared/settings';
+import { loadFullSettings, normalizeSettings } from '../../shared/settings';
 import { canonicalAiIntent } from '../../shared/ai-prompts';
 
 const CONTENT_SCRIPT_JS = ['content-script.js'];
@@ -348,14 +348,10 @@ function initializeContextMenu() {
 
 chrome.runtime.onInstalled.addListener(() => {
   initializeContextMenu();
-  void Promise.all([
-    migrateSettingsSchema(),
-    loadFullSettings(),
-  ]).catch(() => undefined);
+  void loadFullSettings().catch(() => undefined);
 });
 
 chrome.runtime.onStartup?.addListener(() => {
-  void migrateSettingsSchema().catch(() => undefined);
   void loadFullSettings().catch(() => undefined);
 });
 

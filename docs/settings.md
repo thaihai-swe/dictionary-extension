@@ -1,6 +1,6 @@
 # Settings Reference
 
-This document serves as the complete configuration reference for **Dictionary**. It details all customizable preferences, storage partitioning architecture, default values, validation rules, AI prompt variables, and schema migration contracts up to schema version 12.
+This document serves as the complete configuration reference for **Dictionary**. It details all customizable preferences, storage partitioning architecture, default values, validation rules, and AI prompt variables.
 
 ---
 
@@ -17,7 +17,7 @@ To guarantee that private credentials can never leak across browser sync channel
 │ • translateTargetLanguage, customLanguages, translateProvider          │
 │ • dictionaryProvider, libreTranslateBaseUrl                            │
 │ • enableTranslate, enableDictionary, enableLexicalProfile, enableAI    │
-│ • enableAiPreload, enablePhraseFallback, disablePageContextExtraction  │
+│ • preloadedAiIntents, enablePhraseFallback, disablePageContextExtraction │
 │ • pausedHostnames                                                      │
 │ • pronunciationRate, pronunciationVoiceURI                             │
 │ • aiBaseUrl, aiModel (gemini-3.5-flash-lite), and all AI Prompts       │
@@ -31,6 +31,7 @@ To guarantee that private credentials can never leak across browser sync channel
 ├────────────────────────────────────────────────────────────────────────┤
 │ • aiApiKey (Gemini / OpenAI API Key)                                   │
 │ • libreTranslateApiKey (LibreTranslate Private Key)                    │
+│ • aiRewritePromptTemplate (Rewriter Master Prompt - local due to size) │
 │ • hasAiApiKey (Mirrored local boolean flag)                            │
 │ ➔ NEVER synced to the cloud. Stored strictly on this physical device.  │
 │ ➔ ISOLATED TO BACKGROUND SERVICE WORKER AND SECURE OPTIONS MODAL.      │
@@ -102,7 +103,8 @@ To guarantee that private credentials can never leak across browser sync channel
 | `aiApiKey` | `string` | `local` | `""` | Private API key. Required for Gemini. Optional for local OpenAI Standard (Ollama / proxy). |
 | `hasAiApiKey` | `boolean` | `sync & local`| `false` | Boolean indicator reflecting key presence without leaking the key string. |
 | `aiModel` | `string` | `sync` | Gemini: `"gemini-3.5-flash-lite"` · OpenAI: `""` | Model identifier. Gemini defaults to `gemini-3.5-flash-lite`. OpenAI Standard has no preset — the user types the model name their server expects. |
-| `enableAiPreload` | `boolean` | `sync` | `true` | Speculatively preloads Main AI in background after 600ms on Dictionary tab, then warms follow-up intents sequentially when visiting the AI tab. |
+| `preloadedAiIntents` | `AiIntentId[]` | `sync` | `[]` | Per-intent preload allowlist under Prompt templates. Empty means no background LLM calls. Legacy `enableAiPreload: true` (no list) maps to `["default"]` only. |
+| `enableAiPreload` | `boolean` | `sync` | `false` | Derived: `true` when `preloadedAiIntents` is non-empty. Not shown as a global toggle. |
 | `disablePageContextExtraction`| `boolean`| `sync`| `false` | When `true`, suppresses automatic extraction of surrounding webpage sentences. Manual context entry remains available. |
 | `aiPromptTemplate` | `string` | `sync` | *(Built-in)* | Prompt template for **Main AI** (`default`). |
 | `aiContextPromptTemplate` | `string` | `sync` | *(Built-in)* | Prompt template for **Context Explain** (`explain_in_context`). |
@@ -111,6 +113,7 @@ To guarantee that private credentials can never leak across browser sync channel
 | `aiSentencePromptTemplate` | `string` | `sync` | *(Built-in)* | Prompt template for **Sentence Breakdown** (`sentence_breakdown`). |
 | `aiComparePromptTemplate` | `string` | `sync` | *(Built-in)* | Prompt template for **Compare Confusables** (`confusables`). |
 | `aiRephrasePromptTemplate` | `string` | `sync` | *(Built-in)* | Prompt template for **Rephrase** (`rephrase`). |
+| `aiRewritePromptTemplate` | `string` | `local` | *(Built-in)* | Prompt template for **Rewriter** (`rewrite`). Stored in `local` because prompt size exceeds `sync` 8KB item quota. |
 
 ---
 
@@ -167,22 +170,3 @@ Click **Import settings** and select a previously exported JSON file. The import
 ### Resetting Prompts
 - In Settings → Prompts tab, click **Restore default** below any prompt textarea to restore that template.
 - Click **Save** to persist your changes.
-
----
-
-## 5. Schema Migration History
-
-The extension manages automatic schema migrations via `SETTINGS_SCHEMA_VERSION = 12`:
-
-- **Schema v1 → v2:** Upgraded Sentence Breakdown template to structural JSON without CEFR noise.
-- **Schema v3:** Purged legacy collocations templates and obsolete local vocabulary keys.
-- **Schema v4 → v5:** Separated structured Lexical Profile tags from Markdown heading duplication.
-- **Schema v6:** Aligned built-in Main, Context, and Grammar prompts to lean, non-duplicating intent outlines.
-- **Schema v7:** Added sense-aware target language glosses to Translation & Meaning.
-- **Schema v8:** Enriched bilingual example translations and phrase core meaning target-language equivalents.
-- **Schema v9:** Upgraded Main AI for structured sense matrices with contextual relevance flags, Context Explain for direct substitutions/nuance loss, and Grammar for syntactic slots; added Compare Confusables and Rephrase prompt templates.
-- **Schema v10:** Added `pausedHostnames` and `enablePhraseFallback`. Fresh installs default `enableAI` to `false`. Existing installs (schema ≥ 1) that never stored `enableAI` keep it enabled.
-- **Schema v11:** Internal increment with no new user-facing setting keys. Legacy commercial dictionary keys (`dictionaryApiKey`, `wordnikApiKey`, `wordsApiKey`) are stripped from local storage on load.
-- **Schema v12:** Introduces `hasAiApiKey` as a public/local boolean so UI layers know whether an API key exists without reading the secret. Default Gemini model is `gemini-3.5-flash-lite`.
-
-*(Custom prompt modifications are detected and strictly preserved during all schema upgrades).*

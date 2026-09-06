@@ -3,7 +3,12 @@ import { registerCacheInvalidator, settingsStore, whenSettingsReady } from './co
 import { stopAllAudio } from './composable.dictionary';
 import { registerAiRuntimeAbort } from './runtime-hooks';
 import { AiResult, AiIntentId, AppSettings } from '../types';
-import { canonicalAiIntent, PRELOAD_ALL_INTENTS, PRELOAD_FOLLOW_UPS } from '../shared/ai-prompts';
+import {
+  canonicalAiIntent,
+  isAiIntentPreloadEnabled,
+  PRELOAD_ALL_INTENTS,
+  PRELOAD_FOLLOW_UPS,
+} from '../shared/ai-prompts';
 import { hasConfiguredAiApiKey } from '../shared/settings-export';
 import { isOpenAiStandard } from '../shared/settings';
 import { cancelAiLookup, createRequestId, requestAiLookup } from '../shared/runtime-client';
@@ -183,11 +188,18 @@ function makePreloadKey(text: string, context: string, lang: string): string {
   return `${text.toLowerCase()}\0${context.toLowerCase()}\0${lang.toLowerCase()}`;
 }
 
-function shouldPreloadAi(settings: AppSettings): boolean {
-  const ready = isOpenAiStandard(settings)
+function isAiReady(settings: AppSettings): boolean {
+  return isOpenAiStandard(settings)
     ? Boolean(settings.aiModel?.trim())
     : hasConfiguredAiApiKey(settings);
-  return Boolean(settings.enableAiPreload && settings.enableAI && ready);
+}
+
+function shouldPreloadAi(settings: AppSettings): boolean {
+  return Boolean(settings.enableAI && isAiReady(settings) && settings.preloadedAiIntents?.length);
+}
+
+function shouldPreloadIntent(settings: AppSettings, intent: AiIntentId): boolean {
+  return Boolean(settings.enableAI && isAiReady(settings) && isAiIntentPreloadEnabled(settings, intent));
 }
 
 async function requestAnalysis(
@@ -286,8 +298,8 @@ async function runIntent(intentId: AiIntentId, text: string, targetLang?: string
   }
 
   if (shouldPreloadAi(settings) && generation === aiGeneration) {
-    // Only preload code chunks lazily, do NOT trigger background API calls for other intents
-    void preloadIntentChunks(PRELOAD_FOLLOW_UPS);
+    const chunks = PRELOAD_FOLLOW_UPS.filter((intent) => shouldPreloadIntent(settings, intent));
+    if (chunks.length) void preloadIntentChunks(chunks);
   }
 }
 
@@ -316,11 +328,12 @@ export async function preloadFollowUpIntentsOnTabVisit(
 
   const token = preloadToken;
   const queryKey = makePreloadKey(cleanText, cleanContext, lang);
-  void preloadIntentChunks(PRELOAD_FOLLOW_UPS);
 
   const queue = PRELOAD_FOLLOW_UPS.filter(
-    (intent) => !(intent === 'explain_in_context' && !cleanContext),
+    (intent) => shouldPreloadIntent(settings, intent) && !(intent === 'explain_in_context' && !cleanContext),
   );
+  if (queue.length) void preloadIntentChunks(queue);
+  if (!queue.length) return;
 
   const runNext = (index: number) => {
     if (token !== preloadToken) return;
@@ -361,7 +374,7 @@ export async function preloadSpecificIntent(
 ) {
   await whenSettingsReady();
   const settings = settingsStore.value;
-  if (!shouldPreloadAi(settings)) return;
+  if (!shouldPreloadIntent(settings, canonicalAiIntent(intentId))) return;
   const cleanText = String(text || '').trim();
   if (!cleanText) return;
   const lang = targetLang || settings.translateTargetLanguage || 'Vietnamese';
@@ -381,7 +394,7 @@ export async function preloadSpecificIntent(
 async function preloadIntents(text: string, context?: string, targetLang?: string) {
   await whenSettingsReady();
   const settings = settingsStore.value;
-  if (!shouldPreloadAi(settings)) return;
+  if (!shouldPreloadIntent(settings, 'default')) return;
   const cleanText = String(text || '').trim();
   if (!cleanText) return;
   const lang = targetLang || settings.translateTargetLanguage || 'Vietnamese';

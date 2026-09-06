@@ -5,8 +5,8 @@ When the user selects a word or inputs a search term, **Dictionary** and **AI As
 - Dictionary lookup does **not** wait for AI.
 - AI analysis does **not** wait for dictionary definitions or Lexical Profile.
 - Dictionary fires immediately on selection.
-- If AI preload is enabled, **only `Main AI` (`default`)** preloads in parallel after a 600ms debounce. The remaining 6 AI intents are deferred until the user opens the AI tab.
-- If the user later opens the AI tab, the `Main AI` intent is already in cache (0ms render), and the remaining intents are automatically queued in the background.
+- Preloading is configured per-intent under Settings → AI → Prompt templates. If `Main AI` is enabled for preload, it preloads after a 600ms debounce; follow-up intents preload only if enabled in `preloadedAiIntents`.
+- If an intent has preload enabled, opening its tab renders from cache (0ms); intents with preload disabled are fetched on demand when opened.
 
 Related: [Architecture](architecture.md), [Context Extraction](context-extraction.md), [Providers](providers.md), [Settings](settings.md).
 

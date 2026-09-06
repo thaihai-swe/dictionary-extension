@@ -1,0 +1,2 @@
+> English sentence
+> {{targetLang}} translation

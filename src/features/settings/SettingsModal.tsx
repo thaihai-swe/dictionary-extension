@@ -8,7 +8,7 @@ import {
 } from '@/composables/composable.storage';
 import { SECRET_SETTING_KEYS } from '@/shared/settings-export';
 import { requestProviderValidation } from '@/shared/runtime-client';
-import { DEFAULT_AI_PROMPTS } from '@/shared/ai-prompts';
+import { DEFAULT_AI_PROMPTS } from '@/prompts/prompt-templates';
 import { KNOWN_LANGUAGE_MAPPINGS } from '@/shared/languages';
 import { AppSettings } from '@/types';
 import { useAppTheme } from '@/ui/theme';
@@ -29,14 +29,15 @@ const TabAi = lazy(() => import('./tabs/TabAi'));
 
 type SettingsTab = 'general' | 'appearance' | 'sources' | 'ai';
 
-const promptEditors: Array<{ key: keyof AppSettings; label: string }> = [
-  { key: 'aiPromptTemplate', label: 'Main AI prompt' },
-  { key: 'aiContextPromptTemplate', label: 'Context Explain prompt' },
-  { key: 'aiGrammarPromptTemplate', label: 'Grammar & Nuance prompt' },
-  { key: 'aiPhraseExplorerPromptTemplate', label: 'Phrase & Collocations prompt' },
-  { key: 'aiSentencePromptTemplate', label: 'Sentence Breakdown prompt' },
-  { key: 'aiComparePromptTemplate', label: 'Compare Confusables prompt' },
-  { key: 'aiRephrasePromptTemplate', label: 'Rephrase prompt' },
+const promptEditors: Array<{ key: keyof AppSettings; label: string; intent: AppSettings['preloadedAiIntents'][number] }> = [
+  { key: 'aiPromptTemplate', label: 'Main AI', intent: 'default' },
+  { key: 'aiContextPromptTemplate', label: 'Context Explain', intent: 'explain_in_context' },
+  { key: 'aiGrammarPromptTemplate', label: 'Grammar & Nuance', intent: 'grammar' },
+  { key: 'aiPhraseExplorerPromptTemplate', label: 'Phrase & Collocations', intent: 'collocations' },
+  { key: 'aiSentencePromptTemplate', label: 'Sentence Breakdown', intent: 'sentence_breakdown' },
+  { key: 'aiComparePromptTemplate', label: 'Compare Confusables', intent: 'confusables' },
+  { key: 'aiRephrasePromptTemplate', label: 'Rephrase', intent: 'rephrase' },
+  { key: 'aiRewritePromptTemplate', label: 'Rewriter', intent: 'rewrite' },
 ];
 
 const presetModels = ['gemini-3.5-flash-lite'];
@@ -307,24 +308,24 @@ export const SettingsModal: React.FC = () => {
   return (
     <div
       className={cx(
-        'min-h-screen bg-paper text-content font-sans transition-colors',
+        'settings-shell min-h-screen bg-paper text-content font-sans transition-colors',
         isDarkMode ? 'dark' : 'light-theme light',
       )}
       data-theme={isDarkMode ? 'dark' : 'light'}
     >
       {/* Top App Bar */}
-      <header className="sticky top-0 z-30 bg-surface/85 backdrop-blur-md border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-30 bg-surface/90 backdrop-blur-md border-b border-border">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-[4.25rem] flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-accent-subtle border border-accent/30 flex items-center justify-center text-accent shadow-2xs shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-accent-subtle border border-accent/30 flex items-center justify-center text-accent shadow-2xs shrink-0">
               <IconSettings className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <h1 className="font-bold text-base sm:text-lg text-content font-heading truncate">
+              <h1 className="font-bold text-[17px] sm:text-lg text-content font-heading truncate tracking-tight">
                 Preferences
               </h1>
               <p className="text-[11.5px] text-content-muted truncate hidden sm:block">
-                Configure triggers, dictionaries, AI provider, and appearance
+                Triggers, dictionaries, AI, and appearance
               </p>
             </div>
           </div>
@@ -333,7 +334,7 @@ export const SettingsModal: React.FC = () => {
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="h-8 px-4 rounded-lg bg-accent hover:opacity-90 text-white dark:text-neutral-950 text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50 shrink-0"
+            className="h-9 px-4 rounded-xl bg-accent hover:opacity-90 text-white dark:text-neutral-950 text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50 shrink-0"
           >
             {isSavedNotice ? (
               <>
@@ -357,7 +358,7 @@ export const SettingsModal: React.FC = () => {
               type="button"
               onClick={() => switchTab(id)}
               className={cx(
-                'px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-2xs',
+                'px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0',
                 activeTab === id
                   ? 'chip-active font-extrabold'
                   : 'bg-surface border border-border text-content-secondary hover:text-content',
@@ -373,7 +374,7 @@ export const SettingsModal: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-[240px_minmax(0,1fr)] gap-8 items-start">
           {/* Desktop Left Rail (Sticky) */}
           <aside className="hidden md:block sticky top-24 space-y-4">
-            <nav className="space-y-1 bg-surface border border-border rounded-xl p-2 shadow-xs">
+            <nav className="space-y-1.5 bg-surface border border-border rounded-2xl p-2.5 shadow-card">
               {TABS.map(({ id, label, icon: Icon }) => {
                 const isActive = activeTab === id;
                 return (
@@ -382,10 +383,10 @@ export const SettingsModal: React.FC = () => {
                     type="button"
                     onClick={() => switchTab(id)}
                     className={cx(
-                      'w-full px-3 py-2 rounded-lg text-left text-xs font-semibold transition-all cursor-pointer flex items-center gap-2.5',
+                      'w-full px-3.5 py-2.5 rounded-xl text-left text-xs font-semibold transition-all cursor-pointer flex items-center gap-2.5',
                       isActive
                         ? 'chip-active font-bold shadow-2xs'
-                        : 'text-content-secondary hover:text-content hover:bg-muted/60',
+                        : 'text-content-secondary hover:text-content hover:bg-muted/70',
                     )}
                   >
                     <Icon className={cx('w-4 h-4 shrink-0', isActive ? 'text-accent' : 'text-content-muted')} />
@@ -396,7 +397,7 @@ export const SettingsModal: React.FC = () => {
             </nav>
 
             {/* Backup & Tools Card */}
-            <div className="bg-surface border border-border rounded-xl p-3.5 space-y-2.5 shadow-xs">
+            <div className="bg-surface border border-border rounded-2xl p-4 space-y-3 shadow-card">
               <span className="text-[10.5px] font-bold text-content-muted uppercase tracking-wider block font-mono">
                 Data &amp; Backup
               </span>
@@ -405,7 +406,7 @@ export const SettingsModal: React.FC = () => {
                   type="button"
                   onClick={exportSettings}
                   title="Download settings JSON backup"
-                  className="w-full text-left px-2.5 py-1.5 rounded-md hover:bg-muted text-xs text-content-secondary hover:text-content font-medium transition-colors cursor-pointer flex items-center justify-between"
+                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted/70 text-xs text-content-secondary hover:text-content font-medium transition-colors cursor-pointer flex items-center justify-between border border-transparent hover:border-border"
                 >
                   <span>Export JSON</span>
                   <span className="text-[10px] text-content-muted font-mono">↓</span>
@@ -414,7 +415,7 @@ export const SettingsModal: React.FC = () => {
                   type="button"
                   onClick={triggerImportFile}
                   title="Restore settings from JSON file"
-                  className="w-full text-left px-2.5 py-1.5 rounded-md hover:bg-muted text-xs text-content-secondary hover:text-content font-medium transition-colors cursor-pointer flex items-center justify-between"
+                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted/70 text-xs text-content-secondary hover:text-content font-medium transition-colors cursor-pointer flex items-center justify-between border border-transparent hover:border-border"
                 >
                   <span>Import JSON</span>
                   <span className="text-[10px] text-content-muted font-mono">↑</span>
@@ -478,25 +479,25 @@ export const SettingsModal: React.FC = () => {
       </div>
 
       {/* Floating Sticky Save Bar on scroll */}
-      <div className="fixed bottom-0 inset-x-0 z-20 bg-surface/90 backdrop-blur-md border-t border-border py-3 px-4 sm:px-6 shadow-elevated">
+      <div className="fixed bottom-0 inset-x-0 z-20 bg-surface/92 backdrop-blur-md border-t border-border py-3.5 px-4 sm:px-6 shadow-elevated">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-xs text-content-muted min-w-0">
             <button
               type="button"
               onClick={exportSettings}
-              className="md:hidden px-2.5 py-1.5 rounded-lg bg-muted hover:bg-elevated text-content-secondary hover:text-content text-xs font-semibold border border-border cursor-pointer"
+              className="md:hidden px-2.5 py-1.5 rounded-xl bg-muted hover:bg-elevated text-content-secondary hover:text-content text-xs font-semibold border border-border cursor-pointer"
             >
               Export
             </button>
             <button
               type="button"
               onClick={triggerImportFile}
-              className="md:hidden px-2.5 py-1.5 rounded-lg bg-muted hover:bg-elevated text-content-secondary hover:text-content text-xs font-semibold border border-border cursor-pointer"
+              className="md:hidden px-2.5 py-1.5 rounded-xl bg-muted hover:bg-elevated text-content-secondary hover:text-content text-xs font-semibold border border-border cursor-pointer"
             >
               Import
             </button>
             <span className="hidden sm:inline">Press</span>
-            <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-muted text-content border border-border font-mono text-[10.5px]">
+            <kbd className="hidden sm:inline px-1.5 py-0.5 rounded-md bg-muted text-content border border-border font-mono text-[10.5px]">
               ⌘S
             </kbd>
             <span className="hidden sm:inline">or Ctrl+S to save</span>
@@ -513,7 +514,7 @@ export const SettingsModal: React.FC = () => {
             <button
               type="button"
               onClick={resetForm}
-              className="px-3.5 py-1.5 rounded-lg bg-muted hover:bg-elevated text-content-secondary hover:text-content text-xs font-semibold border border-border transition-colors cursor-pointer active:scale-95 shadow-2xs"
+              className="px-3.5 py-2 rounded-xl bg-muted hover:bg-elevated text-content-secondary hover:text-content text-xs font-semibold border border-border transition-colors cursor-pointer active:scale-95 shadow-2xs"
             >
               Reset
             </button>
@@ -521,12 +522,12 @@ export const SettingsModal: React.FC = () => {
               type="button"
               onClick={handleSave}
               disabled={isSaving}
-              className="px-5 py-1.5 rounded-lg bg-accent hover:opacity-90 text-white dark:text-neutral-950 text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
+              className="px-5 py-2 rounded-xl bg-accent hover:opacity-90 text-white dark:text-neutral-950 text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
             >
               {isSavedNotice ? (
                 <>
                   <IconCheck className="w-3.5 h-3.5" />
-                  <span>Saved!</span>
+                  <span>Saved</span>
                 </>
               ) : (
                 <span>Save Changes</span>

@@ -1,10 +1,15 @@
-export const SETTINGS_SCHEMA_VERSION = 12;
+export const LOCAL_SETTING_KEYS = [
+  'aiApiKey',
+  'libreTranslateApiKey',
+  'aiRewritePromptTemplate',
+] as const;
 
 export const SECRET_SETTING_KEYS = [
   'aiApiKey',
   'libreTranslateApiKey',
 ] as const;
 
+export const LOCAL_ONLY_KEYS = new Set<string>(LOCAL_SETTING_KEYS);
 export const SECRET_KEYS = new Set<string>(SECRET_SETTING_KEYS);
 
 export function stripSecretRecord<T extends Record<string, unknown>>(input: T): Partial<T> {
@@ -32,6 +37,9 @@ export function mergePublicSettings(
     publicData.hasAiApiKey = Boolean(local.hasAiApiKey);
   } else {
     publicData.hasAiApiKey = Boolean(publicData.hasAiApiKey);
+  }
+  if (Object.prototype.hasOwnProperty.call(local, 'aiRewritePromptTemplate')) {
+    publicData.aiRewritePromptTemplate = local.aiRewritePromptTemplate;
   }
   return publicData;
 }

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { extractEtymologyFromWikitext } from '../src/providers/provider.wiktionary-etymology.ts';
 import { wiktionaryLangHost } from '../src/providers/provider.wiktionary-bilingual.ts';
 import { examplesFromTatoebaPayload, tatoebaLangCode } from '../src/providers/provider.tatoeba.ts';
+import { filterUrbanItems, stripUrbanMarkup } from '../src/providers/provider.urban-dictionary.ts';
 
 test('extractEtymologyFromWikitext pulls the English etymology section', () => {
   const wikitext = `{{also|helló}}
@@ -60,3 +61,46 @@ test('examplesFromTatoebaPayload prefers target-language translations', () => {
     'Stay persistent. — Hãy kiên trì.',
   ]);
 });
+
+test('filterUrbanItems strictly filters by votes, ratio, and exact term', () => {
+  const items = [
+    {
+      word: 'rizz',
+      definition: '[Charisma], especially in attracting romantic interest.',
+      example: 'He has insane rizz.',
+      thumbs_up: 1200,
+      thumbs_down: 100,
+    },
+    {
+      word: 'rizz',
+      definition: 'A troll low score definition.',
+      example: 'Bad definition.',
+      thumbs_up: 50, // Fails min thumbs_up (100)
+      thumbs_down: 10,
+    },
+    {
+      word: 'rizz',
+      definition: 'Controversial definition with low ratio.',
+      example: '',
+      thumbs_up: 300,
+      thumbs_down: 250, // Fails min ratio (70%) and net score
+    },
+    {
+      word: 'rizz god', // Fails exact match
+      definition: 'Someone with maximum rizz.',
+      example: '',
+      thumbs_up: 2000,
+      thumbs_down: 50,
+    },
+  ];
+
+  const filtered = filterUrbanItems(items, 'rizz');
+  assert.equal(filtered.length, 1);
+  assert.equal(filtered[0].definition, 'Charisma, especially in attracting romantic interest.');
+  assert.equal(filtered[0].thumbsUp, 1200);
+});
+
+test('stripUrbanMarkup removes square brackets and excess newlines', () => {
+  assert.equal(stripUrbanMarkup('This is [lit] and [fire]!'), 'This is lit and fire!');
+});
+

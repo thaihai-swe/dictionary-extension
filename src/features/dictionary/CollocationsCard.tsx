@@ -31,7 +31,7 @@ export const CollocationsCard: React.FC<CollocationsCardProps> = ({
   if (!groups.length) return null;
 
   return (
-    <section className="p-3.5 rounded-lg border border-border bg-surface dark:bg-accent-subtle/50 space-y-2.5 font-sans shadow-card">
+    <section className="p-3.5 rounded-lg border border-border bg-surface space-y-2.5 font-sans shadow-card">
       <div className="flex items-center gap-1.5 text-[11px] font-bold text-content-muted uppercase tracking-wider">
         <IconLink className="w-3.5 h-3.5 text-accent" />
         <span>Collocations</span>

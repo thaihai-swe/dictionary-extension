@@ -11,7 +11,7 @@ export const ToastContainer: React.FC = () => {
     <div
       role="status"
       aria-live="polite"
-      className="absolute bottom-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-surface/95 dark:bg-[#161a23]/95 text-content text-[12px] font-medium border border-border dark:border-accent/35 shadow-card-elevated backdrop-blur-md transition-all select-none"
+      className="absolute bottom-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-surface/95 text-content text-[12px] font-medium border border-border dark:border-accent/35 shadow-card-elevated backdrop-blur-md transition-all select-none"
     >
       <IconCheck className="w-3.5 h-3.5 text-accent flex-shrink-0" />
       <span className="whitespace-nowrap">{message}</span>

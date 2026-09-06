@@ -1,4 +1,4 @@
-import { safeFetch } from './provider.http';
+import { DICTIONARY_FETCH_TIMEOUT_MS, safeFetch } from './provider.http';
 import { Meaning, Phonetic, AttributedItem, ProviderLookupDto } from '../types';
 import { normalizeDictionaryTerm } from '../shared/query-utils';
 import { NotFoundError, throwForHttpStatus } from './errors';
@@ -19,7 +19,7 @@ function languageFromRegion(region?: Phonetic['region']): string | undefined {
 export async function fetchFreeDictionary(word: string, _targetLang: string = 'vi', signal?: AbortSignal): Promise<ProviderLookupDto> {
   const term = normalizeDictionaryTerm(word);
   const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(term)}`;
-  const res = await safeFetch(url, { signal });
+  const res = await safeFetch(url, { signal, timeoutMs: DICTIONARY_FETCH_TIMEOUT_MS, retries: 0 });
 
   if (!res.ok) {
     throwForHttpStatus(res.status, `No dictionary entry found for "${term}".`, `Free Dictionary lookup failed (HTTP ${res.status}).`);

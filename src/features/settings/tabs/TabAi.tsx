@@ -1,7 +1,8 @@
 import React from 'react';
-import { AppSettings } from '@/types';
+import { AppSettings, AiIntentId } from '@/types';
 import { cx } from '@/ui/cx';
 import { IconEdit, IconExternalLink, IconSparkles, IconSpinner } from '@/components/icons';
+import { PRELOADABLE_AI_INTENTS } from '@/shared/ai-prompts';
 import {
   DEFAULT_GEMINI_BASE_URL,
   DEFAULT_GEMINI_MODEL,
@@ -14,7 +15,7 @@ interface TabAiProps {
   isManualModelInput: boolean;
   connectionStatus: Record<string, string>;
   connectionBusy: Record<string, boolean>;
-  promptEditors: Array<{ key: keyof AppSettings; label: string }>;
+  promptEditors: Array<{ key: keyof AppSettings; label: string; intent: AiIntentId }>;
   onChange: (patch: Partial<AppSettings>) => void;
   onToggleManualModel: () => void;
   onTestAi: () => void;
@@ -57,20 +58,6 @@ export const TabAi: React.FC<TabAiProps> = ({
               type="checkbox"
               checked={localSettings.enableAI !== false}
               onChange={(e) => onChange({ enableAI: e.target.checked })}
-              className="w-4 h-4 cursor-pointer"
-            />
-          </label>
-          <label className="flex items-center justify-between cursor-pointer py-2.5 hover:bg-muted/30 px-1 rounded-lg transition-colors">
-            <div className="pr-4">
-              <span className="font-semibold text-content text-xs block">Preload on selection</span>
-              <span className="text-[11px] text-content-muted block">
-                Fetch explanations in the background so the AI tab feels instant
-              </span>
-            </div>
-            <input
-              type="checkbox"
-              checked={Boolean(localSettings.enableAiPreload)}
-              onChange={(e) => onChange({ enableAiPreload: e.target.checked })}
               className="w-4 h-4 cursor-pointer"
             />
           </label>
@@ -265,7 +252,7 @@ export const TabAi: React.FC<TabAiProps> = ({
           <div>
             <h3 className="text-sm font-bold text-content font-heading">Prompt templates</h3>
             <p className="text-[11.5px] text-content-muted">
-              Advanced. Defaults work for most lookups.
+              Edit prompts per intent. Enable Preload only for intents you want fetched in the background — this uses tokens.
             </p>
           </div>
           <button
@@ -277,34 +264,70 @@ export const TabAi: React.FC<TabAiProps> = ({
           </button>
         </div>
         <div className="space-y-2">
-          {promptEditors.map(({ key, label }) => (
-            <details key={key} className="rounded-xl border border-border bg-muted/20">
-              <summary className="px-3 py-2.5 cursor-pointer flex items-center justify-between gap-2 list-none">
-                <span className="font-bold text-content text-xs flex items-center gap-1.5">
-                  <IconEdit className="w-3.5 h-3.5 text-accent" />
-                  {label}
-                </span>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onRestorePrompt(key);
-                  }}
-                  className="text-[11px] text-content-muted hover:text-accent underline cursor-pointer"
-                >
-                  Restore default
-                </button>
-              </summary>
-              <div className="px-3 pb-3">
-                <textarea
-                  value={String(localSettings[key] || '')}
-                  onChange={(e) => onChange({ [key]: e.target.value })}
-                  rows={5}
-                  className="w-full bg-muted border border-border rounded-lg p-2.5 text-xs text-content font-mono outline-none focus:border-accent leading-relaxed"
-                />
-              </div>
-            </details>
-          ))}
+          {promptEditors.map(({ key, label, intent }) => {
+            const preloaded = localSettings.preloadedAiIntents || [];
+            const preloadOn = preloaded.includes(intent);
+            const canPreload = (PRELOADABLE_AI_INTENTS as readonly string[]).includes(intent);
+            return (
+              <details key={key} className="rounded-xl border border-border bg-muted/20">
+                <summary className="px-3 py-2.5 cursor-pointer flex items-center justify-between gap-2 list-none">
+                  <span className="font-bold text-content text-xs flex items-center gap-1.5">
+                    <IconEdit className="w-3.5 h-3.5 text-accent" />
+                    {label}
+                  </span>
+                  <span className="flex items-center gap-3 shrink-0">
+                    {canPreload ? (
+                      <label
+                        className="flex items-center gap-1.5 cursor-pointer"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={preloadOn}
+                          onChange={(e) => {
+                            const next = e.target.checked
+                              ? [...preloaded.filter((id) => id !== intent), intent]
+                              : preloaded.filter((id) => id !== intent);
+                            onChange({
+                              preloadedAiIntents: next,
+                              enableAiPreload: next.length > 0,
+                            });
+                          }}
+                          className="w-3.5 h-3.5 cursor-pointer"
+                        />
+                        <span className="text-[11px] font-semibold text-content-secondary">Preload</span>
+                      </label>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onRestorePrompt(key);
+                      }}
+                      className="text-[11px] text-content-muted hover:text-accent underline cursor-pointer"
+                    >
+                      Restore default
+                    </button>
+                  </span>
+                </summary>
+                <div className="px-3 pb-3 space-y-2">
+                  <p className="text-[11px] text-content-muted">
+                    {intent === 'default'
+                      ? 'Preload fetches this intent after selection so Dictionary → AI feels instant.'
+                      : intent === 'rewrite'
+                        ? 'Used by the Rewriter tab. Stored on this device only. Not preloaded — runs only when you click Rewrite.'
+                        : 'Preload fetches this intent in the background when you open the AI tab, or on hover if enabled.'}
+                  </p>
+                  <textarea
+                    value={String(localSettings[key] || '')}
+                    onChange={(e) => onChange({ [key]: e.target.value })}
+                    rows={intent === 'rewrite' ? 12 : 5}
+                    className="w-full bg-muted border border-border rounded-lg p-2.5 text-xs text-content font-mono outline-none focus:border-accent leading-relaxed"
+                  />
+                </div>
+              </details>
+            );
+          })}
         </div>
       </section>
     </div>

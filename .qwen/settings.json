@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npm test)",
+      "Skill(design)",
+      "Skill(design-system)",
+      "Skill(ui-styling)",
+      "Bash(python3 *)",
+      "Bash(node *)",
+      "Bash(npx *)",
+      "Bash(git checkout *)"
+    ]
+  },
+  "$version": 4
+}

@@ -2,7 +2,11 @@ import React, { useEffect } from 'react';
 import { TabId } from '../types';
 import { useStorage } from '../composables/composable.storage';
 import { cx } from '../ui/cx';
-import { IconBook, IconSparkles } from './icons';
+import {
+  IconBook,
+  IconEdit,
+  IconSparkles,
+} from './icons';
 
 interface TabNavigationProps {
   activeTab?: TabId;
@@ -26,7 +30,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
 
   return (
     <nav
-      className="flex items-center gap-1.5 border-b border-border bg-surface px-3 py-1.5 transition-colors select-none"
+      className="flex items-center gap-1.5 border-b border-border bg-surface px-2.5 py-1.5 transition-colors select-none overflow-x-auto"
       role="tablist"
       aria-label="Lookup mode"
     >
@@ -36,17 +40,14 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
         aria-selected={currentActive === 'dictionary'}
         onClick={() => selectTab('dictionary')}
         className={cx(
-          'relative min-h-[30px] px-3 rounded-md flex items-center gap-1.5 text-[12.5px] font-semibold transition-all duration-150 outline-none cursor-pointer focus-ring',
+          'relative min-h-[28px] px-2.5 rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all duration-150 outline-none cursor-pointer whitespace-nowrap shadow-2xs',
           currentActive === 'dictionary'
-            ? 'chip-active shadow-2xs'
+            ? 'chip-active ring-1 ring-accent/30'
             : 'text-content-secondary hover:text-content hover:bg-muted border border-transparent',
         )}
       >
         <IconBook className="w-3.5 h-3.5" />
         <span>Dictionary</span>
-        <span className="hidden sm:inline-block text-[9.5px] font-mono px-1 py-0.2 rounded bg-surface/80 border border-border/70 text-content-muted">
-          Alt+1
-        </span>
       </button>
 
       {showAiTab ? (
@@ -56,17 +57,32 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
           aria-selected={currentActive === 'ai_assistant'}
           onClick={() => selectTab('ai_assistant')}
           className={cx(
-            'relative min-h-[30px] px-3 rounded-md flex items-center gap-1.5 text-[12.5px] font-semibold transition-all duration-150 outline-none cursor-pointer focus-ring',
+            'relative min-h-[28px] px-2.5 rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all duration-150 outline-none cursor-pointer whitespace-nowrap shadow-2xs',
             currentActive === 'ai_assistant'
-              ? 'chip-active shadow-2xs'
+              ? 'chip-active ring-1 ring-accent/30'
               : 'text-content-secondary hover:text-content hover:bg-muted border border-transparent',
           )}
         >
           <IconSparkles className="w-3.5 h-3.5" />
           <span>AI Assistant</span>
-          <span className="hidden sm:inline-block text-[9.5px] font-mono px-1 py-0.2 rounded bg-surface/80 border border-border/70 text-content-muted">
-            Alt+2
-          </span>
+        </button>
+      ) : null}
+
+      {showAiTab ? (
+        <button
+          type="button"
+          role="tab"
+          aria-selected={currentActive === 'rewriter'}
+          onClick={() => selectTab('rewriter')}
+          className={cx(
+            'relative min-h-[28px] px-2.5 rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all duration-150 outline-none cursor-pointer whitespace-nowrap shadow-2xs',
+            currentActive === 'rewriter'
+              ? 'chip-active ring-1 ring-accent/30'
+              : 'text-content-secondary hover:text-content hover:bg-muted border border-transparent',
+          )}
+        >
+          <IconEdit className="w-3.5 h-3.5" />
+          <span>Rewriter</span>
         </button>
       ) : null}
     </nav>

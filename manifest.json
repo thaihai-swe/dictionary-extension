@@ -31,7 +31,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["overlay.js", "overlay.css", "overlay-*.js", "overlay-*.css", "fonts/*"],
+      "resources": ["overlay.js", "overlay.css", "overlay-*.js", "overlay-*.css"],
       "matches": ["<all_urls>"]
     }
   ],
@@ -49,8 +49,8 @@
     "https://generativelanguage.googleapis.com/*",
     "https://libretranslate.com/*",
     "https://api.datamuse.com/*",
-    "https://api.urbandictionary.com/*",
     "https://en.wikipedia.org/*",
+    "https://api.urbandictionary.com/*",
     "https://rhymebrain.com/*",
     "https://tatoeba.org/*",
     "https://api.mymemory.translated.net/*"

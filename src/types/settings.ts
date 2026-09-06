@@ -1,4 +1,4 @@
-import type { TabId } from './models';
+import type { TabId, AiIntentId } from './models';
 
 export type SelectionTriggerMode = 'off' | 'icon' | 'direct';
 export type PostSelectionModifier = 'shift' | 'alt' | 'ctrl';
@@ -13,9 +13,9 @@ export type DictionaryProviderId =
   | 'wiktionary_etymology'
   | 'wiktionary_bilingual'
   | 'datamuse'
-  | 'urban_dictionary'
   | 'wikipedia'
   | 'rhymebrain'
+  | 'urban_dictionary'
   | 'tatoeba';
 
 export interface AppSettings {
@@ -38,6 +38,7 @@ export interface AppSettings {
   enableLexicalProfile: boolean;
   enableAI: boolean;
   enableAiPreload: boolean;
+  preloadedAiIntents: AiIntentId[];
   enablePhraseFallback: boolean;
   disablePageContextExtraction: boolean;
   pausedHostnames: string[];
@@ -56,4 +57,5 @@ export interface AppSettings {
   aiPhraseExplorerPromptTemplate: string;
   aiComparePromptTemplate: string;
   aiRephrasePromptTemplate: string;
+  aiRewritePromptTemplate: string;
 }

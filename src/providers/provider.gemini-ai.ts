@@ -2,14 +2,6 @@ import { AiIntentId, AiResult, AppSettings } from '../types';
 import { lookupGoogleTranslation } from './provider.google-translate';
 import { AI_FETCH_TIMEOUT_MS, safeFetch } from './provider.http';
 import {
-  DEFAULT_AI_COMPARE_PROMPT_TEMPLATE,
-  DEFAULT_AI_CONTEXT_PROMPT_TEMPLATE,
-  DEFAULT_AI_GRAMMAR_PROMPT_TEMPLATE,
-  DEFAULT_AI_PHRASE_EXPLORER_PROMPT_TEMPLATE,
-  DEFAULT_AI_PHRASE_FALLBACK_PROMPT_TEMPLATE,
-  DEFAULT_AI_PROMPT_TEMPLATE,
-  DEFAULT_AI_REPHRASE_PROMPT_TEMPLATE,
-  DEFAULT_AI_SENTENCE_PROMPT_TEMPLATE,
   appendInputContract,
   applyTemplate,
   canonicalAiIntent,
@@ -17,6 +9,19 @@ import {
   lexicalExtrasForIntent,
   shouldRequestLexicalProfile,
 } from '../shared/ai-prompts';
+import {
+  DEFAULT_AI_COMPARE_PROMPT_TEMPLATE,
+  DEFAULT_AI_CONTEXT_PROMPT_TEMPLATE,
+  DEFAULT_AI_GRAMMAR_PROMPT_TEMPLATE,
+  DEFAULT_AI_PHRASE_EXPLORER_PROMPT_TEMPLATE,
+  DEFAULT_AI_PHRASE_FALLBACK_PROMPT_TEMPLATE,
+  DEFAULT_AI_PROMPT_TEMPLATE,
+  DEFAULT_AI_REPHRASE_PROMPT_TEMPLATE,
+  DEFAULT_AI_REWRITE_PROMPT_TEMPLATE,
+  DEFAULT_AI_SENTENCE_PROMPT_TEMPLATE,
+  PROMPT_LANGUAGE_POLICY,
+  SHARED_PROMPT_PARTIALS,
+} from '../prompts/prompt-templates';
 import {
   normalizeComparisonData,
   normalizeRephraseStyles,
@@ -83,6 +88,8 @@ function templateForIntent(intent: AiIntentId, settings?: AppSettings): string {
       return pick(settings?.aiComparePromptTemplate, DEFAULT_AI_COMPARE_PROMPT_TEMPLATE);
     case 'rephrase':
       return pick(settings?.aiRephrasePromptTemplate, DEFAULT_AI_REPHRASE_PROMPT_TEMPLATE);
+    case 'rewrite':
+      return pick(settings?.aiRewritePromptTemplate, DEFAULT_AI_REWRITE_PROMPT_TEMPLATE);
     case 'phrase_fallback':
       return DEFAULT_AI_PHRASE_FALLBACK_PROMPT_TEMPLATE;
     default:
@@ -103,16 +110,20 @@ export function buildPrompt(
   const variables = {
     text,
     str: text,
-    sentence: context || text,
+    sentence: canonical === 'rewrite' ? text : (context || text),
     context: context || '',
-    word_count: countWords(text),
+    word_count: countWords(canonical === 'rewrite' ? text : (context || text)),
     targetLang: settings?.translateTargetLanguage || 'Vietnamese',
     enableLexicalProfile: shouldRequestLexicalProfile(canonical, settings?.enableLexicalProfile),
     lexicalExtras: shouldRequestLexicalProfile(canonical, settings?.enableLexicalProfile)
       ? lexicalExtrasForIntent(canonical)
       : [],
   };
-  return appendInputContract(applyTemplate(templateForIntent(canonical, settings), variables), variables);
+  return appendInputContract(
+    applyTemplate(templateForIntent(canonical, settings), variables, SHARED_PROMPT_PARTIALS),
+    variables,
+    PROMPT_LANGUAGE_POLICY,
+  );
 }
 
 async function requestGeminiText(prompt: string, apiKey: string, model: string, signal?: AbortSignal): Promise<string> {
@@ -265,7 +276,7 @@ function buildOfflineFallback(intentId: AiIntentId, term: string, trimmed: strin
     return {
       type: intentId,
       query: term,
-      summary: `### Syntactic Breakdown\n• Selected text: "${term}"\n• Structure: ${isLong ? 'clause / complex sentence' : 'phrase'}\n• Translation: ${translation}\n\n> "${trimmed}"`,
+      summary: `### Syntactic Breakdown\n• Selected text: "${term}"\n• Structure: ${isLong ? 'clause / complex sentence' : 'phrase'}\n• Translation: ${translation}\n\n### Pattern Rules\n- **Headword in context**: treat "${term}" as occupying its current syntactic slot.\n> "${trimmed}"\n> ${translation}`,
       translation,
     };
   }
@@ -287,6 +298,14 @@ function buildOfflineFallback(intentId: AiIntentId, term: string, trimmed: strin
         coreDistinction: `Enter an API key to compare "${term}" with its nearest confusable.`,
         rows: [],
       },
+    };
+  }
+  if (intentId === 'rewrite') {
+    return {
+      type: intentId,
+      query: term,
+      summary: `### Polished Version\nConfigure an AI endpoint in Settings to polish full sentences and paragraphs.\n\n> "${trimmed}"`,
+      translation,
     };
   }
   if (intentId === 'rephrase') {
@@ -328,7 +347,9 @@ export async function fetchAiAnalysis(
 
   const canonical = canonicalAiIntent(intentId);
   const { term, surrounding } = resolveQueryAndContext(trimmed, context);
-  const promptContext = surrounding || (canonical === 'explain_in_context' ? '' : trimmed);
+  const promptContext = canonical === 'rewrite'
+    ? String(context || '').trim()
+    : (surrounding || (canonical === 'explain_in_context' ? '' : trimmed));
 
   let translation = trimmed;
   try {
@@ -394,6 +415,15 @@ export async function fetchAiAnalysis(
           translation,
           lexicalProfile,
           comparison: comparison || undefined,
+        };
+      }
+
+      if (canonical === 'rewrite') {
+        return {
+          type: canonical,
+          query: trimmed,
+          summary: content,
+          translation,
         };
       }
 

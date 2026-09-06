@@ -1,0 +1,2 @@
+- Write instructional explanations, definitions, grammar analyses, usage notes, and etymologies in English.
+- Use {{targetLang}} only for translations, bilingual glosses, or when a section explicitly requests explanations in that language.
