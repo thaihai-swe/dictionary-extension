@@ -21,7 +21,7 @@ export const ConfusablesIntent: React.FC<ConfusablesIntentProps> = ({ result, ta
   return (
     <div className="space-y-4">
       {comparison?.coreDistinction ? (
-        <div className="rounded-xl border border-accent/30 bg-accent-subtle p-3.5 space-y-1.5 shadow-xs">
+        <div className="rounded-lg border border-border bg-surface p-3.5 space-y-1.5">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-accent uppercase tracking-wider">
             <IconScale className="w-3.5 h-3.5 text-accent" />
             <span>Core Distinction</span>
@@ -37,7 +37,7 @@ export const ConfusablesIntent: React.FC<ConfusablesIntentProps> = ({ result, ta
           <div className="text-[11px] font-bold text-content-muted uppercase tracking-wider">
             Comparison Matrix
           </div>
-          <div className="overflow-x-auto rounded-xl border border-border shadow-xs">
+          <div className="overflow-x-auto rounded-lg border border-border">
             <table className="w-full text-[13px] text-left">
               <thead className="bg-muted text-content font-bold">
                 <tr>
@@ -76,7 +76,7 @@ export const ConfusablesIntent: React.FC<ConfusablesIntentProps> = ({ result, ta
               return (
                 <div
                   key={idx}
-                  className="rounded-xl border border-border bg-surface p-3 space-y-2 text-[13px] shadow-xs"
+                  className="rounded-lg border border-border bg-surface p-3.5 space-y-2 text-[13px]"
                 >
                   <div className="space-y-1.5">
                     <div className="flex items-start justify-between gap-2 pl-2.5 py-1 border-l-2 border-accent bg-accent-subtle rounded-r">
@@ -115,9 +115,9 @@ export const ConfusablesIntent: React.FC<ConfusablesIntentProps> = ({ result, ta
       ) : null}
 
       {result.summary && !comparison?.coreDistinction && !comparison?.rows?.length && !comparison?.minimalPairs?.length ? (
-        <div className="pt-2 border-t border-border/50 space-y-3">
+        <section className="p-3.5 rounded-lg border border-border bg-surface space-y-3">
           <MarkdownRenderer content={result.summary} targetLang={targetLang} />
-        </div>
+        </section>
       ) : null}
     </div>
   );

@@ -60,7 +60,7 @@ export const RephraseIntent: React.FC<RephraseIntentProps> = ({ result, targetLa
               return (
                 <article
                   key={`${item.style}-${idx}`}
-                  className="rounded-xl border border-border bg-surface p-3 space-y-2 text-[13.5px] shadow-xs hover:border-accent/40 transition-all"
+                  className="rounded-lg border border-border bg-surface p-3.5 space-y-2 text-[13.5px]"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span
@@ -114,9 +114,9 @@ export const RephraseIntent: React.FC<RephraseIntentProps> = ({ result, targetLa
 
       {/* Markdown fallback when no structured styles parsed */}
       {result.summary && !styles?.length ? (
-        <div className="pt-2 border-t border-border/50 space-y-3">
+        <section className="p-3.5 rounded-lg border border-border bg-surface space-y-3">
           <MarkdownRenderer content={result.summary} targetLang={targetLang} />
-        </div>
+        </section>
       ) : null}
     </div>
   );

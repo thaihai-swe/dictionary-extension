@@ -327,7 +327,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
       {/* Results */}
       <div className="space-y-3 pt-1">
         {isAiLoading ? (
-          <div className="p-4 rounded-xl border border-border bg-surface shadow-xs space-y-3" aria-busy="true" aria-live="polite">
+          <div className="p-3.5 rounded-lg border border-border bg-surface space-y-3" aria-busy="true" aria-live="polite">
             <div className="flex items-center justify-between pb-1.5 border-b border-border/60">
               <div className="h-3.5 skeleton-shimmer rounded w-1/3"></div>
               <div className="h-3 skeleton-shimmer rounded w-16"></div>

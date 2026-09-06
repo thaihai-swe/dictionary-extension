@@ -53,7 +53,7 @@ export const WordFamilyCard: React.FC<WordFamilyCardProps> = ({ family, onSelect
     ) : null;
 
   return (
-    <section className="p-3.5 rounded-lg border border-border bg-surface space-y-2 font-sans shadow-card">
+    <section className="p-3.5 rounded-lg border border-border bg-surface space-y-2 font-sans">
       <div className="flex items-center gap-1.5 text-[11px] font-bold text-content-muted uppercase tracking-wider">
         <IconTree className="w-3.5 h-3.5 text-accent" />
         <span>Word Family</span>

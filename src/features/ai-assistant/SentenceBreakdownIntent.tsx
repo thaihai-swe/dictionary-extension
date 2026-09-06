@@ -19,7 +19,7 @@ export const SentenceBreakdownIntent: React.FC<SentenceBreakdownIntentProps> = (
       ) : null}
 
       {result.phrases?.length ? (
-        <div className="rounded-xl border border-border bg-muted p-3 space-y-2">
+        <div className="rounded-lg border border-border bg-muted p-3.5 space-y-2">
           <div className="text-[12px] font-extrabold text-content uppercase tracking-wider">
             Phrase parsing
           </div>
@@ -34,9 +34,9 @@ export const SentenceBreakdownIntent: React.FC<SentenceBreakdownIntentProps> = (
       ) : null}
 
       {result.summary && !result.structure?.length ? (
-        <div className="pt-2 border-t border-border/50 space-y-3">
+        <section className="p-3.5 rounded-lg border border-border bg-surface space-y-3">
           <MarkdownRenderer content={result.summary} targetLang={targetLang} />
-        </div>
+        </section>
       ) : null}
     </div>
   );
