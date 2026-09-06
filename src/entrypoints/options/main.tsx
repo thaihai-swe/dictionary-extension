@@ -1,3 +1,4 @@
+import '@/ui/theme-init';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import SettingsModal from '@/features/settings/SettingsModal';

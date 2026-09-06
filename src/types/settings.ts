@@ -1,4 +1,4 @@
-import type { TabId } from './models';
+import type { TabId, AiIntentId } from './models';
 
 export type SelectionTriggerMode = 'off' | 'icon' | 'direct';
 export type PostSelectionModifier = 'shift' | 'alt' | 'ctrl';
@@ -38,6 +38,7 @@ export interface AppSettings {
   enableLexicalProfile: boolean;
   enableAI: boolean;
   enableAiPreload: boolean;
+  preloadedAiIntents: AiIntentId[];
   enablePhraseFallback: boolean;
   disablePageContextExtraction: boolean;
   pausedHostnames: string[];

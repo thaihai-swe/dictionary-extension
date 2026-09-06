@@ -55,23 +55,23 @@ const TRIGGER_CSS = `
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 10px 24px rgba(13, 148, 136, 0.25);
+  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.28);
   transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 220ms ease;
   animation: dictionary-trigger-enter 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .dictionary-trigger-icon-btn:hover { transform: scale(1.08); }
 .dictionary-trigger-icon-btn:active { transform: scale(0.95); }
 .dictionary-trigger-icon-btn.dark {
-  background: #d4af37;
-  color: #0e1117;
-  border: 2px solid #161a22;
-  box-shadow: 0 10px 24px rgba(212, 175, 55, 0.35);
+  background: #22c55e;
+  color: #052e16;
+  border: 2px solid #2d333b;
+  box-shadow: 0 10px 24px rgba(34, 197, 94, 0.4);
 }
 .dictionary-trigger-icon-btn.light {
-  background: #0d9488;
+  background: #16a34a;
   color: #fff;
   border: 2px solid #ffffff;
-  box-shadow: 0 10px 24px rgba(13, 148, 136, 0.25);
+  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.28);
 }
 .dictionary-popup-layer {
   position: fixed;

@@ -209,6 +209,6 @@ Run this comprehensive verification protocol before submitting code changes:
 
 ---
 
-### I. Model & Schema
+### I. Model
 27. Confirm Settings → AI tab lists only `gemini-3.5-flash-lite` as the Gemini preset.
-28. Confirm a reset-to-defaults restore writes `aiModel: "gemini-3.5-flash-lite"` and `SETTINGS_SCHEMA_VERSION = 12`.
+28. Confirm a reset-to-defaults restore writes `aiModel: "gemini-3.5-flash-lite"`.

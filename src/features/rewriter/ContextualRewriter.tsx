@@ -7,7 +7,8 @@ import { showToast } from '@/composables/composable.toast';
 import { requestAiLookup } from '@/shared/runtime-client';
 import { createRequestId } from '@/shared/messages';
 import { AiResult } from '@/types';
-import MarkdownRenderer from '@/components/component.markdown-renderer';
+import { parseRewriteMarkdown } from './rewrite-markdown';
+import RewriterMarkdownView from './RewriterMarkdownView';
 
 interface ContextualRewriterProps {
   initialText?: string;
@@ -22,6 +23,18 @@ const REWRITE_STYLES = [
   { id: 'casual', label: 'Casual & Friendly', desc: 'Relaxed conversational tone' },
 ];
 
+function seedRewriterText(selected: string, surrounding: string): string {
+  const text = selected.trim();
+  const context = surrounding.trim();
+  if (!text) return context;
+  if (!context) return text;
+  if (context.toLowerCase() === text.toLowerCase()) return text;
+  if (context.toLowerCase().includes(text.toLowerCase()) && context.split(/\s+/).length > text.split(/\s+/).length) {
+    return context;
+  }
+  return text;
+}
+
 export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
   initialText = '',
   contextSentence = '',
@@ -29,7 +42,7 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
 }) => {
   const { settings } = useStorage();
   const { playPronunciation } = useDictionaryAudio();
-  const [inputText, setInputText] = useState(initialText || contextSentence || '');
+  const [inputText, setInputText] = useState(() => seedRewriterText(initialText, contextSentence));
   const [activeStyle, setActiveStyle] = useState('natural');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -61,7 +74,7 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
     try {
       const result = await requestAiLookup({
         text: textToRun,
-        intent: 'rephrase',
+        intent: 'rewrite',
         context: styleHint,
         targetLang: targetLang || settings.translateTargetLanguage || 'Vietnamese',
         requestId: reqId,
@@ -100,11 +113,8 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
   }
 
   useEffect(() => {
-    if (initialText || contextSentence) {
-      const init = (initialText || contextSentence).trim();
-      setInputText(init);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const seeded = seedRewriterText(initialText, contextSentence);
+    if (seeded) setInputText(seeded);
   }, [initialText, contextSentence]);
 
   return (
@@ -113,7 +123,7 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <label className="text-[11px] font-bold uppercase tracking-wider text-content-muted">
-            Original Text to Polish
+            Text to polish
           </label>
           {inputText ? (
             <button
@@ -132,9 +142,9 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
         <textarea
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
-          rows={3}
-          placeholder="Paste or type a sentence, email draft, or paragraph to rephrase and correct…"
-          className="w-full bg-muted/40 hover:bg-muted/60 focus:bg-surface border border-border focus:border-accent rounded-xl p-3 text-xs text-content placeholder:text-content-muted outline-none transition-all resize-y min-h-[70px]"
+          placeholder="Paste a sentence, email draft, or short paragraph. Selecting one word on a page seeds the full sentence when available."
+          className="w-full bg-muted/40 hover:bg-muted/60 focus:bg-surface border border-border focus:border-accent rounded-xl p-3 text-xs text-content placeholder:text-content-muted outline-none transition-all resize-y min-h-[96px]"
+          rows={5}
         />
       </div>
 
@@ -206,76 +216,13 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
               Rewritten Suggestions
             </span>
 
-            {rewriteResult.rephraseStyles?.length ? (
-              <div className="space-y-2.5">
-                {rewriteResult.rephraseStyles.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="p-3.5 rounded-xl border border-border bg-surface shadow-2xs space-y-2 hover:border-accent/30 transition-all"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-accent-subtle text-accent border border-accent/20 font-mono">
-                        {item.label || item.style}
-                      </span>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleSpeak(item.text, `speak-${idx}`)}
-                          title="Read aloud"
-                          className="h-6 w-6 rounded border border-border bg-surface hover:bg-elevated text-content-muted hover:text-accent flex items-center justify-center cursor-pointer transition-colors shadow-2xs"
-                        >
-                          <IconSpeaker className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleCopy(item.text, `style-${idx}`)}
-                          className="h-6 px-2 rounded border border-border bg-surface hover:bg-elevated text-[10.5px] font-semibold flex items-center gap-1 text-content-secondary hover:text-content cursor-pointer transition-colors shadow-2xs"
-                        >
-                          {copiedId === `style-${idx}` ? (
-                            <IconCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                          ) : (
-                            <IconCopy className="w-3 h-3 text-content-muted" />
-                          )}
-                          <span>{copiedId === `style-${idx}` ? 'Copied' : 'Copy'}</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-content leading-relaxed font-medium">
-                      “{item.text}”
-                    </p>
-
-                    {item.note ? (
-                      <p className="text-[11px] text-content-muted italic">
-                        Note: {item.note}
-                      </p>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            ) : rewriteResult.summary ? (
-              <div className="p-3.5 rounded-xl border border-border bg-surface shadow-2xs space-y-2">
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => handleCopy(rewriteResult.summary || '', 'summary')}
-                    className="h-6 px-2 rounded border border-border bg-surface hover:bg-elevated text-[10.5px] font-semibold flex items-center gap-1 cursor-pointer"
-                  >
-                    {copiedId === 'summary' ? (
-                      <IconCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                    ) : (
-                      <IconCopy className="w-3 h-3" />
-                    )}
-                    <span>Copy</span>
-                  </button>
-                </div>
-                <div className="text-xs text-content leading-relaxed">
-                  <MarkdownRenderer
-                    content={rewriteResult.summary}
-                    targetLang={targetLang || settings.translateTargetLanguage}
-                  />
-                </div>
-              </div>
+            {rewriteResult.summary ? (
+              <RewriteResultDeck
+                markdown={rewriteResult.summary}
+                copiedId={copiedId}
+                onCopy={handleCopy}
+                onSpeak={handleSpeak}
+              />
             ) : null}
           </div>
         )}
@@ -283,5 +230,82 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
     </div>
   );
 };
+
+function RewriteResultDeck({
+  markdown,
+  copiedId,
+  onCopy,
+  onSpeak,
+}: {
+  markdown: string;
+  copiedId: string | null;
+  onCopy: (text: string, id: string) => void;
+  onSpeak: (text: string, id: string) => void;
+}) {
+  const parsed = parseRewriteMarkdown(markdown);
+  const polished = parsed.polished;
+
+  return (
+    <div className="space-y-3">
+      {polished ? (
+        <div className="p-3.5 rounded-xl border border-accent/30 bg-accent-subtle/40 shadow-2xs space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[10.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-accent-subtle text-accent border border-accent/20 font-mono">
+              Polished rewrite
+            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => onSpeak(polished, 'speak-polished')}
+                title="Read aloud"
+                className="h-6 w-6 rounded border border-border bg-surface hover:bg-elevated text-content-muted hover:text-accent flex items-center justify-center cursor-pointer transition-colors shadow-2xs"
+              >
+                <IconSpeaker className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => onCopy(polished, 'polished')}
+                className="h-6 px-2 rounded border border-border bg-surface hover:bg-elevated text-[10.5px] font-semibold flex items-center gap-1 text-content-secondary hover:text-content cursor-pointer transition-colors shadow-2xs"
+              >
+                {copiedId === 'polished' ? (
+                  <IconCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                ) : (
+                  <IconCopy className="w-3 h-3 text-content-muted" />
+                )}
+                <span>{copiedId === 'polished' ? 'Copied' : 'Copy'}</span>
+              </button>
+            </div>
+          </div>
+          <p className="text-[13px] text-content leading-relaxed font-medium whitespace-pre-wrap">
+            {polished}
+          </p>
+        </div>
+      ) : null}
+
+      {parsed.sections.length ? (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10.5px] uppercase font-bold tracking-wider text-content-muted">
+              Coaching notes
+            </span>
+            <button
+              type="button"
+              onClick={() => onCopy(markdown, 'summary')}
+              className="h-6 px-2 rounded border border-border bg-surface hover:bg-elevated text-[10.5px] font-semibold flex items-center gap-1 cursor-pointer"
+            >
+              {copiedId === 'summary' ? (
+                <IconCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+              ) : (
+                <IconCopy className="w-3 h-3" />
+              )}
+              <span>{copiedId === 'summary' ? 'Copied' : 'Copy all'}</span>
+            </button>
+          </div>
+          <RewriterMarkdownView content={markdown} />
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 export default ContextualRewriter;

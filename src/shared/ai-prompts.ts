@@ -11,6 +11,7 @@ export const AI_INTENTS = [
   'compare_confusables',
   'confusables',
   'rephrase',
+  'rewrite',
 ] as const;
 
 export type LexicalExtraId =
@@ -36,6 +37,7 @@ const LEXICAL_EXTRAS_BY_INTENT: Record<AiIntentId, readonly LexicalExtraId[]> = 
   sentence_breakdown: [],
   confusables: [],
   rephrase: [],
+  rewrite: [],
   phrase_fallback: [],
 };
 
@@ -64,7 +66,41 @@ export const PRELOAD_FOLLOW_UPS: AiIntentId[] = [
   'rephrase',
 ];
 
-export const PRELOAD_ALL_INTENTS: AiIntentId[] = ['default', ...PRELOAD_FOLLOW_UPS];
+export const PRELOADABLE_AI_INTENTS: readonly AiIntentId[] = ['default', ...PRELOAD_FOLLOW_UPS];
+export const PRELOAD_ALL_INTENTS: AiIntentId[] = [...PRELOADABLE_AI_INTENTS];
+
+const PRELOADABLE_INTENT_SET = new Set<string>(PRELOADABLE_AI_INTENTS);
+
+export function normalizePreloadedAiIntents(value: unknown): AiIntentId[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<AiIntentId>();
+  const result: AiIntentId[] = [];
+  for (const item of value) {
+    const id = String(item || '').trim();
+    if (!PRELOADABLE_INTENT_SET.has(id) || seen.has(id as AiIntentId)) continue;
+    seen.add(id as AiIntentId);
+    result.push(id as AiIntentId);
+  }
+  return result;
+}
+
+export function resolvePreloadedAiIntents(source: {
+  preloadedAiIntents?: unknown;
+  enableAiPreload?: unknown;
+}): AiIntentId[] {
+  if (Array.isArray(source.preloadedAiIntents)) {
+    return normalizePreloadedAiIntents(source.preloadedAiIntents);
+  }
+  return source.enableAiPreload ? ['default'] : [];
+}
+
+export function isAiIntentPreloadEnabled(
+  settings: { preloadedAiIntents?: unknown } | null | undefined,
+  intent: string | undefined,
+): boolean {
+  const allowed = normalizePreloadedAiIntents(settings?.preloadedAiIntents);
+  return allowed.includes(canonicalAiIntent(intent));
+}
 
 export function canonicalAiIntent(intent: string | undefined): AiIntentId {
   if (intent === 'phrase_explorer') return 'collocations';

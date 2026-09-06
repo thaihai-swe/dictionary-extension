@@ -106,7 +106,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <div className="w-6 h-6 rounded-md bg-accent-subtle border border-accent/20 flex items-center justify-center text-accent flex-shrink-0">
           <IconBook className="w-3.5 h-3.5 text-accent" />
         </div>
-        <span className="text-[13px] font-semibold text-content tracking-tight font-serif hidden min-[420px]:inline whitespace-nowrap">
+        <span className="text-[13px] font-semibold text-content tracking-tight font-heading hidden min-[420px]:inline whitespace-nowrap">
           Dictionary
         </span>
       </div>
@@ -202,9 +202,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             aria-label={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
             {isDarkMode ? (
-              <IconMoon className="w-3.5 h-3.5 text-amber-300" />
+              <IconMoon className="w-3.5 h-3.5 text-accent" />
             ) : (
-              <IconSun className="w-3.5 h-3.5 text-amber-500" />
+              <IconSun className="w-3.5 h-3.5 text-accent" />
             )}
           </button>
 

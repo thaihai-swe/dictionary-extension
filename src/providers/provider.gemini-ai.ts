@@ -17,6 +17,7 @@ import {
   lexicalExtrasForIntent,
   shouldRequestLexicalProfile,
 } from '../shared/ai-prompts';
+import { getEnglishRefinePrompt } from '../prompts/refine-prompt';
 import {
   normalizeComparisonData,
   normalizeRephraseStyles,
@@ -83,6 +84,8 @@ function templateForIntent(intent: AiIntentId, settings?: AppSettings): string {
       return pick(settings?.aiComparePromptTemplate, DEFAULT_AI_COMPARE_PROMPT_TEMPLATE);
     case 'rephrase':
       return pick(settings?.aiRephrasePromptTemplate, DEFAULT_AI_REPHRASE_PROMPT_TEMPLATE);
+    case 'rewrite':
+      return getEnglishRefinePrompt();
     case 'phrase_fallback':
       return DEFAULT_AI_PHRASE_FALLBACK_PROMPT_TEMPLATE;
     default:
@@ -103,9 +106,9 @@ export function buildPrompt(
   const variables = {
     text,
     str: text,
-    sentence: context || text,
+    sentence: canonical === 'rewrite' ? text : (context || text),
     context: context || '',
-    word_count: countWords(text),
+    word_count: countWords(canonical === 'rewrite' ? text : (context || text)),
     targetLang: settings?.translateTargetLanguage || 'Vietnamese',
     enableLexicalProfile: shouldRequestLexicalProfile(canonical, settings?.enableLexicalProfile),
     lexicalExtras: shouldRequestLexicalProfile(canonical, settings?.enableLexicalProfile)
@@ -289,6 +292,14 @@ function buildOfflineFallback(intentId: AiIntentId, term: string, trimmed: strin
       },
     };
   }
+  if (intentId === 'rewrite') {
+    return {
+      type: intentId,
+      query: term,
+      summary: `### Polished Version\nConfigure an AI endpoint in Settings to polish full sentences and paragraphs.\n\n> "${trimmed}"`,
+      translation,
+    };
+  }
   if (intentId === 'rephrase') {
     return {
       type: intentId,
@@ -328,7 +339,9 @@ export async function fetchAiAnalysis(
 
   const canonical = canonicalAiIntent(intentId);
   const { term, surrounding } = resolveQueryAndContext(trimmed, context);
-  const promptContext = surrounding || (canonical === 'explain_in_context' ? '' : trimmed);
+  const promptContext = canonical === 'rewrite'
+    ? String(context || '').trim()
+    : (surrounding || (canonical === 'explain_in_context' ? '' : trimmed));
 
   let translation = trimmed;
   try {
@@ -394,6 +407,15 @@ export async function fetchAiAnalysis(
           translation,
           lexicalProfile,
           comparison: comparison || undefined,
+        };
+      }
+
+      if (canonical === 'rewrite') {
+        return {
+          type: canonical,
+          query: trimmed,
+          summary: content,
+          translation,
         };
       }
 

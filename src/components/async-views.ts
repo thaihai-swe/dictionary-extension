@@ -24,6 +24,7 @@ const INTENT_CHUNK_LOADERS: Record<AiIntentId, () => Promise<unknown>> = {
   grammar: loadAiMarkdownIntent,
   collocations: loadAiMarkdownIntent,
   rephrase: loadRephraseIntent,
+  rewrite: loadAiMarkdownIntent,
   phrase_fallback: loadAiMarkdownIntent,
   sentence_breakdown: loadSentenceBreakdownIntent,
   confusables: loadConfusablesIntent,

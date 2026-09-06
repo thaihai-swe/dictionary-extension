@@ -8,6 +8,7 @@ export type AiIntentId =
   | 'sentence_breakdown'
   | 'confusables'
   | 'rephrase'
+  | 'rewrite'
   | 'phrase_fallback';
 
 export interface SentenceStructureItem {

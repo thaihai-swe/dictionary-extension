@@ -1,9 +1,8 @@
-import { DEFAULT_AI_PROMPTS, getLegacyDefaultPromptUpdates } from './ai-prompts';
+import { DEFAULT_AI_PROMPTS, resolvePreloadedAiIntents } from './ai-prompts';
 import type { AppSettings } from '../types';
 import {
   SECRET_KEYS,
   SECRET_SETTING_KEYS,
-  SETTINGS_SCHEMA_VERSION,
   hasConfiguredAiApiKey,
   mergePublicSettings,
   mergeStoredSettings,
@@ -13,12 +12,10 @@ import {
 export {
   SECRET_KEYS,
   SECRET_SETTING_KEYS,
-  SETTINGS_SCHEMA_VERSION,
   hasConfiguredAiApiKey,
   mergePublicSettings,
   mergeStoredSettings,
 };
-export const SETTINGS_SCHEMA_VERSION_KEY = 'dictionaryHelperSettingsSchemaVersion';
 
 export const DEFAULT_GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/openai';
 export const DEFAULT_OPENAI_BASE_URL = 'http://localhost:20128/v1';
@@ -69,7 +66,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   enableDictionary: true,
   enableLexicalProfile: true,
   enableAI: true,
-  enableAiPreload: true,
+  enableAiPreload: false,
+  preloadedAiIntents: [],
   enablePhraseFallback: true,
   disablePageContextExtraction: false,
   pausedHostnames: [],
@@ -86,7 +84,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
 export const PUBLIC_SETTING_KEYS = (Object.keys(DEFAULT_SETTINGS) as Array<keyof AppSettings>)
   .filter((key) => !SECRET_KEYS.has(key));
 
-const SYNC_SETTING_KEYS = [...PUBLIC_SETTING_KEYS, SETTINGS_SCHEMA_VERSION_KEY];
+const SYNC_SETTING_KEYS = [...PUBLIC_SETTING_KEYS];
 
 export function normalizePausedHostnames(value: unknown): string[] {
   const raw = Array.isArray(value) ? value : String(value || '').split(/[\n,]/);
@@ -140,12 +138,13 @@ export function normalizeSettings(input?: Partial<AppSettings> | Record<string, 
   merged.enableDictionary = Boolean(merged.enableDictionary);
   merged.enableLexicalProfile = merged.enableLexicalProfile !== false;
   merged.enableAI = Boolean(merged.enableAI);
-  merged.enableAiPreload = Boolean(merged.enableAiPreload);
+  const sourceSettings = (source || {}) as Partial<AppSettings> & Record<string, unknown>;
+  merged.preloadedAiIntents = resolvePreloadedAiIntents(sourceSettings);
+  merged.enableAiPreload = merged.preloadedAiIntents.length > 0;
   merged.enablePhraseFallback = merged.enablePhraseFallback !== false;
   merged.disablePageContextExtraction = Boolean(merged.disablePageContextExtraction);
   merged.hasAiApiKey = hasConfiguredAiApiKey(merged);
 
-  const sourceSettings = source as Partial<AppSettings>;
   const aiProv = String(merged.aiProvider || '').trim().toLowerCase();
   merged.aiProvider = aiProv === 'openai' ? 'openai' : 'gemini';
   merged.aiBaseUrl = String(sourceSettings.aiBaseUrl || '').trim().replace(/\/+$/, '') || defaultAiBaseUrlFor(merged.aiProvider);
@@ -180,7 +179,6 @@ export function stripSecretSettings(settings?: Partial<AppSettings>): Partial<Ap
 
 export function serializePublicSettings(settings: AppSettings) {
   return {
-    version: SETTINGS_SCHEMA_VERSION,
     exportedAt: new Date().toISOString(),
     settings: getPublicSettings(settings),
   };
@@ -200,17 +198,6 @@ export function parsePublicSettingsImport(raw: unknown): Partial<AppSettings> {
     if (key in DEFAULT_SETTINGS) imported[key] = value;
   }
   return imported as Partial<AppSettings>;
-}
-
-export function looksLikeLegacyMainInstall(syncData?: Record<string, unknown>): boolean {
-  if (!syncData || typeof syncData !== 'object') return false;
-  return Boolean(
-    syncData.aiPromptTemplate
-    || syncData.aiContextPromptTemplate
-    || syncData.aiGrammarPromptTemplate
-    || syncData.enablePhraseFallback !== undefined
-    || syncData.pausedHostnames
-  );
 }
 
 export async function loadFullSettings(): Promise<AppSettings> {
@@ -286,54 +273,4 @@ export async function saveSettingsPartial(partial: Partial<AppSettings>): Promis
   if (Object.keys(syncData).length) writes.push(chrome.storage.sync.set(syncData));
   if (Object.keys(localData).length) writes.push(chrome.storage.local.set(localData));
   if (writes.length) await Promise.all(writes);
-}
-
-export async function migrateSettingsSchema(): Promise<{ migrated: boolean; version: number }> {
-  if (typeof chrome === 'undefined' || !chrome.storage?.sync) {
-    return { migrated: false, version: SETTINGS_SCHEMA_VERSION };
-  }
-
-  const syncData = await chrome.storage.sync.get([
-    SETTINGS_SCHEMA_VERSION_KEY,
-    'enableAI',
-    'hasAiApiKey',
-    'aiPromptTemplate',
-    'aiContextPromptTemplate',
-    'aiGrammarPromptTemplate',
-    'aiSentencePromptTemplate',
-    'aiPhraseExplorerPromptTemplate',
-    'aiComparePromptTemplate',
-    'aiRephrasePromptTemplate',
-  ]) as Record<string, unknown>;
-  const currentVersion = Number(syncData?.[SETTINGS_SCHEMA_VERSION_KEY] || 0);
-  if (currentVersion >= SETTINGS_SCHEMA_VERSION) {
-    return { migrated: false, version: currentVersion };
-  }
-
-  const updates: Record<string, unknown> = {
-    [SETTINGS_SCHEMA_VERSION_KEY]: SETTINGS_SCHEMA_VERSION,
-  };
-
-  if (currentVersion > 0 && currentVersion < 9) {
-    Object.assign(updates, getLegacyDefaultPromptUpdates(syncData));
-  }
-
-  if (currentVersion < 10 && currentVersion >= 1 && !Object.prototype.hasOwnProperty.call(syncData || {}, 'enableAI')) {
-    updates.enableAI = true;
-  }
-
-  if (currentVersion < 12) {
-    const localData = await chrome.storage.local.get(['aiApiKey']);
-    updates.hasAiApiKey = hasConfiguredAiApiKey({
-      ...(syncData || {}),
-      ...(localData || {}),
-    });
-  }
-
-  if (currentVersion === 0 && looksLikeLegacyMainInstall(syncData)) {
-    // Preserve custom prompts/keys from main; only stamp the new schema version.
-  }
-
-  await chrome.storage.sync.set(updates);
-  return { migrated: true, version: SETTINGS_SCHEMA_VERSION };
 }

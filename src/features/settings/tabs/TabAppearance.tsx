@@ -40,9 +40,9 @@ export const TabAppearance: React.FC<TabAppearanceProps> = ({ localSettings, onC
                   className="hidden"
                 />
                 {mode === 'dark' ? (
-                  <IconMoon className="w-4 h-4 text-amber-400" />
+                  <IconMoon className="w-4 h-4 text-accent" />
                 ) : mode === 'light' ? (
-                  <IconSun className="w-4 h-4 text-amber-500" />
+                  <IconSun className="w-4 h-4 text-accent" />
                 ) : (
                   <IconMonitor className="w-4 h-4 text-content-secondary" />
                 )}
