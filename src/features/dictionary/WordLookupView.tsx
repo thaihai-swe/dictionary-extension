@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { searchWord, stopAllAudio, useDictionaryQuery, useDictionaryResult } from '@/composables/composable.dictionary';
 import { useStorage } from '@/composables/composable.storage';
 import { IconClose, IconSearch } from '@/components/icons';
-import WordLookupResult from './WordLookupResult';
 import PresetChips from '@/components/component.preset-chips';
 import type { DemoPreset } from '@/shared/presets';
+
+const WordLookupResult = lazy(() => import('./WordLookupResult'));
 
 interface WordLookupViewProps {
   initialQuery?: string;
@@ -135,7 +136,15 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
           </div>
         ) : result ? (
           <div aria-busy={isLoading || undefined}>
-            <WordLookupResult onSelectWord={handleSearch} contextSentence={initialContext} />
+            <Suspense fallback={
+              <div className="p-4 space-y-3.5 rounded-xl border border-border bg-surface shadow-xs" aria-busy="true">
+                <div className="h-7 skeleton-shimmer rounded-md w-2/5" />
+                <div className="h-4 skeleton-shimmer rounded w-4/5" />
+                <div className="h-16 skeleton-shimmer rounded-lg" />
+              </div>
+            }>
+              <WordLookupResult onSelectWord={handleSearch} contextSentence={initialContext} />
+            </Suspense>
           </div>
         ) : isLoading ? (
           <div className="p-4 space-y-3.5 rounded-xl border border-border bg-surface shadow-xs" aria-busy="true" aria-live="polite">

@@ -6,6 +6,7 @@ import {
   startDictionaryLookup,
   subscribeLookupUpdates,
 } from '../shared/dictionary-lookup-client';
+import { requestPlayAudio, requestSpeakTts, requestStopAudio } from '../shared/runtime-client';
 import { createPersistedLruCache } from '../shared/lookup-cache';
 import { AppSettings, DictionaryEntry, PracticeResult } from '../types';
 
@@ -26,9 +27,11 @@ let activeRecognition: { stop: () => void; abort?: () => void } | null = null;
 let speechStartTimer: ReturnType<typeof setTimeout> | null = null;
 let lookupGeneration = 0;
 let playGeneration = 0;
+let lookupUnsubscribe: (() => void) | null = null;
 const practiceResults = new Map<string, PracticeResult>();
 
-const MAX_DICT_CACHE_SIZE = 200;
+const MAX_DICT_CACHE_SIZE = 80;
+const MAX_PRACTICE_RESULTS = 20;
 const DICT_CACHE_TTL_MS = 48 * 60 * 60 * 1000; // 48 hours
 const DICT_STORAGE_KEY = 'dict_lookup_cache_v4';
 
@@ -36,7 +39,7 @@ const dictCache = createPersistedLruCache<DictionaryEntry>({
   maxSize: MAX_DICT_CACHE_SIZE,
   ttlMs: DICT_CACHE_TTL_MS,
   storageKey: DICT_STORAGE_KEY,
-  persistDelayMs: 300,
+  persistDelayMs: 1500,
 });
 
 const dictPendingMap = new Map<string, Promise<DictionaryEntry>>();
@@ -60,9 +63,11 @@ function normalizeSpeechText(value: string): string {
     .trim();
 }
 
+const MAX_LEVENSHTEIN_CHARS = 120;
+
 function levenshteinDistance(a: string, b: string): number {
-  const left = String(a || '');
-  const right = String(b || '');
+  const left = String(a || '').slice(0, MAX_LEVENSHTEIN_CHARS);
+  const right = String(b || '').slice(0, MAX_LEVENSHTEIN_CHARS);
   if (left === right) return 0;
   if (!left.length) return right.length;
   if (!right.length) return left.length;
@@ -151,6 +156,7 @@ export function stopAllAudio() {
   isAudioPlayingRef.value = false;
   isPracticingRef.value = false;
   playingKeyRef.value = null;
+  requestStopAudio();
   if (speechStartTimer) {
     clearTimeout(speechStartTimer);
     speechStartTimer = null;
@@ -165,7 +171,8 @@ export function stopAllAudio() {
   if (currentAudioElement) {
     try {
       currentAudioElement.pause();
-      currentAudioElement.currentTime = 0;
+      currentAudioElement.removeAttribute('src');
+      currentAudioElement.load();
     } catch {
       // Ignore audio pause error
     }
@@ -188,6 +195,8 @@ const AI_PRELOAD_DEBOUNCE_MS = 600;
 export function abortActiveDictRequest() {
   stopAllAudio();
   lookupGeneration += 1;
+  lookupUnsubscribe?.();
+  lookupUnsubscribe = null;
   dictPreloadGeneration += 1;
   if (aiPreloadTimer) {
     clearTimeout(aiPreloadTimer);
@@ -220,25 +229,62 @@ function maybePreloadAi(text: string, targetLang: string, context?: string, gene
   }, AI_PRELOAD_DEBOUNCE_MS);
 }
 
-function playAudioClip(url: string, rate = 1): Promise<boolean> {
+async function playAudioClip(url: string, rate = 1): Promise<boolean> {
+  const offscreenPlayed = await requestPlayAudio({ url, rate });
+  if (offscreenPlayed) return true;
+
   return new Promise((resolve) => {
     const clip = new Audio(url);
     currentAudioElement = clip;
     clip.playbackRate = Number.isFinite(rate) && rate > 0 ? rate : 1;
     let settled = false;
+
+    const cleanup = () => {
+      clip.removeEventListener('ended', onEnded);
+      clip.removeEventListener('error', onError);
+      if (currentAudioElement === clip) currentAudioElement = null;
+    };
+
     const finish = (ok: boolean) => {
       if (settled) return;
       settled = true;
-      if (currentAudioElement === clip) currentAudioElement = null;
+      cleanup();
       resolve(ok);
     };
-    clip.addEventListener('ended', () => finish(true), { once: true });
-    clip.addEventListener('error', () => finish(false), { once: true });
+
+    const onEnded = () => finish(true);
+    const onError = () => finish(false);
+
+    clip.addEventListener('ended', onEnded, { once: true });
+    clip.addEventListener('error', onError, { once: true });
     clip.play().catch(() => finish(false));
   });
 }
 
 export function speakTTS(text: string, accent: 'uk' | 'us' = 'us', key?: string) {
+  const playKey = key || playingKeyRef.value || (accent === 'uk' ? 'en-GB' : 'en-US');
+  const settings = settingsStore.value;
+  playingKeyRef.value = playKey;
+  isAudioPlayingRef.value = true;
+
+  void requestSpeakTts({
+    text,
+    lang: accent === 'uk' ? 'en-GB' : 'en-US',
+    rate: settings.pronunciationRate || 0.95,
+    voiceURI: settings.pronunciationVoiceURI,
+  }).then((ok) => {
+    if (ok) {
+      if (playingKeyRef.value === playKey) {
+        playingKeyRef.value = null;
+        isAudioPlayingRef.value = false;
+      }
+      return;
+    }
+    speakTtsLocal(text, accent, playKey);
+  });
+}
+
+function speakTtsLocal(text: string, accent: 'uk' | 'us' = 'us', key?: string) {
   if (speechStartTimer) {
     clearTimeout(speechStartTimer);
     speechStartTimer = null;
@@ -391,7 +437,13 @@ export function startSpeechPractice(text = queryRef.value, language = 'en-US') {
     const spoken = event.results?.[0]?.[0]?.transcript || '';
     const scored = scorePractice(text, spoken);
     practiceResultRef.value = scored;
-    practiceResults.set(practiceKey(text, language), scored);
+    const pKey = practiceKey(text, language);
+    practiceResults.set(pKey, scored);
+    while (practiceResults.size > MAX_PRACTICE_RESULTS) {
+      const oldestKey = practiceResults.keys().next().value;
+      if (!oldestKey) break;
+      practiceResults.delete(oldestKey);
+    }
     isPracticingRef.value = false;
     playingKeyRef.value = null;
     activeRecognition = null;
@@ -455,6 +507,8 @@ export async function searchWord(
     cancelDictionaryLookup(activeDictRequestId);
     activeDictRequestId = null;
   }
+  lookupUnsubscribe?.();
+  lookupUnsubscribe = null;
 
   const generation = ++lookupGeneration;
   const requestId = reusedRequestId || createRequestId('dict');
@@ -478,6 +532,10 @@ export async function searchWord(
   let updateFrame = 0;
   const flushUpdate = () => {
     updateFrame = 0;
+    if (generation !== lookupGeneration) {
+      pendingUpdate = null;
+      return;
+    }
     if (!pendingUpdate) return;
     const enriched = pendingUpdate;
     pendingUpdate = null;
@@ -490,6 +548,7 @@ export async function searchWord(
       isEnrichingRef.value = false;
       if (enrichmentTimeout) clearTimeout(enrichmentTimeout);
       unsubscribe();
+      if (lookupUnsubscribe === unsubscribe) lookupUnsubscribe = null;
     }
   };
   const unsubscribe = subscribeLookupUpdates((payload) => {
@@ -504,6 +563,7 @@ export async function searchWord(
       flushUpdate();
     }
   });
+  lookupUnsubscribe = unsubscribe;
 
   const request = pending || startDictionaryLookup({
     text: cleanWord,
@@ -550,6 +610,7 @@ export async function searchWord(
     if (generation === lookupGeneration) {
       isEnrichingRef.value = false;
       unsubscribe();
+      if (lookupUnsubscribe === unsubscribe) lookupUnsubscribe = null;
     }
   }, 20000);
 }

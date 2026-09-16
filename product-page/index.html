@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Dictionary — Look it up. Hear it. Keep reading.</title>
     <meta name="description"
-        content="A free Chrome extension for instant definitions, translation, pronunciation, speech practice, sentence-aware AI, and an in-page Rewriter. Look up words where you read without leaving the page.">
+        content="A free Chrome and Firefox extension for instant definitions, translation, pronunciation, speech practice, sentence-aware AI, and an in-page Rewriter. Look up words where you read without leaving the page.">
     <meta name="theme-color" content="#fbfaf7">
     <link rel="canonical" href="https://thaihai-swe.github.io/dictionary-extension/">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -18,13 +18,13 @@
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Dictionary — Look it up. Hear it. Keep reading.">
     <meta name="twitter:description"
-        content="A free Chrome extension for dictionary lookup, translation, pronunciation, speech practice, contextual AI, and an in-page Rewriter.">
+        content="A free Chrome and Firefox extension for dictionary lookup, translation, pronunciation, speech practice, contextual AI, and an in-page Rewriter.">
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
       "name": "Dictionary",
-      "operatingSystem": "Chrome, Chromium, Brave, Edge",
+      "operatingSystem": "Chrome, Chromium, Brave, Edge, Firefox",
       "applicationCategory": "BrowserExtension",
       "applicationSubCategory": "Language Learning & Productivity",
       "offers": {
@@ -32,7 +32,7 @@
         "price": "0",
         "priceCurrency": "USD"
       },
-      "description": "A free Chrome extension for instant definitions, translation, pronunciation, speech practice, sentence-aware AI, and an in-page Rewriter without leaving the page.",
+      "description": "A free Chrome and Firefox extension for instant definitions, translation, pronunciation, speech practice, sentence-aware AI, and an in-page Rewriter without leaving the page.",
       "author": {
         "@type": "Person",
         "name": "thaihai-swe",
@@ -63,7 +63,7 @@
                         <line x1="24" y1="33" x2="27" y2="33" stroke="#2563EB" stroke-width="1.5" />
                     </svg>
                 </span>
-                <span class="brand-text">Dictionary <span class="brand-badge">Free · Chrome</span></span>
+                <span class="brand-text">Dictionary <span class="brand-badge">Free · Chrome &amp; Firefox</span></span>
             </a>
 
             <nav class="site-nav" id="site-nav" aria-label="Primary">
@@ -504,9 +504,9 @@
             <div class="container">
                 <div class="section-header">
                     <p class="section-kicker">Free and open source · Load in under 2 minutes</p>
-                    <h2 class="section-title">Install locally in Chrome. No account or payment required.</h2>
-                    <p class="section-lead">Dictionary is fully open source. You install it directly using Chrome’s
-                        unpacked extension workflow. Perfect for personal learning, student labs, and team deployments
+                    <h2 class="section-title">Install locally in Chrome or Firefox. No account or payment required.</h2>
+                    <p class="section-lead">Dictionary is fully open source. You install it directly using your browser’s
+                        unpacked extension workflow (Chrome <code>dist</code> or Firefox <code>dist-firefox</code>). Perfect for personal learning, student labs, and team deployments
                         without store wait times or subscriptions.</p>
                 </div>
                 <ol class="install-steps">
@@ -537,17 +537,20 @@ npm install &amp;&amp; npm run build</code></pre>
                     <li class="install-step">
                         <span class="install-num">2</span>
                         <div>
-                            <h3>Open Chrome extensions</h3>
-                            <p>Navigate to <code>chrome://extensions</code> in your address bar and turn on
-                                <strong>Developer mode</strong> in the top-right corner.</p>
+                            <h3>Chrome / Chromium / Edge</h3>
+                            <p>Open <code>chrome://extensions</code>, turn on <strong>Developer mode</strong>, click
+                                <strong>Load unpacked</strong>, and select the built <code>dist</code> folder. Do not
+                                load <code>dist-firefox</code> into Chrome.</p>
                         </div>
                     </li>
                     <li class="install-step">
                         <span class="install-num">3</span>
                         <div>
-                            <h3>Load unpacked</h3>
-                            <p>Click <strong>Load unpacked</strong> and select the built <code>dist</code> directory in
-                                the repository.</p>
+                            <h3>Firefox 115+</h3>
+                            <p>Open <code>about:debugging#/runtime/this-firefox</code>, click <strong>Load Temporary
+                                Add-on…</strong>, and select <code>dist-firefox/manifest.json</code>. Do not load
+                                Chrome’s <code>dist</code> into Firefox. Temporary add-ons unload when Firefox quits;
+                                load the manifest again after a restart.</p>
                         </div>
                     </li>
                     <li class="install-step">
@@ -555,8 +558,9 @@ npm install &amp;&amp; npm run build</code></pre>
                         <div>
                             <h3>Try it on any webpage</h3>
                             <p>Select any word, click the floating icon, or use the right-click menu. For local HTML
-                                files and PDFs, enable <strong>Allow access to file URLs</strong> in extension details.
-                            </p>
+                                files and PDFs, enable <strong>Allow access to file URLs</strong> in Chrome extension
+                                details or Firefox <code>about:addons</code>. Speech Practice is Chrome-only (no Speech
+                                Recognition API in Firefox).</p>
                         </div>
                     </li>
                 </ol>
@@ -659,10 +663,12 @@ npm install &amp;&amp; npm run build</code></pre>
                             are not the same feature.</p>
                     </details>
                     <details class="faq-item">
-                        <summary>Is there a Chrome Web Store listing?</summary>
-                        <p>Not yet. Install from GitHub with Chrome’s unpacked-extension workflow: clone the repository,
-                            run <code>npm install &amp;&amp; npm run build</code>, enable Developer mode, and choose
-                            <strong>Load unpacked</strong> on the built <code>dist</code> folder.</p>
+                        <summary>Is there a Chrome Web Store or Firefox Add-ons listing?</summary>
+                        <p>Not yet. Install from GitHub: clone the repository, run
+                            <code>npm install &amp;&amp; npm run build</code>. In Chrome, enable Developer mode and
+                            <strong>Load unpacked</strong> on the built <code>dist</code> folder. In Firefox 115+, open
+                            <code>about:debugging#/runtime/this-firefox</code> and load
+                            <code>dist-firefox/manifest.json</code> as a temporary add-on.</p>
                     </details>
                 </div>
             </div>
@@ -674,7 +680,7 @@ npm install &amp;&amp; npm run build</code></pre>
                     <div class="cta-content">
                         <span class="cta-kicker">Open source &amp; free</span>
                         <h2 class="cta-title">Understand unfamiliar English without breaking your flow.</h2>
-                        <p class="cta-lead">Install Dictionary in Chrome, configure your target language, and test it on
+                        <p class="cta-lead">Install Dictionary in Chrome or Firefox, configure your target language, and test it on
                             the next challenging article that slows you down.</p>
                         <div class="cta-buttons">
                             <a href="#install" class="btn btn-primary">Install free</a>
@@ -691,7 +697,7 @@ npm install &amp;&amp; npm run build</code></pre>
     <footer class="site-footer">
         <div class="container footer-inner">
             <div class="footer-copy">
-                <p>&copy; <span id="year">2026</span> Dictionary. A free Chrome Manifest V3 extension by <a
+                <p>&copy; <span id="year">2026</span> Dictionary. A free Chrome and Firefox Manifest V3 extension by <a
                         href="https://github.com/thaihai-swe" target="_blank" rel="noopener noreferrer">thaihai-swe</a>.
                 </p>
             </div>

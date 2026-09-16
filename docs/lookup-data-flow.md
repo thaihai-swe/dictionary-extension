@@ -132,7 +132,7 @@ selection
 5. **Phase B (Progressive Lazy Enrichment):** Background worker queries secondary keyless providers (`Datamuse`, `Wiktionary`, `Wikipedia`, `Urban Dictionary`, `RhymeBrain`) in concurrent batches of 2 (`ENRICHMENT_CONCURRENCY = 2`). `LOOKUP_UPDATE` messages are pushed with incrementing `revision` numbers. Extra cards (`CollocationsCard`, `WordFamilyCard`, `LearnerMistakesCard`, `WordFormationCard`) mount on subsequent animation frames without layout jump.
 6. **Timeouts:** All dictionary, translation, and proxy fetch calls enforce a uniform **60,000ms (60s)** timeout limit (`DICTIONARY_FETCH_TIMEOUT_MS = 60000`, `TRANSLATION_FETCH_TIMEOUT_MS = 60000`).
 
-> **Inspecting Network Requests:** Because dictionary and translation requests run in the background service worker to bypass webpage CORS boundaries, their HTTP requests appear in the **Background Service Worker's DevTools Network tab** (`chrome://extensions` → "service worker"), not the in-page DevTools.
+> **Inspecting Network Requests:** Because dictionary and translation requests run in the background worker to bypass webpage CORS boundaries, their HTTP requests appear in the **background DevTools Network tab** (Chrome: `chrome://extensions` → "service worker"; Firefox: `about:debugging` → Inspect), not the in-page DevTools.
 
 ### 3. AI Pipeline (Speculative & Sequenced)
 1. The same `searchWord()` call schedules `maybePreloadAi()` with a **600ms debounce**. Rapid re-selection or text adjustment clears the timer (`cancelAiPreload()`), preventing wasted API tokens.

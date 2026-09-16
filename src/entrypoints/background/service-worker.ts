@@ -8,6 +8,10 @@ import {
   LOOKUP_UPDATE,
   OPEN_LOOKUP_POPUP,
   OPEN_OPTIONS,
+  PLAY_AUDIO,
+  SPEAK_TTS,
+  STOP_AUDIO,
+  OFFSCREEN_AUDIO,
   VALIDATE_PROVIDER,
   aiAbortScope,
   createRequestId,
@@ -29,10 +33,10 @@ import {
 } from '../../providers/provider.index';
 import { loadFullSettings, normalizeSettings } from '../../shared/settings';
 import { canonicalAiIntent } from '../../shared/ai-prompts';
+import { canInjectIntoUrl } from '../../shared/ext';
 
 const CONTENT_SCRIPT_JS = ['content-script.js'];
 const SETTINGS_TTL_MS = 15_000;
-const RESTRICTED_URL_RE = /^(chrome|chrome-extension|edge|about|devtools|https:\/\/chromewebstore\.google\.com)/i;
 
 const activeProxyRequests = new Map<string, AbortController>();
 const lookupControllers = new Map<string, AbortController>();
@@ -58,6 +62,90 @@ function registerController(tabId: number | undefined, scope: string, requestId:
 
 function unregisterController(tabId: number | undefined, scope: string, requestId: string) {
   lookupControllers.delete(getRequestKey(tabId, scope, requestId));
+}
+
+let creatingOffscreen: Promise<void> | null = null;
+let offscreenIdleTimer: ReturnType<typeof setTimeout> | null = null;
+const OFFSCREEN_IDLE_TIMEOUT_MS = 30_000;
+
+async function ensureOffscreenDocument(): Promise<boolean> {
+  const offscreenApi = (chrome as typeof chrome & {
+    offscreen?: {
+      hasDocument: () => Promise<boolean>;
+      createDocument: (options: { url: string; reasons: string[]; justification: string }) => Promise<void>;
+      closeDocument: () => Promise<void>;
+    };
+  }).offscreen;
+  if (!offscreenApi?.createDocument) return false;
+
+  if (offscreenIdleTimer) {
+    clearTimeout(offscreenIdleTimer);
+    offscreenIdleTimer = null;
+  }
+
+  try {
+    if (await offscreenApi.hasDocument()) return true;
+  } catch {
+    // Continue creation
+  }
+
+  if (creatingOffscreen) {
+    await creatingOffscreen;
+    return true;
+  }
+
+  creatingOffscreen = offscreenApi.createDocument({
+    url: 'offscreen.html',
+    reasons: ['AUDIO_PLAYBACK'],
+    justification: 'Playback pronunciation audio and speech synthesis without content script overhead.',
+  }).finally(() => {
+    creatingOffscreen = null;
+  });
+
+  try {
+    await creatingOffscreen;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function scheduleOffscreenClose() {
+  const offscreenApi = (chrome as typeof chrome & {
+    offscreen?: {
+      hasDocument: () => Promise<boolean>;
+      closeDocument: () => Promise<void>;
+    };
+  }).offscreen;
+  if (!offscreenApi?.closeDocument) return;
+
+  if (offscreenIdleTimer) clearTimeout(offscreenIdleTimer);
+  offscreenIdleTimer = setTimeout(async () => {
+    offscreenIdleTimer = null;
+    try {
+      if (await offscreenApi.hasDocument?.()) {
+        await offscreenApi.closeDocument();
+      }
+    } catch {
+      // Ignore
+    }
+  }, OFFSCREEN_IDLE_TIMEOUT_MS);
+}
+
+function releaseIdleState() {
+  for (const controller of lookupControllers.values()) controller.abort();
+  lookupControllers.clear();
+  inflightDictionaryLookups.clear();
+  for (const controller of activeProxyRequests.values()) controller.abort();
+  activeProxyRequests.clear();
+  cachedSettings = null;
+  cachedSettingsAt = 0;
+  cachedSettingsPromise = null;
+  if (offscreenIdleTimer) {
+    clearTimeout(offscreenIdleTimer);
+    offscreenIdleTimer = null;
+  }
+  void (chrome as typeof chrome & { offscreen?: { closeDocument?: () => Promise<void> } }).offscreen?.closeDocument?.().catch(() => undefined);
 }
 
 function cancelRequestsForScope(tabId: number | undefined, scope: string, exceptRequestId?: string) {
@@ -108,12 +196,6 @@ async function getCachedSettings(): Promise<AppSettings> {
 function invalidateSettingsCache() {
   cachedSettings = null;
   cachedSettingsAt = 0;
-}
-
-function canInjectIntoUrl(url?: string): boolean {
-  const value = String(url || '');
-  if (!value) return false;
-  return !RESTRICTED_URL_RE.test(value);
 }
 
 async function publishLookupUpdate(options: {
@@ -190,10 +272,8 @@ async function handleDictionaryLookup(payload: LookupTextPayload, sender: chrome
         controller.signal,
       );
       return { ...result, requestId };
-    } catch (error) {
-      unregisterController(tabId, scope, requestId);
-      throw error;
     } finally {
+      unregisterController(tabId, scope, requestId);
       inflightDictionaryLookups.delete(requestKey);
     }
   })();
@@ -355,6 +435,10 @@ chrome.runtime.onStartup?.addListener(() => {
   void loadFullSettings().catch(() => undefined);
 });
 
+chrome.runtime.onSuspend?.addListener(() => {
+  releaseIdleState();
+});
+
 chrome.storage?.onChanged?.addListener((changes, area) => {
   if (area !== 'sync' && area !== 'local') return;
   invalidateSettingsCache();
@@ -487,6 +571,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       .catch((error) => sendResponse({
         ok: false,
         error: error instanceof Error ? error.message : 'AI lookup failed.',
+      }));
+    return true;
+  }
+
+  if (message?.type === PLAY_AUDIO || message?.type === SPEAK_TTS || message?.type === STOP_AUDIO) {
+    const action = message.type === PLAY_AUDIO ? 'play' : message.type === SPEAK_TTS ? 'speak' : 'stop';
+    ensureOffscreenDocument()
+      .then(async (ok) => {
+        if (!ok) {
+          sendResponse({ ok: false, error: 'Offscreen audio is unavailable.' });
+          return;
+        }
+        const response = await chrome.runtime.sendMessage({
+          type: OFFSCREEN_AUDIO,
+          payload: { ...(message.payload || {}), action },
+        });
+        scheduleOffscreenClose();
+        sendResponse(response || { ok: Boolean(response?.ok) });
+      })
+      .catch((error) => sendResponse({
+        ok: false,
+        error: error instanceof Error ? error.message : 'Audio playback failed.',
       }));
     return true;
   }

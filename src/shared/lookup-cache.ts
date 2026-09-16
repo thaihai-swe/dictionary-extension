@@ -7,6 +7,7 @@ export interface PersistedLruCache<T> {
   read(key: string): T | undefined;
   write(key: string, value: T): void;
   clear(): void;
+  flush(): void;
 }
 
 function canUseLocalStorage(): boolean {
@@ -22,11 +23,14 @@ export function createPersistedLruCache<T>(options: {
   ttlMs: number;
   storageKey: string;
   persistDelayMs?: number;
+  shouldPersist?: (value: T) => boolean;
 }): PersistedLruCache<T> {
   const map = new Map<string, CacheEntry<T>>();
-  const persistDelayMs = options.persistDelayMs ?? 250;
+  const persistDelayMs = options.persistDelayMs ?? 1500;
   let hydrated = false;
   let persistTimer: ReturnType<typeof setTimeout> | null = null;
+  let dirty = false;
+  let unloadBound = false;
 
   function prune() {
     const now = Date.now();
@@ -40,21 +44,42 @@ export function createPersistedLruCache<T>(options: {
     }
   }
 
+  function persistNow() {
+    if (!canUseLocalStorage() || !dirty) return;
+    dirty = false;
+    prune();
+    const snapshot: Record<string, CacheEntry<T>> = {};
+    for (const [key, entry] of map.entries()) {
+      if (options.shouldPersist && !options.shouldPersist(entry.value)) continue;
+      snapshot[key] = entry;
+    }
+    void Promise.resolve(chrome.storage.local.set({ [options.storageKey]: snapshot })).catch(() => undefined);
+  }
+
   function persist() {
     if (!canUseLocalStorage()) return;
+    dirty = true;
     if (persistTimer) clearTimeout(persistTimer);
     persistTimer = setTimeout(() => {
       persistTimer = null;
-      prune();
-      const snapshot: Record<string, CacheEntry<T>> = {};
-      for (const [key, entry] of map.entries()) snapshot[key] = entry;
-      void Promise.resolve(chrome.storage.local.set({ [options.storageKey]: snapshot })).catch(() => undefined);
+      persistNow();
     }, persistDelayMs);
+  }
+
+  function bindUnload() {
+    if (unloadBound || typeof window === 'undefined') return;
+    unloadBound = true;
+    const flush = () => persistNow();
+    window.addEventListener('pagehide', flush);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') flush();
+    });
   }
 
   function hydrate() {
     if (hydrated) return;
     hydrated = true;
+    bindUnload();
     if (!canUseLocalStorage()) return;
     void Promise.resolve(chrome.storage.local.get(options.storageKey))
       .then((stored) => {
@@ -90,8 +115,16 @@ export function createPersistedLruCache<T>(options: {
       prune();
       persist();
     },
+    flush() {
+      if (persistTimer) {
+        clearTimeout(persistTimer);
+        persistTimer = null;
+      }
+      persistNow();
+    },
     clear() {
       map.clear();
+      dirty = false;
       if (persistTimer) {
         clearTimeout(persistTimer);
         persistTimer = null;

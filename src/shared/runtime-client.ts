@@ -5,6 +5,9 @@ import {
   LOOKUP_TEXT,
   LOOKUP_UPDATE,
   OPEN_OPTIONS,
+  PLAY_AUDIO,
+  SPEAK_TTS,
+  STOP_AUDIO,
   VALIDATE_PROVIDER,
   aiAbortScope,
   createRequestId,
@@ -15,9 +18,11 @@ import {
   type CancelLookupPayload,
   type LookupTextPayload,
   type LookupUpdatePayload,
+  type PlayAudioPayload,
   type ProviderValidationKind,
   type ProviderValidationResult,
   type RuntimeResponse,
+  type SpeakTtsPayload,
 } from './messages';
 
 export { createRequestId } from './messages';
@@ -130,6 +135,48 @@ export function cancelDictionaryLookup(requestId?: string) {
 
 export function cancelAiLookup(intent?: AiIntentId | string, requestId?: string) {
   cancelRuntimeLookup(aiAbortScope(intent), requestId);
+}
+
+function canUseRuntimeAudio(): boolean {
+  try {
+    return typeof chrome !== 'undefined'
+      && typeof chrome.runtime?.sendMessage === 'function'
+      && Boolean(chrome.runtime.id)
+      && !isExtensionContextInvalidated();
+  } catch {
+    return false;
+  }
+}
+
+export async function requestPlayAudio(payload: PlayAudioPayload): Promise<boolean> {
+  if (!canUseRuntimeAudio()) return false;
+  try {
+    const response = await sendMessage<boolean>({ type: PLAY_AUDIO, payload });
+    return Boolean(response?.ok && response.result !== false);
+  } catch {
+    return false;
+  }
+}
+
+export async function requestSpeakTts(payload: SpeakTtsPayload): Promise<boolean> {
+  if (!canUseRuntimeAudio()) return false;
+  try {
+    const response = await sendMessage<boolean>({ type: SPEAK_TTS, payload });
+    return Boolean(response?.ok && response.result !== false);
+  } catch {
+    return false;
+  }
+}
+
+export function requestStopAudio() {
+  if (!canUseRuntimeAudio()) return;
+  try {
+    chrome.runtime.sendMessage({ type: STOP_AUDIO, payload: {} }, () => {
+      void runtimeErrorMessage('');
+    });
+  } catch {
+    // Ignore closed or invalidated channels.
+  }
 }
 
 export function subscribeLookupUpdates(handler: (payload: LookupUpdatePayload) => void): () => void {

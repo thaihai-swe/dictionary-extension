@@ -340,12 +340,17 @@ export function mergeDictionaryEntries(
 export function cloneDictionaryEntry(entry: DictionaryEntry): DictionaryEntry {
   return {
     ...entry,
-    meanings: mergeMeanings(entry.meanings || [], []),
-    phonetics: entry.phonetics ? entry.phonetics.map((item) => ({ ...item })) : undefined,
-    examples: entry.examples ? entry.examples.map((item) => ({ ...item })) : undefined,
-    synonyms: entry.synonyms ? entry.synonyms.map((item) => ({ ...item })) : undefined,
-    antonyms: entry.antonyms ? entry.antonyms.map((item) => ({ ...item })) : undefined,
-    phraseExplanation: entry.phraseExplanation ? entry.phraseExplanation.map((item) => ({ ...item })) : undefined,
+    meanings: entry.meanings ? entry.meanings.map((m) => ({
+      ...m,
+      definitions: m.definitions ? [...m.definitions] : [],
+      synonyms: m.synonyms ? [...m.synonyms] : undefined,
+      antonyms: m.antonyms ? [...m.antonyms] : undefined,
+    })) : [],
+    phonetics: entry.phonetics ? [...entry.phonetics] : undefined,
+    examples: entry.examples ? [...entry.examples] : undefined,
+    synonyms: entry.synonyms ? [...entry.synonyms] : undefined,
+    antonyms: entry.antonyms ? [...entry.antonyms] : undefined,
+    phraseExplanation: entry.phraseExplanation ? [...entry.phraseExplanation] : undefined,
     translation: entry.translation ? { ...entry.translation } : undefined,
   };
 }

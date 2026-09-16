@@ -1,7 +1,7 @@
 import { defineConfig, build as viteBuild, Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
-import { copyFileSync, existsSync, readdirSync, readFileSync, writeFileSync } from 'fs';
+import { copyFileSync, cpSync, existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
 
 function buildExtensionScriptsPlugin(): Plugin {
   return {
@@ -52,6 +52,27 @@ function buildExtensionScriptsPlugin(): Plugin {
             name: 'ContentScriptBootstrap',
             formats: ['iife'],
             fileName: () => 'content-script.js',
+          },
+        },
+      });
+
+      await viteBuild({
+        configFile: false,
+        define: {
+          'process.env.NODE_ENV': JSON.stringify('production'),
+        },
+        resolve: {
+          alias: { '@': resolve(__dirname, 'src') },
+        },
+        build: {
+          write: true,
+          outDir: 'dist',
+          emptyOutDir: false,
+          lib: {
+            entry: resolve(__dirname, 'src/entrypoints/offscreen/main.ts'),
+            name: 'DictionaryOffscreen',
+            formats: ['iife'],
+            fileName: () => 'offscreen.js',
           },
         },
       });
@@ -114,6 +135,16 @@ function buildExtensionScriptsPlugin(): Plugin {
 
       if (existsSync('manifest.json')) {
         copyFileSync('manifest.json', 'dist/manifest.json');
+      }
+      if (existsSync('offscreen.html')) {
+        copyFileSync('offscreen.html', 'dist/offscreen.html');
+      }
+
+      const firefoxDir = resolve(__dirname, 'dist-firefox');
+      if (existsSync(firefoxDir)) rmSync(firefoxDir, { recursive: true, force: true });
+      cpSync(distDir, firefoxDir, { recursive: true });
+      if (existsSync('manifest.firefox.json')) {
+        copyFileSync('manifest.firefox.json', resolve(firefoxDir, 'manifest.json'));
       }
     },
   };

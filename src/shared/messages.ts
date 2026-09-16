@@ -11,6 +11,10 @@ export const OPEN_LOOKUP_POPUP = 'OPEN_LOOKUP_POPUP';
 export const OPEN_OPTIONS = 'OPEN_OPTIONS';
 export const FETCH_PROXY = 'FETCH_PROXY';
 export const ABORT_FETCH_PROXY = 'ABORT_FETCH_PROXY';
+export const PLAY_AUDIO = 'PLAY_AUDIO';
+export const STOP_AUDIO = 'STOP_AUDIO';
+export const SPEAK_TTS = 'SPEAK_TTS';
+export const OFFSCREEN_AUDIO = 'OFFSCREEN_AUDIO';
 
 export type LookupSource = 'dictionary' | 'ai';
 export type ProviderValidationKind = 'dictionary' | 'translation' | 'ai';
@@ -64,6 +68,32 @@ export interface FetchProxyPayload {
   timeoutMs?: number;
 }
 
+export interface PlayAudioPayload {
+  url: string;
+  rate?: number;
+  requestId?: string;
+}
+
+export interface SpeakTtsPayload {
+  text: string;
+  lang?: string;
+  rate?: number;
+  voiceURI?: string;
+  requestId?: string;
+}
+
+export type OffscreenAudioAction = 'play' | 'stop' | 'speak';
+
+export interface OffscreenAudioPayload {
+  action: OffscreenAudioAction;
+  url?: string;
+  rate?: number;
+  text?: string;
+  lang?: string;
+  voiceURI?: string;
+  requestId?: string;
+}
+
 export interface RuntimeOkResponse<T> {
   ok: true;
   result: T;
@@ -98,7 +128,7 @@ export function isMissingReceiverError(error: unknown): boolean {
 
 export function isExtensionContextInvalidated(error?: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error || '');
-  if (/Extension context invalidated/i.test(message)) return true;
+  if (/Extension context invalidated|Context is invalidated|can't access dead object/i.test(message)) return true;
   try {
     return typeof chrome !== 'undefined' && Boolean(chrome.runtime?.id) === false && typeof chrome.runtime?.sendMessage === 'function';
   } catch {

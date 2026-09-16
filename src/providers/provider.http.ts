@@ -1,3 +1,5 @@
+import { isExtensionPage } from '../shared/ext.ts';
+
 let nextRequestId = 1;
 
 export const DICTIONARY_FETCH_TIMEOUT_MS = 60000;
@@ -55,19 +57,22 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
     return Promise.reject(new DOMException('The user aborted a request.', 'AbortError'));
   }
   return new Promise((resolve, reject) => {
-    const timeoutId = setTimeout(resolve, ms);
-    if (!signal) return;
     const abort = () => {
       clearTimeout(timeoutId);
-      const error = new DOMException('The user aborted a request.', 'AbortError');
-      reject(error);
+      reject(new DOMException('The user aborted a request.', 'AbortError'));
     };
+    const timeoutId = setTimeout(() => {
+      signal?.removeEventListener('abort', abort);
+      resolve();
+    }, ms);
+    if (!signal) return;
     signal.addEventListener('abort', abort, { once: true });
   });
 }
 
 const HTTP_CACHE_TTL_MS = 10 * 60 * 1000;
-const MAX_HTTP_CACHE_SIZE = 200;
+const MAX_HTTP_CACHE_SIZE = 80;
+const MAX_HTTP_CACHE_BODY = 256 * 1024;
 const httpCacheMap = new Map<string, HttpCacheEntry>();
 const inflightHttpMap = new Map<string, Promise<Response>>();
 
@@ -76,10 +81,31 @@ export function clearHttpCache() {
   inflightHttpMap.clear();
 }
 
+function getHttpMethod(options?: RequestInit): string {
+  return (options?.method || 'GET').toUpperCase();
+}
+
+function isCacheableMethod(method: string): boolean {
+  return method === 'GET' || method === 'HEAD';
+}
+
 function getHttpCacheKey(url: string, options?: RequestInit): string {
-  const method = (options?.method || 'GET').toUpperCase();
+  const method = getHttpMethod(options);
+  if (isCacheableMethod(method)) return `${method}:${url}`;
   const body = options?.body ? String(options.body) : '';
   return `${method}:${url}:${body}`;
+}
+
+function pruneHttpCache() {
+  const now = Date.now();
+  for (const [key, entry] of httpCacheMap.entries()) {
+    if (now - entry.timestamp >= HTTP_CACHE_TTL_MS) httpCacheMap.delete(key);
+  }
+  while (httpCacheMap.size >= MAX_HTTP_CACHE_SIZE) {
+    const oldestKey = httpCacheMap.keys().next().value;
+    if (!oldestKey) break;
+    httpCacheMap.delete(oldestKey);
+  }
 }
 
 export function shouldProxyThroughServiceWorker(): boolean {
@@ -87,7 +113,7 @@ export function shouldProxyThroughServiceWorker(): boolean {
   try {
     if (!chrome.runtime?.id) return false;
     if (typeof window === 'undefined') return false;
-    if (window.location?.protocol === 'chrome-extension:') return false;
+    if (isExtensionPage()) return false;
   } catch {
     return false;
   }
@@ -106,6 +132,9 @@ function timeoutError(timeoutMs: number): Error {
 
 function rememberResponse(cacheKey: string, status: number, statusText: string, bodyText: string) {
   if (!isCacheableStatus(status)) return;
+  if (!cacheKey.startsWith('GET:') && !cacheKey.startsWith('HEAD:')) return;
+  if (bodyText.length > MAX_HTTP_CACHE_BODY) return;
+  if (httpCacheMap.size >= MAX_HTTP_CACHE_SIZE) pruneHttpCache();
   if (httpCacheMap.size >= MAX_HTTP_CACHE_SIZE) {
     const oldestKey = httpCacheMap.keys().next().value;
     if (oldestKey) httpCacheMap.delete(oldestKey);

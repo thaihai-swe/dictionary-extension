@@ -46,14 +46,14 @@ let activeLookupKey = '';
 let aiGeneration = 0;
 
 const AI_STORAGE_KEY = 'ai_lookup_cache_v2';
-const MAX_AI_CACHE_SIZE = 100;
+const MAX_AI_CACHE_SIZE = 50;
 const AI_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 const aiCache = createPersistedLruCache<AiResult>({
   maxSize: MAX_AI_CACHE_SIZE,
   ttlMs: AI_CACHE_TTL_MS,
   storageKey: AI_STORAGE_KEY,
-  persistDelayMs: 300,
+  persistDelayMs: 1500,
 });
 
 const aiPendingMap = new Map<string, Promise<AiResult>>();

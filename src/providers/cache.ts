@@ -1,5 +1,6 @@
 import type { AppSettings, DictionaryEntry } from '../types';
 import { cloneDictionaryEntry } from '../shared/enrichment.ts';
+import { isExtensionPage } from '../shared/ext.ts';
 
 export const ENRICHMENT_TTL_MS = 10 * 60 * 1000;
 export const MAX_ENRICHMENT_CACHE = 20;
@@ -18,11 +19,23 @@ export interface EnrichmentCacheEntry {
 
 const combinedResultCache = new Map<string, CombinedResultCacheEntry>();
 const enrichmentMemoryCache = new Map<string, EnrichmentCacheEntry>();
+const combinedSessionKeys: string[] = [];
+const enrichmentSessionKeys: string[] = [];
+
+function rememberSessionKey(list: string[], key: string, max: number) {
+  const existing = list.indexOf(key);
+  if (existing >= 0) list.splice(existing, 1);
+  list.push(key);
+  const excess = list.splice(0, Math.max(0, list.length - max));
+  if (excess.length && hasSessionStorage()) {
+    void chrome.storage.session.remove(excess).catch(() => undefined);
+  }
+}
 
 export function hasSessionStorage(): boolean {
   try {
     if (typeof chrome === 'undefined' || typeof chrome.storage?.session?.get !== 'function') return false;
-    if (typeof window !== 'undefined' && window.location?.protocol !== 'chrome-extension:') return false;
+    if (typeof window !== 'undefined' && !isExtensionPage()) return false;
     return true;
   } catch {
     return false;
@@ -81,6 +94,7 @@ export function writeCombinedResultCache(key: string, result: DictionaryEntry) {
   }
   if (hasSessionStorage()) {
     const sKey = combinedSessionStorageKey(key);
+    rememberSessionKey(combinedSessionKeys, sKey, MAX_COMBINED_RESULT_CACHE);
     void Promise.resolve(chrome.storage.session.set({ [sKey]: entry })).catch(() => undefined);
   }
 }
@@ -109,6 +123,7 @@ export async function writeSessionEnrichment(key: string, results: DictionaryEnt
   enrichmentMemoryCache.set(key, entry);
   if (!hasSessionStorage()) return;
   try {
+    rememberSessionKey(enrichmentSessionKeys, key, MAX_ENRICHMENT_CACHE);
     await Promise.resolve(chrome.storage.session.set({ [key]: entry })).catch(() => undefined);
   } catch {
     // Memory cache suffices if session storage is unavailable.
@@ -118,6 +133,8 @@ export async function writeSessionEnrichment(key: string, results: DictionaryEnt
 export function clearEnrichmentCache() {
   enrichmentMemoryCache.clear();
   combinedResultCache.clear();
+  combinedSessionKeys.length = 0;
+  enrichmentSessionKeys.length = 0;
   if (hasSessionStorage()) {
     try {
       void chrome.storage.session.get(null).then((all) => {

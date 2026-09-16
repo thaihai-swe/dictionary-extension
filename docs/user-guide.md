@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Dictionary** is a modern Chrome extension built for readers, students, and language learners. It brings instant definitions, neural translations, natural pronunciation, speech practice, and deep contextual AI explanations directly to the text you are reading—without breaking your reading flow or requiring external tabs.
+**Dictionary** is a modern Chrome and Firefox Manifest V3 extension built for readers, students, and language learners. It brings instant definitions, neural translations, natural pronunciation, speech practice, and deep contextual AI explanations directly to the text you are reading—without breaking your reading flow or requiring external tabs.
 
 The user interface is powered by the **Editorial Ink** design system:
 - **Editorial Typography:** Clear, distraction-free serif typography for headwords and crisp sans-serif body text, with native support for System, Light (warm paper), and Dark (obsidian velvet + champagne gold) themes.
@@ -11,11 +11,59 @@ The user interface is powered by the **Editorial Ink** design system:
 
 ---
 
-## 1. Quick Start & Lookup Workflows
+## 1. Build & Install (Chrome and Firefox)
+
+The extension is not listed on the Chrome Web Store or addons.mozilla.org. Load it unpacked from a local production build. Requires **Node.js 22+** and **npm 10+**. Firefox requires **115+**.
+
+### Build both packages
+
+From the repository root:
+
+```bash
+npm install
+npm run build
+```
+
+`npm run build` writes two folders:
+
+| Browser | Load this | Do not load |
+|---|---|---|
+| **Chrome / Chromium / Edge** | `dist/` | `dist-firefox/` |
+| **Firefox** | `dist-firefox/` | `dist/` |
+
+Chrome `dist/` uses a Manifest V3 service worker. Firefox `dist-firefox/` uses the same scripts with a gecko id and a background event page. Mixing the two packages will fail to load.
+
+Developer typecheck, tests, and HMR live in the [Development Guide](development.md).
+
+### Install in Chrome
+
+1. Open Chrome (or Chromium / Edge) and go to `chrome://extensions`.
+2. Turn on **Developer mode** (top right).
+3. Click **Load unpacked** and select the **`dist/`** folder (the folder itself, not a file inside it).
+4. Pin the **Dictionary Assistant** icon on the toolbar for one-click lookup.
+5. After you change code, run `npm run build` again, click **Reload** (↻) on the extension card, then **refresh every webpage tab** you test so the content script re-injects.
+6. For lookups on local HTML or PDF (`file://`), open the extension **Details** and enable **Allow access to file URLs**.
+
+### Install in Firefox
+
+1. Open Firefox 115+ and go to `about:debugging#/runtime/this-firefox`.
+2. Click **Load Temporary Add-on…**.
+3. Select **`dist-firefox/manifest.json`** (the manifest file, not the folder).
+4. Pin the toolbar icon if you want one-click lookup.
+5. After you change code, run `npm run build`, click **Reload** on the add-on card, then refresh webpage tabs.
+6. For local HTML or PDF (`file://`), open `about:addons` → Dictionary → enable **Allow access to file URLs**.
+
+Firefox temporary add-ons **unload when Firefox quits**. Load `dist-firefox/manifest.json` again after a restart. This is unsigned local sideload, not an AMO listing.
+
+Speech **Practice** needs the browser Speech Recognition API. It works in Chrome and is unavailable in Firefox. Dictionary lookup, translation, AI, toolbar window, in-page overlay, context menu, and `Alt+L` work in both browsers.
+
+---
+
+## 2. Quick Start & Lookup Workflows
 
 ### Manual Lookup (Toolbar Popup)
 
-1. Click the **Dictionary** icon in the Chrome toolbar (or pin it for one-click access).
+1. Click the **Dictionary** icon in the Chrome or Firefox toolbar (or pin it for one-click access).
 2. Type any word, idiom, phrasal verb, or complete sentence into the search input.
 3. Press `Enter` or click **Search**.
 4. Use the **Dictionary** tab for structured definitions and translations, or switch to the **AI** tab for contextual explanations, grammatical breakdowns, or comparisons.
@@ -41,7 +89,7 @@ Look up words directly on any webpage without copying or typing:
 
 ---
 
-## 2. The Dictionary Tab
+## 3. The Dictionary Tab
 
 The **Dictionary** tab delivers a comprehensive, multi-source learning view combining real-time translation, progressive dictionary lookups, pronunciation, and structured lexical relationships.
 
@@ -94,7 +142,7 @@ Translation runs alongside dictionary lookups:
 
 ---
 
-## 3. Pronunciation & Speech Practice
+## 4. Pronunciation & Speech Practice
 
 Pronunciation tools are integrated directly into the result header:
 
@@ -109,7 +157,7 @@ Pronunciation tools are integrated directly into the result header:
 ### Speech Practice Evaluator
 Click the **Practice** button (`🎙️ Practice`) next to pronunciation controls to test and refine your spoken English:
 1. Speak the target word into your microphone when the glowing recording ring activates (`Listening…`).
-2. The extension captures your speech via Chrome's Speech Recognition API, normalizes the input, and calculates pronunciation similarity using Levenshtein distance metrics.
+2. The extension captures your speech via the browser Speech Recognition API (Chrome only; unavailable in Firefox), normalizes the input, and calculates pronunciation similarity using Levenshtein distance metrics.
 3. You receive an instant color-coded grade badge:
    - `90%–100%`: **Excellent** (Emerald badge)
    - `70%–89%`: **Good** (Teal badge)
@@ -119,7 +167,7 @@ Click the **Practice** button (`🎙️ Practice`) next to pronunciation control
 
 ---
 
-## 4. Structured Lexical Profile
+## 5. Structured Lexical Profile
 
 When **Lexical Profile** is enabled in Settings (default), lookups assemble an organized lexical learning matrix:
 
@@ -132,7 +180,7 @@ When **Lexical Profile** is enabled in Settings (default), lookups assemble an o
 
 ---
 
-## 5. The AI Tab & Specialized Actions
+## 6. The AI Tab & Specialized Actions
 
 Switch to the **AI** tab for deep generative explanations powered by Google Gemini (`gemini-3.5-flash-lite`) or any OpenAI-compatible endpoint (Ollama, Groq, OpenRouter, OpenAI, LocalAI).
 
@@ -185,7 +233,7 @@ The AI toolbar provides 7 interactive actions, each equipped with live status in
 
 ---
 
-## 6. Context Extraction & Privacy Controls
+## 7. Context Extraction & Privacy Controls
 
 Contextual AI actions rely on exact sentence extraction rather than sending broad, privacy-invasive page dumps.
 
@@ -203,16 +251,16 @@ Contextual AI actions rely on exact sentence extraction rather than sending broa
 
 ---
 
-## 7. PDFs, Web Readers, and Restricted Pages
+## 8. PDFs, Web Readers, and Restricted Pages
 
 - **Scriptable HTML5 PDFs:** Online and local PDFs rendered with HTML5 text layers (e.g. PDF.js, Chrome PDF text layer) support exact sentence extraction and floating selection triggers.
-- **Local Files (`file://`):** To enable lookups on local HTML or PDF files, open `chrome://extensions`, open Dictionary details, and enable **Allow access to file URLs**.
+- **Local Files (`file://`):** To enable lookups on local HTML or PDF files, open Chrome `chrome://extensions` or Firefox `about:addons`, open Dictionary details, and enable **Allow access to file URLs**.
 - **Reader Mode & Iframes:** Full multi-frame coordination ensures lookups inside reader containers or nested iframes extract sentences accurately without duplicate popups.
-- **Browser-Restricted Pages:** Chrome security policy strictly blocks extension injection on `chrome://` URLs, the Chrome Web Store, and internal browser PDF reader chrome. On these pages, use the toolbar popup for manual lookups and paste your context sentence directly.
+- **Browser-Restricted Pages:** Browser security policy blocks extension injection on `chrome://` / `about:` URLs, the Chrome Web Store, addons.mozilla.org, and internal PDF reader chrome. On these pages, use the toolbar popup for manual lookups and paste your context sentence directly.
 
 ---
 
-## 8. Keyboard Navigation & Accessibility
+## 9. Keyboard Navigation & Accessibility
 
 - **Keyboard Trapping:** In-page and toolbar popups support smooth `Tab` / `Shift+Tab` cycling through interactive elements.
 - **Quick Dismissal:** Press `Escape` to close the in-page popup and return focus cleanly to the webpage. Pressing `Escape` also cancels any active audio speech.

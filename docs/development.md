@@ -3,7 +3,7 @@
 ## 1. Architectural Philosophy & Environment
 
 **Dictionary** is engineered with a modern, high-performance web extension stack:
-- **Runtime Stack:** React 18, TypeScript 5, Vite 5, Tailwind CSS, Chrome Manifest V3.
+- **Runtime Stack:** React 18, TypeScript 5, Vite 5, Tailwind CSS, Chrome and Firefox Manifest V3.
 - **Module Architecture:** Organized under `src/entrypoints/` (`background/`, `content-script/`, `toolbar-popup/`).
 - **Isolation:** Content script overlay is mounted inside Shadow DOM (`#dictionary-extension-root`) with encapsulated Tailwind CSS, preventing style leaks into or out of host pages.
 - **Type Safety:** Full TypeScript interfaces defined in `src/types/index.ts` checked with `npm run typecheck` (`tsc --noEmit`).
@@ -26,16 +26,25 @@ npm run typecheck
 # 4. Unit tests
 npm test
 
-# 5. Production Build (outputs to /dist)
+# 5. Production Build (Chrome `dist/` + Firefox `dist-firefox/`)
 npm run build
 ```
 
+**Chrome**
 1. Open Chrome and navigate to `chrome://extensions`.
 2. Toggle on **Developer mode** in the top-right corner.
 3. Click **Load unpacked** and select the built `dist/` directory.
 4. Click the **Reload icon** (↻) on the extension card after rebuilding code changes.
 5. **Important:** Refresh open webpage tabs where you are testing so content scripts re-inject.
 6. For local HTML/PDF testing, open extension **Details** and enable **Allow access to file URLs**.
+
+**Firefox (115+)**
+1. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`.
+2. Click **Load Temporary Add-on…** and select `dist-firefox/manifest.json`.
+3. After rebuilding, click **Reload** on the add-on card, then refresh webpage tabs so content scripts re-inject.
+4. For local HTML/PDF testing, open `about:addons` → Dictionary → **Allow access to file URLs**.
+
+Speech practice uses `SpeechRecognition` / `webkitSpeechRecognition`. Firefox does not expose that API, so the Practice control stays unavailable there. Dictionary lookup, translation, AI, toolbar window, overlay, context menu, and `Alt+L` work on both browsers.
 
 ---
 
@@ -204,7 +213,7 @@ Run this comprehensive verification protocol before submitting code changes:
     - Open an online PDF (e.g. PDF.js viewer); test exact sentence extraction on text layer selections.
     - Open a local `file://` PDF or HTML document after enabling **Allow access to file URLs**; confirm lookups work seamlessly.
 26. Browser-restricted pages:
-    - Open `chrome://extensions` or the Chrome Web Store.
+    - Open `chrome://extensions` or the Chrome Web Store (in Chrome), or `about:debugging` / AMO (in Firefox).
     - Confirm the toolbar popup displays restriction-specific help without throwing unhandled exceptions.
 
 ---

@@ -15,14 +15,20 @@ interface MarkdownRendererProps {
 const IN_CONTEXT_BADGE =
   '<span class="inline-flex items-center px-2 py-0.5 ml-1.5 rounded-full text-[10.5px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 uppercase tracking-wide font-mono select-none">Used in context</span>';
 
+const RE_USED_IN_CONTEXT_BOLD = /\*\*(?:used in this context|in context)\*\*/gi;
+const RE_USED_IN_CONTEXT_BRACKET = /\[(?:used in this context|in context)\]/gi;
+const RE_BOLD = /\*\*(.*?)\*\*/g;
+const RE_ITALIC = /\*(.*?)\*/g;
+const RE_CODE = /`(.*?)`/g;
+
 function formatInlineMarkdown(text: string): string {
   if (!text) return '';
   return text
-    .replace(/\*\*(?:used in this context|in context)\*\*/gi, IN_CONTEXT_BADGE)
-    .replace(/\[(?:used in this context|in context)\]/gi, IN_CONTEXT_BADGE)
-    .replace(/\*\*(.*?)\*\*/g, '<strong class="text-content font-bold">$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em class="text-accent italic">$1</em>')
-    .replace(/`(.*?)`/g, '<code class="px-1.5 py-0.5 rounded bg-muted border border-border text-accent font-mono text-[12px]">$1</code>');
+    .replace(RE_USED_IN_CONTEXT_BOLD, IN_CONTEXT_BADGE)
+    .replace(RE_USED_IN_CONTEXT_BRACKET, IN_CONTEXT_BADGE)
+    .replace(RE_BOLD, '<strong class="text-content font-bold">$1</strong>')
+    .replace(RE_ITALIC, '<em class="text-accent italic">$1</em>')
+    .replace(RE_CODE, '<code class="px-1.5 py-0.5 rounded bg-muted border border-border text-accent font-mono text-[12px]">$1</code>');
 }
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, targetLang }) => {

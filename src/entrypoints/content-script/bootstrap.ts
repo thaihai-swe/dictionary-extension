@@ -1,6 +1,6 @@
 import { extractSelectionContext } from '../../shared/page-context';
 import { isExtensionContextInvalidated } from '../../shared/messages';
-import { createRequestId, startDictionaryLookup } from '../../shared/dictionary-lookup-client';
+import { cancelDictionaryLookup, createRequestId, startDictionaryLookup } from '../../shared/dictionary-lookup-client';
 
 type BootSettings = {
   theme: string;
@@ -141,6 +141,7 @@ function startBootstrap() {
   let settings: BootSettings = { ...BOOT_DEFAULTS };
   let overlayApi: OverlayApi | null = null;
   let overlayModulePromise: Promise<OverlayModule> | null = null;
+  let overlayOpenGeneration = 0;
   let showPopup = false;
   let isMaximized = false;
   let dockPosition: 'none' | 'left' | 'right' = 'none';
@@ -310,6 +311,7 @@ function startBootstrap() {
     if (isHostnamePaused()) return;
     const cleanText = String(text || '').trim();
     if (!cleanText) return;
+    const generation = ++overlayOpenGeneration;
     applyTheme();
     triggerBtn.style.display = 'none';
     selectedText = cleanText;
@@ -339,7 +341,7 @@ function startBootstrap() {
       }
       throw error;
     }
-    if (!showPopup) return;
+    if (!showPopup || generation !== overlayOpenGeneration) return;
     if (!overlayApi) {
       overlayApi = mod.mountOverlay(shadow, overlayMount, overlayProps(), {
         onClose: closePopup,
@@ -354,6 +356,8 @@ function startBootstrap() {
   }
 
   function closePopup() {
+    overlayOpenGeneration += 1;
+    const closingRequestId = lookupRequestId;
     showPopup = false;
     isMaximized = false;
     dockPosition = 'none';
@@ -363,6 +367,8 @@ function startBootstrap() {
     popupLayer.style.display = 'none';
     backdrop.style.display = 'none';
     popupLayer.classList.remove('maximized');
+    destroyOverlay();
+    if (closingRequestId) cancelDictionaryLookup(closingRequestId);
   }
 
   function toggleDock() {
@@ -498,7 +504,6 @@ function startBootstrap() {
 
     snapshotSelection(selection);
     selectedText = text;
-    void loadOverlayModule().catch(() => undefined);
 
     const iconSize = 38;
     const margin = 10;
@@ -551,6 +556,7 @@ function startBootstrap() {
   });
 
   window.addEventListener('mouseup', (event) => {
+    if (isHostnamePaused()) return;
     if (host.contains(event.target as Node) || shadow.contains(event.target as Node)) return;
     snapshotSelection(window.getSelection());
     if (selectionRaf) cancelAnimationFrame(selectionRaf);
@@ -558,7 +564,7 @@ function startBootstrap() {
       selectionRaf = 0;
       updateSelectionTrigger(event);
     });
-  });
+  }, { passive: true });
 
   window.addEventListener('keydown', (event) => {
     const target = event.target as HTMLElement;

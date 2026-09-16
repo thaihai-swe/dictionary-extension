@@ -77,5 +77,6 @@ This document outlines completed milestones and future enhancements for **Dictio
 
 - [ ] **On-Device LLM Integration (Chrome Built-in AI / Gemini Nano):**
   - Integrate with Chrome's experimental `window.ai` / Prompt API to offer zero-latency, private, keyless local AI explanations when supported by hardware.
-- [ ] **Cross-Browser Packaging:**
-  - Verify and package Firefox (Manifest V2/V3) and Safari Web Extension distributions.
+- [x] **Firefox Manifest V3 packaging:** Dual output (`dist/` Chrome service worker, `dist-firefox/` gecko event page). Safari remains later.
+- [ ] **Safari Web Extension:**
+  - Verify and package a Safari Web Extension distribution.
