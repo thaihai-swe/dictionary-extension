@@ -1,5 +1,4 @@
 import type { AppSettings, DictionaryEntry } from '../types';
-import { cloneDictionaryEntry } from '../shared/enrichment.ts';
 import { isExtensionPage } from '../shared/ext.ts';
 
 export const ENRICHMENT_TTL_MS = 10 * 60 * 1000;
@@ -63,7 +62,7 @@ export function readCombinedResultCache(key: string): DictionaryEntry | undefine
   }
   combinedResultCache.delete(key);
   combinedResultCache.set(key, entry);
-  return cloneDictionaryEntry(entry.result);
+  return entry.result;
 }
 
 export async function readSessionCombinedResult(key: string): Promise<DictionaryEntry | undefined> {
@@ -76,7 +75,7 @@ export async function readSessionCombinedResult(key: string): Promise<Dictionary
     const entry = stored?.[sKey];
     if (!entry || Date.now() - entry.timestamp > COMBINED_RESULT_TTL_MS) return undefined;
     combinedResultCache.set(key, entry);
-    return cloneDictionaryEntry(entry.result);
+    return entry.result;
   } catch {
     return undefined;
   }
@@ -84,7 +83,7 @@ export async function readSessionCombinedResult(key: string): Promise<Dictionary
 
 export function writeCombinedResultCache(key: string, result: DictionaryEntry) {
   if (!result.enriched) return;
-  const entry: CombinedResultCacheEntry = { result: cloneDictionaryEntry(result), timestamp: Date.now() };
+  const entry: CombinedResultCacheEntry = { result, timestamp: Date.now() };
   combinedResultCache.delete(key);
   combinedResultCache.set(key, entry);
   while (combinedResultCache.size > MAX_COMBINED_RESULT_CACHE) {

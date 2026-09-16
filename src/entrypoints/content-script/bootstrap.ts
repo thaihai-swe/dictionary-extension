@@ -33,6 +33,17 @@ type OverlayModule = {
   ) => OverlayApi;
 };
 
+type BootUi = {
+  host: HTMLDivElement;
+  shadow: ShadowRoot;
+  triggerBtn: HTMLButtonElement;
+  backdrop: HTMLDivElement;
+  popupLayer: HTMLDivElement;
+  overlayMount: HTMLDivElement;
+};
+
+const BOOT_FLAG = '__dictionaryAssistantBoot';
+
 const BOOT_DEFAULTS: BootSettings = {
   theme: 'dark',
   dockPosition: 'none',
@@ -101,43 +112,16 @@ const TRIGGER_CSS = `
 }
 `;
 
-if (document.getElementById('dictionary-extension-root')) {
+const bootWindow = window as Window & { [BOOT_FLAG]?: boolean };
+if (bootWindow[BOOT_FLAG] || document.getElementById('dictionary-extension-root')) {
   // Already injected in this frame.
 } else {
+  bootWindow[BOOT_FLAG] = true;
   void startBootstrap();
 }
 
 function startBootstrap() {
-  const host = document.createElement('div');
-  host.id = 'dictionary-extension-root';
-  (document.body || document.documentElement).appendChild(host);
-  const shadow = host.attachShadow({ mode: 'open' });
-
-  const bootStyle = document.createElement('style');
-  bootStyle.textContent = TRIGGER_CSS;
-  shadow.appendChild(bootStyle);
-
-  const triggerBtn = document.createElement('button');
-  triggerBtn.type = 'button';
-  triggerBtn.title = 'Look up selection in Dictionary';
-  triggerBtn.className = 'dictionary-trigger-icon-btn dark';
-  triggerBtn.style.display = 'none';
-  triggerBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M9 3.5a5.5 5.5 0 1 0 3.5 9.7l3.15 3.15a1 1 0 0 0 1.4-1.4l-3.15-3.15A5.5 5.5 0 0 0 9 3.5Zm-3.5 5.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z"></path></svg>';
-  shadow.appendChild(triggerBtn);
-
-  const backdrop = document.createElement('div');
-  backdrop.className = 'dictionary-backdrop';
-  backdrop.style.display = 'none';
-  shadow.appendChild(backdrop);
-
-  const popupLayer = document.createElement('div');
-  popupLayer.className = 'dictionary-popup-layer';
-  popupLayer.style.display = 'none';
-  const overlayMount = document.createElement('div');
-  overlayMount.setAttribute('role', 'presentation');
-  popupLayer.appendChild(overlayMount);
-  shadow.appendChild(popupLayer);
-
+  let bootUi: BootUi | null = null;
   let settings: BootSettings = { ...BOOT_DEFAULTS };
   let overlayApi: OverlayApi | null = null;
   let overlayModulePromise: Promise<OverlayModule> | null = null;
@@ -173,8 +157,7 @@ function startBootstrap() {
   let pendingPointerX = 0;
   let pendingPointerY = 0;
 
-  applyTheme();
-  void loadBootSettings().then(() => applyTheme());
+  void loadBootSettings();
 
   if (typeof window !== 'undefined' && window.matchMedia) {
     const media = window.matchMedia('(prefers-color-scheme: dark)');
@@ -185,6 +168,57 @@ function startBootstrap() {
     });
   }
 
+  function ensureUi(): BootUi {
+    if (bootUi) return bootUi;
+
+    const host = document.createElement('div');
+    host.id = 'dictionary-extension-root';
+    (document.body || document.documentElement).appendChild(host);
+    const shadow = host.attachShadow({ mode: 'open' });
+
+    const bootStyle = document.createElement('style');
+    bootStyle.textContent = TRIGGER_CSS;
+    shadow.appendChild(bootStyle);
+
+    const triggerBtn = document.createElement('button');
+    triggerBtn.type = 'button';
+    triggerBtn.title = 'Look up selection in Dictionary';
+    triggerBtn.className = 'dictionary-trigger-icon-btn dark';
+    triggerBtn.style.display = 'none';
+    triggerBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M9 3.5a5.5 5.5 0 1 0 3.5 9.7l3.15 3.15a1 1 0 0 0 1.4-1.4l-3.15-3.15A5.5 5.5 0 0 0 9 3.5Zm-3.5 5.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z"></path></svg>';
+    shadow.appendChild(triggerBtn);
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'dictionary-backdrop';
+    backdrop.style.display = 'none';
+    shadow.appendChild(backdrop);
+
+    const popupLayer = document.createElement('div');
+    popupLayer.className = 'dictionary-popup-layer';
+    popupLayer.style.display = 'none';
+    const overlayMount = document.createElement('div');
+    overlayMount.setAttribute('role', 'presentation');
+    popupLayer.appendChild(overlayMount);
+    shadow.appendChild(popupLayer);
+
+    triggerBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (selectedText) void openPopup(triggerX, triggerY, selectedText);
+    });
+    backdrop.addEventListener('click', () => {
+      if (isMaximized) toggleMaximize();
+    });
+
+    bootUi = { host, shadow, triggerBtn, backdrop, popupLayer, overlayMount };
+    applyTheme();
+    return bootUi;
+  }
+
+  function hideTrigger() {
+    if (bootUi) bootUi.triggerBtn.style.display = 'none';
+  }
+
   function isDarkMode() {
     if (settings.theme === 'system') {
       return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? true;
@@ -193,7 +227,9 @@ function startBootstrap() {
   }
 
   function applyTheme() {
+    if (!bootUi) return;
     const dark = isDarkMode();
+    const { host, triggerBtn, popupLayer, overlayMount } = bootUi;
     triggerBtn.classList.toggle('dark', dark);
     triggerBtn.classList.toggle('light', !dark);
     host.setAttribute('data-theme', dark ? 'dark' : 'light');
@@ -220,13 +256,15 @@ function startBootstrap() {
   }
 
   function applyPopupSize(width: number, height: number) {
+    if (!bootUi) return;
     customWidth = width;
     customHeight = height;
-    popupLayer.style.width = `${width}px`;
-    popupLayer.style.height = `${height}px`;
+    bootUi.popupLayer.style.width = `${width}px`;
+    bootUi.popupLayer.style.height = `${height}px`;
   }
 
   function positionPopup(x: number, y: number) {
+    const { popupLayer } = ensureUi();
     const { width, height } = popupSize();
     const vw = window.innerWidth;
     const vh = window.innerHeight;
@@ -272,6 +310,7 @@ function startBootstrap() {
     if (isExtensionContextInvalidated()) {
       return Promise.reject(new Error('Extension was reloaded. Refresh this page to continue.'));
     }
+    const { shadow } = ensureUi();
     if (!overlayModulePromise) {
       try {
         if (!shadow.querySelector('[data-dict-overlay-css]')) {
@@ -311,6 +350,7 @@ function startBootstrap() {
     if (isHostnamePaused()) return;
     const cleanText = String(text || '').trim();
     if (!cleanText) return;
+    const { shadow, triggerBtn, popupLayer, overlayMount, backdrop } = ensureUi();
     const generation = ++overlayOpenGeneration;
     applyTheme();
     triggerBtn.style.display = 'none';
@@ -361,17 +401,21 @@ function startBootstrap() {
     showPopup = false;
     isMaximized = false;
     dockPosition = 'none';
-    popupLayer.classList.remove('docked-left', 'docked-right');
     lookupRequestId = '';
-    triggerBtn.style.display = 'none';
-    popupLayer.style.display = 'none';
-    backdrop.style.display = 'none';
-    popupLayer.classList.remove('maximized');
+    if (bootUi) {
+      bootUi.popupLayer.classList.remove('docked-left', 'docked-right');
+      bootUi.triggerBtn.style.display = 'none';
+      bootUi.popupLayer.style.display = 'none';
+      bootUi.backdrop.style.display = 'none';
+      bootUi.popupLayer.classList.remove('maximized');
+    }
     destroyOverlay();
     if (closingRequestId) cancelDictionaryLookup(closingRequestId);
   }
 
   function toggleDock() {
+    if (!bootUi) return;
+    const { popupLayer } = bootUi;
     if (dockPosition === 'none') {
       dockPosition = 'right';
       popupLayer.classList.add('docked-right');
@@ -390,6 +434,8 @@ function startBootstrap() {
   }
 
   function toggleMaximize() {
+    if (!bootUi) return;
+    const { popupLayer, backdrop } = bootUi;
     isMaximized = !isMaximized;
     if (isMaximized) {
       dockPosition = 'none';
@@ -403,25 +449,25 @@ function startBootstrap() {
   }
 
   function handleStartDrag(e: MouseEvent) {
-    if (isMaximized) return;
+    if (isMaximized || !bootUi) return;
     isDragging = true;
     dragStartX = e.clientX;
     dragStartY = e.clientY;
     popupStartX = popupX;
     popupStartY = popupY;
-    popupLayer.style.willChange = 'left, top';
+    bootUi.popupLayer.style.willChange = 'left, top';
     window.addEventListener('mousemove', handleDragMove, { passive: true });
     window.addEventListener('mouseup', handleDragEnd);
   }
 
   function handleDragMove(e: MouseEvent) {
-    if (!isDragging) return;
+    if (!isDragging || !bootUi) return;
     pendingPointerX = e.clientX;
     pendingPointerY = e.clientY;
     if (dragRaf) return;
     dragRaf = requestAnimationFrame(() => {
       dragRaf = 0;
-      if (!isDragging) return;
+      if (!isDragging || !bootUi) return;
       const { width, height } = popupSize();
       let newX = popupStartX + (pendingPointerX - dragStartX);
       let newY = popupStartY + (pendingPointerY - dragStartY);
@@ -429,8 +475,8 @@ function startBootstrap() {
       newY = Math.max(8, Math.min(newY, window.innerHeight - height - 8));
       popupX = newX;
       popupY = newY;
-      popupLayer.style.left = `${newX}px`;
-      popupLayer.style.top = `${newY}px`;
+      bootUi.popupLayer.style.left = `${newX}px`;
+      bootUi.popupLayer.style.top = `${newY}px`;
     });
   }
 
@@ -440,20 +486,20 @@ function startBootstrap() {
       cancelAnimationFrame(dragRaf);
       dragRaf = 0;
     }
-    popupLayer.style.willChange = 'auto';
+    if (bootUi) bootUi.popupLayer.style.willChange = 'auto';
     window.removeEventListener('mousemove', handleDragMove);
     window.removeEventListener('mouseup', handleDragEnd);
   }
 
   function handleStartResize(e: MouseEvent) {
-    if (isMaximized) return;
+    if (isMaximized || !bootUi) return;
     isResizing = true;
     resizeStartX = e.clientX;
     resizeStartY = e.clientY;
     const size = popupSize();
     initialWidth = size.width;
     initialHeight = size.height;
-    popupLayer.style.willChange = 'width, height';
+    bootUi.popupLayer.style.willChange = 'width, height';
     window.addEventListener('mousemove', handleResizeMove, { passive: true });
     window.addEventListener('mouseup', handleResizeEnd);
   }
@@ -483,20 +529,20 @@ function startBootstrap() {
       void chrome.storage?.sync?.set({ popupWidth: customWidth, popupHeight: customHeight });
     }
     isResizing = false;
-    popupLayer.style.willChange = 'auto';
+    if (bootUi) bootUi.popupLayer.style.willChange = 'auto';
     window.removeEventListener('mousemove', handleResizeMove);
     window.removeEventListener('mouseup', handleResizeEnd);
   }
 
   function updateSelectionTrigger(event?: MouseEvent) {
     if (isHostnamePaused()) {
-      triggerBtn.style.display = 'none';
+      hideTrigger();
       return;
     }
     const selection = window.getSelection();
     const text = selection?.toString().trim();
     if (!text || isSkippableSelection(text)) {
-      triggerBtn.style.display = 'none';
+      hideTrigger();
       return;
     }
     const mode = settings.selectionTriggerMode || 'icon';
@@ -505,6 +551,7 @@ function startBootstrap() {
     snapshotSelection(selection);
     selectedText = text;
 
+    const { triggerBtn } = ensureUi();
     const iconSize = 38;
     const margin = 10;
     let x = window.innerWidth / 2;
@@ -546,19 +593,20 @@ function startBootstrap() {
     triggerBtn.style.display = showPopup ? 'none' : 'flex';
   }
 
-  triggerBtn.addEventListener('click', (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    if (selectedText) void openPopup(triggerX, triggerY, selectedText);
-  });
-  backdrop.addEventListener('click', () => {
-    if (isMaximized) toggleMaximize();
-  });
-
   window.addEventListener('mouseup', (event) => {
     if (isHostnamePaused()) return;
-    if (host.contains(event.target as Node) || shadow.contains(event.target as Node)) return;
-    snapshotSelection(window.getSelection());
+    if (bootUi && (bootUi.host.contains(event.target as Node) || bootUi.shadow.contains(event.target as Node))) return;
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed) {
+      hideTrigger();
+      return;
+    }
+    const text = selection.toString().trim();
+    if (!text || isSkippableSelection(text)) {
+      hideTrigger();
+      return;
+    }
+    snapshotSelection(selection);
     if (selectionRaf) cancelAnimationFrame(selectionRaf);
     selectionRaf = requestAnimationFrame(() => {
       selectionRaf = 0;
@@ -589,9 +637,9 @@ function startBootstrap() {
   });
 
   window.addEventListener('click', (event) => {
-    if (isDragging || isResizing || !showPopup) return;
+    if (isDragging || isResizing || !showPopup || !bootUi) return;
     const target = event.target as Node;
-    if (!host.contains(target) && !shadow.contains(target)) closePopup();
+    if (!bootUi.host.contains(target) && !bootUi.shadow.contains(target)) closePopup();
   }, true);
 
   chrome.runtime?.onMessage?.addListener((message: { type?: string; text?: string; payload?: { text?: string; context?: string; fromSelection?: boolean } }) => {
@@ -624,7 +672,7 @@ function startBootstrap() {
         customWidth = null;
         customHeight = null;
       }
-      if (showPopup && !isMaximized) {
+      if (showPopup && !isMaximized && bootUi) {
         const { width, height } = popupSize();
         applyPopupSize(width, height);
       }
@@ -657,6 +705,7 @@ function startBootstrap() {
         popupHeight: Number(stored.popupHeight) || BOOT_DEFAULTS.popupHeight,
         disablePageContextExtraction: Boolean(stored.disablePageContextExtraction),
       };
+      applyTheme();
     } catch {
       settings = { ...BOOT_DEFAULTS };
     }

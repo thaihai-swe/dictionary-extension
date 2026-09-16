@@ -66,7 +66,7 @@ function unregisterController(tabId: number | undefined, scope: string, requestI
 
 let creatingOffscreen: Promise<void> | null = null;
 let offscreenIdleTimer: ReturnType<typeof setTimeout> | null = null;
-const OFFSCREEN_IDLE_TIMEOUT_MS = 30_000;
+const OFFSCREEN_IDLE_TIMEOUT_MS = 5_000;
 
 async function ensureOffscreenDocument(): Promise<boolean> {
   const offscreenApi = (chrome as typeof chrome & {
@@ -468,6 +468,10 @@ chrome.windows?.onRemoved?.addListener((removedId) => {
     toolbarWindowId = null;
     void chrome.storage.session?.remove(TOOLBAR_WINDOW_ID_KEY).catch(() => undefined);
   }
+});
+
+chrome.tabs?.onRemoved?.addListener((tabId) => {
+  cancelRequestsForTab(tabId);
 });
 
 chrome.action?.onClicked?.addListener(() => {
