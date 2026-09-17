@@ -8,6 +8,7 @@ import type {
   TranslationResult,
 } from '../types';
 import { mergeLexicalProfiles } from './query-utils.ts';
+import { splitBilingualExample } from './ai-example-blocks.ts';
 
 export const MAX_DEFINITIONS_PER_POS = 8;
 export const MAX_MEANINGS = 6;
@@ -109,14 +110,24 @@ function displayPartOfSpeech(pos: string): string {
   return canonicalPartOfSpeech(pos);
 }
 
+function normalizeExampleItem(item: AttributedItem): AttributedItem {
+  const rawText = String(item?.text || '').trim();
+  if (!rawText) return { text: '' };
+  const parsed = splitBilingualExample(rawText, item.translation);
+  return parsed.translation
+    ? { text: parsed.english, translation: parsed.translation }
+    : { text: parsed.english };
+}
+
 function mergeAttributed(existing: AttributedItem[] = [], incoming: AttributedItem[] = []): AttributedItem[] {
   const merged = [...existing];
-  for (const item of incoming) {
+  for (const rawItem of incoming) {
+    const item = normalizeExampleItem(rawItem);
     const text = String(item?.text || '').trim();
     if (!text) continue;
     if (merged.some((row) => normalizeText(row.text) === normalizeText(text))) continue;
     if (merged.length >= MAX_ITEMS_PER_SECTION) break;
-    merged.push({ text });
+    merged.push(item.translation ? { text, translation: item.translation } : { text });
   }
   return merged;
 }
@@ -173,9 +184,17 @@ export function mergeMeanings(existing: Meaning[], incoming: Meaning[]): Meaning
       const existingDef = target.definitions.find((definition) => (
         areDefinitionsEquivalent(definition.definition, defText)
       ));
+      let example = incDef.example;
+      let exampleTranslation = incDef.exampleTranslation;
+      if (example) {
+        const parsed = splitBilingualExample(example, exampleTranslation);
+        example = parsed.english;
+        exampleTranslation = parsed.translation;
+      }
       if (existingDef) {
-        if (!existingDef.example && incDef.example) {
-          existingDef.example = incDef.example;
+        if (!existingDef.example && example) {
+          existingDef.example = example;
+          existingDef.exampleTranslation = exampleTranslation;
         }
         continue;
       }
@@ -183,6 +202,8 @@ export function mergeMeanings(existing: Meaning[], incoming: Meaning[]): Meaning
         target.definitions.push({
           ...incDef,
           definition: defText,
+          example,
+          exampleTranslation,
         });
       }
     }
@@ -294,12 +315,26 @@ function extractTranslationFromMeanings(meanings: Meaning[]): TranslationResult 
 export function toDictionaryEntry(dto: ProviderLookupDto | DictionaryEntry): DictionaryEntry {
   const extra = dto as Partial<DictionaryEntry> & Partial<ProviderLookupDto>;
   const phonetics = mergePhonetics(dto.phonetics);
-  const meanings = dto.meanings || [];
+  const meanings = (dto.meanings || []).map((meaning) => ({
+    ...meaning,
+    definitions: (meaning.definitions || []).map((def) => {
+      if (!def.example) return def;
+      const parsed = splitBilingualExample(def.example, def.exampleTranslation);
+      return {
+        ...def,
+        example: parsed.english,
+        exampleTranslation: parsed.translation,
+      };
+    }),
+  }));
+  const examples = (dto.examples || [])
+    .map(normalizeExampleItem)
+    .filter((item) => Boolean(item.text));
   return {
     word: String(dto.word || '').trim(),
     phonetics,
     meanings,
-    examples: dto.examples,
+    examples,
     synonyms: dto.synonyms,
     antonyms: dto.antonyms,
     lexicalProfile: dto.lexicalProfile,
@@ -342,12 +377,12 @@ export function cloneDictionaryEntry(entry: DictionaryEntry): DictionaryEntry {
     ...entry,
     meanings: entry.meanings ? entry.meanings.map((m) => ({
       ...m,
-      definitions: m.definitions ? [...m.definitions] : [],
+      definitions: m.definitions ? m.definitions.map((d) => ({ ...d })) : [],
       synonyms: m.synonyms ? [...m.synonyms] : undefined,
       antonyms: m.antonyms ? [...m.antonyms] : undefined,
     })) : [],
     phonetics: entry.phonetics ? [...entry.phonetics] : undefined,
-    examples: entry.examples ? [...entry.examples] : undefined,
+    examples: entry.examples ? entry.examples.map((ex) => ({ ...ex })) : undefined,
     synonyms: entry.synonyms ? [...entry.synonyms] : undefined,
     antonyms: entry.antonyms ? [...entry.antonyms] : undefined,
     phraseExplanation: entry.phraseExplanation ? [...entry.phraseExplanation] : undefined,

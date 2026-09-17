@@ -64,11 +64,13 @@ export function examplesFromTatoebaPayload(payload: TatoebaSearchResponse, targe
       String(row.lang || '') === targetIso3 && String(row.text || '').trim()
     ));
     const translated = String(match?.text || '').trim();
-    const text = translated && targetIso3 !== 'eng' ? `${source} — ${translated}` : source;
-    const key = text.toLowerCase();
+    const key = source.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    examples.push({ text });
+    examples.push({
+      text: source,
+      translation: translated && targetIso3 !== 'eng' ? translated : undefined,
+    });
     if (examples.length >= MAX_EXAMPLES) break;
   }
   return examples;

@@ -187,7 +187,7 @@ Run this comprehensive verification protocol before submitting code changes:
     - Open the in-page popup near screen edges; confirm collision flipping prevents card clipping.
     - Drag the bottom-right resize handle; close and reopen to confirm dimensions persist (360–1000 × 380–900).
 21. Accessibility & Theme:
-    - Test `System`, `Light`, and `Dark` themes and `Learner` font mode (Atkinson Hyperlegible).
+    - Test `System`, `Light`, and `Dark` themes. UI text uses the operating system font stack.
     - Enable operating system reduced motion; confirm entrance, exit, and wave animations are suppressed.
     - Confirm full keyboard `Tab` trapping and `Escape` key dismissal.
 

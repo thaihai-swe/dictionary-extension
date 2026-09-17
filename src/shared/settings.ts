@@ -54,7 +54,6 @@ const DICTIONARY_PROVIDERS = new Set<string>([
 
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'dark',
-  fontFamily: 'learner',
   selectionTriggerMode: 'icon',
   postSelectionModifier: 'shift',
   enableContextMenuTrigger: true,

@@ -55,27 +55,6 @@ export const TabAppearance: React.FC<TabAppearanceProps> = ({ localSettings, onC
 
       <section className="bg-surface border border-border rounded-xl p-5 space-y-3 shadow-xs">
         <div>
-          <h3 className="text-sm font-bold text-content font-heading">Typography</h3>
-          <p className="text-[11.5px] text-content-muted">
-            Font used for definitions, examples, and AI responses in the popup.
-          </p>
-        </div>
-        <select
-          value={localSettings.fontFamily || 'learner'}
-          onChange={(e) => onChange({ fontFamily: e.target.value as AppSettings['fontFamily'] })}
-          className="w-full bg-muted border border-border text-content text-xs font-medium rounded-xl px-3 py-2.5 outline-none focus:border-accent cursor-pointer shadow-xs"
-        >
-          <option value="learner" className="bg-surface text-content">
-            System Sans
-          </option>
-          <option value="editorial" className="bg-surface text-content">
-            System Serif
-          </option>
-        </select>
-      </section>
-
-      <section className="bg-surface border border-border rounded-xl p-5 space-y-3 shadow-xs">
-        <div>
           <h3 className="text-sm font-bold text-content font-heading">Lookup Card Content</h3>
           <p className="text-[11.5px] text-content-muted">
             Extra lexical cards sit behind “More lexical detail” on word results.

@@ -397,14 +397,31 @@ export function splitInlineBilingual(text: string, targetLang?: string): { engli
       translation: stripTranslationPrefix(paren[2], targetLang) || undefined,
     };
   }
-  const dash = value.match(/^(.+?)\s+[—–]\s+(.+)$/);
-  if (dash && looksLikeEnglish(dash[1]) && looksLikeTranslation(dash[2], targetLang)) {
+  const dash = value.match(/^(.+?)\s+[—–-]\s+(.+)$/);
+  if (
+    dash
+    && looksLikeEnglish(dash[1])
+    && dash[2].trim()
+    && (looksLikeTranslation(dash[2], targetLang) || !looksLikeEnglish(dash[2]))
+  ) {
     return {
       english: unwrapExampleText(dash[1]),
       translation: stripTranslationPrefix(dash[2], targetLang) || undefined,
     };
   }
   return { english: value };
+}
+
+export function splitBilingualExample(
+  text: string,
+  translation?: string,
+  targetLang?: string,
+): { english: string; translation?: string } {
+  const explicit = String(translation || '').trim();
+  if (explicit) {
+    return { english: unwrapExampleText(text), translation: explicit };
+  }
+  return splitInlineBilingual(text, targetLang);
 }
 
 function shouldPairTranslation(

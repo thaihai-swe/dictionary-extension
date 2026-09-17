@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { Meaning } from '@/types';
 import { useDictionaryAudio } from '@/composables/composable.dictionary';
+import { useStorage } from '@/composables/composable.storage';
 import { mergeMeanings } from '@/shared/enrichment';
 import { cx } from '@/ui/cx';
-import { IconSpeaker } from '@/components/icons';
+import ExampleSentence from '@/components/component.example-sentence';
 import RelatedWords from '@/components/component.related-words';
 
 interface SenseMatrixCardProps {
@@ -23,6 +24,7 @@ function getPosBadgeClass(pos: string): string {
 export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSelectWord }) => {
   const groupedMeanings = useMemo(() => mergeMeanings(meanings || [], []), [meanings]);
   const { playPronunciation, playingKey } = useDictionaryAudio();
+  const { settings } = useStorage();
   const [selectedPos, setSelectedPos] = useState<string>('all');
 
   const distinctPosList = useMemo(() => {
@@ -122,30 +124,20 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSe
                   </div>
 
                   {def.example ? (
-                    <div className="ml-5 pl-3 py-1.5 pr-2 border-l-2 border-accent/50 bg-muted/40 rounded-r-md text-content-secondary text-[13.5px] leading-relaxed flex items-center justify-between gap-2">
-                      <span>"{def.example}"</span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          playPronunciation({
-                            text: def.example,
-                            language: 'en-US',
-                            key: listenKey,
-                          })
-                        }
-                        title="Listen to example sentence"
-                        className={cx(
-                          'h-[24px] px-2 rounded border text-[11px] flex-shrink-0 flex items-center gap-1 cursor-pointer',
-                          isPlaying
-                            ? 'bg-accent-subtle text-accent border-accent/40 audio-playing-indicator'
-                            : 'bg-surface text-content-secondary hover:text-content border-border',
-                        )}
-                        aria-pressed={isPlaying}
-                      >
-                        <IconSpeaker className="w-3 h-3 text-accent" />
-                        <span>Listen</span>
-                      </button>
-                    </div>
+                    <ExampleSentence
+                      className="ml-5"
+                      english={def.example}
+                      translation={def.exampleTranslation}
+                      targetLang={settings.translateTargetLanguage}
+                      isPlaying={isPlaying}
+                      onListen={() =>
+                        playPronunciation({
+                          text: def.example!,
+                          language: 'en-US',
+                          key: listenKey,
+                        })
+                      }
+                    />
                   ) : null}
 
                   {def.synonyms && def.synonyms.length > 0 ? (

@@ -6,6 +6,7 @@ import {
   WordFormationCard,
 } from '@/components/async-views';
 import MarkdownRenderer from '@/components/component.markdown-renderer';
+import ExampleSentence from '@/components/component.example-sentence';
 import RelatedWords from '@/components/component.related-words';
 import { IconCheck, IconChevronDown, IconCopy, IconMic, IconQuote, IconSparkles, IconSpeaker } from '@/components/icons';
 import {
@@ -435,41 +436,27 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                   <IconQuote className="w-3.5 h-3.5 text-accent" />
                   <span>Examples</span>
                 </div>
-                <ul className="space-y-2">
+                <div className="space-y-2">
                   {filteredExamples.map((example, index) => {
                     const listenKey = `example-${index}`;
-                    const isPlaying = playingKey === listenKey;
                     return (
-                      <li
+                      <ExampleSentence
                         key={`${example.text}-${index}`}
-                        className="flex items-start justify-between gap-3 text-[13px] leading-relaxed text-content-secondary"
-                      >
-                        <span className="flex-1 min-w-0">“{example.text}”</span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            playPronunciation({
-                              text: example.text,
-                              language: 'en-US',
-                              key: listenKey,
-                            })
-                          }
-                          className={cx(
-                            'h-6 px-2 rounded-full border text-[10.5px] font-semibold flex items-center gap-1 cursor-pointer transition-colors flex-shrink-0',
-                            isPlaying
-                              ? 'bg-accent-subtle text-accent border-accent/40 audio-playing-indicator'
-                              : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
-                          )}
-                          aria-pressed={isPlaying}
-                          title="Listen to example"
-                        >
-                          <IconSpeaker className="w-2.5 h-2.5" />
-                          <span>{isPlaying ? 'Playing…' : 'Listen'}</span>
-                        </button>
-                      </li>
+                        english={example.text}
+                        translation={example.translation}
+                        targetLang={settings.translateTargetLanguage}
+                        isPlaying={playingKey === listenKey}
+                        onListen={() =>
+                          playPronunciation({
+                            text: example.text,
+                            language: 'en-US',
+                            key: listenKey,
+                          })
+                        }
+                      />
                     );
                   })}
-                </ul>
+                </div>
               </div>
             ) : null}
 

@@ -12,7 +12,7 @@ To guarantee that private credentials can never leak across browser sync channel
 ┌────────────────────────────────────────────────────────────────────────┐
 │                   chrome.storage.sync (Public Preferences)             │
 ├────────────────────────────────────────────────────────────────────────┤
-│ • theme, fontFamily, defaultTab, popupWidth, popupHeight               │
+│ • theme, defaultTab, popupWidth, popupHeight                          │
 │ • selectionTriggerMode, postSelectionModifier, enableContextMenuTrigger│
 │ • translateTargetLanguage, customLanguages, translateProvider          │
 │ • dictionaryProvider, libreTranslateBaseUrl                            │
@@ -66,8 +66,7 @@ To guarantee that private credentials can never leak across browser sync channel
 
 | Setting Key | Type | Allowed Values / Range | Default | Description |
 |---|---|---|---|---|
-| `theme` | `string` | `"system"`, `"light"`, `"dark"` | `"dark"` | Visual surface theme. `"system"` automatically mirrors your operating system light/dark preference. |
-| `fontFamily` | `string` | `"editorial"`, `"learner"` | `"learner"` | Reading typography. `"editorial"` applies classic serif styling; `"learner"` switches definitions, examples, and controls to bundled Atkinson Hyperlegible for enhanced letter disambiguation. |
+| `theme` | `string` | `"system"`, `"light"`, `"dark"` | `"dark"` | Visual surface theme. `"system"` automatically mirrors your operating system light/dark preference. UI text uses the operating system font stack (`system-ui`); there is no font-family setting. |
 | `defaultTab` | `string` | `"dictionary"`, `"ai_assistant"` | `"dictionary"` | Initial tab selected when opening a new lookup popup session. |
 | `popupWidth` | `number` | `360` to `1000` (pixels) | `620` | Preferred width of in-page cards. Automatically updated when resizing via the bottom-right drag handle. |
 | `popupHeight` | `number` | `380` to `900` (pixels) | `720` | Preferred height of in-page cards. Automatically updated when resizing via the bottom-right drag handle. |
@@ -152,7 +151,6 @@ Click **Export settings** in the Settings modal to download a sanitized `diction
   "exportedAt": "2025-02-23T12:00:00.000Z",
   "settings": {
     "theme": "dark",
-    "fontFamily": "learner",
     "selectionTriggerMode": "icon",
     "popupWidth": 620,
     "popupHeight": 720,

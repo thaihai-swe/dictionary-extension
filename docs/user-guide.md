@@ -5,7 +5,7 @@
 **Dictionary** is a modern Chrome and Firefox Manifest V3 extension built for readers, students, and language learners. It brings instant definitions, neural translations, natural pronunciation, speech practice, and deep contextual AI explanations directly to the text you are reading—without breaking your reading flow or requiring external tabs.
 
 The user interface is powered by the **Editorial Ink** design system:
-- **Editorial Typography:** Clear, distraction-free serif typography for headwords and crisp sans-serif body text, with native support for System, Light (warm paper), and Dark (obsidian velvet + champagne gold) themes.
+- **System Typography:** UI text uses the operating system font stack (`system-ui`) with native support for System, Light (warm paper), and Dark (obsidian velvet + champagne gold) themes.
 - **Calm Header:** The Dictionary tab shows the headword plus UK/US pronunciation, speech practice controls, and a quiet pulsing **Stop Voice** button (`⏹ Stop`) to cancel audio or speech synthesis at any moment.
 - **Persistent Geometry:** In-page popup dimensions can be resized from the bottom-right corner and are automatically saved.
 

@@ -8,6 +8,7 @@ import {
 } from '../shared/dictionary-lookup-client';
 import { requestPlayAudio, requestSpeakTts, requestStopAudio } from '../shared/runtime-client';
 import { createPersistedLruCache } from '../shared/lookup-cache';
+import { toDictionaryEntry } from '../shared/enrichment';
 import { AppSettings, DictionaryEntry, PracticeResult } from '../types';
 
 const queryRef = signal<string>('');
@@ -33,7 +34,7 @@ const practiceResults = new Map<string, PracticeResult>();
 const MAX_DICT_CACHE_SIZE = 80;
 const MAX_PRACTICE_RESULTS = 20;
 const DICT_CACHE_TTL_MS = 48 * 60 * 60 * 1000; // 48 hours
-const DICT_STORAGE_KEY = 'dict_lookup_cache_v4';
+const DICT_STORAGE_KEY = 'dict_lookup_cache_v5';
 
 const dictCache = createPersistedLruCache<DictionaryEntry>({
   maxSize: MAX_DICT_CACHE_SIZE,
@@ -518,8 +519,9 @@ export async function searchWord(
   errorRef.value = null;
   practiceResultRef.value = practiceResults.get(practiceKey(cleanWord)) || null;
 
-  const cached = dictCache.read(cacheKey);
-  resultRef.value = cached || null;
+  const cachedRaw = dictCache.read(cacheKey);
+  const cached = cachedRaw ? toDictionaryEntry(cachedRaw) : null;
+  resultRef.value = cached;
   isLoadingRef.value = !cached;
   isEnrichingRef.value = Boolean(cached) && !cached?.enriched;
   if (cached?.enriched && !attachedRequestId) {

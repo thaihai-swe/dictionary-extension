@@ -235,9 +235,8 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
       aria-label="Dictionary lookup"
       tabIndex={-1}
       className={cx(
-        'bg-paper/95 dark:bg-paper/90 backdrop-blur-xl border border-border/80 rounded-xl shadow-card-elevated overflow-hidden flex flex-col select-none text-content text-sm relative inpage-popup-card w-full h-full transition-colors outline-none',
+        'bg-paper/95 dark:bg-paper/90 backdrop-blur-xl border border-border/80 rounded-xl shadow-card-elevated overflow-hidden flex flex-col select-none text-content text-sm font-sans relative inpage-popup-card w-full h-full transition-colors outline-none',
         isDarkMode ? 'dark' : 'light-theme light',
-        settings.fontFamily === 'editorial' ? 'font-serif' : 'font-sans',
         isMaximized ? 'max-w-5xl max-h-[90vh]' : '',
       )}
       data-theme={isDarkMode ? 'dark' : 'light'}

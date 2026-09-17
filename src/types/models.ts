@@ -55,6 +55,7 @@ export interface Phonetic {
 export interface Definition {
   definition: string;
   example?: string;
+  exampleTranslation?: string;
   synonyms?: string[];
   antonyms?: string[];
 }
@@ -68,6 +69,7 @@ export interface Meaning {
 
 export interface AttributedItem {
   text: string;
+  translation?: string;
 }
 
 export interface WordFamily {

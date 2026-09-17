@@ -5,7 +5,7 @@
 /* ==========================================================================
    Design System Tokens
    Light: product-page warm paper, ink text, restrained teal.
-   Dark: Solarized Dark deep teal-navy, warm base3/base1 text, cyan accent.
+   Dark: VS Code / Antigravity Solarized Dark (base03/base02 deep teal-navy & Solarized Cyan).
    ========================================================================== */
 
 :root,
@@ -73,24 +73,24 @@ html.light {
 :host([data-theme="dark"]),
 .dark,
 [data-theme="dark"] {
-  /* Dark Mode: Solarized Dark (base03/base02 deep teal-navy & Solarized Cyan) */
+  /* Dark Mode: VS Code / Antigravity Solarized Dark (base03/base02 & Solarized Cyan) */
   --bg-paper: #002b36;
   --bg-paper-rgb: 0, 43, 54;
   --bg-surface: #073642;
   --bg-surface-rgb: 7, 54, 66;
   --bg-elevated: #0e4453;
   --bg-elevated-rgb: 14, 68, 83;
-  --bg-muted: #063744;
-  --bg-muted-rgb: 6, 55, 68;
-  --bg-hover: #134e5e;
-  --bg-hover-rgb: 19, 78, 94;
+  --bg-muted: #003847;
+  --bg-muted-rgb: 0, 56, 71;
+  --bg-hover: #004b5c;
+  --bg-hover-rgb: 0, 75, 92;
 
-  --border-color: #1e5a6b;
-  --border-color-rgb: 30, 90, 107;
-  --border-subtle: #0f4452;
-  --border-subtle-rgb: 15, 68, 82;
+  --border-color: #0f4a5a;
+  --border-color-rgb: 15, 74, 90;
+  --border-subtle: #09333f;
+  --border-subtle-rgb: 9, 51, 63;
 
-  /* Solarized Dark typography: warm base3 primary, base1 secondary, base00 muted */
+  /* Typography: Solarized Dark CIELAB precision hierarchy */
   --text-primary: #fdf6e3;
   --text-primary-rgb: 253, 246, 227;
   --text-main: #fdf6e3;
@@ -104,20 +104,20 @@ html.light {
   --color-primary: #2aa198;
   --color-primary-rgb: 42, 161, 152;
   --color-primary-hover: #35b5ab;
-  --color-primary-light: rgba(42, 161, 152, 0.16);
+  --color-primary-light: rgba(42, 161, 152, 0.15);
   --color-accent: #2aa198;
   --color-accent-rgb: 42, 161, 152;
-  --color-accent-light: rgba(42, 161, 152, 0.16);
+  --color-accent-light: rgba(42, 161, 152, 0.15);
   --ring-focus: rgba(42, 161, 152, 0.45);
 
   --accent-ink: #2aa198;
   --accent-warm: #b58900;
   --accent-rose: #dc322f;
 
-  --shadow-card: 0 1px 0 rgba(253, 246, 227, 0.06) inset, 0 8px 22px -4px rgba(0, 0, 0, 0.45);
-  --shadow-elevated: 0 1px 0 rgba(253, 246, 227, 0.08) inset, 0 16px 36px -8px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(42, 161, 152, 0.22);
-  --hairline-gold: rgba(42, 161, 152, 0.35);
-  --hairline-accent: rgba(42, 161, 152, 0.35);
+  --shadow-card: 0 1px 0 rgba(253, 246, 227, 0.05) inset, 0 4px 16px -2px rgba(0, 0, 0, 0.55);
+  --shadow-elevated: 0 1px 0 rgba(253, 246, 227, 0.08) inset, 0 20px 48px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(42, 161, 152, 0.25);
+  --hairline-gold: rgba(42, 161, 152, 0.32);
+  --hairline-accent: rgba(42, 161, 152, 0.32);
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
 
   color-scheme: dark;
@@ -136,6 +136,10 @@ html.light {
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25) !important;
   transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1), width 200ms ease;
 }
+.dark .dictionary-popup-layer.docked-left,
+[data-theme="dark"] .dictionary-popup-layer.docked-left {
+  box-shadow: 4px 0 32px rgba(0, 0, 0, 0.65) !important;
+}
 
 .dictionary-popup-layer.docked-right {
   top: 0 !important;
@@ -150,23 +154,28 @@ html.light {
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.25) !important;
   transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1), width 200ms ease;
 }
+.dark .dictionary-popup-layer.docked-right,
+[data-theme="dark"] .dictionary-popup-layer.docked-right {
+  box-shadow: -4px 0 32px rgba(0, 0, 0, 0.65) !important;
+}
 
 /* Base resets & typography */
 @layer base {
   html,
   body,
-  #app {
+  #app,
+  :host {
     width: 100%;
     height: 100%;
     margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     text-rendering: optimizeLegibility;
     background-color: var(--bg-paper);
     color: var(--text-primary);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
   }
   input,
   textarea,
@@ -181,24 +190,6 @@ html.light {
     background-color: var(--bg-surface);
     color: var(--text-primary);
   }
-}
-
-/* Editorial Typography Helpers */
-.font-heading,
-.font-serif {
-  letter-spacing: -0.015em;
-  text-rendering: optimizeLegibility;
-}
-
-.dark.font-heading,
-.dark .font-heading,
-[data-theme="dark"].font-heading,
-[data-theme="dark"] .font-heading,
-.dark.font-serif,
-.dark .font-serif,
-[data-theme="dark"].font-serif,
-[data-theme="dark"] .font-serif {
-  color: var(--text-primary);
 }
 
 /* Standardized Button & Interactive Control Utilities */
@@ -362,11 +353,13 @@ input[type="range"] {
   color: var(--color-primary);
   text-decoration-color: var(--color-primary);
 }
-.dark .related-word-link {
+.dark .related-word-link,
+[data-theme="dark"] .related-word-link {
   color: var(--text-primary);
   text-decoration-color: rgba(42, 161, 152, 0.35);
 }
-.dark .related-word-link:hover {
+.dark .related-word-link:hover,
+[data-theme="dark"] .related-word-link:hover {
   color: var(--color-primary-hover);
   text-decoration-color: var(--color-primary-hover);
 }
@@ -389,11 +382,11 @@ input[type="range"] {
 
 .dark ::-webkit-scrollbar-thumb,
 [data-theme="dark"] ::-webkit-scrollbar-thumb {
-  background: rgba(42, 161, 152, 0.32);
+  background: rgba(42, 161, 152, 0.25);
 }
 .dark ::-webkit-scrollbar-thumb:hover,
 [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
-  background: rgba(42, 161, 152, 0.5);
+  background: rgba(42, 161, 152, 0.45);
 }
 
 /* Part of Speech Badges */
@@ -430,7 +423,7 @@ input[type="range"] {
 [data-theme="dark"] .badge-pos-adj {
   background-color: rgba(181, 137, 0, 0.16);
   color: #b58900;
-  border: 1px solid rgba(181, 137, 0, 0.32);
+  border: 1px solid rgba(181, 137, 0, 0.35);
 }
 
 .badge-pos-adv {
@@ -442,7 +435,7 @@ input[type="range"] {
 [data-theme="dark"] .badge-pos-adv {
   background-color: rgba(220, 50, 47, 0.16);
   color: #dc322f;
-  border: 1px solid rgba(220, 50, 47, 0.32);
+  border: 1px solid rgba(220, 50, 47, 0.35);
 }
 
 .badge-pos-other {
@@ -468,7 +461,7 @@ input[type="range"] {
 .dark header,
 [data-theme="dark"] header {
   background:
-    linear-gradient(180deg, rgba(42, 161, 152, 0.1) 0%, transparent 100%),
+    linear-gradient(180deg, rgba(42, 161, 152, 0.08) 0%, transparent 100%),
     var(--bg-surface);
 }
 
@@ -487,7 +480,7 @@ input[type="range"] {
   border-color: var(--border-color);
   box-shadow:
     0 1px 0 rgba(253, 246, 227, 0.08) inset,
-    0 24px 48px -16px rgba(0, 0, 0, 0.55),
+    0 24px 52px -12px rgba(0, 0, 0, 0.75),
     0 0 0 1px rgba(42, 161, 152, 0.22);
 }
 
@@ -506,9 +499,9 @@ input[type="range"] {
 }
 
 /* Audio Pronunciation Wave Pulse Indicator */
-@keyframes audio-pulse-ring-emerald {
+@keyframes audio-pulse-ring-cyan {
   0% {
-    box-shadow: 0 0 0 0 rgba(42, 161, 152, 0.5);
+    box-shadow: 0 0 0 0 rgba(42, 161, 152, 0.45);
   }
   70% {
     box-shadow: 0 0 0 6px rgba(42, 161, 152, 0);
@@ -536,7 +529,7 @@ input[type="range"] {
 
 .dark .audio-playing-indicator,
 [data-theme="dark"] .audio-playing-indicator {
-  animation: audio-pulse-ring-emerald 1.25s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  animation: audio-pulse-ring-cyan 1.25s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }
 
 /* Shimmer Skeletal Loading for AI & Dictionary Lookups */
@@ -576,8 +569,8 @@ input[type="range"] {
 .dark .settings-shell,
 [data-theme="dark"] .settings-shell {
   background-image:
-    radial-gradient(1200px 420px at 12% -10%, rgba(42, 161, 152, 0.12), transparent 55%),
-    radial-gradient(900px 360px at 100% 0%, rgba(253, 246, 227, 0.04), transparent 50%);
+    radial-gradient(1100px 450px at 15% -8%, rgba(42, 161, 152, 0.12), transparent 55%),
+    radial-gradient(900px 380px at 95% 5%, rgba(38, 139, 210, 0.08), transparent 50%);
 }
 .settings-shell section.bg-surface {
   border-radius: 1rem;

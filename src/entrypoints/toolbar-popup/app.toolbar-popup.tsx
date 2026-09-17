@@ -116,12 +116,11 @@ export const ToolbarPopupApp: React.FC = () => {
   return (
     <div
       className={cx(
-        'bg-paper text-content flex flex-col select-none overflow-hidden transition-colors duration-150',
+        'bg-paper text-content font-sans flex flex-col select-none overflow-hidden transition-colors duration-150',
         isFullTab
           ? 'w-full max-w-5xl min-h-[calc(100vh-2rem)] mx-auto my-4 rounded-xl border border-border shadow-card-elevated'
           : 'w-full h-full',
         isDarkMode ? 'dark' : 'light-theme light',
-        settings.fontFamily === 'editorial' ? 'font-serif' : 'font-sans',
       )}
       data-theme={isDarkMode ? 'dark' : 'light'}
       onKeyDown={handleKeydown}

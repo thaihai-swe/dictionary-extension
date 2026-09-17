@@ -18,7 +18,7 @@ This document is a product narrative. Runtime contracts live in [Architecture](a
 
 Look up a word or phrase in place. Hear it. Practice saying it. Translate it. Ask AI what it means *in this sentence*. Keep credentials off the webpage.
 
-The UI is the **Calm Learning Studio**: editorial or Atkinson Hyperlegible typography, system/light/dark themes, a resizable in-page card, and a global **Stop Voice** control when audio is playing.
+The UI is the **Calm Learning Studio**: system-ui typography, system/light/dark themes, a resizable in-page card, and a global **Stop Voice** control when audio is playing.
 
 ---
 
@@ -65,7 +65,7 @@ API keys live in `chrome.storage.local`. The content script and public sync payl
 | AI | `gemini-3.5-flash-lite` or custom OpenAI-compatible URL; 7 UI intents + phrase fallback |
 | Audio | MP3 / Google TTS / SpeechSynthesis; Stop Voice; speech practice |
 | Triggers | Floating icon, direct popup, post-selection modifier, context menu, toolbar, paused hostnames |
-| Appearance | Dark default, system/light/dark, editorial or learner font, 360–1000 × 380–900 resizable card |
+| Appearance | Dark default, system/light/dark, system-ui font, 360–1000 × 380–900 resizable card |
 | Privacy | Local secrets, 800-char context cap, opt-out page extraction, sanitized settings export (schema v12) |
 
 ---

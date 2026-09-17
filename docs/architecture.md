@@ -332,7 +332,7 @@ The extension implements strict data boundaries to guarantee that API credential
 ┌────────────────────────────────────────────────────────────────────────┐
 │                   chrome.storage.sync (Public Data)                    │
 ├────────────────────────────────────────────────────────────────────────┤
-│ User preferences, theme, font choice, triggers, provider IDs, popup   │
+│ User preferences, theme, triggers, provider IDs, popup                │
 │ dimensions, pronunciation rate, and AI prompt templates.               │
 │ -> Accessible by background, options, toolbar popup, and content script.│
 └────────────────────────────────────────────────────────────────────────┘

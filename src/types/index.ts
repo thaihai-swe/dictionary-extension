@@ -28,7 +28,6 @@ export type {
   SelectionTriggerMode,
   PostSelectionModifier,
   AppTheme,
-  AppFontFamily,
   AiProviderId,
   TranslationProviderId,
   DictionaryProviderId,
