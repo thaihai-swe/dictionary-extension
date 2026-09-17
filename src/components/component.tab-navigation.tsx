@@ -30,61 +30,68 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
 
   return (
     <nav
-      className="flex items-center gap-1.5 border-b border-border bg-surface px-2.5 py-1.5 transition-colors select-none overflow-x-auto"
+      className="px-3 py-2 bg-paper/95 border-b border-border transition-colors select-none"
       role="tablist"
       aria-label="Lookup mode"
     >
-      <button
-        type="button"
-        role="tab"
-        aria-selected={currentActive === 'dictionary'}
-        onClick={() => selectTab('dictionary')}
+      <div
         className={cx(
-          'relative min-h-[28px] px-2.5 rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all duration-150 outline-none cursor-pointer whitespace-nowrap shadow-2xs',
-          currentActive === 'dictionary'
-            ? 'chip-active ring-1 ring-accent/30'
-            : 'text-content-secondary hover:text-content hover:bg-muted border border-transparent',
+          'grid gap-1 p-1 rounded-xl bg-muted/70 border border-border text-xs font-medium',
+          showAiTab ? 'grid-cols-3' : 'grid-cols-1',
         )}
       >
-        <IconBook className="w-3.5 h-3.5" />
-        <span>Dictionary</span>
-      </button>
-
-      {showAiTab ? (
         <button
           type="button"
           role="tab"
-          aria-selected={currentActive === 'ai_assistant'}
-          onClick={() => selectTab('ai_assistant')}
+          aria-selected={currentActive === 'dictionary'}
+          onClick={() => selectTab('dictionary')}
           className={cx(
-            'relative min-h-[28px] px-2.5 rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all duration-150 outline-none cursor-pointer whitespace-nowrap shadow-2xs',
-            currentActive === 'ai_assistant'
-              ? 'chip-active ring-1 ring-accent/30'
-              : 'text-content-secondary hover:text-content hover:bg-muted border border-transparent',
+            'py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 text-xs transition-all duration-150 outline-none cursor-pointer whitespace-nowrap select-none',
+            currentActive === 'dictionary'
+              ? 'bg-surface text-accent font-bold shadow-2xs border border-border/80 dark:border-accent/40'
+              : 'text-content-secondary hover:text-content hover:bg-surface/50 border border-transparent font-medium',
           )}
         >
-          <IconSparkles className="w-3.5 h-3.5" />
-          <span>AI Assistant</span>
+          <IconBook className="w-3.5 h-3.5 shrink-0" />
+          <span>Dictionary</span>
         </button>
-      ) : null}
 
-      {showAiTab ? (
-        <button
-          type="button"
-          role="tab"
-          aria-selected={currentActive === 'rewriter'}
-          onClick={() => selectTab('rewriter')}
-          className={cx(
-            'relative min-h-[28px] px-2.5 rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all duration-150 outline-none cursor-pointer whitespace-nowrap shadow-2xs',
-            currentActive === 'rewriter'
-              ? 'chip-active ring-1 ring-accent/30'
-              : 'text-content-secondary hover:text-content hover:bg-muted border border-transparent',
-          )}
-        >
-          <IconEdit className="w-3.5 h-3.5" />
-          <span>Rewriter</span>
-        </button>
-      ) : null}
+        {showAiTab ? (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={currentActive === 'ai_assistant'}
+            onClick={() => selectTab('ai_assistant')}
+            className={cx(
+              'py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 text-xs transition-all duration-150 outline-none cursor-pointer whitespace-nowrap select-none',
+              currentActive === 'ai_assistant'
+                ? 'bg-surface text-accent font-bold shadow-2xs border border-border/80 dark:border-accent/40'
+                : 'text-content-secondary hover:text-content hover:bg-surface/50 border border-transparent font-medium',
+            )}
+          >
+            <IconSparkles className="w-3.5 h-3.5 shrink-0" />
+            <span>AI Assistant</span>
+          </button>
+        ) : null}
+
+        {showAiTab ? (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={currentActive === 'rewriter'}
+            onClick={() => selectTab('rewriter')}
+            className={cx(
+              'py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 text-xs transition-all duration-150 outline-none cursor-pointer whitespace-nowrap select-none',
+              currentActive === 'rewriter'
+                ? 'bg-surface text-accent font-bold shadow-2xs border border-border/80 dark:border-accent/40'
+                : 'text-content-secondary hover:text-content hover:bg-surface/50 border border-transparent font-medium',
+            )}
+          >
+            <IconEdit className="w-3.5 h-3.5 shrink-0" />
+            <span>Rewriter</span>
+          </button>
+        ) : null}
+      </div>
     </nav>
   );
 };

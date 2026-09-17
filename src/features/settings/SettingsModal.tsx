@@ -334,7 +334,7 @@ export const SettingsModal: React.FC = () => {
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="h-9 px-4 rounded-xl bg-accent hover:opacity-90 text-white dark:text-neutral-950 text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50 shrink-0"
+            className="h-9 px-4 rounded-xl bg-accent hover:opacity-90 text-white dark:text-[#002b36] text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50 shrink-0"
           >
             {isSavedNotice ? (
               <>
@@ -522,7 +522,7 @@ export const SettingsModal: React.FC = () => {
               type="button"
               onClick={handleSave}
               disabled={isSaving}
-              className="px-5 py-2 rounded-xl bg-accent hover:opacity-90 text-white dark:text-neutral-950 text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
+              className="px-5 py-2 rounded-xl bg-accent hover:opacity-90 text-white dark:text-[#002b36] text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
             >
               {isSavedNotice ? (
                 <>

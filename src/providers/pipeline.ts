@@ -243,7 +243,12 @@ export async function runDictionaryEnrichment(
     return;
   }
 
-  const secondaryProviders = DICTIONARY_FALLBACK_ORDER.filter((id) => id !== primaryProviderId);
+  const skipHeavyWhenPrimaryReady = hasUsableDefinitions(baseResult);
+  const secondaryProviders = DICTIONARY_FALLBACK_ORDER.filter((id) => {
+    if (id === primaryProviderId) return false;
+    if (skipHeavyWhenPrimaryReady && (id === 'wikipedia' || id === 'urban_dictionary')) return false;
+    return true;
+  });
   const collected: DictionaryEntry[] = [];
 
   const collectSettled = (settled: PromiseSettledResult<ProviderLookupDto>[]) => {

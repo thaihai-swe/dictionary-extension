@@ -98,7 +98,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ show, onClose })
         <button
           type="button"
           onClick={onClose}
-          className="w-full py-2.5 rounded-xl bg-accent hover:opacity-90 text-white dark:text-neutral-950 text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95"
+          className="w-full py-2.5 rounded-xl bg-accent hover:opacity-90 text-white dark:text-[#002b36] text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95"
         >
           Got it
         </button>

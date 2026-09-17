@@ -20,6 +20,7 @@ function buildExtensionScriptsPlugin(): Plugin {
           write: true,
           outDir: 'dist',
           emptyOutDir: false,
+          minify: 'esbuild',
           lib: {
             entry: resolve(__dirname, 'src/entrypoints/background/service-worker.ts'),
             name: 'DictionaryServiceWorker',
@@ -47,6 +48,7 @@ function buildExtensionScriptsPlugin(): Plugin {
           write: true,
           outDir: 'dist',
           emptyOutDir: false,
+          minify: 'esbuild',
           lib: {
             entry: resolve(__dirname, 'src/entrypoints/content-script/bootstrap.ts'),
             name: 'ContentScriptBootstrap',
@@ -68,6 +70,7 @@ function buildExtensionScriptsPlugin(): Plugin {
           write: true,
           outDir: 'dist',
           emptyOutDir: false,
+          minify: 'esbuild',
           lib: {
             entry: resolve(__dirname, 'src/entrypoints/offscreen/main.ts'),
             name: 'DictionaryOffscreen',
@@ -90,6 +93,7 @@ function buildExtensionScriptsPlugin(): Plugin {
           write: true,
           outDir: 'dist',
           emptyOutDir: false,
+          minify: 'esbuild',
           cssCodeSplit: true,
           lib: {
             entry: resolve(__dirname, 'src/entrypoints/content-script/overlay-app.tsx'),

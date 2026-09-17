@@ -240,7 +240,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
           type="button"
           onClick={() => handleIntentSelect(activeIntent)}
           disabled={!queryInput || isAiLoading}
-          className="absolute right-1.5 h-7 px-3 rounded-md bg-accent hover:opacity-90 text-white dark:text-neutral-950 active:scale-95 text-[12px] font-semibold transition-all disabled:opacity-50 cursor-pointer"
+          className="absolute right-1.5 h-7 px-3 rounded-md bg-accent hover:opacity-90 text-white dark:text-[#002b36] active:scale-95 text-[12px] font-semibold transition-all disabled:opacity-50 cursor-pointer"
         >
           <span>{isAiLoading ? 'Analyzing…' : 'Analyze'}</span>
         </button>

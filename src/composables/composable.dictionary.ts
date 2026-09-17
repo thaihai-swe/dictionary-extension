@@ -41,6 +41,7 @@ const dictCache = createPersistedLruCache<DictionaryEntry>({
   ttlMs: DICT_CACHE_TTL_MS,
   storageKey: DICT_STORAGE_KEY,
   persistDelayMs: 1500,
+  shouldPersist: (value) => Boolean(value?.enriched),
 });
 
 const dictPendingMap = new Map<string, Promise<DictionaryEntry>>();
@@ -214,6 +215,8 @@ export function abortActiveDictRequest() {
 }
 
 function maybePreloadAi(text: string, targetLang: string, context?: string, generation = dictPreloadGeneration) {
+  const settings = settingsStore.value;
+  if (!settings.enableAI || !settings.preloadedAiIntents?.length) return;
   if (aiPreloadTimer) {
     clearTimeout(aiPreloadTimer);
     aiPreloadTimer = null;
@@ -223,6 +226,8 @@ function maybePreloadAi(text: string, targetLang: string, context?: string, gene
     void (async () => {
       await whenSettingsReady();
       if (generation !== dictPreloadGeneration) return;
+      const next = settingsStore.value;
+      if (!next.enableAI || !next.preloadedAiIntents?.length) return;
       const { getAiAssistantStore } = await import('./composable.ai-assistant');
       if (generation !== dictPreloadGeneration) return;
       await getAiAssistantStore().preloadIntents(text, context, targetLang);

@@ -66,7 +66,7 @@ const TRIGGER_CSS = `
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.28);
+  box-shadow: 0 10px 24px rgba(13, 148, 136, 0.28);
   transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 220ms ease;
   animation: dictionary-trigger-enter 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -159,13 +159,10 @@ function startBootstrap() {
 
   void loadBootSettings();
 
-  if (typeof window !== 'undefined' && window.matchMedia) {
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-    media.addEventListener?.('change', () => {
-      if (settings.theme === 'system') {
-        applyTheme();
-      }
-    });
+  function onWindowClick(event: MouseEvent) {
+    if (isDragging || isResizing || !showPopup || !bootUi) return;
+    const target = event.target as Node;
+    if (!bootUi.host.contains(target) && !bootUi.shadow.contains(target)) closePopup();
   }
 
   function ensureUi(): BootUi {
@@ -360,6 +357,7 @@ function startBootstrap() {
     lookupRequestId = createRequestId('dict');
     positionPopup(x, y);
     showPopup = true;
+    window.addEventListener('click', onWindowClick, true);
     isMaximized = false;
     popupLayer.classList.remove('maximized');
     popupLayer.style.display = 'block';
@@ -396,6 +394,7 @@ function startBootstrap() {
   }
 
   function closePopup() {
+    window.removeEventListener('click', onWindowClick, true);
     overlayOpenGeneration += 1;
     const closingRequestId = lookupRequestId;
     showPopup = false;
@@ -595,6 +594,7 @@ function startBootstrap() {
 
   window.addEventListener('mouseup', (event) => {
     if (isHostnamePaused()) return;
+    if ((settings.selectionTriggerMode || 'icon') === 'off') return;
     if (bootUi && (bootUi.host.contains(event.target as Node) || bootUi.shadow.contains(event.target as Node))) return;
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed) {
@@ -615,32 +615,28 @@ function startBootstrap() {
   }, { passive: true });
 
   window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      if (showPopup) {
+        event.preventDefault();
+        closePopup();
+      }
+      return;
+    }
+    if (event.key !== 'q' && event.key !== 'Q') return;
     const target = event.target as HTMLElement;
     if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target.isContentEditable) return;
-    const currentSelection = window.getSelection()?.toString().trim();
     const modifier = settings.postSelectionModifier || 'shift';
+    const matches =
+      (modifier === 'shift' && event.shiftKey)
+      || (modifier === 'alt' && event.altKey)
+      || (modifier === 'ctrl' && (event.ctrlKey || event.metaKey));
+    if (!matches) return;
+    const currentSelection = window.getSelection()?.toString().trim();
     if (currentSelection) {
-      const matches =
-        (modifier === 'shift' && event.shiftKey)
-        || (modifier === 'alt' && event.altKey)
-        || (modifier === 'ctrl' && (event.ctrlKey || event.metaKey));
-      if (matches && (event.key === 'Q' || event.key === 'q')) {
-        updateSelectionTrigger();
-        event.preventDefault();
-        return;
-      }
-    }
-    if (event.key === 'Escape' && showPopup) {
+      updateSelectionTrigger();
       event.preventDefault();
-      closePopup();
     }
   });
-
-  window.addEventListener('click', (event) => {
-    if (isDragging || isResizing || !showPopup || !bootUi) return;
-    const target = event.target as Node;
-    if (!bootUi.host.contains(target) && !bootUi.shadow.contains(target)) closePopup();
-  }, true);
 
   chrome.runtime?.onMessage?.addListener((message: { type?: string; text?: string; payload?: { text?: string; context?: string; fromSelection?: boolean } }) => {
     const payload = message.payload || {};

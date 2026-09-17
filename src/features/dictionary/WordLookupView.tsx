@@ -95,7 +95,7 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
             type="text"
             placeholder="Look up a word, phrase, or sentence…"
             aria-label="Look up a word, phrase, or sentence"
-            className="w-full h-[38px] bg-muted/40 hover:bg-muted/60 focus:bg-surface border border-border focus:border-accent rounded-lg pl-9 pr-8 text-[13.5px] text-content placeholder:text-content-muted outline-none focus-visible:ring-2 focus-visible:ring-accent/20 transition-all font-sans"
+            className="w-full h-[38px] bg-muted/50 hover:bg-muted/75 focus:bg-surface border border-border focus:border-accent rounded-lg pl-9 pr-8 text-[13.5px] text-content placeholder:text-content-muted outline-none focus-visible:ring-2 focus-visible:ring-accent/25 transition-all font-sans"
           />
 
           {searchInput ? (
@@ -118,7 +118,7 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
           type="button"
           onClick={() => handleSearch()}
           disabled={!searchInput || isLoading}
-          className="h-[38px] px-4 rounded-lg bg-accent hover:opacity-90 text-white dark:text-neutral-950 active:scale-95 text-[13px] font-bold transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer shadow-xs flex items-center gap-1.5"
+          className="h-[38px] px-4 rounded-lg bg-accent hover:opacity-90 text-white dark:text-[#002b36] active:scale-95 text-[13px] font-bold transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer shadow-xs flex items-center gap-1.5"
         >
           {isLoading ? (
             <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />

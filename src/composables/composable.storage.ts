@@ -251,6 +251,10 @@ export function initStorage() {
 
   if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
     chrome.storage.onChanged.addListener((changes, areaName) => {
+      const changedKeys = Object.keys(changes);
+      if (!changedKeys.some((key) => key in DEFAULT_SETTINGS || key === 'hasAiApiKey' || SECRET_KEYS.has(key))) {
+        return;
+      }
       const allowSecrets = canAccessSecretSettings();
       const nextSettings = { ...settingsRef.value };
       for (const [key, change] of Object.entries(changes)) {

@@ -441,7 +441,6 @@ chrome.runtime.onSuspend?.addListener(() => {
 
 chrome.storage?.onChanged?.addListener((changes, area) => {
   if (area !== 'sync' && area !== 'local') return;
-  invalidateSettingsCache();
   const cacheKeys = [
     'dictionaryProvider',
     'enableDictionary',
@@ -457,8 +456,11 @@ chrome.storage?.onChanged?.addListener((changes, area) => {
     'aiModel',
     'aiBaseUrl',
   ];
+  const sizeChanged = Boolean(changes.popupWidth || changes.popupHeight);
+  if (!cacheKeys.some((key) => key in changes) && !sizeChanged) return;
+  invalidateSettingsCache();
   if (cacheKeys.some((key) => key in changes)) clearEnrichmentCache();
-  if (area === 'sync' && toolbarWindowId && (changes.popupWidth || changes.popupHeight)) {
+  if (area === 'sync' && toolbarWindowId && sizeChanged) {
     void applyToolbarWindowSize(toolbarWindowId);
   }
 });

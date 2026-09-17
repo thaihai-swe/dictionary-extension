@@ -178,7 +178,7 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
           type="button"
           onClick={() => handleRewrite(activeStyle)}
           disabled={!inputText.trim() || isRewriting}
-          className="w-full h-9 mt-1 rounded-xl bg-accent hover:opacity-90 text-white dark:text-neutral-950 text-[13px] font-bold transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+          className="w-full h-9 mt-1 rounded-xl bg-accent hover:opacity-90 text-white dark:text-[#002b36] text-[13px] font-bold transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
         >
           {isRewriting ? (
             <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
