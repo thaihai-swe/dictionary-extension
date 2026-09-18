@@ -6,9 +6,10 @@ import { IconMonitor, IconMoon, IconSun } from '@/components/icons';
 interface TabAppearanceProps {
   localSettings: AppSettings;
   onChange: (patch: Partial<AppSettings>) => void;
+  onClearCache?: () => void;
 }
 
-export const TabAppearance: React.FC<TabAppearanceProps> = ({ localSettings, onChange }) => {
+export const TabAppearance: React.FC<TabAppearanceProps> = ({ localSettings, onChange, onClearCache }) => {
   return (
     <div className="space-y-6 font-sans text-xs">
       <section className="bg-surface border border-border rounded-xl p-5 space-y-3 shadow-xs">
@@ -51,6 +52,38 @@ export const TabAppearance: React.FC<TabAppearanceProps> = ({ localSettings, onC
             );
           })}
         </div>
+      </section>
+
+      <section className="bg-surface border border-border rounded-xl p-5 space-y-3 shadow-xs">
+        <div>
+          <h3 className="text-sm font-bold text-content font-heading">Privacy &amp; Local Cache</h3>
+          <p className="text-[11.5px] text-content-muted">
+            Cached dictionary and AI results stay on this device for faster repeat lookups.
+          </p>
+        </div>
+        <label className="flex items-center justify-between cursor-pointer py-1.5 hover:bg-muted/30 px-1 rounded-lg transition-colors">
+          <div className="pr-4">
+            <span className="font-semibold text-content text-xs block">Persist lookup cache</span>
+            <span className="text-[11px] text-content-muted block">
+              Disable for memory-only mode; use Data &amp; Backup to clear existing cached results.
+            </span>
+          </div>
+          <input
+            type="checkbox"
+            checked={localSettings.persistLookupCache !== false}
+            onChange={(e) => onChange({ persistLookupCache: e.target.checked })}
+            className="w-4 h-4 cursor-pointer"
+          />
+        </label>
+        {onClearCache ? (
+          <button
+            type="button"
+            onClick={onClearCache}
+            className="w-full sm:w-auto px-3 py-2 rounded-lg border border-border bg-muted/50 text-content-secondary hover:text-content hover:bg-elevated text-[11px] font-semibold transition-colors cursor-pointer"
+          >
+            Clear cached lookup results
+          </button>
+        ) : null}
       </section>
 
       <section className="bg-surface border border-border rounded-xl p-5 space-y-3 shadow-xs">

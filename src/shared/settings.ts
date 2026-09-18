@@ -71,6 +71,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   enableLexicalProfile: true,
   enableAI: true,
   enableAiPreload: false,
+  persistLookupCache: true,
   preloadedAiIntents: [],
   enablePhraseFallback: true,
   disablePageContextExtraction: false,
@@ -142,6 +143,7 @@ export function normalizeSettings(input?: Partial<AppSettings> | Record<string, 
   merged.enableDictionary = Boolean(merged.enableDictionary);
   merged.enableLexicalProfile = merged.enableLexicalProfile !== false;
   merged.enableAI = Boolean(merged.enableAI);
+  merged.persistLookupCache = merged.persistLookupCache !== false;
   const sourceSettings = (source || {}) as Partial<AppSettings> & Record<string, unknown>;
   merged.preloadedAiIntents = resolvePreloadedAiIntents(sourceSettings);
   merged.enableAiPreload = merged.preloadedAiIntents.length > 0;

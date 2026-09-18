@@ -5,11 +5,9 @@ import { useStorage } from '@/composables/composable.storage';
 import { mergeMeanings } from '@/shared/enrichment';
 import { cx } from '@/ui/cx';
 import ExampleSentence from '@/components/component.example-sentence';
-import RelatedWords from '@/components/component.related-words';
 
 interface SenseMatrixCardProps {
   meanings: Meaning[];
-  onSelectWord?: (word: string) => void;
 }
 
 function getPosBadgeClass(pos: string): string {
@@ -21,7 +19,7 @@ function getPosBadgeClass(pos: string): string {
   return 'badge-pos-other';
 }
 
-export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSelectWord }) => {
+export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings }) => {
   const groupedMeanings = useMemo(() => mergeMeanings(meanings || [], []), [meanings]);
   const { playPronunciation, playingKey } = useDictionaryAudio();
   const { settings } = useStorage();
@@ -123,7 +121,7 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSe
                     </span>
                   </div>
 
-                  {def.example ? (
+                  {mIdx === 0 && dIdx === 0 && def.example ? (
                     <ExampleSentence
                       className="ml-5"
                       english={def.example}
@@ -140,47 +138,10 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSe
                     />
                   ) : null}
 
-                  {def.synonyms && def.synonyms.length > 0 ? (
-                    <RelatedWords
-                      label="Synonyms"
-                      tone="synonym"
-                      words={def.synonyms}
-                      onSelectWord={onSelectWord}
-                      className="ml-5"
-                    />
-                  ) : null}
-
-                  {def.antonyms && def.antonyms.length > 0 ? (
-                    <RelatedWords
-                      label="Antonyms"
-                      tone="antonym"
-                      words={def.antonyms}
-                      onSelectWord={onSelectWord}
-                      className="ml-5"
-                    />
-                  ) : null}
                 </li>
               );
             })}
           </ol>
-
-          {meaning.synonyms && meaning.synonyms.length > 0 ? (
-            <RelatedWords
-              label="Synonyms"
-              tone="synonym"
-              words={meaning.synonyms}
-              onSelectWord={onSelectWord}
-            />
-          ) : null}
-
-          {meaning.antonyms && meaning.antonyms.length > 0 ? (
-            <RelatedWords
-              label="Antonyms"
-              tone="antonym"
-              words={meaning.antonyms}
-              onSelectWord={onSelectWord}
-            />
-          ) : null}
         </div>
       ))}
     </div>

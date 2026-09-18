@@ -4,7 +4,7 @@ import { useLookupSession } from '@/composables/composable.lookup-session';
 import AppHeader from '@/components/component.app-header';
 import TabNavigation from '@/components/component.tab-navigation';
 import WordLookupView from '@/features/dictionary/WordLookupView';
-import { TabId } from '@/types';
+import { AppTheme, TabId } from '@/types';
 import { isDistinctContext } from '@/shared/page-context';
 import { cx } from '@/ui/cx';
 import { useAppTheme } from '@/ui/theme';
@@ -46,9 +46,10 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
   onStartDrag,
   onStartResize,
 }) => {
-  const { activeTab, settings, saveSettings, setActiveTab } = useStorage();
+  const { activeTab, settings, setActiveTab } = useStorage();
   const session = useLookupSession();
-  const { isDarkMode, toggleTheme } = useAppTheme(settings.theme, { saveSettings });
+  const [theme, setTheme] = useState<AppTheme>(settings.theme);
+  const { isDarkMode, toggleTheme } = useAppTheme(theme, { onThemeChange: setTheme });
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [aiVisited, setAiVisited] = useState(activeTab === 'ai_assistant');
   const [rewriterVisited, setRewriterVisited] = useState(activeTab === 'rewriter');
@@ -71,6 +72,10 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
       setCurrentLang(settings.translateTargetLanguage);
     }
   }, [settings.translateTargetLanguage, targetLang]);
+
+  useEffect(() => {
+    setTheme(settings.theme);
+  }, [settings.theme]);
 
   useEffect(() => {
     if (activeTab === 'ai_assistant') setAiVisited(true);
@@ -235,7 +240,7 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
       aria-label="Dictionary lookup"
       tabIndex={-1}
       className={cx(
-        'bg-paper/95 dark:bg-paper/90 backdrop-blur-xl border border-border/80 rounded-xl shadow-card-elevated overflow-hidden flex flex-col select-none text-content text-sm font-sans relative inpage-popup-card w-full h-full transition-colors outline-none',
+        'bg-paper/95 dark:bg-paper/90 backdrop-blur-xl border border-border/80 rounded-2xl shadow-card-elevated overflow-hidden flex flex-col select-none text-content text-sm font-sans relative inpage-popup-card w-full h-full transition-colors outline-none',
         isDarkMode ? 'dark' : 'light-theme light',
         isMaximized ? 'max-w-5xl max-h-[90vh]' : '',
       )}
@@ -252,6 +257,13 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
           showShortcuts={showShortcuts}
           isMaximized={isMaximized}
           isDarkMode={isDarkMode}
+          provider={currentProvider}
+          targetLanguage={currentLang}
+          hasUnsavedSettings={
+            theme !== settings.theme
+            || currentProvider !== settings.dictionaryProvider
+            || currentLang !== settings.translateTargetLanguage
+          }
           onToggleShortcuts={() => setShowShortcuts((v) => !v)}
           onToggleMaximize={onToggleMaximize}
           onToggleTheme={toggleTheme}

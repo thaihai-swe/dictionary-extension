@@ -10,6 +10,18 @@ export interface PersistedLruCache<T> {
   flush(): void;
 }
 
+// Cache keys are obfuscated to avoid putting the user's lookup text in storage keys.
+// This is not encryption; cached values still remain local until cleared or expired.
+export function hashCacheKey(value: string): string {
+  let hash = 2166136261;
+  const input = String(value || '');
+  for (let index = 0; index < input.length; index += 1) {
+    hash ^= input.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `v1_${(hash >>> 0).toString(16).padStart(8, '0')}_${input.length.toString(16)}`;
+}
+
 function canUseLocalStorage(): boolean {
   try {
     return typeof chrome !== 'undefined' && typeof chrome.storage?.local?.get === 'function';
@@ -24,6 +36,7 @@ export function createPersistedLruCache<T>(options: {
   storageKey: string;
   persistDelayMs?: number;
   shouldPersist?: (value: T) => boolean;
+  isPersistenceEnabled?: () => boolean;
 }): PersistedLruCache<T> {
   const map = new Map<string, CacheEntry<T>>();
   const persistDelayMs = options.persistDelayMs ?? 1500;
@@ -31,6 +44,10 @@ export function createPersistedLruCache<T>(options: {
   let persistTimer: ReturnType<typeof setTimeout> | null = null;
   let dirty = false;
   let unloadBound = false;
+
+  function persistenceEnabled(): boolean {
+    return options.isPersistenceEnabled ? options.isPersistenceEnabled() : true;
+  }
 
   function prune() {
     const now = Date.now();
@@ -47,6 +64,10 @@ export function createPersistedLruCache<T>(options: {
   function persistNow() {
     if (!canUseLocalStorage() || !dirty) return;
     dirty = false;
+    if (!persistenceEnabled()) {
+      void Promise.resolve(chrome.storage.local.remove(options.storageKey)).catch(() => undefined);
+      return;
+    }
     prune();
     const snapshot: Record<string, CacheEntry<T>> = {};
     for (const [key, entry] of map.entries()) {
@@ -58,6 +79,15 @@ export function createPersistedLruCache<T>(options: {
 
   function persist() {
     if (!canUseLocalStorage()) return;
+    if (!persistenceEnabled()) {
+      dirty = false;
+      if (persistTimer) {
+        clearTimeout(persistTimer);
+        persistTimer = null;
+      }
+      void Promise.resolve(chrome.storage.local.remove(options.storageKey)).catch(() => undefined);
+      return;
+    }
     dirty = true;
     if (persistTimer) clearTimeout(persistTimer);
     persistTimer = setTimeout(() => {
@@ -80,7 +110,7 @@ export function createPersistedLruCache<T>(options: {
     if (hydrated) return;
     hydrated = true;
     bindUnload();
-    if (!canUseLocalStorage()) return;
+    if (!canUseLocalStorage() || !persistenceEnabled()) return;
     void Promise.resolve(chrome.storage.local.get(options.storageKey))
       .then((stored) => {
         const snapshot = (stored as Record<string, Record<string, CacheEntry<T>> | undefined>)?.[options.storageKey];

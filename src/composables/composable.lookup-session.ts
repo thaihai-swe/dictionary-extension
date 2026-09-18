@@ -4,7 +4,7 @@ import { abortAiRuntimeIfLoaded } from './runtime-hooks';
 import { useStorage } from './composable.storage';
 
 export function useLookupSession() {
-  const { settings, saveSettings, setActiveTab } = useStorage();
+  const { settings, setActiveTab } = useStorage();
 
   function abortAllLookups() {
     stopAllAudio();
@@ -19,7 +19,6 @@ export function useLookupSession() {
       return;
     }
     setActiveTab(nextTab);
-    void saveSettings({ defaultTab: nextTab });
   }
 
   return {

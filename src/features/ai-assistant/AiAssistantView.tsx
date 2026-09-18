@@ -204,7 +204,16 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
   }
 
   return (
-    <div className="p-4 space-y-3 font-sans">
+    <div className="p-4 space-y-4 font-sans">
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 rounded-xl bg-accent-subtle border border-accent/25 flex items-center justify-center shrink-0">
+          <span className="text-accent text-sm font-bold">✦</span>
+        </div>
+        <div>
+          <h2 className="text-sm font-bold text-content tracking-tight">AI language studio</h2>
+          <p className="text-[11px] text-content-muted">Explore nuance, grammar, and natural phrasing</p>
+        </div>
+      </div>
       <div className="relative flex items-center">
         <span className="absolute left-3 text-content-muted pointer-events-none">
           <IconSearch className="w-3.5 h-3.5" />
@@ -218,7 +227,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
           type="text"
           placeholder="Analyze a word or sentence…"
           aria-label="Analyze a word or sentence"
-          className="w-full h-10 bg-muted/50 hover:bg-muted/70 focus:bg-surface border border-border rounded-xl pl-9 pr-24 text-[13px] text-content placeholder:text-content-muted outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all font-sans"
+          className="w-full h-11 bg-muted/40 hover:bg-muted/60 focus:bg-surface border border-border/80 rounded-xl pl-10 pr-24 text-[13.5px] text-content placeholder:text-content-muted outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all font-sans shadow-inner-light"
         />
 
         {queryInput ? (
@@ -266,7 +275,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
           <span className="truncate max-w-[22rem]">{contextInput.trim()}</span>
         </button>
       ) : (
-        <div className="rounded-lg border border-border bg-surface p-2.5 space-y-1.5">
+        <div className="rounded-2xl border border-border/80 bg-surface/90 p-3 space-y-2.5 shadow-xs">
           <div className="flex items-center justify-between gap-2">
             <span className="text-[11px] font-bold uppercase tracking-wider text-content-muted">
               Context Sentence
@@ -312,7 +321,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
             }}
             aria-pressed={item.isActive}
             className={cx(
-              'inline-flex items-center gap-1.5 min-h-[28px] px-2.5 rounded-full border text-[11px] font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap',
+              'inline-flex items-center gap-1.5 min-h-[30px] px-3 rounded-xl border text-[11px] font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap active:scale-95',
               item.isActive
                 ? 'chip-active font-semibold'
                 : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
@@ -327,7 +336,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
       {/* Results */}
       <div className="space-y-3 pt-1">
         {isAiLoading ? (
-          <div className="p-3.5 rounded-lg border border-border bg-surface space-y-3" aria-busy="true" aria-live="polite">
+          <div className="p-4 rounded-2xl border border-border/80 bg-surface/90 shadow-xs space-y-3.5" aria-busy="true" aria-live="polite">
             <div className="flex items-center justify-between pb-1.5 border-b border-border/60">
               <div className="h-3.5 skeleton-shimmer rounded w-1/3"></div>
               <div className="h-3 skeleton-shimmer rounded w-16"></div>
@@ -340,7 +349,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
             <div className="h-16 skeleton-shimmer rounded-lg mt-2"></div>
           </div>
         ) : aiError ? (
-          <div className="p-3 rounded-lg bg-rose-500/8 border border-rose-500/25 text-[12.5px] text-rose-700 dark:text-rose-400">
+          <div role="alert" className="p-4 rounded-2xl bg-rose-500/8 border border-rose-500/25 text-[12.5px] text-rose-700 dark:text-rose-400 shadow-xs">
             {aiError}
           </div>
         ) : aiResult ? (

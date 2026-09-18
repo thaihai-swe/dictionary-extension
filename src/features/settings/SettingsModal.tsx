@@ -1,6 +1,7 @@
 import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import {
   canAccessSecretSettings,
+  clearLookupCaches,
   parsePublicSettingsImport,
   serializePublicSettings,
   useStorage,
@@ -8,6 +9,7 @@ import {
 } from '@/composables/composable.storage';
 import { SECRET_SETTING_KEYS } from '@/shared/settings-export';
 import { requestProviderValidation } from '@/shared/runtime-client';
+import { requestOriginPermission } from '@/shared/permissions';
 import { DEFAULT_AI_PROMPTS } from '@/prompts/prompt-templates';
 import { KNOWN_LANGUAGE_MAPPINGS } from '@/shared/languages';
 import { AppSettings } from '@/types';
@@ -41,6 +43,10 @@ const promptEditors: Array<{ key: keyof AppSettings; label: string; intent: AppS
 ];
 
 const presetModels = ['gemini-3.5-flash-lite'];
+const MANIFEST_ENDPOINT_ORIGINS = [
+  'https://generativelanguage.googleapis.com',
+  'https://libretranslate.com',
+];
 
 const TABS: Array<{ id: SettingsTab; label: string; icon: React.FC<{ className?: string }> }> = [
   { id: 'general', label: 'Triggers & Shortcuts', icon: IconSearch },
@@ -66,6 +72,8 @@ export const SettingsModal: React.FC = () => {
   const [localSettings, setLocalSettings] = useState<AppSettings>({ ...settings });
   const [formHydrated, setFormHydrated] = useState(false);
   const [isSavedNotice, setIsSavedNotice] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [cacheClearedNotice, setCacheClearedNotice] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [pausedSitesInput, setPausedSitesInput] = useState<string>('');
@@ -73,6 +81,13 @@ export const SettingsModal: React.FC = () => {
   const [connectionStatus, setConnectionStatus] = useState<Record<string, string>>({});
   const [connectionBusy, setConnectionBusy] = useState<Record<string, boolean>>({});
   const canEditApiKey = canAccessSecretSettings();
+  const isDirty = useMemo(() => {
+    if (!formHydrated) return false;
+    return (Object.keys(localSettings) as Array<keyof AppSettings>).some((key) => {
+      if (SECRET_SETTING_KEYS.includes(key as never) && !canEditApiKey) return false;
+      return JSON.stringify(localSettings[key]) !== JSON.stringify(settings[key]);
+    }) || pausedSitesInput !== (settings.pausedHostnames || []).join('\n');
+  }, [localSettings, settings, pausedSitesInput, canEditApiKey, formHydrated]);
 
   function switchTab(tab: SettingsTab) {
     setActiveTab(tab);
@@ -167,8 +182,9 @@ export const SettingsModal: React.FC = () => {
   }
 
   async function handleSave() {
-    if (isSaving) return;
+    if (isSaving || !isDirty) return;
     setIsSaving(true);
+    setSaveError(null);
     const pausedList = pausedSitesInput
       .split('\n')
       .map((line) => line.trim().toLowerCase())
@@ -186,14 +202,30 @@ export const SettingsModal: React.FC = () => {
     }
 
     try {
+      if (toSave.aiBaseUrl) {
+        const allowed = await requestOriginPermission(toSave.aiBaseUrl, MANIFEST_ENDPOINT_ORIGINS);
+        if (!allowed) throw new Error('Permission was not granted for the custom AI endpoint.');
+      }
+      if (toSave.translateProvider === 'libretranslate') {
+        const allowed = await requestOriginPermission(toSave.libreTranslateBaseUrl, MANIFEST_ENDPOINT_ORIGINS);
+        if (!allowed) throw new Error('Permission was not granted for the custom translation endpoint.');
+      }
       await saveSettings(toSave);
       setIsSavedNotice(true);
       setTimeout(() => {
         setIsSavedNotice(false);
       }, 2000);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Settings could not be saved.');
     } finally {
       setIsSaving(false);
     }
+  }
+
+  function handleClearLookupCaches() {
+    clearLookupCaches();
+    setCacheClearedNotice(true);
+    setTimeout(() => setCacheClearedNotice(false), 2000);
   }
 
   // Keyboard shortcut: Cmd/Ctrl + S to save
@@ -206,7 +238,17 @@ export const SettingsModal: React.FC = () => {
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [localSettings, pausedSitesInput, isSaving, canEditApiKey]);
+  }, [localSettings, pausedSitesInput, isSaving, canEditApiKey, isDirty, formHydrated]);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    function warnBeforeUnload(event: BeforeUnloadEvent) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
+    window.addEventListener('beforeunload', warnBeforeUnload);
+    return () => window.removeEventListener('beforeunload', warnBeforeUnload);
+  }, [isDirty]);
 
   function resetForm() {
     applyStoreToLocal();
@@ -308,16 +350,16 @@ export const SettingsModal: React.FC = () => {
   return (
     <div
       className={cx(
-        'settings-shell min-h-screen bg-paper text-content font-sans transition-colors',
+        'settings-shell min-h-screen bg-paper text-content font-sans transition-colors selection:bg-accent/20',
         isDarkMode ? 'dark' : 'light-theme light',
       )}
       data-theme={isDarkMode ? 'dark' : 'light'}
     >
       {/* Top App Bar */}
       <header className="sticky top-0 z-30 bg-surface/90 backdrop-blur-md border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-[4.25rem] flex items-center justify-between gap-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-[4.75rem] flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-accent-subtle border border-accent/30 flex items-center justify-center text-accent shadow-2xs shrink-0">
+            <div className="w-11 h-11 rounded-2xl bg-accent-subtle border border-accent/30 flex items-center justify-center text-accent shadow-xs shrink-0">
               <IconSettings className="w-5 h-5" />
             </div>
             <div className="min-w-0">
@@ -330,23 +372,26 @@ export const SettingsModal: React.FC = () => {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={isSaving}
-            className="h-9 px-4 rounded-xl bg-accent hover:opacity-90 text-white dark:text-[#002b36] text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50 shrink-0"
-          >
-            {isSavedNotice ? (
-              <>
-                <IconCheck className="w-3.5 h-3.5" />
-                <span>Saved</span>
-              </>
-            ) : (
-              <span>Save</span>
+          <div
+            role="status"
+            aria-live="polite"
+            className={cx(
+              'text-[11px] font-semibold whitespace-nowrap',
+              isDirty ? 'text-amber-700 dark:text-amber-300' : 'text-content-muted',
             )}
-          </button>
+          >
+            {isSaving ? 'Saving…' : isDirty ? 'Unsaved changes' : isSavedNotice ? 'Saved' : 'All changes saved'}
+          </div>
         </div>
       </header>
+
+      {saveError ? (
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-4">
+          <p role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-700 dark:text-rose-300">
+            {saveError}
+          </p>
+        </div>
+      ) : null}
 
       {/* Main Container */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-24">
@@ -420,6 +465,15 @@ export const SettingsModal: React.FC = () => {
                   <span>Import JSON</span>
                   <span className="text-[10px] text-content-muted font-mono">↑</span>
                 </button>
+                <button
+                  type="button"
+                  onClick={handleClearLookupCaches}
+                  title="Remove locally cached lookup results"
+                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted/70 text-xs text-content-secondary hover:text-content font-medium transition-colors cursor-pointer flex items-center justify-between border border-transparent hover:border-border"
+                >
+                  <span>{cacheClearedNotice ? 'Cache cleared' : 'Clear lookup cache'}</span>
+                  <span className="text-[10px] text-content-muted font-mono">×</span>
+                </button>
               </div>
             </div>
           </aside>
@@ -439,7 +493,7 @@ export const SettingsModal: React.FC = () => {
 
             {activeTab === 'appearance' && (
               <Suspense fallback={<div className="p-8 text-xs text-content-muted">Loading appearance…</div>}>
-                <TabAppearance localSettings={localSettings} onChange={patchLocalSettings} />
+                <TabAppearance localSettings={localSettings} onChange={patchLocalSettings} onClearCache={handleClearLookupCaches} />
               </Suspense>
             )}
 
@@ -514,17 +568,20 @@ export const SettingsModal: React.FC = () => {
             <button
               type="button"
               onClick={resetForm}
-              className="px-3.5 py-2 rounded-xl bg-muted hover:bg-elevated text-content-secondary hover:text-content text-xs font-semibold border border-border transition-colors cursor-pointer active:scale-95 shadow-2xs"
+              disabled={!isDirty || isSaving}
+              className="px-3.5 py-2 rounded-xl bg-muted hover:bg-elevated text-content-secondary hover:text-content text-xs font-semibold border border-border transition-colors cursor-pointer active:scale-95 shadow-2xs disabled:opacity-50 disabled:pointer-events-none"
             >
               Reset
             </button>
             <button
               type="button"
               onClick={handleSave}
-              disabled={isSaving}
+              disabled={isSaving || !isDirty}
               className="px-5 py-2 rounded-xl bg-accent hover:opacity-90 text-white dark:text-[#002b36] text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
             >
-              {isSavedNotice ? (
+              {isSaving ? (
+                <span>Saving…</span>
+              ) : isSavedNotice ? (
                 <>
                   <IconCheck className="w-3.5 h-3.5" />
                   <span>Saved</span>

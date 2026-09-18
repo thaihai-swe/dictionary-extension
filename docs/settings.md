@@ -70,6 +70,7 @@ To guarantee that private credentials can never leak across browser sync channel
 | `defaultTab` | `string` | `"dictionary"`, `"ai_assistant"` | `"dictionary"` | Initial tab selected when opening a new lookup popup session. |
 | `popupWidth` | `number` | `360` to `1000` (pixels) | `620` | Preferred width of in-page cards. Automatically updated when resizing via the bottom-right drag handle. |
 | `popupHeight` | `number` | `380` to `900` (pixels) | `720` | Preferred height of in-page cards. Automatically updated when resizing via the bottom-right drag handle. |
+| `persistLookupCache` | `boolean` | `true`, `false` | `true` | Keep dictionary and AI lookup results in local storage for faster repeat lookups. Disable for memory-only mode. |
 
 ---
 

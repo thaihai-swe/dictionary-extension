@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { searchWord, stopAllAudio, useDictionaryQuery, useDictionaryResult } from '@/composables/composable.dictionary';
 import { useStorage } from '@/composables/composable.storage';
-import { IconClose, IconSearch } from '@/components/icons';
+import { IconClose, IconSearch, IconSpinner } from '@/components/icons';
 import PresetChips from '@/components/component.preset-chips';
 import type { DemoPreset } from '@/shared/presets';
 
@@ -81,84 +81,106 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
 
   return (
     <div className="font-sans">
-      {/* Search Bar - Modern Command Palette Style */}
-      <div className="flex gap-2 p-3 bg-surface border-b border-border shadow-2xs">
-        <div className="relative flex-1 flex items-center">
-          <IconSearch className="w-4 h-4 text-content-muted absolute left-3 pointer-events-none" />
-          <input
-            ref={searchInputElement}
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleSearch();
-            }}
-            type="text"
-            placeholder="Look up a word, phrase, or sentence…"
-            aria-label="Look up a word, phrase, or sentence"
-            className="w-full h-[38px] bg-muted/50 hover:bg-muted/75 focus:bg-surface border border-border focus:border-accent rounded-lg pl-9 pr-8 text-[13.5px] text-content placeholder:text-content-muted outline-none focus-visible:ring-2 focus-visible:ring-accent/25 transition-all font-sans"
-          />
+      {/* Modern Command-Palette Search Bar */}
+      <div className="px-3.5 py-3 bg-surface/90 backdrop-blur-md border-b border-border/80 sticky top-0 z-20 shadow-2xs">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="relative flex-1 min-w-0 flex items-center group">
+            <IconSearch className="w-4 h-4 text-content-muted absolute left-3.5 pointer-events-none group-focus-within:text-accent transition-colors" />
+            <input
+              ref={searchInputElement}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSearch();
+              }}
+              type="text"
+              placeholder="Type a word, phrase, or sentence…"
+              aria-label="Look up a word, phrase, or sentence"
+              className="w-full h-10 bg-muted/40 hover:bg-muted/60 focus:bg-surface border border-border/80 focus:border-accent rounded-xl pl-10 pr-20 text-[13.5px] text-content placeholder:text-content-muted outline-none focus-visible:ring-2 focus-visible:ring-accent/25 transition-all shadow-inner-light"
+            />
 
-          {searchInput ? (
-            <button
-              type="button"
-              onClick={clearSearch}
-              title="Clear search text"
-              className="absolute right-2 text-content-muted hover:text-content p-1 cursor-pointer flex items-center justify-center rounded-md hover:bg-muted transition-colors"
-            >
-              <IconClose className="w-3.5 h-3.5" />
-            </button>
-          ) : (
-            <span className="hidden sm:inline-flex absolute right-2.5 px-1.5 py-0.5 rounded text-[11px] font-mono text-content-muted/70 border border-border/60 bg-surface/80 select-none pointer-events-none">
-              ↵ Enter
-            </span>
-          )}
+            {searchInput ? (
+              <button
+                type="button"
+                onClick={clearSearch}
+                title="Clear search text"
+                aria-label="Clear search text"
+                className="absolute right-3 text-content-muted hover:text-content p-1 cursor-pointer flex items-center justify-center rounded-lg hover:bg-muted transition-colors"
+              >
+                <IconClose className="w-3.5 h-3.5" />
+              </button>
+            ) : (
+              <span className="hidden sm:inline-flex absolute right-3 px-1.5 py-0.5 rounded-md text-[10.5px] font-mono text-content-muted/70 border border-border/70 bg-surface select-none pointer-events-none shadow-2xs">
+                ↵ Enter
+              </span>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => handleSearch()}
+            disabled={!searchInput.trim() || isLoading}
+            className="h-10 px-2.5 sm:px-4 rounded-xl bg-accent hover:opacity-90 text-white dark:text-[#090d16] active:scale-95 text-[12.5px] font-bold transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer shadow-xs flex items-center gap-1.5 shrink-0"
+          >
+            {isLoading ? (
+              <IconSpinner className="w-4 h-4" />
+            ) : (
+              <span>Lookup</span>
+            )}
+          </button>
         </div>
-
-        <button
-          type="button"
-          onClick={() => handleSearch()}
-          disabled={!searchInput || isLoading}
-          className="h-[38px] px-4 rounded-lg bg-accent hover:opacity-90 text-white dark:text-[#002b36] active:scale-95 text-[13px] font-bold transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer shadow-xs flex items-center gap-1.5"
-        >
-          {isLoading ? (
-            <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <span>Lookup</span>
-          )}
-        </button>
       </div>
 
-      <div className="p-4 space-y-3.5">
+      {/* Main Content Area */}
+      <div className="p-4 space-y-4">
         {error ? (
-          <div role="alert" className="p-3 rounded-lg bg-rose-500/8 border border-rose-500/25 text-[13px] text-rose-700 dark:text-rose-400 flex items-start gap-2">
-            <span className="mt-0.5 text-rose-500" aria-hidden="true">●</span>
-            <span>{error}</span>
+          <div role="alert" className="p-4 rounded-2xl bg-rose-500/8 border border-rose-500/25 text-[13px] text-rose-700 dark:text-rose-400 space-y-2">
+            <div className="flex items-center gap-2 font-semibold">
+              <span className="w-2 h-2 rounded-full bg-rose-500" aria-hidden="true" />
+              <span>Lookup failed</span>
+            </div>
+            <p className="text-[12.5px] text-content-secondary leading-relaxed pl-4">
+              {error}
+            </p>
+            <div className="pl-4 pt-1">
+              <button
+                type="button"
+                onClick={() => handleSearch()}
+                className="btn-accent h-7 px-3 text-[11px] font-bold cursor-pointer"
+              >
+                Try Again
+              </button>
+            </div>
           </div>
         ) : result ? (
           <div aria-busy={isLoading || undefined}>
             <Suspense fallback={
-              <div className="p-4 space-y-3.5 rounded-xl border border-border bg-surface shadow-xs" aria-busy="true">
-                <div className="h-7 skeleton-shimmer rounded-md w-2/5" />
-                <div className="h-4 skeleton-shimmer rounded w-4/5" />
-                <div className="h-16 skeleton-shimmer rounded-lg" />
+              <div className="p-4 space-y-3.5 rounded-2xl border border-border/80 bg-surface shadow-xs" aria-busy="true">
+                <div className="h-8 skeleton-shimmer rounded-lg w-2/5" />
+                <div className="h-5 skeleton-shimmer rounded-md w-3/5" />
+                <div className="h-20 skeleton-shimmer rounded-xl" />
               </div>
             }>
               <WordLookupResult onSelectWord={handleSearch} contextSentence={initialContext} />
             </Suspense>
           </div>
         ) : isLoading ? (
-          <div className="p-4 space-y-3.5 rounded-xl border border-border bg-surface shadow-xs" aria-busy="true" aria-live="polite">
-            <div className="flex items-center justify-between pb-2 border-b border-border/60">
-              <div className="h-7 skeleton-shimmer rounded-md w-2/5"></div>
-              <div className="h-5 skeleton-shimmer rounded-full w-20"></div>
+          /* Realistic Loading Skeleton */
+          <div className="p-5 space-y-4 rounded-2xl border border-border/80 bg-surface shadow-xs" aria-busy="true" aria-live="polite">
+            <div className="flex items-center justify-between pb-3 border-b border-border/60">
+              <div className="h-8 skeleton-shimmer rounded-lg w-2/5"></div>
+              <div className="h-6 skeleton-shimmer rounded-full w-24"></div>
             </div>
-            <div className="flex gap-2">
-              <div className="h-6 skeleton-shimmer rounded-md w-16"></div>
-              <div className="h-6 skeleton-shimmer rounded-md w-20"></div>
+            <div className="flex gap-2.5">
+              <div className="h-8 skeleton-shimmer rounded-lg w-24"></div>
+              <div className="h-8 skeleton-shimmer rounded-lg w-28"></div>
             </div>
-            <div className="h-4 skeleton-shimmer rounded w-4/5"></div>
-            <div className="h-4 skeleton-shimmer rounded w-3/5"></div>
-            <div className="h-20 skeleton-shimmer rounded-lg mt-2"></div>
+            <div className="space-y-2 pt-2">
+              <div className="h-4 skeleton-shimmer rounded w-5/6"></div>
+              <div className="h-4 skeleton-shimmer rounded w-4/6"></div>
+              <div className="h-4 skeleton-shimmer rounded w-3/6"></div>
+            </div>
+            <div className="h-24 skeleton-shimmer rounded-xl mt-2"></div>
           </div>
         ) : !searchInput.trim() && !query.trim() ? (
           <PresetChips onSelect={handlePresetSelect} />

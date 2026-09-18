@@ -7,7 +7,7 @@ import {
   subscribeLookupUpdates,
 } from '../shared/dictionary-lookup-client';
 import { requestPlayAudio, requestSpeakTts, requestStopAudio } from '../shared/runtime-client';
-import { createPersistedLruCache } from '../shared/lookup-cache';
+import { createPersistedLruCache, hashCacheKey } from '../shared/lookup-cache';
 import { toDictionaryEntry } from '../shared/enrichment';
 import { AppSettings, DictionaryEntry, PracticeResult } from '../types';
 
@@ -34,13 +34,14 @@ const practiceResults = new Map<string, PracticeResult>();
 const MAX_DICT_CACHE_SIZE = 80;
 const MAX_PRACTICE_RESULTS = 20;
 const DICT_CACHE_TTL_MS = 48 * 60 * 60 * 1000; // 48 hours
-const DICT_STORAGE_KEY = 'dict_lookup_cache_v5';
+const DICT_STORAGE_KEY = 'dict_lookup_cache_v6';
 
 const dictCache = createPersistedLruCache<DictionaryEntry>({
   maxSize: MAX_DICT_CACHE_SIZE,
   ttlMs: DICT_CACHE_TTL_MS,
   storageKey: DICT_STORAGE_KEY,
   persistDelayMs: 1500,
+  isPersistenceEnabled: () => settingsStore.value.persistLookupCache !== false,
   shouldPersist: (value) => Boolean(value?.enriched),
 });
 
@@ -48,7 +49,7 @@ const dictPendingMap = new Map<string, Promise<DictionaryEntry>>();
 const dictPendingRequestIds = new Map<string, string>();
 
 function getDictCacheKey(word: string, settings: AppSettings, provider: string, lang: string): string {
-  return `${word.toLowerCase().trim()}|${provider.toLowerCase()}|${lang.toLowerCase()}|${settings.translateProvider || ''}|${Boolean(settings.enableTranslate)}|${Boolean(settings.enableDictionary)}|${Boolean(settings.enablePhraseFallback)}|${settings.enableLexicalProfile !== false}`;
+  return hashCacheKey(`${word.toLowerCase().trim()}|${provider.toLowerCase()}|${lang.toLowerCase()}|${settings.translateProvider || ''}|${Boolean(settings.enableTranslate)}|${Boolean(settings.enableDictionary)}|${Boolean(settings.enablePhraseFallback)}|${settings.enableLexicalProfile !== false}`);
 }
 
 function practiceKey(text: string, language = 'en-US'): string {

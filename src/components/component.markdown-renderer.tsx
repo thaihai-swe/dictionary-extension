@@ -7,6 +7,7 @@ import {
 } from '../shared/ai-example-blocks';
 import ExampleSentence from './component.example-sentence';
 import { IconSpeaker } from './icons';
+import { escapeHtml } from '../features/rewriter/rewrite-markdown';
 
 interface MarkdownRendererProps {
   content?: string;
@@ -24,7 +25,7 @@ const RE_CODE = /`(.*?)`/g;
 
 function formatInlineMarkdown(text: string): string {
   if (!text) return '';
-  return text
+  return escapeHtml(text)
     .replace(RE_USED_IN_CONTEXT_BOLD, IN_CONTEXT_BADGE)
     .replace(RE_USED_IN_CONTEXT_BRACKET, IN_CONTEXT_BADGE)
     .replace(RE_BOLD, '<strong class="text-content font-bold">$1</strong>')

@@ -36,7 +36,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ show, onClose })
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 font-sans"
+      className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-md flex items-center justify-center p-4 font-sans"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose?.();
       }}
@@ -47,7 +47,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ show, onClose })
         aria-modal="true"
         aria-labelledby="shortcuts-title"
         tabIndex={-1}
-        className="w-full max-w-sm rounded-2xl border border-border bg-surface p-5 space-y-4 shadow-card-elevated select-none outline-none"
+        className="w-full max-w-sm rounded-3xl border border-border/80 bg-surface p-5 space-y-4 shadow-card-elevated select-none outline-none"
       >
         <div className="flex items-center justify-between border-b border-border/60 pb-3">
           <div className="flex items-center gap-2.5">

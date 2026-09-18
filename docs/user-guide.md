@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Dictionary** is a modern Chrome and Firefox Manifest V3 extension built for readers, students, and language learners. It brings instant definitions, neural translations, natural pronunciation, speech practice, and deep contextual AI explanations directly to the text you are reading—without breaking your reading flow or requiring external tabs.
+**Dictionary** is a modern Chrome and Firefox Manifest V3 extension built for readers, students, and language learners. It brings fast definitions, neural translations, natural pronunciation, speech practice, and deep contextual AI explanations directly to the text you are reading—without breaking your reading flow or requiring external tabs.
 
 The user interface is powered by the **Editorial Ink** design system:
 - **System Typography:** UI text uses the operating system font stack (`system-ui`) with native support for System, Light (warm paper), and Dark (obsidian velvet + champagne gold) themes.
@@ -120,7 +120,7 @@ The **Dictionary** tab delivers a comprehensive, multi-source learning view comb
 Dictionary lookups execute in two synchronized phases:
 
 1. **Phase 1 — Fast Primary Lookup (Sub-second):**
-   - The primary dictionary provider (default: **Free Dictionary API**) returns first. Lookups use the selected text as-is.
+   - The primary dictionary provider (default: **Wiktionary**) returns first. Lookups use the selected text as-is.
    - Translation starts in parallel and appears on first paint when it is already ready; otherwise it fills in a moment later.
    - Initial definitions, examples, and phonetic audio appear immediately under a clean headword header.
 2. **Phase 2 — Asynchronous Lazy Enrichment (Non-blocking):**
@@ -245,7 +245,7 @@ Contextual AI actions rely on exact sentence extraction rather than sending broa
 ### Privacy Safeguards
 - **Zero Background Transmission:** Context is never sent to any AI endpoint during standard dictionary lookups.
 - **Explicit Activation:** Context is transmitted only when you run AI actions.
-- **Session-Only Memory:** Context is held transiently in browser session memory and is never saved to disk or synchronized across devices.
+- **Local privacy controls:** Dictionary and AI results can be cached locally for faster repeat lookups. Disable **Persist lookup cache** for memory-only mode, or clear cached results from Settings. Context is never synchronized across devices.
 - **Opt-Out Setting:** Enable **Exclude page context for AI lookups** in Settings to disable automatic page sentence scanning completely.
 - **Context Used Verification:** Whenever an AI response uses context, a blockquoted **Context used** header confirms the exact text submitted.
 

@@ -159,7 +159,7 @@ export const TabSources: React.FC<TabSourcesProps> = ({
 
       <section className="bg-surface border border-border rounded-xl p-5 space-y-4 shadow-xs">
         <div>
-          <h3 className="text-sm font-bold text-content font-heading">Dictionary provider</h3>
+          <h3 className="text-sm font-bold text-content font-heading">Primary dictionary source</h3>
           <p className="text-[11.5px] text-content-muted">
             Primary source for definitions. Others still enrich in the background.
           </p>

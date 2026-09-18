@@ -12,7 +12,7 @@ import {
 import { hasConfiguredAiApiKey } from '../shared/settings-export';
 import { isOpenAiStandard } from '../shared/settings';
 import { cancelAiLookup, createRequestId, requestAiLookup } from '../shared/runtime-client';
-import { createPersistedLruCache } from '../shared/lookup-cache';
+import { createPersistedLruCache, hashCacheKey } from '../shared/lookup-cache';
 
 export { PRELOAD_ALL_INTENTS, PRELOAD_FOLLOW_UPS };
 
@@ -54,6 +54,7 @@ const aiCache = createPersistedLruCache<AiResult>({
   ttlMs: AI_CACHE_TTL_MS,
   storageKey: AI_STORAGE_KEY,
   persistDelayMs: 1500,
+  isPersistenceEnabled: () => settingsStore.value.persistLookupCache !== false,
 });
 
 const aiPendingMap = new Map<string, Promise<AiResult>>();
@@ -65,7 +66,7 @@ function getAiCacheKey(
   context: string | undefined,
   settings: AppSettings,
 ): string {
-  return `${canonicalAiIntent(intentId)}|${String(text || '').toLowerCase().trim()}|${String(lang || '').toLowerCase()}|${String(context || '').toLowerCase().trim()}|${settings.aiModel || ''}|${settings.aiBaseUrl || ''}|${settings.enableLexicalProfile !== false}`;
+  return hashCacheKey(`${canonicalAiIntent(intentId)}|${String(text || '').toLowerCase().trim()}|${String(lang || '').toLowerCase()}|${String(context || '').toLowerCase().trim()}|${settings.aiModel || ''}|${settings.aiBaseUrl || ''}|${settings.enableLexicalProfile !== false}`);
 }
 
 let intentStatusRaf = 0;

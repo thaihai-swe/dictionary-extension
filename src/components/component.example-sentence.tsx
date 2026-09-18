@@ -23,36 +23,46 @@ export const ExampleSentence: React.FC<ExampleSentenceProps> = ({
   return (
     <div
       className={cx(
-        'rounded-xl border border-border overflow-hidden bg-surface shadow-xs',
+        'rounded-xl border border-border/80 overflow-hidden bg-surface shadow-xs transition-all hover:border-accent/30',
         className,
       )}
     >
-      <div className="flex items-start gap-3 px-3.5 py-2.5 bg-accent-subtle border-l-2 border-accent">
-        <span className="mt-0.5 px-1.5 py-0.5 rounded text-[11px] font-extrabold tracking-wider bg-accent-subtle text-accent border border-accent/30 flex-shrink-0">
+      <div className="flex items-start gap-2.5 px-3.5 py-2.5 bg-accent-subtle/60 border-l-3 border-accent">
+        <span className="mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-extrabold tracking-wider bg-accent/15 text-accent border border-accent/25 flex-shrink-0 font-mono">
           EN
         </span>
-        <p className="flex-1 text-[14px] leading-relaxed text-content font-medium min-w-0">
-          "{english}"
+        <p className="flex-1 text-[13.5px] leading-relaxed text-content font-medium min-w-0">
+          “{english}”
         </p>
         <button
           type="button"
           onClick={onListen}
-          title="Listen to English example"
+          title="Listen to English pronunciation"
+          aria-label="Listen to English pronunciation"
           className={cx(
-            'h-[28px] px-2.5 rounded-lg border text-[12px] font-semibold flex-shrink-0 cursor-pointer transition-colors flex items-center gap-1.5 not-italic shadow-xs',
+            'h-7 px-2.5 rounded-lg border text-[11.5px] font-semibold flex-shrink-0 cursor-pointer transition-all flex items-center gap-1.5 shadow-2xs active:scale-95',
             isPlaying
-              ? 'bg-accent-subtle text-accent border-accent/40 audio-playing-indicator'
-              : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
+              ? 'bg-accent text-white dark:text-[#090d16] border-accent font-bold audio-playing-indicator'
+              : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border hover:border-accent/40',
           )}
           aria-pressed={isPlaying}
         >
-          <IconSpeaker className="w-3.5 h-3.5 text-accent" />
-          <span>{isPlaying ? 'Playing…' : 'Listen'}</span>
+          {isPlaying ? (
+            <span className="soundwave-bars text-white dark:text-[#090d16]">
+              <span className="soundwave-bar" />
+              <span className="soundwave-bar" />
+              <span className="soundwave-bar" />
+            </span>
+          ) : (
+            <IconSpeaker className="w-3.5 h-3.5 text-accent" />
+          )}
+          <span>{isPlaying ? 'Playing' : 'Listen'}</span>
         </button>
       </div>
+
       {translation ? (
-        <div className="flex items-start gap-3 px-3.5 py-2 bg-muted/30 border-t border-border/50 border-l-2 border-border">
-          <span className="mt-0.5 px-1.5 py-0.5 rounded text-[11px] font-extrabold tracking-wider bg-muted text-content-secondary border border-border flex-shrink-0">
+        <div className="flex items-start gap-2.5 px-3.5 py-2 bg-muted/20 border-t border-border/60 border-l-3 border-border/60">
+          <span className="mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-extrabold tracking-wider bg-muted text-content-secondary border border-border/60 flex-shrink-0 font-mono">
             {languageBadge(targetLang)}
           </span>
           <p className="flex-1 text-[13px] leading-relaxed text-content-secondary font-normal">

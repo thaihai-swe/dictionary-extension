@@ -243,10 +243,8 @@ export async function runDictionaryEnrichment(
     return;
   }
 
-  const skipHeavyWhenPrimaryReady = hasUsableDefinitions(baseResult);
   const secondaryProviders = DICTIONARY_FALLBACK_ORDER.filter((id) => {
     if (id === primaryProviderId) return false;
-    if (skipHeavyWhenPrimaryReady && (id === 'wikipedia' || id === 'urban_dictionary')) return false;
     return true;
   });
   const collected: DictionaryEntry[] = [];

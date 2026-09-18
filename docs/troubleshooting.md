@@ -37,7 +37,7 @@ This guide provides actionable solutions for common issues across extension relo
   - **AI model name:** Default and recommended is `gemini-3.5-flash-lite`.
 - **Check 2 — Test Connection Action:** In Settings, click **Test AI connection** to run a non-destructive latency and authentication check.
 - **Check 3 — Older Gemini Models in Local Cache:**
-  - If you previously tested older models (e.g. `gemini-2.5-flash` or `gemini-1.5-pro`) and the UI still references them, open Settings → AI tab, select `gemini-3.5-flash-lite` from the dropdown, and click **Save settings**.
+  - If you previously tested older models (e.g. `gemini-2.5-flash` or `gemini-1.5-pro`) and the UI still references them, open Settings → AI tab, select `gemini-3.5-flash-lite` from the dropdown, and click **Save Changes**.
 - **Check 4 — Host Permission Prompts:** If using custom self-hosted base URLs (e.g. `http://localhost:11434` or custom domain proxies), ensure you accepted the browser's dynamic origin permission prompt when saving settings.
 
 ### Symptom: Context Explain or Grammar & Nuance buttons are disabled.

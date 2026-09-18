@@ -36,7 +36,7 @@ User selects word in browser (or types in toolbar popup)
 [3] DICTIONARY PIPELINE                                       [4] AI PRELOAD PIPELINE (DICTIONARY TAB)
     composable.dictionary.ts → searchWord()                   composable.dictionary.ts → maybePreloadAi()
            │                                                             │
-           ├─ Persistent LRU cache (dict, 200 / 48h)                     ├─ Persistent LRU cache (AI, 100 / 24h)
+           ├─ Persistent LRU cache (dict, 80 / 48h)                      ├─ Persistent LRU cache (AI, 50 / 24h)
            │   HIT → paint in the same tick (0ms)                        │   HIT → ready with no network
            │                                                             │
            ├─ MISS → chrome.runtime.sendMessage                          ├─ MISS → chrome.runtime.sendMessage
@@ -126,10 +126,10 @@ selection
 
 ### 2. Dictionary Pipeline (Immediate)
 1. `<WordLookupView />` calls `searchWord(text, provider, lang, context)` via `useLookupSession()`.
-2. **Cache:** in-memory LRU synced to `chrome.storage.local` (200 entries, 48h TTL, `dict_lookup_cache_v2`). Hit paints definitions and phonetics immediately with 0ms network latency.
+2. **Cache:** in-memory LRU synced to `chrome.storage.local` (80 entries, 48h TTL, `dict_lookup_cache_v6`) when `persistLookupCache` is enabled. Hit paints definitions and phonetics immediately with 0ms network latency.
 3. **Miss:** `LOOKUP_TEXT` message sent to `src/entrypoints/background/service-worker.ts` → `fetchCombinedDictionaryResult()`.
 4. **Phase A (Fast Primary Lookup):** Primary provider (default: Free Dictionary API) and neural translation run in parallel. First paint renders the serif headword, UK/US phonetic chips, audio playback buttons, and core definitions.
-5. **Phase B (Progressive Lazy Enrichment):** Background worker queries secondary keyless providers (`Datamuse`, `Wiktionary`, `Wikipedia`, `Urban Dictionary`, `RhymeBrain`) in concurrent batches of 2 (`ENRICHMENT_CONCURRENCY = 2`). `LOOKUP_UPDATE` messages are pushed with incrementing `revision` numbers. Extra cards (`CollocationsCard`, `WordFamilyCard`, `LearnerMistakesCard`, `WordFormationCard`) mount on subsequent animation frames without layout jump.
+5. **Phase B (Progressive Lazy Enrichment):** Background worker queries every remaining keyless dictionary provider (`Datamuse`, `Wiktionary`, `Wikipedia`, `Urban Dictionary`, `RhymeBrain`, Wiktionary Etymology, Wiktionary Bilingual, and Tatoeba) in concurrent batches of 2 (`ENRICHMENT_CONCURRENCY = 2`). `LOOKUP_UPDATE` messages are pushed with incrementing `revision` numbers. Extra cards (`CollocationsCard`, `WordFamilyCard`, `LearnerMistakesCard`, `WordFormationCard`) mount on subsequent animation frames without layout jump.
 6. **Timeouts:** All dictionary, translation, and proxy fetch calls enforce a uniform **60,000ms (60s)** timeout limit (`DICTIONARY_FETCH_TIMEOUT_MS = 60000`, `TRANSLATION_FETCH_TIMEOUT_MS = 60000`).
 
 > **Inspecting Network Requests:** Because dictionary and translation requests run in the background worker to bypass webpage CORS boundaries, their HTTP requests appear in the **background DevTools Network tab** (Chrome: `chrome://extensions` → "service worker"; Firefox: `about:debugging` → Inspect), not the in-page DevTools.
@@ -144,7 +144,7 @@ selection
    - **Emerald:** Cached and ready.
    - **Amber Pulse:** Currently fetching.
    - **Gray (Unrequested):** Not requested yet.
-7. **Cache:** Persistent LRU, 100 entries, 24h TTL (`ai_lookup_cache_v2` in `chrome.storage.local`).
+7. **Cache:** Persistent LRU, 50 entries, 24h TTL (`ai_lookup_cache_v2` in `chrome.storage.local`) when `persistLookupCache` is enabled.
 8. AI HTTP runs in the background service worker (`handleAiLookup` → `fetchAiAnalysis`) using `gemini-3.5-flash-lite` or custom endpoints with a **60,000ms (60s)** timeout.
 
 Preload is skipped when AI is disabled, preload is off, or no API key is configured (`shouldPreloadAi()`).
@@ -172,6 +172,6 @@ The AI view is loaded lazily on first visit (`aiVisited`), then stays mounted wi
 | **Timeout limit** | **60,000ms (60s)** | **60,000ms (60s)** |
 | **Background handler** | `handleDictionaryLookup` | `handleAiLookup` |
 | **Abort scope** | Dictionary `AbortController` | Per-intent AI `AbortController` |
-| **Cache** | LRU 200 entries, 48h, `chrome.storage.local` (`dict_lookup_cache_v2`) | LRU 100 entries, 24h, `chrome.storage.local` (`ai_lookup_cache_v2`) |
+| **Cache** | LRU 80 entries, 48h, optional `chrome.storage.local` (`dict_lookup_cache_v6`) | LRU 50 entries, 24h, optional `chrome.storage.local` (`ai_lookup_cache_v2`) |
 | **UI lifecycle** | Always mounted while overlay is open | Lazy until first visit, then keep-alive |
 | **Data dependency** | None (purely decoupled) | None (purely decoupled) |

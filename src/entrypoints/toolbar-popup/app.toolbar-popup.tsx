@@ -2,7 +2,7 @@ import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { useStorage } from '../../composables/composable.storage';
 import { useLookupSession } from '../../composables/composable.lookup-session';
 import { useDictionaryQuery } from '../../composables/composable.dictionary';
-import { TabId } from '../../types';
+import { AppTheme, TabId } from '../../types';
 import { cx } from '../../ui/cx';
 import { useAppTheme } from '../../ui/theme';
 import AppHeader from '../../components/component.app-header';
@@ -15,12 +15,13 @@ const ContextualRewriter = lazy(() => import('@/features/rewriter/ContextualRewr
 const ShortcutsModal = lazy(() => import('@/features/settings/ShortcutsModal'));
 
 export const ToolbarPopupApp: React.FC = () => {
-  const { activeTab, settings, saveSettings } = useStorage();
+  const { activeTab, settings } = useStorage();
   const session = useLookupSession();
   const query = useDictionaryQuery();
-  const { isDarkMode, toggleTheme } = useAppTheme(settings.theme, {
+  const [theme, setTheme] = useState<AppTheme>(settings.theme);
+  const { isDarkMode, toggleTheme } = useAppTheme(theme, {
     syncDocument: true,
-    saveSettings,
+    onThemeChange: setTheme,
   });
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [aiVisited, setAiVisited] = useState(activeTab === 'ai_assistant');
@@ -36,6 +37,10 @@ export const ToolbarPopupApp: React.FC = () => {
   useEffect(() => {
     if (settings.translateTargetLanguage) setTargetLang(settings.translateTargetLanguage);
   }, [settings.translateTargetLanguage]);
+
+  useEffect(() => {
+    setTheme(settings.theme);
+  }, [settings.theme]);
 
   useEffect(() => {
     if (activeTab === 'ai_assistant') setAiVisited(true);
@@ -131,6 +136,13 @@ export const ToolbarPopupApp: React.FC = () => {
         showShortcuts={showShortcuts}
         isDarkMode={isDarkMode}
         isMaximized={isFullTab}
+        provider={currentProvider}
+        targetLanguage={targetLang}
+        hasUnsavedSettings={
+          theme !== settings.theme
+          || currentProvider !== settings.dictionaryProvider
+          || targetLang !== settings.translateTargetLanguage
+        }
         onToggleShortcuts={() => setShowShortcuts((v) => !v)}
         onToggleMaximize={openFullTab}
         onToggleTheme={toggleTheme}

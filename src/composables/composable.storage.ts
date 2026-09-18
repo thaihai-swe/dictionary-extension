@@ -28,6 +28,7 @@ const CACHE_INVALIDATION_KEYS = new Set([
   'enablePhraseFallback',
   'enableLexicalProfile',
   'enableAI',
+  'persistLookupCache',
   'translateTargetLanguage',
   'translateProvider',
   'libreTranslateBaseUrl',
@@ -61,13 +62,16 @@ export function registerCacheInvalidator(invalidate: CacheInvalidator): () => vo
   };
 }
 
-function invalidateLookupCaches() {
+export function clearLookupCaches() {
   for (const invalidate of cacheInvalidators) {
     try {
       invalidate();
     } catch (error) {
       console.warn('Lookup cache invalidation failed:', error);
     }
+  }
+  if (typeof chrome !== 'undefined' && chrome.storage?.local?.remove) {
+    void chrome.storage.local.remove(['dict_lookup_cache_v5', 'dict_lookup_cache_v6', 'ai_lookup_cache_v2']).catch(() => undefined);
   }
 }
 
@@ -229,7 +233,7 @@ export async function saveSettingsToStorage(partial: Partial<AppSettings>): Prom
   }
 
   if (shouldInvalidateLookupCache([...Object.keys(writable), ...Object.keys(secretWrites)])) {
-    invalidateLookupCaches();
+    clearLookupCaches();
   }
 }
 
@@ -241,6 +245,7 @@ export function initStorage() {
     .then((s) => {
       if (settingsWriteEpoch !== loadEpoch) return;
       settingsRef.value = s;
+      if (s.persistLookupCache === false) clearLookupCaches();
     })
     .catch((error) => {
       console.warn('Settings load failed:', error);
@@ -271,7 +276,7 @@ export function initStorage() {
       normalizeSettingsArrayFields(nextSettings);
       settingsRef.value = nextSettings;
       if (shouldInvalidateLookupCache(Object.keys(changes))) {
-        invalidateLookupCaches();
+        clearLookupCaches();
       }
     });
   }

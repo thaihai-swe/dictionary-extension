@@ -114,8 +114,8 @@ After the initial result is dispatched to the popup, the background service work
 
 1. **Late Translation Merge:** If translation was still in flight at first paint, it is merged via `LOOKUP_UPDATE` (`revision: 1`) before phrase fallback or dictionary enrichment.
 2. **AI Phrase Fallback (Multi-word Lookups):** After a ~300ms delay when translation was already included (so a dismissed card can cancel), if the query is phrase-like, lacks usable definitions, and both `enableAI` and `enablePhraseFallback` are on, `lookupAiProvider(text, settings, { intent: "phrase_fallback" })` runs first. Upon completion, the phrase explanation is merged and broadcast via `LOOKUP_UPDATE` before secondary dictionary enrichment.
-3. **Always-enrich:** Secondary keyless providers always run after Phase 1, even when the primary entry already has definitions. There is no thin-entry gate.
-4. **Secondary Provider Filtering:** Remaining keyless providers (Datamuse, Wiktionary, Wikipedia, Urban Dictionary, RhymeBrain) participate in progressive enrichment without requiring API keys.
+3. **Always-enrich:** Every provider in `DICTIONARY_FALLBACK_ORDER` runs after Phase 1, except the selected primary provider, even when the primary entry already has definitions. There is no thin-entry or provider-cost gate.
+4. **Secondary Provider Filtering:** Remaining keyless dictionary providers (Datamuse, Wiktionary, Wikipedia, Urban Dictionary, RhymeBrain, Wiktionary Etymology, Wiktionary Bilingual, and Tatoeba) participate in progressive enrichment without requiring API keys. Google Translate and LibreTranslate are translation adapters and remain in the separate translation path.
 5. **Bounded Concurrency:** Remaining unqueried providers are fetched in concurrent batches of 2 (`ENRICHMENT_CONCURRENCY = 2`).
 6. **Resilient Failure Handling:** Secondary `NotFoundError` results and operational errors are caught and logged silently without disrupting the displayed primary result.
 7. **Cumulative Merge Engine (`mergeDictionaryEntries`):**
@@ -193,7 +193,7 @@ The AI subsystem (`src/composables/composable.ai-assistant.ts` and `src/provider
 4. **In-Flight Request Deduplication (`aiPendingMap`):**
    - If a background preload is already in flight when the user switches to the AI tab or clicks an intent, the UI attaches to the running promise (`aiPendingMap.get(cacheKey)`), preventing duplicate API calls.
 5. **Persistent 24-Hour LRU Cache (`chrome.storage.local`):**
-   - Up to 100 AI responses are cached locally with a **24-hour TTL** (`ai_lookup_cache_v2`).
+   - Up to 50 AI responses are cached locally with a **24-hour TTL** (`ai_lookup_cache_v2`) when `persistLookupCache` is enabled.
    - Keys are hashed compound representations of `intent`, `text`, `targetLang`, `context`, `model`, `baseUrl`, and `enableLexicalProfile`.
 6. **Keep-Alive UI Mounting & Lazy Code Splitting:**
    - The `<AiAssistantView />` chunk is loaded lazily on first tab visit (`aiVisited` state).

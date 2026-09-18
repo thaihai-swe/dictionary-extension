@@ -36,6 +36,7 @@ export interface AppSettings {
   enableLexicalProfile: boolean;
   enableAI: boolean;
   enableAiPreload: boolean;
+  persistLookupCache: boolean;
   preloadedAiIntents: AiIntentId[];
   enablePhraseFallback: boolean;
   disablePageContextExtraction: boolean;

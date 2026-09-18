@@ -31,6 +31,7 @@ export function useAppTheme(
   options?: {
     syncDocument?: boolean;
     saveSettings?: (partial: { theme: AppTheme }) => void | Promise<void>;
+    onThemeChange?: (theme: AppTheme) => void;
   },
 ) {
   const syncDocument = options?.syncDocument === true;
@@ -56,6 +57,7 @@ export function useAppTheme(
     const next = !isDarkMode;
     setIsDarkMode(next);
     if (syncDocument) syncDocumentTheme(next);
+    options?.onThemeChange?.(next ? 'dark' : 'light');
     if (options?.saveSettings) {
       void options.saveSettings({ theme: next ? 'dark' : 'light' });
     }

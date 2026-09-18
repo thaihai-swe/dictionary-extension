@@ -34,6 +34,7 @@ import {
 import { loadFullSettings, normalizeSettings } from '../../shared/settings';
 import { canonicalAiIntent } from '../../shared/ai-prompts';
 import { canInjectIntoUrl } from '../../shared/ext';
+import { getOriginPermissionPattern } from '../../shared/permissions';
 
 const CONTENT_SCRIPT_JS = ['content-script.js'];
 const SETTINGS_TTL_MS = 15_000;
@@ -41,6 +42,17 @@ const SETTINGS_TTL_MS = 15_000;
 const activeProxyRequests = new Map<string, AbortController>();
 const lookupControllers = new Map<string, AbortController>();
 const inflightDictionaryLookups = new Map<string, Promise<DictionaryEntry & { requestId: string }>>();
+
+async function hasProxyPermission(rawUrl: string): Promise<boolean> {
+  const pattern = getOriginPermissionPattern(rawUrl);
+  if (!pattern) return false;
+  if (typeof chrome.permissions?.contains !== 'function') return true;
+  try {
+    return await chrome.permissions.contains({ origins: [pattern] });
+  } catch {
+    return false;
+  }
+}
 
 let cachedSettings: AppSettings | null = null;
 let cachedSettingsAt = 0;
@@ -504,24 +516,30 @@ chrome.commands?.onCommand.addListener(async (command) => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === FETCH_PROXY && message.url) {
     const requestId = String(message.requestId || createRequestId('proxy'));
-    const controller = new AbortController();
-    activeProxyRequests.set(requestId, controller);
-    const timeoutMs = Math.max(1000, Math.min(Number(message.timeoutMs) || 60000, 60000));
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-    fetch(message.url, { ...(message.options || {}), signal: controller.signal })
-      .then(async (res) => {
-        const text = await res.text();
-        let data: unknown = text;
-        try { data = JSON.parse(text); } catch { /* keep text */ }
-        sendResponse({ ok: res.ok, status: res.status, data });
-      })
-      .catch((err: Error) => {
-        sendResponse({ ok: false, status: 0, error: err.message });
-      })
-      .finally(() => {
-        clearTimeout(timeoutId);
-        activeProxyRequests.delete(requestId);
-      });
+    void hasProxyPermission(String(message.url)).then((allowed) => {
+      if (!allowed) {
+        sendResponse({ ok: false, status: 403, error: 'Endpoint permission is not granted.' });
+        return;
+      }
+      const controller = new AbortController();
+      activeProxyRequests.set(requestId, controller);
+      const timeoutMs = Math.max(1000, Math.min(Number(message.timeoutMs) || 60000, 60000));
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      fetch(message.url, { ...(message.options || {}), signal: controller.signal })
+        .then(async (res) => {
+          const text = await res.text();
+          let data: unknown = text;
+          try { data = JSON.parse(text); } catch { /* keep text */ }
+          sendResponse({ ok: res.ok, status: res.status, data });
+        })
+        .catch((err: Error) => {
+          sendResponse({ ok: false, status: 0, error: err.message });
+        })
+        .finally(() => {
+          clearTimeout(timeoutId);
+          activeProxyRequests.delete(requestId);
+        });
+    });
     return true;
   }
 
