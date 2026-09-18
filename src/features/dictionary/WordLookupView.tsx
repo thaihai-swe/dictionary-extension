@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
-import { searchWord, stopAllAudio, useDictionaryQuery, useDictionaryResult } from '@/composables/composable.dictionary';
+import { abortActiveDictRequest, searchWord, stopAllAudio, useDictionaryQuery, useDictionaryResult } from '@/composables/composable.dictionary';
 import { useStorage } from '@/composables/composable.storage';
 import { IconClose, IconSearch, IconSpinner } from '@/components/icons';
 import PresetChips from '@/components/component.preset-chips';
@@ -78,6 +78,10 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
     if (target) runLookup(target, lookupRequestId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialQuery, lookupRequestId, provider, targetLang, settings.dictionaryProvider, settings.translateTargetLanguage]);
+
+  useEffect(() => () => {
+    abortActiveDictRequest();
+  }, []);
 
   return (
     <div className="font-sans">

@@ -4,7 +4,7 @@ import { useDictionaryAudio } from '@/composables/composable.dictionary';
 import { cx } from '@/ui/cx';
 import { IconCheck, IconCopy, IconSparkles, IconSpeaker } from '@/components/icons';
 import { showToast } from '@/composables/composable.toast';
-import { requestAiLookup } from '@/shared/runtime-client';
+import { cancelAiLookup, requestAiLookup } from '@/shared/runtime-client';
 import { createRequestId } from '@/shared/messages';
 import { AiResult } from '@/types';
 import { parseRewriteMarkdown } from './rewrite-markdown';
@@ -116,6 +116,12 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
     const seeded = seedRewriterText(initialText, contextSentence);
     if (seeded) setInputText(seeded);
   }, [initialText, contextSentence]);
+
+  useEffect(() => () => {
+    const requestId = activeReqRef.current;
+    activeReqRef.current = null;
+    if (requestId) cancelAiLookup('rewrite', requestId);
+  }, []);
 
   return (
     <div className="p-4 space-y-4 font-sans">

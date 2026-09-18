@@ -7,7 +7,7 @@ import type {
 } from '../types';
 import { NotFoundError, isFatalDictionaryError } from './errors';
 import {
-  DICTIONARY_FALLBACK_ORDER,
+  getSecondaryDictionaryProviderIds,
   getPrimaryDictionaryLookupAttempts,
   isPhraseLike,
   extractLexicalProfileFromMarkdown,
@@ -18,6 +18,7 @@ import {
 import { cloneDictionaryEntry, mergeDictionaryEntries, mergeMeanings, toDictionaryEntry } from '../shared/enrichment';
 import { fetchAiAnalysis } from './provider.gemini-ai';
 import { providerRegistry } from './registry';
+import { runBounded } from './provider-scheduler';
 import './register-adapters';
 import {
   combinedResultCacheKey,
@@ -29,6 +30,7 @@ import {
 } from './cache';
 
 export const ENRICHMENT_CONCURRENCY = 2;
+export { getSecondaryDictionaryProviderIds };
 
 export function resolvePrimaryProviderId(provider: string, settings?: AppSettings): string {
   return provider || settings?.dictionaryProvider || 'wiktionary';
@@ -243,10 +245,7 @@ export async function runDictionaryEnrichment(
     return;
   }
 
-  const secondaryProviders = DICTIONARY_FALLBACK_ORDER.filter((id) => {
-    if (id === primaryProviderId) return false;
-    return true;
-  });
+  const secondaryProviders = getSecondaryDictionaryProviderIds(primaryProviderId);
   const collected: DictionaryEntry[] = [];
 
   const collectSettled = (settled: PromiseSettledResult<ProviderLookupDto>[]) => {
@@ -262,26 +261,16 @@ export async function runDictionaryEnrichment(
     }
   };
 
-  // Isolate free_dictionary (api.dictionaryapi.dev): it is often slow and must not stall other sources.
-  const isolatedId = 'free_dictionary';
-  const isolatedPromise = secondaryProviders.includes(isolatedId)
-    ? lookupSingleProvider(isolatedId, queryTerm, targetLang, signal, settings)
-      .then((value) => collectSettled([{ status: 'fulfilled', value }]))
-      .catch(() => undefined)
-    : Promise.resolve();
-
-  const queuedProviders = secondaryProviders.filter((id) => id !== isolatedId);
-  for (let index = 0; index < queuedProviders.length; index += ENRICHMENT_CONCURRENCY) {
-    if (signal?.aborted) break;
-    const batch = queuedProviders.slice(index, index + ENRICHMENT_CONCURRENCY);
-    const settled = await Promise.allSettled(
-      batch.map((providerId) => lookupSingleProvider(providerId, queryTerm, targetLang, signal, settings)),
-    );
-    collectSettled(settled);
-  }
-
-  await isolatedPromise;
-  if (collected.length) await writeSessionEnrichment(cacheKey, collected);
+  await runBounded(
+    secondaryProviders,
+    (providerId) => lookupSingleProvider(providerId, queryTerm, targetLang, signal, settings),
+    {
+      concurrency: ENRICHMENT_CONCURRENCY,
+      signal,
+      onSettled: (_providerId, settled) => collectSettled([settled]),
+    },
+  );
+  if (!signal?.aborted && collected.length) await writeSessionEnrichment(cacheKey, collected);
 }
 
 export async function fetchCombinedDictionaryResult(
@@ -326,7 +315,7 @@ export async function fetchCombinedDictionaryResult(
   const dictionary = await dictionaryPromise;
   const primaryProviderId = provider;
   const canEnrich = settings.enableDictionary !== false
-    && DICTIONARY_FALLBACK_ORDER.some((id) => id !== primaryProviderId);
+    && getSecondaryDictionaryProviderIds(primaryProviderId).length > 0;
 
   if (!dictionary && translationPromise && !translationState.outcome) {
     await translationPromise;
@@ -401,6 +390,7 @@ export async function fetchCombinedDictionaryResult(
     : Promise.resolve();
 
   const backgroundWork = Promise.allSettled([translationTask, enrichmentTask, phraseTask]).then(() => {
+    if (backgroundSignal?.aborted) return latest;
     latest = {
       ...latest,
       enriched: true,

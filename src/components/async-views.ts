@@ -34,5 +34,5 @@ export function preloadAiIntentChunks(intentIds?: AiIntentId[]) {
   const loaders = intentIds?.length
     ? intentIds.map((id) => INTENT_CHUNK_LOADERS[id]).filter(Boolean)
     : Object.values(INTENT_CHUNK_LOADERS);
-  return Promise.all(loaders.map((load) => load().catch(() => undefined)));
+  return Promise.all([...new Set(loaders)].map((load) => load().catch(() => undefined)));
 }

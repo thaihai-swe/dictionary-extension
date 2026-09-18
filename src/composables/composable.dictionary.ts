@@ -7,137 +7,36 @@ import {
   subscribeLookupUpdates,
 } from '../shared/dictionary-lookup-client';
 import { requestPlayAudio, requestSpeakTts, requestStopAudio } from '../shared/runtime-client';
-import { createPersistedLruCache, hashCacheKey } from '../shared/lookup-cache';
 import { toDictionaryEntry } from '../shared/enrichment';
-import { AppSettings, DictionaryEntry, PracticeResult } from '../types';
+import { GenerationGate } from '../shared/generation-gate';
+import { AppSettings, DictionaryEntry } from '../types';
+import {
+  isPracticingRef,
+  practiceResultRef,
+  readPracticeResult,
+  startSpeechPracticeSession,
+  stopSpeechPractice,
+  supportsSpeechPractice,
+} from './dictionary-practice';
+import { dictCache, dictPendingMap, dictPendingRequestIds, getDictCacheKey } from './dictionary-cache';
+
+export { supportsSpeechPractice } from './dictionary-practice';
 
 const queryRef = signal<string>('');
 const resultRef = signal<DictionaryEntry | null>(null);
 const isLoadingRef = signal<boolean>(false);
 const isEnrichingRef = signal<boolean>(false);
 const errorRef = signal<string | null>(null);
-const practiceResultRef = signal<PracticeResult | null>(null);
-const isPracticingRef = signal<boolean>(false);
-
 export const isAudioPlayingRef = signal<boolean>(false);
 export const playingKeyRef = signal<string | null>(null);
 
 let activeDictRequestId: string | null = null;
 let currentAudioElement: HTMLAudioElement | null = null;
-let activeRecognition: { stop: () => void; abort?: () => void } | null = null;
 let speechStartTimer: ReturnType<typeof setTimeout> | null = null;
-let lookupGeneration = 0;
+const lookupGeneration = new GenerationGate();
 let playGeneration = 0;
 let lookupUnsubscribe: (() => void) | null = null;
-const practiceResults = new Map<string, PracticeResult>();
-
-const MAX_DICT_CACHE_SIZE = 80;
-const MAX_PRACTICE_RESULTS = 20;
-const DICT_CACHE_TTL_MS = 48 * 60 * 60 * 1000; // 48 hours
-const DICT_STORAGE_KEY = 'dict_lookup_cache_v6';
-
-const dictCache = createPersistedLruCache<DictionaryEntry>({
-  maxSize: MAX_DICT_CACHE_SIZE,
-  ttlMs: DICT_CACHE_TTL_MS,
-  storageKey: DICT_STORAGE_KEY,
-  persistDelayMs: 1500,
-  isPersistenceEnabled: () => settingsStore.value.persistLookupCache !== false,
-  shouldPersist: (value) => Boolean(value?.enriched),
-});
-
-const dictPendingMap = new Map<string, Promise<DictionaryEntry>>();
-const dictPendingRequestIds = new Map<string, string>();
-
-function getDictCacheKey(word: string, settings: AppSettings, provider: string, lang: string): string {
-  return hashCacheKey(`${word.toLowerCase().trim()}|${provider.toLowerCase()}|${lang.toLowerCase()}|${settings.translateProvider || ''}|${Boolean(settings.enableTranslate)}|${Boolean(settings.enableDictionary)}|${Boolean(settings.enablePhraseFallback)}|${settings.enableLexicalProfile !== false}`);
-}
-
-function practiceKey(text: string, language = 'en-US'): string {
-  return `${String(text || '').trim().toLowerCase()}|${language.toLowerCase()}`;
-}
-
-function normalizeSpeechText(value: string): string {
-  return String(value || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9'\s-]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-const MAX_LEVENSHTEIN_CHARS = 120;
-
-function levenshteinDistance(a: string, b: string): number {
-  const left = String(a || '').slice(0, MAX_LEVENSHTEIN_CHARS);
-  const right = String(b || '').slice(0, MAX_LEVENSHTEIN_CHARS);
-  if (left === right) return 0;
-  if (!left.length) return right.length;
-  if (!right.length) return left.length;
-
-  let prev = new Array<number>(right.length + 1);
-  let curr = new Array<number>(right.length + 1);
-  for (let j = 0; j <= right.length; j += 1) prev[j] = j;
-  for (let i = 1; i <= left.length; i += 1) {
-    curr[0] = i;
-    for (let j = 1; j <= right.length; j += 1) {
-      const cost = left.charCodeAt(i - 1) === right.charCodeAt(j - 1) ? 0 : 1;
-      curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
-    }
-    const swap = prev;
-    prev = curr;
-    curr = swap;
-  }
-  return prev[right.length];
-}
-
-function scorePractice(target: string, spoken: string): PracticeResult {
-  const normTarget = normalizeSpeechText(target);
-  const normSpoken = normalizeSpeechText(spoken);
-  if (!normTarget) {
-    return { score: 0, grade: 'retry', gradeLabel: 'Try again', spoken: '', details: [] };
-  }
-  if (!normSpoken) {
-    return { score: 0, grade: 'retry', gradeLabel: 'Try again', spoken: '', details: [] };
-  }
-
-  const targetWords = normTarget.split(/\s+/).filter(Boolean);
-  const spokenWords = normSpoken.split(/\s+/).filter(Boolean);
-  const remaining = [...spokenWords];
-  const details = targetWords.map((word) => {
-    const idx = remaining.indexOf(word);
-    if (idx >= 0) {
-      remaining.splice(idx, 1);
-      return { word, matched: true };
-    }
-    const closeMatch = spokenWords.some(
-      (sw) => levenshteinDistance(word, sw) <= Math.max(1, Math.floor(word.length * 0.3)),
-    );
-    return { word, matched: false, closeMatch };
-  });
-
-  const matchedCount = details.filter((d) => d.matched).length;
-  const wordScore = targetWords.length > 0
-    ? Math.round((matchedCount / targetWords.length) * 100)
-    : 0;
-  const distance = levenshteinDistance(normTarget, normSpoken);
-  const maxLength = Math.max(normTarget.length, normSpoken.length, 1);
-  const charScore = Math.max(0, Math.round((1 - distance / maxLength) * 100));
-  const score = Math.max(wordScore, charScore);
-  const grade = score >= 90 ? 'excellent' : score >= 70 ? 'good' : score >= 50 ? 'almost' : 'retry';
-  const gradeLabel = grade === 'excellent' ? 'Excellent' : grade === 'good' ? 'Good' : grade === 'almost' ? 'Almost there' : 'Try again';
-  return { score, grade, gradeLabel, spoken: normSpoken, details };
-}
-
-function recognitionErrorMessage(errorType: string): string | null {
-  if (errorType === 'not-allowed' || errorType === 'service-not-allowed') return 'Microphone permission denied.';
-  if (errorType === 'no-speech') return 'No speech detected. Try again.';
-  if (errorType === 'audio-capture') return 'No microphone found.';
-  if (errorType === 'network') return 'Speech recognition network error.';
-  if (errorType === 'aborted') return null;
-  return 'Speech recognition failed.';
-}
-
+let activeLookupCleanup: (() => void) | null = null;
 function getFreeTtsUrl(text: string, language = 'en-US'): string {
   const clean = String(text || '').trim();
   if (!clean) return '';
@@ -145,28 +44,15 @@ function getFreeTtsUrl(text: string, language = 'en-US'): string {
   return `https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=${encodeURIComponent(langCode)}&q=${encodeURIComponent(clean)}`;
 }
 
-export function supportsSpeechPractice(): boolean {
-  if (typeof window === 'undefined') return false;
-  const win = window as Window & {
-    SpeechRecognition?: unknown;
-    webkitSpeechRecognition?: unknown;
-  };
-  return Boolean(win.SpeechRecognition || win.webkitSpeechRecognition);
-}
-
 export function stopAllAudio() {
   playGeneration += 1;
   isAudioPlayingRef.value = false;
-  isPracticingRef.value = false;
+  stopSpeechPractice(playingKeyRef);
   playingKeyRef.value = null;
   requestStopAudio();
   if (speechStartTimer) {
     clearTimeout(speechStartTimer);
     speechStartTimer = null;
-  }
-  if (activeRecognition) {
-    try { activeRecognition.abort?.() ?? activeRecognition.stop(); } catch { /* ignore */ }
-    activeRecognition = null;
   }
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     window.speechSynthesis.cancel();
@@ -184,6 +70,7 @@ export function stopAllAudio() {
 }
 
 export function clearDictionaryCache() {
+  abortActiveDictRequest();
   dictCache.clear();
   dictPendingMap.clear();
   dictPendingRequestIds.clear();
@@ -191,16 +78,17 @@ export function clearDictionaryCache() {
 
 registerCacheInvalidator(clearDictionaryCache);
 
-let dictPreloadGeneration = 0;
+const dictPreloadGeneration = new GenerationGate();
 let aiPreloadTimer: ReturnType<typeof setTimeout> | null = null;
 const AI_PRELOAD_DEBOUNCE_MS = 600;
 
 export function abortActiveDictRequest() {
   stopAllAudio();
-  lookupGeneration += 1;
-  lookupUnsubscribe?.();
+  activeLookupCleanup?.();
+  activeLookupCleanup = null;
+  lookupGeneration.invalidate();
   lookupUnsubscribe = null;
-  dictPreloadGeneration += 1;
+  dictPreloadGeneration.invalidate();
   if (aiPreloadTimer) {
     clearTimeout(aiPreloadTimer);
     aiPreloadTimer = null;
@@ -215,7 +103,7 @@ export function abortActiveDictRequest() {
   isEnrichingRef.value = false;
 }
 
-function maybePreloadAi(text: string, targetLang: string, context?: string, generation = dictPreloadGeneration) {
+function maybePreloadAi(text: string, targetLang: string, context?: string, generation = dictPreloadGeneration.current()) {
   const settings = settingsStore.value;
   if (!settings.enableAI || !settings.preloadedAiIntents?.length) return;
   if (aiPreloadTimer) {
@@ -226,11 +114,11 @@ function maybePreloadAi(text: string, targetLang: string, context?: string, gene
     aiPreloadTimer = null;
     void (async () => {
       await whenSettingsReady();
-      if (generation !== dictPreloadGeneration) return;
+      if (!dictPreloadGeneration.isCurrent(generation)) return;
       const next = settingsStore.value;
       if (!next.enableAI || !next.preloadedAiIntents?.length) return;
       const { getAiAssistantStore } = await import('./composable.ai-assistant');
-      if (generation !== dictPreloadGeneration) return;
+      if (!dictPreloadGeneration.isCurrent(generation)) return;
       await getAiAssistantStore().preloadIntents(text, context, targetLang);
     })();
   }, AI_PRELOAD_DEBOUNCE_MS);
@@ -413,71 +301,7 @@ export function playPronunciation(options: { text?: string; audioUrl?: string; l
 
 export function startSpeechPractice(text = queryRef.value, language = 'en-US') {
   stopAllAudio();
-  type RecognitionLike = {
-    lang: string;
-    interimResults: boolean;
-    maxAlternatives: number;
-    continuous?: boolean;
-    onresult: ((event: { results?: ArrayLike<ArrayLike<{ transcript?: string }>> }) => void) | null;
-    onerror: ((event: { error?: string }) => void) | null;
-    onend: (() => void) | null;
-    start: () => void;
-    stop: () => void;
-    abort?: () => void;
-  };
-  const SpeechRecognitionCtor = (window as Window & {
-    SpeechRecognition?: new () => RecognitionLike;
-    webkitSpeechRecognition?: new () => RecognitionLike;
-  }).SpeechRecognition || (window as Window & { webkitSpeechRecognition?: new () => RecognitionLike }).webkitSpeechRecognition;
-  if (!SpeechRecognitionCtor) {
-    practiceResultRef.value = { score: 0, grade: 'retry', gradeLabel: 'Practice needs Chrome speech recognition.' };
-    return;
-  }
-  const recognition = new SpeechRecognitionCtor();
-  recognition.lang = language;
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
-  recognition.continuous = false;
-  isPracticingRef.value = true;
-  playingKeyRef.value = 'practice';
-  recognition.onresult = (event) => {
-    const spoken = event.results?.[0]?.[0]?.transcript || '';
-    const scored = scorePractice(text, spoken);
-    practiceResultRef.value = scored;
-    const pKey = practiceKey(text, language);
-    practiceResults.set(pKey, scored);
-    while (practiceResults.size > MAX_PRACTICE_RESULTS) {
-      const oldestKey = practiceResults.keys().next().value;
-      if (!oldestKey) break;
-      practiceResults.delete(oldestKey);
-    }
-    isPracticingRef.value = false;
-    playingKeyRef.value = null;
-    activeRecognition = null;
-  };
-  recognition.onerror = (event) => {
-    const message = recognitionErrorMessage(String(event?.error || ''));
-    isPracticingRef.value = false;
-    playingKeyRef.value = null;
-    activeRecognition = null;
-    if (message) {
-      practiceResultRef.value = { score: 0, grade: 'retry', gradeLabel: message };
-    }
-  };
-  recognition.onend = () => {
-    isPracticingRef.value = false;
-    if (playingKeyRef.value === 'practice') playingKeyRef.value = null;
-    activeRecognition = null;
-  };
-  activeRecognition = recognition;
-  try {
-    recognition.start();
-  } catch {
-    isPracticingRef.value = false;
-    playingKeyRef.value = null;
-    activeRecognition = null;
-    practiceResultRef.value = { score: 0, grade: 'retry', gradeLabel: 'Unable to start speech recognition.' };
-  }
+  startSpeechPracticeSession(text, language, playingKeyRef);
 }
 
 export async function searchWord(
@@ -490,8 +314,7 @@ export async function searchWord(
   if (!wordToSearch || !wordToSearch.trim()) return;
 
   stopAllAudio();
-  dictPreloadGeneration += 1;
-  const preloadGeneration = dictPreloadGeneration;
+  const preloadGeneration = dictPreloadGeneration.next();
   void import('./composable.ai-assistant')
     .then(({ cancelAiPreload }) => cancelAiPreload())
     .catch(() => undefined);
@@ -514,16 +337,17 @@ export async function searchWord(
     cancelDictionaryLookup(activeDictRequestId);
     activeDictRequestId = null;
   }
-  lookupUnsubscribe?.();
+  activeLookupCleanup?.();
+  activeLookupCleanup = null;
   lookupUnsubscribe = null;
 
-  const generation = ++lookupGeneration;
+  const generation = lookupGeneration.next();
   const requestId = reusedRequestId || createRequestId('dict');
   activeDictRequestId = requestId;
 
   queryRef.value = cleanWord;
   errorRef.value = null;
-  practiceResultRef.value = practiceResults.get(practiceKey(cleanWord)) || null;
+  practiceResultRef.value = readPracticeResult(cleanWord) || null;
 
   const cachedRaw = dictCache.read(cacheKey);
   const cached = cachedRaw ? toDictionaryEntry(cachedRaw) : null;
@@ -538,9 +362,10 @@ export async function searchWord(
   let enrichmentTimeout: ReturnType<typeof setTimeout> | null = null;
   let pendingUpdate: DictionaryEntry | null = null;
   let updateFrame = 0;
+  let lookupClosed = false;
   const flushUpdate = () => {
     updateFrame = 0;
-    if (generation !== lookupGeneration) {
+    if (!lookupGeneration.isCurrent(generation)) {
       pendingUpdate = null;
       return;
     }
@@ -554,13 +379,11 @@ export async function searchWord(
     dictCache.write(cacheKey, enriched);
     if (enriched.enriched) {
       isEnrichingRef.value = false;
-      if (enrichmentTimeout) clearTimeout(enrichmentTimeout);
-      unsubscribe();
-      if (lookupUnsubscribe === unsubscribe) lookupUnsubscribe = null;
+      cleanupLookup();
     }
   };
   const unsubscribe = subscribeLookupUpdates((payload) => {
-    if (generation !== lookupGeneration) return;
+    if (!lookupGeneration.isCurrent(generation)) return;
     if (payload.requestId !== requestId || payload.source !== 'dictionary') return;
     const enriched = payload.result as DictionaryEntry;
     if ((resultRef.value?.revision || 0) > (enriched.revision || 0)) return;
@@ -571,6 +394,23 @@ export async function searchWord(
       flushUpdate();
     }
   });
+  const cleanupLookup = () => {
+    if (lookupClosed) return;
+    lookupClosed = true;
+    if (enrichmentTimeout) {
+      clearTimeout(enrichmentTimeout);
+      enrichmentTimeout = null;
+    }
+    if (updateFrame) {
+      cancelAnimationFrame(updateFrame);
+      updateFrame = 0;
+    }
+    pendingUpdate = null;
+    unsubscribe();
+    if (lookupUnsubscribe === unsubscribe) lookupUnsubscribe = null;
+    if (activeLookupCleanup === cleanupLookup) activeLookupCleanup = null;
+  };
+  activeLookupCleanup = cleanupLookup;
   lookupUnsubscribe = unsubscribe;
 
   const request = pending || startDictionaryLookup({
@@ -586,7 +426,7 @@ export async function searchWord(
 
   try {
     const data = await request;
-    if (generation !== lookupGeneration) return;
+    if (!lookupGeneration.isCurrent(generation)) return;
     if ((resultRef.value?.revision || 0) < (data.revision || 0) || !resultRef.value) {
       resultRef.value = data;
       dictCache.write(cacheKey, data);
@@ -597,14 +437,14 @@ export async function searchWord(
     if (err instanceof Error && (/abort/i.test(err.message) || err.name === 'AbortError')) {
       return;
     }
-    if (generation !== lookupGeneration) return;
+    if (!lookupGeneration.isCurrent(generation)) return;
     const message = err instanceof Error ? err.message : 'Không tìm thấy dữ liệu từ điển.';
     errorRef.value = /Extension context invalidated|runtime is unavailable/i.test(message)
       ? 'Extension was reloaded. Refresh this page and try again.'
       : message;
     resultRef.value = null;
   } finally {
-    if (generation === lookupGeneration) {
+    if (lookupGeneration.isCurrent(generation)) {
       dictPendingMap.delete(cacheKey);
       dictPendingRequestIds.delete(cacheKey);
       isLoadingRef.value = false;
@@ -614,13 +454,14 @@ export async function searchWord(
     }
   }
 
-  enrichmentTimeout = setTimeout(() => {
-    if (generation === lookupGeneration) {
-      isEnrichingRef.value = false;
-      unsubscribe();
-      if (lookupUnsubscribe === unsubscribe) lookupUnsubscribe = null;
-    }
-  }, 20000);
+  if (!lookupClosed) {
+    enrichmentTimeout = setTimeout(() => {
+      if (lookupGeneration.isCurrent(generation)) {
+        isEnrichingRef.value = false;
+        cleanupLookup();
+      }
+    }, 20000);
+  }
 }
 
 export function useDictionaryResult() {

@@ -9,12 +9,12 @@ The runtime architecture is organized into clean, decoupled layers following mod
 1. **Toolbar Popup Entrypoint** (`src/entrypoints/toolbar-popup/`) — Standalone browser action UI (`app.toolbar-popup.tsx`, `main.tsx`) for manual search, mode switching, editable context, 7 contextual AI intents, global audio controls, and settings.
 2. **Content Script & In-Page Overlay** (`src/entrypoints/content-script/`) — Injected Shadow DOM overlay system (`bootstrap.ts`, `overlay-app.tsx`, `overlay.in-page.tsx`) handling text selection, floating trigger icon, exact context extraction, collision-safe viewport positioning, dragging & resizing, and result rendering.
 3. **Background Service Worker Entrypoint** (`src/entrypoints/background/service-worker.ts`) — Central background service worker handling context menu actions, CORS-bypassing fetch proxies (`FETCH_PROXY`), dictionary and AI lookup dispatch, network cancellation, and keyboard shortcut commands.
-4. **React Stores & Hooks** (`src/composables/`) — External-store state engines subscribed via `useSyncExternalStore` using lightweight reactive signals (`src/ui/signal.ts`):
+4. **React Stores & Hooks** (`src/composables/`) — External-store state engines subscribed via `useSyncExternalStore` using lightweight reactive signals (`src/ui/signal.ts`). Shared request and cache policy lives in `src/shared/abort-registry.ts` and `src/shared/bounded-cache.ts`:
    - `composable.lookup-session.ts`: Session facade for tab switching and `abortAllLookups()` (stops audio and in-flight dictionary/AI requests). Overlay close/unmount calls `abortAllLookups()`.
-   - `composable.dictionary.ts`: Handles caching, dictionary lookups, audio playback & reactive `isAudioPlayingRef` state with global `stopAllAudio()`.
-   - `composable.ai-assistant.ts`: Handles Gemini AI prompts, 7 intent pipelines, Dictionary-tab Main AI preload, AI-tab visit sequencing, and hover prefetching.
+   - `composable.dictionary.ts`: Lookup/audio facade; cache policy and speech-practice scoring live in `dictionary-cache.ts` and `dictionary-practice.ts`.
+   - `composable.ai-assistant.ts`: Intent facade; persistent AI cache/key normalization lives in `ai-cache.ts` while preload and request lifecycle remain feature-owned.
    - `composable.storage.ts`: Reactive `chrome.storage` settings synchronization.
-5. **Provider Adapters** (`src/providers/`) — Keyless vendor adapters registered through `ProviderRegistry` (`src/providers/registry.ts` + `register-adapters.ts`). Dictionary providers (`free_dictionary`, `wiktionary`, `wiktionary_etymology`, `wiktionary_bilingual`, `datamuse`, `wikipedia`, `urban_dictionary`, `rhymebrain`, `tatoeba`), translation (`google_translate`, `mymemory`, `libre_translate`), and Gemini AI (`gemini-3.5-flash-lite`). Lookup orchestration lives in `pipeline.ts`; L1/L2 caches live in `cache.ts`.
+5. **Provider Adapters** (`src/providers/`) — Keyless vendor adapters registered through `ProviderRegistry` (`src/providers/registry.ts` + `register-adapters.ts`). Dictionary providers (`free_dictionary`, `wiktionary`, `wiktionary_etymology`, `wiktionary_bilingual`, `datamuse`, `wikipedia`, `urban_dictionary`, `rhymebrain`, `tatoeba`), translation (`google_translate`, `mymemory`, `libre_translate`), and Gemini AI (`gemini-3.5-flash-lite`). Lookup orchestration lives in `pipeline.ts`, bounded scheduling in `provider-scheduler.ts`, and L1/L2 caches live in `cache.ts`.
 6. **Feature UI** (`src/features/`) — Domain-sliced React views: dictionary cards (`src/features/dictionary/`), AI intents (`src/features/ai-assistant/`), and settings (`src/features/settings/`). Shared primitives (`AppHeader`, `TabNavigation`, `MarkdownRenderer`, `RelatedWords`, `TokenizedContext`) remain in `src/components/`.
 
 ---
@@ -116,7 +116,7 @@ After the initial result is dispatched to the popup, the background service work
 2. **AI Phrase Fallback (Multi-word Lookups):** After a ~300ms delay when translation was already included (so a dismissed card can cancel), if the query is phrase-like, lacks usable definitions, and both `enableAI` and `enablePhraseFallback` are on, `lookupAiProvider(text, settings, { intent: "phrase_fallback" })` runs first. Upon completion, the phrase explanation is merged and broadcast via `LOOKUP_UPDATE` before secondary dictionary enrichment.
 3. **Always-enrich:** Every provider in `DICTIONARY_FALLBACK_ORDER` runs after Phase 1, except the selected primary provider, even when the primary entry already has definitions. There is no thin-entry or provider-cost gate.
 4. **Secondary Provider Filtering:** Remaining keyless dictionary providers (Datamuse, Wiktionary, Wikipedia, Urban Dictionary, RhymeBrain, Wiktionary Etymology, Wiktionary Bilingual, and Tatoeba) participate in progressive enrichment without requiring API keys. Google Translate and LibreTranslate are translation adapters and remain in the separate translation path.
-5. **Bounded Concurrency:** Remaining unqueried providers are fetched in concurrent batches of 2 (`ENRICHMENT_CONCURRENCY = 2`).
+5. **Bounded Concurrency:** Remaining unqueried providers run through `runBounded()` with a hard maximum of 2 active requests (`ENRICHMENT_CONCURRENCY = 2`), so slow providers cannot raise total concurrency above the limit.
 6. **Resilient Failure Handling:** Secondary `NotFoundError` results and operational errors are caught and logged silently without disrupting the displayed primary result.
 7. **Cumulative Merge Engine (`mergeDictionaryEntries`):**
    - **Meanings & Definitions:** Meanings are grouped by canonical POS (`canonicalPartOfSpeech`). Definitions are deduplicated with token-overlap / near-duplicate matching (`areDefinitionsEquivalent`); a later provider can backfill a missing example onto an existing definition. Extra POS groups are skipped once `MAX_MEANINGS` is reached. Clamped to:
@@ -139,7 +139,7 @@ To avoid redundant secondary network calls on repeated lookups, the service work
 LOOKUP Request
       │
       ▼
-Check L1 In-Memory Cache (Fast Map, max 20 entries, 10-min TTL)
+Check L1 In-Memory Cache (Fast Map, max 20 entries / 4 MiB, 10-min TTL)
   ├─ Hit  ──► Return cached enrichment immediately
   └─ Miss ──► Check L2 Storage Cache
                 │
@@ -155,6 +155,7 @@ Check L2 Session Storage (chrome.storage.session with "enrich_" prefix)
 ```
 
 - **Cache Key Serialization:** Formed from normalized query text, primary provider ID, translation parameters, and provider API key availability flags.
+- **Memory Bound:** L1 enrichment and combined-result maps each enforce a 20-entry and 4 MiB payload cap; stale and least-recently-used entries are evicted during hydration and access.
 - **In-flight Deduplication:** `enrichmentInFlight` tracks active enrichment promises by cache key, ensuring duplicate rapid queries share the same network execution.
 - **Cache Invalidation:** Any change in `chrome.storage.sync` or `chrome.storage.local` to provider selection, enabled features, target language, or API keys triggers `clearEnrichmentSessionCache()`, clearing both L1 and L2 session storage.
 
@@ -193,11 +194,11 @@ The AI subsystem (`src/composables/composable.ai-assistant.ts` and `src/provider
 4. **In-Flight Request Deduplication (`aiPendingMap`):**
    - If a background preload is already in flight when the user switches to the AI tab or clicks an intent, the UI attaches to the running promise (`aiPendingMap.get(cacheKey)`), preventing duplicate API calls.
 5. **Persistent 24-Hour LRU Cache (`chrome.storage.local`):**
-   - Up to 50 AI responses are cached locally with a **24-hour TTL** (`ai_lookup_cache_v2`) when `persistLookupCache` is enabled.
+   - Up to 50 AI responses are cached locally with a **24-hour TTL and 8 MiB cap** (`ai_lookup_cache_v2`) when `persistLookupCache` is enabled.
    - Keys are hashed compound representations of `intent`, `text`, `targetLang`, `context`, `model`, `baseUrl`, and `enableLexicalProfile`.
 6. **Keep-Alive UI Mounting & Lazy Code Splitting:**
    - The `<AiAssistantView />` chunk is loaded lazily on first tab visit (`aiVisited` state).
-   - Once mounted, switching between Dictionary and AI tabs keeps the component mounted with `display: none`, preserving scroll positions, active intents, and rendered syntax trees. Follow-up API preload only runs while `isVisible` is true.
+   - The AI and Rewriter subtrees are mounted only while their tab is active. Shared lookup/cache state prevents repeat network work; tab-local drafts and rendered trees are released when inactive.
 7. **Tab-Scoped Abort & Context Invalidation:**
    - Each AI lookup creates a unique `requestId` and registers an `AbortController`.
    - Selecting a new word or closing the overlay aborts in-flight AI requests via `abortAllAiRequests()` / `useLookupSession().abortAllLookups()`.

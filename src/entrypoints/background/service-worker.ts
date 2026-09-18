@@ -31,16 +31,19 @@ import {
   validateDictionaryProvider,
   validateTranslationProvider,
 } from '../../providers/provider.index';
+import { clearHttpCache } from '../../providers/provider.http';
 import { loadFullSettings, normalizeSettings } from '../../shared/settings';
 import { canonicalAiIntent } from '../../shared/ai-prompts';
 import { canInjectIntoUrl } from '../../shared/ext';
 import { getOriginPermissionPattern } from '../../shared/permissions';
+import { AbortRegistry } from '../../shared/abort-registry';
+import { createTtlCache } from './ttl-cache';
 
 const CONTENT_SCRIPT_JS = ['content-script.js'];
 const SETTINGS_TTL_MS = 15_000;
 
 const activeProxyRequests = new Map<string, AbortController>();
-const lookupControllers = new Map<string, AbortController>();
+const lookupControllers = new AbortRegistry();
 const inflightDictionaryLookups = new Map<string, Promise<DictionaryEntry & { requestId: string }>>();
 
 async function hasProxyPermission(rawUrl: string): Promise<boolean> {
@@ -54,9 +57,7 @@ async function hasProxyPermission(rawUrl: string): Promise<boolean> {
   }
 }
 
-let cachedSettings: AppSettings | null = null;
-let cachedSettingsAt = 0;
-let cachedSettingsPromise: Promise<AppSettings> | null = null;
+const settingsCache = createTtlCache(loadFullSettings, SETTINGS_TTL_MS);
 
 function getRequestKey(tabId: number | undefined, scope: string, requestId: string): string {
   return `${Number.isInteger(tabId) ? tabId : 'popup'}:${scope}:${requestId}`;
@@ -64,16 +65,12 @@ function getRequestKey(tabId: number | undefined, scope: string, requestId: stri
 
 function registerController(tabId: number | undefined, scope: string, requestId: string): AbortController {
   const key = getRequestKey(tabId, scope, requestId);
-  const existing = lookupControllers.get(key);
-  if (existing) return existing;
-  cancelRequestsForScope(tabId, scope, requestId);
-  const controller = new AbortController();
-  lookupControllers.set(key, controller);
-  return controller;
+  const prefix = `${Number.isInteger(tabId) ? tabId : 'popup'}:${scope}:`;
+  return lookupControllers.register(key, prefix);
 }
 
 function unregisterController(tabId: number | undefined, scope: string, requestId: string) {
-  lookupControllers.delete(getRequestKey(tabId, scope, requestId));
+  lookupControllers.unregister(getRequestKey(tabId, scope, requestId));
 }
 
 let creatingOffscreen: Promise<void> | null = null;
@@ -145,14 +142,12 @@ function scheduleOffscreenClose() {
 }
 
 function releaseIdleState() {
-  for (const controller of lookupControllers.values()) controller.abort();
-  lookupControllers.clear();
+  lookupControllers.cancelAll();
   inflightDictionaryLookups.clear();
   for (const controller of activeProxyRequests.values()) controller.abort();
   activeProxyRequests.clear();
-  cachedSettings = null;
-  cachedSettingsAt = 0;
-  cachedSettingsPromise = null;
+  clearHttpCache();
+  settingsCache.clear();
   if (offscreenIdleTimer) {
     clearTimeout(offscreenIdleTimer);
     offscreenIdleTimer = null;
@@ -163,11 +158,7 @@ function releaseIdleState() {
 function cancelRequestsForScope(tabId: number | undefined, scope: string, exceptRequestId?: string) {
   const prefix = `${Number.isInteger(tabId) ? tabId : 'popup'}:${scope}:`;
   const exceptKey = exceptRequestId ? getRequestKey(tabId, scope, exceptRequestId) : '';
-  for (const [key, controller] of lookupControllers.entries()) {
-    if (!key.startsWith(prefix) || key === exceptKey) continue;
-    controller.abort();
-    lookupControllers.delete(key);
-  }
+  lookupControllers.cancelPrefix(prefix, exceptKey);
   if (scope === dictionaryAbortScope()) {
     for (const key of inflightDictionaryLookups.keys()) {
       if (!key.startsWith(prefix) || key === exceptKey) continue;
@@ -178,36 +169,18 @@ function cancelRequestsForScope(tabId: number | undefined, scope: string, except
 
 function cancelRequestsForTab(tabId: number | undefined) {
   const prefix = `${Number.isInteger(tabId) ? tabId : 'popup'}:`;
-  for (const [key, controller] of lookupControllers.entries()) {
-    if (key.startsWith(prefix)) {
-      controller.abort();
-      lookupControllers.delete(key);
-    }
-  }
+  lookupControllers.cancelPrefix(prefix);
   for (const key of inflightDictionaryLookups.keys()) {
     if (key.startsWith(prefix)) inflightDictionaryLookups.delete(key);
   }
 }
 
 async function getCachedSettings(): Promise<AppSettings> {
-  if (cachedSettings && Date.now() - cachedSettingsAt < SETTINGS_TTL_MS) return cachedSettings;
-  if (!cachedSettingsPromise) {
-    cachedSettingsPromise = loadFullSettings()
-      .then((settings) => {
-        cachedSettings = settings;
-        cachedSettingsAt = Date.now();
-        return settings;
-      })
-      .finally(() => {
-        cachedSettingsPromise = null;
-      });
-  }
-  return cachedSettingsPromise;
+  return settingsCache.get();
 }
 
 function invalidateSettingsCache() {
-  cachedSettings = null;
-  cachedSettingsAt = 0;
+  settingsCache.invalidate();
 }
 
 async function publishLookupUpdate(options: {

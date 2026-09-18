@@ -10,6 +10,7 @@ export {
   lookupSingleProvider,
   lookupTranslationResult,
   resolvePrimaryProviderId,
+  getSecondaryDictionaryProviderIds,
   normalizeDictionaryResult,
 } from './pipeline';
 export { providerRegistry } from './registry';

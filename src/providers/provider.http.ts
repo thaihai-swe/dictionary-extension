@@ -73,12 +73,25 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
 const HTTP_CACHE_TTL_MS = 10 * 60 * 1000;
 const MAX_HTTP_CACHE_SIZE = 80;
 const MAX_HTTP_CACHE_BODY = 256 * 1024;
+const MAX_HTTP_CACHE_CHARS = 4 * 1024 * 1024;
 const httpCacheMap = new Map<string, HttpCacheEntry>();
 const inflightHttpMap = new Map<string, Promise<Response>>();
+let httpCacheChars = 0;
+let httpCacheGeneration = 0;
+
+function deleteHttpCacheEntry(key: string): boolean {
+  const entry = httpCacheMap.get(key);
+  if (!entry) return false;
+  httpCacheMap.delete(key);
+  httpCacheChars = Math.max(0, httpCacheChars - entry.bodyText.length);
+  return true;
+}
 
 export function clearHttpCache() {
+  httpCacheGeneration += 1;
   httpCacheMap.clear();
   inflightHttpMap.clear();
+  httpCacheChars = 0;
 }
 
 function getHttpMethod(options?: RequestInit): string {
@@ -99,12 +112,19 @@ function getHttpCacheKey(url: string, options?: RequestInit): string {
 function pruneHttpCache() {
   const now = Date.now();
   for (const [key, entry] of httpCacheMap.entries()) {
-    if (now - entry.timestamp >= HTTP_CACHE_TTL_MS) httpCacheMap.delete(key);
+    if (now - entry.timestamp >= HTTP_CACHE_TTL_MS) deleteHttpCacheEntry(key);
   }
-  while (httpCacheMap.size >= MAX_HTTP_CACHE_SIZE) {
+}
+
+function evictHttpCache(requiredChars = 0) {
+  pruneHttpCache();
+  while (
+    httpCacheMap.size >= MAX_HTTP_CACHE_SIZE
+    || httpCacheChars + requiredChars > MAX_HTTP_CACHE_CHARS
+  ) {
     const oldestKey = httpCacheMap.keys().next().value;
     if (!oldestKey) break;
-    httpCacheMap.delete(oldestKey);
+    deleteHttpCacheEntry(oldestKey);
   }
 }
 
@@ -130,21 +150,26 @@ function timeoutError(timeoutMs: number): Error {
   return error;
 }
 
-function rememberResponse(cacheKey: string, status: number, statusText: string, bodyText: string) {
+function rememberResponse(
+  cacheKey: string,
+  status: number,
+  statusText: string,
+  bodyText: string,
+  generation = httpCacheGeneration,
+) {
+  if (generation !== httpCacheGeneration) return;
   if (!isCacheableStatus(status)) return;
   if (!cacheKey.startsWith('GET:') && !cacheKey.startsWith('HEAD:')) return;
   if (bodyText.length > MAX_HTTP_CACHE_BODY) return;
-  if (httpCacheMap.size >= MAX_HTTP_CACHE_SIZE) pruneHttpCache();
-  if (httpCacheMap.size >= MAX_HTTP_CACHE_SIZE) {
-    const oldestKey = httpCacheMap.keys().next().value;
-    if (oldestKey) httpCacheMap.delete(oldestKey);
-  }
+  deleteHttpCacheEntry(cacheKey);
+  evictHttpCache(bodyText.length);
   httpCacheMap.set(cacheKey, {
     status,
     statusText,
     bodyText,
     timestamp: Date.now(),
   });
+  httpCacheChars += bodyText.length;
 }
 
 function cachedResponse(entry: HttpCacheEntry): Response {
@@ -164,6 +189,7 @@ async function safeFetchOnce(url: string, options?: SafeFetchOptions): Promise<R
 
   const timeoutMs = options?.timeoutMs ?? DICTIONARY_FETCH_TIMEOUT_MS;
   const cacheKey = getHttpCacheKey(url, options);
+  const cacheGeneration = httpCacheGeneration;
 
   const cached = httpCacheMap.get(cacheKey);
   if (cached) {
@@ -172,7 +198,7 @@ async function safeFetchOnce(url: string, options?: SafeFetchOptions): Promise<R
       httpCacheMap.set(cacheKey, cached);
       return cachedResponse(cached);
     }
-    httpCacheMap.delete(cacheKey);
+    deleteHttpCacheEntry(cacheKey);
   }
 
   const inflight = inflightHttpMap.get(cacheKey);
@@ -263,7 +289,7 @@ async function safeFetchOnce(url: string, options?: SafeFetchOptions): Promise<R
           const bodyText = typeof response.data === 'string' ? response.data : JSON.stringify(response.data);
           const status = response.status || (response.ok ? 200 : 400);
           const statusText = response.error || (response.ok ? 'OK' : 'Error');
-          rememberResponse(cacheKey, status, statusText, bodyText);
+          rememberResponse(cacheKey, status, statusText, bodyText, cacheGeneration);
           return new Response(bodyText, {
             status,
             statusText,
@@ -279,7 +305,7 @@ async function safeFetchOnce(url: string, options?: SafeFetchOptions): Promise<R
 
     const directRes = await fetch(url, fetchOptions);
     const bodyText = await directRes.text();
-    rememberResponse(cacheKey, directRes.status, directRes.statusText, bodyText);
+    rememberResponse(cacheKey, directRes.status, directRes.statusText, bodyText, cacheGeneration);
     return new Response(bodyText, {
       status: directRes.status,
       statusText: directRes.statusText,

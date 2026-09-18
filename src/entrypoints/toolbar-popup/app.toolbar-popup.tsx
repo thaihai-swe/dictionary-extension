@@ -63,13 +63,22 @@ export const ToolbarPopupApp: React.FC = () => {
   }
 
   useEffect(() => {
+    let resizeFrame = 0;
+    const handleResize = () => {
+      if (resizeFrame) return;
+      resizeFrame = requestAnimationFrame(() => {
+        resizeFrame = 0;
+        updateResponsiveMode();
+      });
+    };
     updateResponsiveMode();
     if (typeof window !== 'undefined') {
-      window.addEventListener('resize', updateResponsiveMode);
+      window.addEventListener('resize', handleResize, { passive: true });
     }
     return () => {
+      if (resizeFrame) cancelAnimationFrame(resizeFrame);
       if (typeof window !== 'undefined') {
-        window.removeEventListener('resize', updateResponsiveMode);
+        window.removeEventListener('resize', handleResize);
       }
     };
   }, []);
@@ -155,15 +164,15 @@ export const ToolbarPopupApp: React.FC = () => {
 
       {/* Main Content Surfaces */}
       <main className="flex-1 overflow-y-auto">
-        <div style={{ display: activeTab === 'dictionary' ? undefined : 'none' }}>
+        {activeTab === 'dictionary' ? (
           <WordLookupView
             autoFocus={activeTab === 'dictionary'}
             targetLang={targetLang}
             provider={currentProvider}
           />
-        </div>
+        ) : null}
         {aiVisited ? (
-          <div style={{ display: activeTab === 'ai_assistant' ? undefined : 'none' }}>
+          activeTab === 'ai_assistant' ? (
             <Suspense fallback={<div className="p-4 text-[12.5px] text-content-muted">Loading AI assistant…</div>}>
               <AiAssistantView
                 initialQuery={query}
@@ -172,17 +181,17 @@ export const ToolbarPopupApp: React.FC = () => {
                 onSwitchTab={handleTabChange}
               />
             </Suspense>
-          </div>
+          ) : null
         ) : null}
         {rewriterVisited ? (
-          <div style={{ display: activeTab === 'rewriter' ? undefined : 'none' }}>
+          activeTab === 'rewriter' ? (
             <Suspense fallback={<div className="p-4 text-[12.5px] text-content-muted">Loading rewriter…</div>}>
               <ContextualRewriter
                 initialText={query}
                 targetLang={targetLang}
               />
             </Suspense>
-          </div>
+          ) : null
         ) : null}
       </main>
 

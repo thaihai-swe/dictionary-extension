@@ -1,6 +1,7 @@
 export {
   normalizeDictionaryTerm,
   DICTIONARY_FALLBACK_ORDER,
+  getSecondaryDictionaryProviderIds,
   isPhraseLike,
   getPrimaryDictionaryLookupAttempts,
   extractJsonObject,

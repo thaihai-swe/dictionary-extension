@@ -278,7 +278,7 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
-        <div style={{ display: activeTab === 'dictionary' ? undefined : 'none' }}>
+        {activeTab === 'dictionary' ? (
           <WordLookupView
             initialQuery={currentText}
             initialContext={currentContext}
@@ -286,9 +286,9 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
             targetLang={currentLang}
             provider={currentProvider}
           />
-        </div>
+        ) : null}
         {aiVisited ? (
-          <div style={{ display: activeTab === 'ai_assistant' ? undefined : 'none' }}>
+          activeTab === 'ai_assistant' ? (
             <Suspense fallback={<div className="p-4 text-[13px] text-content-muted">Loading AI assistant…</div>}>
               <AiAssistantView
                 initialQuery={currentText}
@@ -298,10 +298,10 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
                 onSwitchTab={handleTabChange}
               />
             </Suspense>
-          </div>
+          ) : null
         ) : null}
         {rewriterVisited ? (
-          <div style={{ display: activeTab === 'rewriter' ? undefined : 'none' }}>
+          activeTab === 'rewriter' ? (
             <Suspense fallback={<div className="p-4 text-[13px] text-content-muted">Loading rewriter…</div>}>
               <ContextualRewriter
                 initialText={currentText}
@@ -309,7 +309,7 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
                 targetLang={currentLang}
               />
             </Suspense>
-          </div>
+          ) : null
         ) : null}
       </main>
 

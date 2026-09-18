@@ -151,6 +151,10 @@ function normalizeSettingsArrayFields(settings: AppSettings): AppSettings {
   return settings;
 }
 
+function assignSettingValue<K extends keyof AppSettings>(settings: AppSettings, key: K, value: unknown): void {
+  settings[key] = value as AppSettings[K];
+}
+
 export function canAccessSecretSettings(): boolean {
   try {
     if (typeof window === 'undefined') return false;
@@ -178,9 +182,9 @@ async function loadSettingsFromStorage(): Promise<AppSettings> {
       const val = localStorage.getItem(`dict_setting_${key}`);
       if (val !== null) {
         try {
-          (current as any)[key] = JSON.parse(val);
+          assignSettingValue(current, key, JSON.parse(val));
         } catch {
-          (current as any)[key] = val;
+          assignSettingValue(current, key, val);
         }
       }
     }
@@ -265,7 +269,7 @@ export function initStorage() {
       for (const [key, change] of Object.entries(changes)) {
         if (SECRET_KEYS.has(key) && (!allowSecrets || areaName !== 'local')) continue;
         if (key in nextSettings) {
-          (nextSettings as any)[key] = change.newValue ?? DEFAULT_SETTINGS[key as keyof AppSettings];
+          assignSettingValue(nextSettings, key as keyof AppSettings, change.newValue ?? DEFAULT_SETTINGS[key as keyof AppSettings]);
         }
       }
       if (allowSecrets) {

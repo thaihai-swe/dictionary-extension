@@ -55,6 +55,12 @@ const TABS: Array<{ id: SettingsTab; label: string; icon: React.FC<{ className?:
   { id: 'ai', label: 'AI Intelligence', icon: IconSparkles },
 ];
 
+function areSettingValuesEqual(left: unknown, right: unknown): boolean {
+  if (Object.is(left, right)) return true;
+  if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
+  return left.every((value, index) => Object.is(value, right[index]));
+}
+
 function getInitialTab(): SettingsTab {
   if (typeof window !== 'undefined') {
     const hash = window.location.hash.replace('#', '') as SettingsTab;
@@ -85,7 +91,7 @@ export const SettingsModal: React.FC = () => {
     if (!formHydrated) return false;
     return (Object.keys(localSettings) as Array<keyof AppSettings>).some((key) => {
       if (SECRET_SETTING_KEYS.includes(key as never) && !canEditApiKey) return false;
-      return JSON.stringify(localSettings[key]) !== JSON.stringify(settings[key]);
+      return !areSettingValuesEqual(localSettings[key], settings[key]);
     }) || pausedSitesInput !== (settings.pausedHostnames || []).join('\n');
   }, [localSettings, settings, pausedSitesInput, canEditApiKey, formHydrated]);
 

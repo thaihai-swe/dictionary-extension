@@ -1,3 +1,5 @@
+import { createBoundedLruCache } from './bounded-cache.ts';
+
 export interface CacheEntry<T> {
   value: T;
   createdAt: number;
@@ -32,18 +34,33 @@ function canUseLocalStorage(): boolean {
 
 export function createPersistedLruCache<T>(options: {
   maxSize: number;
+  maxBytes?: number;
   ttlMs: number;
   storageKey: string;
   persistDelayMs?: number;
   shouldPersist?: (value: T) => boolean;
   isPersistenceEnabled?: () => boolean;
 }): PersistedLruCache<T> {
-  const map = new Map<string, CacheEntry<T>>();
   const persistDelayMs = options.persistDelayMs ?? 1500;
+  const maxBytes = options.maxBytes ?? Number.POSITIVE_INFINITY;
+  const map = createBoundedLruCache<string, CacheEntry<T>>({
+    maxSize: options.maxSize,
+    maxBytes,
+    estimateSize: (entry) => estimateSize(entry.value),
+  });
   let hydrated = false;
   let persistTimer: ReturnType<typeof setTimeout> | null = null;
   let dirty = false;
   let unloadBound = false;
+  let cacheEpoch = 0;
+
+  function estimateSize(value: T): number {
+    try {
+      return JSON.stringify(value).length * 2;
+    } catch {
+      return 0;
+    }
+  }
 
   function persistenceEnabled(): boolean {
     return options.isPersistenceEnabled ? options.isPersistenceEnabled() : true;
@@ -53,11 +70,6 @@ export function createPersistedLruCache<T>(options: {
     const now = Date.now();
     for (const [key, entry] of map.entries()) {
       if (now - entry.createdAt > options.ttlMs) map.delete(key);
-    }
-    while (map.size > options.maxSize) {
-      const oldestKey = map.keys().next().value;
-      if (!oldestKey) break;
-      map.delete(oldestKey);
     }
   }
 
@@ -109,10 +121,12 @@ export function createPersistedLruCache<T>(options: {
   function hydrate() {
     if (hydrated) return;
     hydrated = true;
+    const hydrateEpoch = cacheEpoch;
     bindUnload();
     if (!canUseLocalStorage() || !persistenceEnabled()) return;
     void Promise.resolve(chrome.storage.local.get(options.storageKey))
       .then((stored) => {
+        if (hydrateEpoch !== cacheEpoch) return;
         const snapshot = (stored as Record<string, Record<string, CacheEntry<T>> | undefined>)?.[options.storageKey];
         if (!snapshot || typeof snapshot !== 'object') return;
         const now = Date.now();
@@ -135,12 +149,9 @@ export function createPersistedLruCache<T>(options: {
         map.delete(key);
         return undefined;
       }
-      map.delete(key);
-      map.set(key, entry);
       return entry.value;
     },
     write(key: string, value: T) {
-      map.delete(key);
       map.set(key, { value, createdAt: Date.now() });
       prune();
       persist();
@@ -153,6 +164,7 @@ export function createPersistedLruCache<T>(options: {
       persistNow();
     },
     clear() {
+      cacheEpoch += 1;
       map.clear();
       dirty = false;
       if (persistTimer) {

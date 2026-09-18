@@ -1,10 +1,13 @@
 import type { AppSettings, DictionaryEntry } from '../types';
 import { isExtensionPage } from '../shared/ext.ts';
+import { createBoundedLruCache } from '../shared/bounded-cache.ts';
+import { clearHttpCache } from './provider.http';
 
 export const ENRICHMENT_TTL_MS = 10 * 60 * 1000;
 export const MAX_ENRICHMENT_CACHE = 20;
 export const COMBINED_RESULT_TTL_MS = 10 * 60 * 1000;
 export const MAX_COMBINED_RESULT_CACHE = 20;
+const MAX_PROVIDER_CACHE_CHARS = 4 * 1024 * 1024;
 
 export interface CombinedResultCacheEntry {
   result: DictionaryEntry;
@@ -16,10 +19,27 @@ export interface EnrichmentCacheEntry {
   timestamp: number;
 }
 
-const combinedResultCache = new Map<string, CombinedResultCacheEntry>();
-const enrichmentMemoryCache = new Map<string, EnrichmentCacheEntry>();
 const combinedSessionKeys: string[] = [];
 const enrichmentSessionKeys: string[] = [];
+
+function estimateCacheChars(value: unknown): number {
+  try {
+    return JSON.stringify(value).length;
+  } catch {
+    return 0;
+  }
+}
+
+const combinedResultCache = createBoundedLruCache<string, CombinedResultCacheEntry>({
+  maxSize: MAX_COMBINED_RESULT_CACHE,
+  maxBytes: MAX_PROVIDER_CACHE_CHARS,
+  estimateSize: estimateCacheChars,
+});
+const enrichmentMemoryCache = createBoundedLruCache<string, EnrichmentCacheEntry>({
+  maxSize: MAX_ENRICHMENT_CACHE,
+  maxBytes: MAX_PROVIDER_CACHE_CHARS,
+  estimateSize: estimateCacheChars,
+});
 
 function rememberSessionKey(list: string[], key: string, max: number) {
   const existing = list.indexOf(key);
@@ -60,8 +80,6 @@ export function readCombinedResultCache(key: string): DictionaryEntry | undefine
     combinedResultCache.delete(key);
     return undefined;
   }
-  combinedResultCache.delete(key);
-  combinedResultCache.set(key, entry);
   return entry.result;
 }
 
@@ -84,13 +102,7 @@ export async function readSessionCombinedResult(key: string): Promise<Dictionary
 export function writeCombinedResultCache(key: string, result: DictionaryEntry) {
   if (!result.enriched) return;
   const entry: CombinedResultCacheEntry = { result, timestamp: Date.now() };
-  combinedResultCache.delete(key);
   combinedResultCache.set(key, entry);
-  while (combinedResultCache.size > MAX_COMBINED_RESULT_CACHE) {
-    const oldest = combinedResultCache.keys().next().value;
-    if (!oldest) break;
-    combinedResultCache.delete(oldest);
-  }
   if (hasSessionStorage()) {
     const sKey = combinedSessionStorageKey(key);
     rememberSessionKey(combinedSessionKeys, sKey, MAX_COMBINED_RESULT_CACHE);
@@ -100,7 +112,12 @@ export function writeCombinedResultCache(key: string, result: DictionaryEntry) {
 
 export async function readSessionEnrichment(key: string): Promise<DictionaryEntry[] | null> {
   const memory = enrichmentMemoryCache.get(key);
-  if (memory && Date.now() - memory.timestamp < ENRICHMENT_TTL_MS) return memory.results;
+  if (memory) {
+    if (Date.now() - memory.timestamp < ENRICHMENT_TTL_MS) {
+      return memory.results;
+    }
+    enrichmentMemoryCache.delete(key);
+  }
   if (!hasSessionStorage()) return null;
   try {
     const stored = await Promise.resolve(chrome.storage.session.get(key)).catch(() => ({})) as Record<string, EnrichmentCacheEntry | undefined>;
@@ -115,10 +132,6 @@ export async function readSessionEnrichment(key: string): Promise<DictionaryEntr
 
 export async function writeSessionEnrichment(key: string, results: DictionaryEntry[]) {
   const entry: EnrichmentCacheEntry = { results, timestamp: Date.now() };
-  if (enrichmentMemoryCache.size >= MAX_ENRICHMENT_CACHE) {
-    const oldest = enrichmentMemoryCache.keys().next().value;
-    if (oldest) enrichmentMemoryCache.delete(oldest);
-  }
   enrichmentMemoryCache.set(key, entry);
   if (!hasSessionStorage()) return;
   try {
@@ -132,6 +145,7 @@ export async function writeSessionEnrichment(key: string, results: DictionaryEnt
 export function clearEnrichmentCache() {
   enrichmentMemoryCache.clear();
   combinedResultCache.clear();
+  clearHttpCache();
   combinedSessionKeys.length = 0;
   enrichmentSessionKeys.length = 0;
   if (hasSessionStorage()) {

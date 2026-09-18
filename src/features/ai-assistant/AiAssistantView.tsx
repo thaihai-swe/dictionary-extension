@@ -1,19 +1,19 @@
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
-import { useAiAssistant, AI_INTENTS, AiIntentStatus } from '@/composables/composable.ai-assistant';
-import { searchWord, stopAllAudio, useDictionaryQuery } from '@/composables/composable.dictionary';
-import { useStorage } from '@/composables/composable.storage';
-import { AiIntentId, TabId } from '@/types';
-import { IconCheck, IconClose, IconCopy, IconSearch } from '@/components/icons';
-import TokenizedContext from '@/components/component.tokenized-context';
-import PresetChips from '@/components/component.preset-chips';
-import type { DemoPreset } from '@/shared/presets';
 import {
   AiMarkdownIntent,
   ConfusablesIntent,
   RephraseIntent,
   SentenceBreakdownIntent,
 } from '@/components/async-views';
+import PresetChips from '@/components/component.preset-chips';
+import TokenizedContext from '@/components/component.tokenized-context';
+import { IconCheck, IconClose, IconCopy, IconSearch } from '@/components/icons';
+import { AI_INTENTS, AiIntentStatus, useAiAssistant } from '@/composables/composable.ai-assistant';
+import { searchWord, stopAllAudio, useDictionaryQuery } from '@/composables/composable.dictionary';
+import { useStorage } from '@/composables/composable.storage';
+import type { DemoPreset } from '@/shared/presets';
+import { AiIntentId, TabId } from '@/types';
 import { cx } from '@/ui/cx';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 
 interface AiAssistantViewProps {
   initialQuery?: string;
@@ -68,6 +68,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
     preloadFollowUpIntentsOnTabVisit,
     getAiIntentStatus,
     isAiIntentDisabled,
+    abortActiveAiRequest,
   } = useAiAssistant();
   const dictionaryQuery = useDictionaryQuery();
   const { settings } = useStorage();
@@ -122,6 +123,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
     }
     return () => {
       stopAllAudio();
+      abortActiveAiRequest();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -205,15 +207,6 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
 
   return (
     <div className="p-4 space-y-4 font-sans">
-      <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-xl bg-accent-subtle border border-accent/25 flex items-center justify-center shrink-0">
-          <span className="text-accent text-sm font-bold">✦</span>
-        </div>
-        <div>
-          <h2 className="text-sm font-bold text-content tracking-tight">AI language studio</h2>
-          <p className="text-[11px] text-content-muted">Explore nuance, grammar, and natural phrasing</p>
-        </div>
-      </div>
       <div className="relative flex items-center">
         <span className="absolute left-3 text-content-muted pointer-events-none">
           <IconSearch className="w-3.5 h-3.5" />

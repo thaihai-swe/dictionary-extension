@@ -22,6 +22,10 @@ export const DICTIONARY_FALLBACK_ORDER = [
   'tatoeba',
 ];
 
+export function getSecondaryDictionaryProviderIds(primaryProviderId: string): string[] {
+  return DICTIONARY_FALLBACK_ORDER.filter((providerId) => providerId !== primaryProviderId);
+}
+
 export function isPhraseLike(text: string): boolean {
   const normalized = String(text || '').replace(/\s+/g, ' ').trim();
   if (!normalized) return false;
