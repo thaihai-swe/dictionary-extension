@@ -24,6 +24,7 @@ import {
   type RuntimeResponse,
   type SpeakTtsPayload,
 } from './messages';
+import { browserRuntimePort } from '../infrastructure/browser/runtime-port';
 
 export { createRequestId } from './messages';
 
@@ -45,32 +46,8 @@ export async function openExtensionSettings(): Promise<void> {
   }
 }
 
-function runtimeUnavailable(): Error {
-  return new Error('Extension runtime is unavailable.');
-}
-
 function sendMessage<T>(message: unknown): Promise<RuntimeResponse<T>> {
-  if (typeof chrome === 'undefined' || typeof chrome.runtime?.sendMessage !== 'function' || isExtensionContextInvalidated()) {
-    return Promise.reject(runtimeUnavailable());
-  }
-  return new Promise((resolve, reject) => {
-    try {
-      chrome.runtime.sendMessage(message, (response: RuntimeResponse<T>) => {
-        const lastError = runtimeErrorMessage('');
-        if (lastError) {
-          reject(new Error(lastError));
-          return;
-        }
-        resolve(response || { ok: false, error: 'Empty runtime response.' });
-      });
-    } catch (error) {
-      if (isExtensionContextInvalidated(error)) {
-        reject(runtimeUnavailable());
-        return;
-      }
-      reject(error instanceof Error ? error : runtimeUnavailable());
-    }
-  });
+  return browserRuntimePort.send<T>(message);
 }
 
 function unwrap<T>(response: RuntimeResponse<T>, fallback = 'Request failed.'): T {

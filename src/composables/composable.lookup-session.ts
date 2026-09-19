@@ -1,28 +1,15 @@
-import { TabId } from '../types';
 import { stopAllAudio, abortActiveDictRequest } from './composable.dictionary';
 import { abortAiRuntimeIfLoaded } from './runtime-hooks';
 import { useStorage } from './composable.storage';
+import { createLookupSessionController } from '../application/lookup-session';
 
 export function useLookupSession() {
   const { settings, setActiveTab } = useStorage();
-
-  function abortAllLookups() {
-    stopAllAudio();
-    abortActiveDictRequest();
-    abortAiRuntimeIfLoaded();
-  }
-
-  function switchTab(nextTab: TabId) {
-    stopAllAudio();
-    if (nextTab === 'ai_assistant' && settings.enableAI === false) {
-      setActiveTab('dictionary');
-      return;
-    }
-    setActiveTab(nextTab);
-  }
-
-  return {
-    abortAllLookups,
-    switchTab,
-  };
+  return createLookupSessionController({
+    getSettings: () => settings,
+    setActiveTab,
+    stopAudio: stopAllAudio,
+    abortDictionary: abortActiveDictRequest,
+    abortAi: abortAiRuntimeIfLoaded,
+  });
 }

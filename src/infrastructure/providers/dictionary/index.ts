@@ -1,0 +1,8 @@
+export { fetchDatamuse } from '../../../providers/provider.datamuse';
+export { fetchFreeDictionary } from '../../../providers/provider.free-dictionary';
+export { fetchRhymeBrain } from '../../../providers/provider.rhymebrain';
+export { fetchUrbanDictionary } from '../../../providers/provider.urban-dictionary';
+export { fetchWiktionary } from '../../../providers/provider.wiktionary';
+export { fetchWiktionaryBilingual } from '../../../providers/provider.wiktionary-bilingual';
+export { fetchGoogleTranslate } from '../../../providers/provider.google-translate';
+export { fetchLibreTranslate } from '../../../providers/provider.libre-translate';

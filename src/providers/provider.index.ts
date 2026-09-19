@@ -14,6 +14,8 @@ export {
   normalizeDictionaryResult,
 } from './pipeline';
 export { providerRegistry } from './registry';
+export { dictionaryProviderCatalog } from '../infrastructure/providers/catalog';
+export { collectProviderOutcomes } from '../application/dictionary/provider-aggregator';
 
 export async function validateDictionaryProvider(
   providerId: string,

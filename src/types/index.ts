@@ -38,8 +38,17 @@ export type {
 export type {
   ProviderValidationResult,
   ProviderLookupDto,
+  DictionaryProviderSettings,
   DictionaryLookupOptions,
   TranslationLookupOptions,
   IDictionaryProvider,
   ITranslationProvider,
 } from './providers';
+
+export type {
+  DictionaryProviderCatalog,
+  DictionaryLookupContext,
+  DictionaryProviderOutcome,
+  DictionaryAggregate,
+  DictionaryProviderLookup,
+} from '../domain/dictionary/contracts';

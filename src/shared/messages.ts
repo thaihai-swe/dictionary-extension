@@ -20,6 +20,13 @@ export type LookupSource = 'dictionary' | 'ai';
 export type ProviderValidationKind = 'dictionary' | 'translation' | 'ai';
 export type CancelLookupScope = 'dictionary' | 'ai' | `ai:${string}`;
 
+/** Minimal sender contract shared by application handlers and browser adapters. */
+export interface RuntimeSender {
+  tab?: {
+    id?: number;
+  };
+}
+
 export interface LookupTextPayload {
   text: string;
   context?: string;

@@ -1,6 +1,12 @@
 import { normalizeDictionaryTerm } from './lemma.ts';
+import {
+  DICTIONARY_FALLBACK_ORDER,
+  getSecondaryDictionaryProviderIds,
+  isConfiguredDictionaryProvider,
+} from '../domain/dictionary/policies.ts';
 
 export { normalizeDictionaryTerm };
+export { DICTIONARY_FALLBACK_ORDER, getSecondaryDictionaryProviderIds, isConfiguredDictionaryProvider };
 
 export type LookupAttemptKind = 'exact';
 
@@ -8,19 +14,6 @@ export interface DictionaryLookupAttempt {
   providerId: string;
   query: string;
   kind: LookupAttemptKind;
-}
-
-export const DICTIONARY_FALLBACK_ORDER = [
-  'wiktionary',
-  'free_dictionary',
-  'datamuse',
-  'rhymebrain',
-  'urban_dictionary',
-  'wiktionary_bilingual',
-];
-
-export function getSecondaryDictionaryProviderIds(primaryProviderId: string): string[] {
-  return DICTIONARY_FALLBACK_ORDER.filter((providerId) => providerId !== primaryProviderId);
 }
 
 export function isPhraseLike(text: string): boolean {

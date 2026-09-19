@@ -6,15 +6,28 @@
 
 The runtime architecture is organized into clean, decoupled layers following modern Chrome Extension entrypoint standards:
 
+### Source boundaries
+
+The source tree follows a dependency direction of `UI → application → domain`, with browser, storage, network, and provider implementations in `infrastructure`:
+
+- `src/domain/` contains browser-independent dictionary policies, provider outcomes, and result rules.
+- `src/application/` contains lookup aggregation, translation coordination, runtime handlers, and session policies.
+- `src/infrastructure/` adapts provider registries, browser messaging, settings storage, and session caches.
+- `src/features/`, `src/components/`, and `src/ui/` contain React presentation and interaction code.
+- `src/entrypoints/` only wires browser lifecycle events to application services.
+
+Domain code must not import React, Chrome APIs, or concrete network adapters. Provider aggregation records every provider outcome (`contributed`, `no_match`, `failed`, or `cancelled`) while merging only usable payloads.
+
 1. **Toolbar Popup Entrypoint** (`src/entrypoints/toolbar-popup/`) — Standalone browser action UI (`app.toolbar-popup.tsx`, `main.tsx`) for manual search, mode switching, editable context, 7 contextual AI intents, global audio controls, and settings.
-2. **Content Script & In-Page Overlay** (`src/entrypoints/content-script/`) — Injected Shadow DOM overlay system (`bootstrap.ts`, `overlay-app.tsx`, `overlay.in-page.tsx`) handling text selection, floating trigger icon, exact context extraction, collision-safe viewport positioning, dragging & resizing, and result rendering.
-3. **Background Service Worker Entrypoint** (`src/entrypoints/background/service-worker.ts`) — Central background service worker handling context menu actions, CORS-bypassing fetch proxies (`FETCH_PROXY`), dictionary and AI lookup dispatch, network cancellation, and keyboard shortcut commands.
-4. **React Stores & Hooks** (`src/composables/`) — External-store state engines subscribed via `useSyncExternalStore` using lightweight reactive signals (`src/ui/signal.ts`). Shared request and cache policy lives in `src/shared/abort-registry.ts` and `src/shared/bounded-cache.ts`:
+2. **Content Script & In-Page Overlay** (`src/entrypoints/content-script/`) — Injected Shadow DOM overlay system (`bootstrap.ts`, `overlay-app.tsx`, `overlay.in-page.tsx`) handling text selection, floating trigger icon, exact context extraction, collision-safe viewport positioning (`popup-geometry.ts`), dragging & resizing, and result rendering.
+3. **Background Service Worker Entrypoint** (`src/entrypoints/background/service-worker.ts`) — Browser lifecycle and message wiring. Lookup/AI/provider-validation handlers live in `src/application/runtime/lookup-handlers.ts`, and cancellation is coordinated by `RequestCoordinator`.
+4. **React Stores & Hooks** (`src/composables/`) — External-store state engines subscribed via `useSyncExternalStore` using lightweight reactive signals (`src/ui/signal.ts`). Application session policy lives in `src/application/lookup-session/`; shared request and cache policy lives in `src/shared/abort-registry.ts` and `src/shared/bounded-cache.ts`:
    - `composable.lookup-session.ts`: Session facade for tab switching and `abortAllLookups()` (stops audio and in-flight dictionary/AI requests). Overlay close/unmount calls `abortAllLookups()`.
-   - `composable.dictionary.ts`: Lookup/audio facade; cache policy and speech-practice scoring live in `dictionary-cache.ts` and `dictionary-practice.ts`.
+    - `composable.dictionary.ts`: Lookup facade; audio playback and speech-practice controls live in `dictionary-audio.ts`, while cache policy and speech-practice scoring live in `dictionary-cache.ts` and `dictionary-practice.ts`.
+    - `dictionary-preload.ts`: Debounced, generation-guarded AI preload scheduling for dictionary selections.
    - `composable.ai-assistant.ts`: Intent facade; persistent AI cache/key normalization lives in `ai-cache.ts` while preload and request lifecycle remain feature-owned.
    - `composable.storage.ts`: Reactive `chrome.storage` settings synchronization.
-5. **Provider Adapters** (`src/providers/`) — Keyless vendor adapters registered through `ProviderRegistry` (`src/providers/registry.ts` + `register-adapters.ts`). Dictionary providers (`free_dictionary`, `wiktionary`, `wiktionary_bilingual`, `datamuse`, `urban_dictionary`, `rhymebrain`), translation (`google_translate`, `mymemory`, `libre_translate`), and Gemini AI (`gemini-3.5-flash-lite`). Lookup orchestration lives in `pipeline.ts`, bounded scheduling in `provider-scheduler.ts`, and L1/L2 caches live in `cache.ts`.
+5. **Provider Adapters** (`src/providers/` + `src/infrastructure/providers/`) — Vendor adapters are registered through the infrastructure catalog. `src/application/dictionary/provider-aggregator.ts` runs every secondary dictionary source with bounded concurrency and records per-provider outcomes. L1/L2 cache access is exposed through `src/infrastructure/storage/cache-repository.ts`.
 6. **Feature UI** (`src/features/`) — Domain-sliced React views: dictionary cards (`src/features/dictionary/`), AI intents (`src/features/ai-assistant/`), and settings (`src/features/settings/`). Shared primitives (`AppHeader`, `TabNavigation`, `MarkdownRenderer`, `RelatedWords`, `TokenizedContext`) remain in `src/components/`.
 
 ---
@@ -95,7 +108,7 @@ User selects text on webpage OR types query in toolbar popup
 
 ### Phase 1: Initial Fast Lookup
 
-1. **Facade Dispatch:** The background worker calls `fetchCombinedDictionaryResult(text, settings)` via `src/providers/provider.index.ts`.
+1. **Application Dispatch:** The background worker calls `fetchCombinedDictionaryResult(text, settings)` via `src/application/dictionary/`.
 2. **Primary Provider Selection:** The configured `dictionaryProvider` (`wiktionary` by default) is attempted first.
 3. **Provider Fallback Chain:** All remaining dictionary backends are keyless. `NotFoundError` and transient network/5xx/429/timeout continue to the next provider. The fallback chain evaluates in order:
    ```text

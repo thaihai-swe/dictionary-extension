@@ -2,6 +2,8 @@ import { extractSelectionContext } from '../../shared/page-context';
 import { isExtensionContextInvalidated } from '../../shared/messages';
 import { cancelDictionaryLookup, createRequestId, startDictionaryLookup } from '../../shared/dictionary-lookup-client';
 import { BOOT_DEFAULTS, loadBootSettings, normalizeHostnames, type BootSettings } from './boot-settings';
+import { calculateDraggedPopupPosition, calculatePopupPosition, calculateTriggerPosition } from './popup-geometry';
+import { TRIGGER_CSS } from './trigger-style';
 
 type OverlayApi = {
   update: (props: Record<string, unknown>) => void;
@@ -33,70 +35,6 @@ type BootUi = {
 };
 
 const BOOT_FLAG = '__dictionaryAssistantBoot';
-
-const TRIGGER_CSS = `
-.dictionary-trigger-icon-btn {
-  position: fixed;
-  z-index: 2147483646;
-  width: 40px;
-  height: 40px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 12px 28px rgba(13, 148, 136, 0.32), 0 0 0 1px rgba(255, 255, 255, 0.16) inset;
-  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 180ms ease;
-  outline: none;
-  animation: dictionary-trigger-enter 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.dictionary-trigger-icon-btn:hover { transform: scale(1.08); }
-.dictionary-trigger-icon-btn:active { transform: scale(0.95); }
-.dictionary-trigger-icon-btn:focus-visible { outline: 3px solid rgba(42, 161, 152, 0.55); outline-offset: 3px; }
-.dictionary-trigger-icon-btn.dark {
-  background: #2aa198;
-  color: #002b36;
-  border: 2px solid #073642;
-  box-shadow: 0 12px 28px rgba(42, 161, 152, 0.42);
-}
-.dictionary-trigger-icon-btn.light {
-  background: #0d9488;
-  color: #ffffff;
-  border: 2px solid #ffffff;
-  box-shadow: 0 12px 28px rgba(13, 148, 136, 0.32);
-}
-.dictionary-popup-layer {
-  position: fixed;
-  z-index: 2147483647;
-  pointer-events: auto;
-}
-.dictionary-popup-layer > div {
-  width: 100%;
-  height: 100%;
-}
-.dictionary-popup-layer.maximized {
-  inset: 1.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.dictionary-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 2147483646;
-  background: rgba(0, 0, 0, 0.6);
-}
-@keyframes dictionary-trigger-enter {
-  0% { opacity: 0; transform: scale(0.65); }
-  70% { transform: scale(1.08); }
-  100% { opacity: 1; transform: scale(1); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .dictionary-trigger-icon-btn { animation: none; transition: none; }
-  .dictionary-trigger-icon-btn:hover,
-  .dictionary-trigger-icon-btn:active { transform: none; }
-}
-`;
 
 const bootWindow = window as Window & { [BOOT_FLAG]?: boolean };
 if (bootWindow[BOOT_FLAG] || document.getElementById('dictionary-extension-root')) {
@@ -249,17 +187,14 @@ function startBootstrap() {
   function positionPopup(x: number, y: number) {
     const { popupLayer } = ensureUi();
     const { width, height } = popupSize();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    let left = x;
-    let top = y + 14;
-    if (top + height > vh - 24) top = y - height - 14;
-    left = Math.max(24, Math.min(left, vw - width - 24));
-    top = Math.max(24, Math.min(top, vh - height - 24));
-    popupX = left;
-    popupY = top;
-    popupLayer.style.left = `${left}px`;
-    popupLayer.style.top = `${top}px`;
+    const position = calculatePopupPosition({ x, y }, { width, height }, {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    });
+    popupX = position.left;
+    popupY = position.top;
+    popupLayer.style.left = `${position.left}px`;
+    popupLayer.style.top = `${position.top}px`;
     popupLayer.style.width = `${width}px`;
     popupLayer.style.height = `${height}px`;
   }
@@ -454,14 +389,16 @@ function startBootstrap() {
       dragRaf = 0;
       if (!isDragging || !bootUi) return;
       const { width, height } = popupSize();
-      let newX = popupStartX + (pendingPointerX - dragStartX);
-      let newY = popupStartY + (pendingPointerY - dragStartY);
-      newX = Math.max(8, Math.min(newX, window.innerWidth - width - 8));
-      newY = Math.max(8, Math.min(newY, window.innerHeight - height - 8));
-      popupX = newX;
-      popupY = newY;
-      bootUi.popupLayer.style.left = `${newX}px`;
-      bootUi.popupLayer.style.top = `${newY}px`;
+      const position = calculateDraggedPopupPosition(
+        { x: popupStartX, y: popupStartY },
+        { x: pendingPointerX - dragStartX, y: pendingPointerY - dragStartY },
+        { width, height },
+        { width: window.innerWidth, height: window.innerHeight },
+      );
+      popupX = position.left;
+      popupY = position.top;
+      bootUi.popupLayer.style.left = `${position.left}px`;
+      bootUi.popupLayer.style.top = `${position.top}px`;
     });
   }
 
@@ -537,29 +474,14 @@ function startBootstrap() {
     selectedText = text;
 
     const { triggerBtn } = ensureUi();
-    const iconSize = 38;
-    const margin = 10;
-    let x = window.innerWidth / 2;
-    let y = window.innerHeight / 2;
-    if (event && typeof event.clientX === 'number') {
-      x = event.clientX + 12;
-      y = event.clientY + 8;
-      if (x + iconSize > window.innerWidth - margin) x = event.clientX - iconSize - 12;
-      if (y + iconSize > window.innerHeight - margin) y = event.clientY - iconSize - 8;
-    } else if (selection && selection.rangeCount > 0) {
-      const rect = selection.getRangeAt(0).getBoundingClientRect();
-      if (rect && (rect.width || rect.height)) {
-        x = rect.right + margin;
-        y = rect.top + Math.max(0, (rect.height - iconSize) / 2);
-        if (x + iconSize > window.innerWidth - margin) x = rect.left - iconSize - margin;
-        if (x < margin) {
-          x = Math.max(margin, Math.min(rect.left, window.innerWidth - iconSize - margin));
-          y = rect.bottom + margin;
-        }
-      }
-    }
-    triggerX = Math.max(margin, Math.min(x, window.innerWidth - iconSize - margin));
-    triggerY = Math.max(margin, Math.min(y, window.innerHeight - iconSize - margin));
+    const rect = selection && selection.rangeCount > 0 ? selection.getRangeAt(0).getBoundingClientRect() : undefined;
+    const triggerPosition = calculateTriggerPosition({
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+      event: event && typeof event.clientX === 'number' ? event : undefined,
+      selectionRect: rect,
+    });
+    triggerX = triggerPosition.x;
+    triggerY = triggerPosition.y;
 
     if (mode === 'direct') {
       if (text.length > 80) {

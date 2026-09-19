@@ -1,19 +1,5 @@
-import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
-import {
-  canAccessSecretSettings,
-  clearLookupCaches,
-  parsePublicSettingsImport,
-  serializePublicSettings,
-  useStorage,
-  whenSettingsReady,
-} from '@/composables/composable.storage';
-import { SECRET_SETTING_KEYS } from '@/shared/settings-export';
-import { requestProviderValidation } from '@/shared/runtime-client';
-import { requestOriginPermission } from '@/shared/permissions';
-import { DEFAULT_AI_PROMPTS } from '@/prompts/prompt-templates';
-import { KNOWN_LANGUAGE_MAPPINGS } from '@/shared/languages';
-import { AppSettings } from '@/types';
-import { useAppTheme } from '@/ui/theme';
+import React, { lazy, Suspense } from 'react';
+import type { AppSettings } from '@/types';
 import { cx } from '@/ui/cx';
 import {
   IconBook,
@@ -23,13 +9,12 @@ import {
   IconSparkles,
   IconSun,
 } from '@/components/icons';
+import { useSettingsForm, type SettingsTab } from './use-settings-form';
 
 const TabGeneral = lazy(() => import('./tabs/TabGeneral'));
 const TabAppearance = lazy(() => import('./tabs/TabAppearance'));
 const TabSources = lazy(() => import('./tabs/TabSources'));
 const TabAi = lazy(() => import('./tabs/TabAi'));
-
-type SettingsTab = 'general' | 'appearance' | 'sources' | 'ai';
 
 const promptEditors: Array<{ key: keyof AppSettings; label: string; intent: AppSettings['preloadedAiIntents'][number] }> = [
   { key: 'aiPromptTemplate', label: 'Main AI', intent: 'default' },
@@ -42,12 +27,6 @@ const promptEditors: Array<{ key: keyof AppSettings; label: string; intent: AppS
   { key: 'aiRewritePromptTemplate', label: 'Rewriter', intent: 'rewrite' },
 ];
 
-const presetModels = ['gemini-3.5-flash-lite'];
-const MANIFEST_ENDPOINT_ORIGINS = [
-  'https://generativelanguage.googleapis.com',
-  'https://libretranslate.com',
-];
-
 const TABS: Array<{ id: SettingsTab; label: string; icon: React.FC<{ className?: string }> }> = [
   { id: 'general', label: 'Triggers & Shortcuts', icon: IconSearch },
   { id: 'appearance', label: 'Appearance', icon: IconSun },
@@ -55,303 +34,38 @@ const TABS: Array<{ id: SettingsTab; label: string; icon: React.FC<{ className?:
   { id: 'ai', label: 'AI Intelligence', icon: IconSparkles },
 ];
 
-function areSettingValuesEqual(left: unknown, right: unknown): boolean {
-  if (Object.is(left, right)) return true;
-  if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
-  return left.every((value, index) => Object.is(value, right[index]));
-}
-
-function getInitialTab(): SettingsTab {
-  if (typeof window !== 'undefined') {
-    const hash = window.location.hash.replace('#', '') as SettingsTab;
-    if (['general', 'appearance', 'sources', 'ai'].includes(hash)) return hash;
-    const saved = sessionStorage.getItem('dict_settings_active_tab') as SettingsTab;
-    if (['general', 'appearance', 'sources', 'ai'].includes(saved)) return saved;
-  }
-  return 'general';
-}
-
 export const SettingsModal: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<SettingsTab>(getInitialTab);
-  const { settings, saveSettings } = useStorage();
-
-  const [localSettings, setLocalSettings] = useState<AppSettings>({ ...settings });
-  const [formHydrated, setFormHydrated] = useState(false);
-  const [isSavedNotice, setIsSavedNotice] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [cacheClearedNotice, setCacheClearedNotice] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
-  const [pausedSitesInput, setPausedSitesInput] = useState<string>('');
-  const [isManualModelInput, setIsManualModelInput] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<Record<string, string>>({});
-  const [connectionBusy, setConnectionBusy] = useState<Record<string, boolean>>({});
-  const canEditApiKey = canAccessSecretSettings();
-  const isDirty = useMemo(() => {
-    if (!formHydrated) return false;
-    return (Object.keys(localSettings) as Array<keyof AppSettings>).some((key) => {
-      if (SECRET_SETTING_KEYS.includes(key as never) && !canEditApiKey) return false;
-      return !areSettingValuesEqual(localSettings[key], settings[key]);
-    }) || pausedSitesInput !== (settings.pausedHostnames || []).join('\n');
-  }, [localSettings, settings, pausedSitesInput, canEditApiKey, formHydrated]);
-
-  function switchTab(tab: SettingsTab) {
-    setActiveTab(tab);
-    if (typeof window !== 'undefined') {
-      window.location.hash = tab;
-      try {
-        sessionStorage.setItem('dict_settings_active_tab', tab);
-      } catch {}
-    }
-  }
-
-  const languageOptions = useMemo(() => {
-    const custom = String(localSettings.customLanguages || '')
-      .split(',')
-      .map((item) => item.trim())
-      .filter(Boolean);
-    const known = KNOWN_LANGUAGE_MAPPINGS.map((item) => item.name);
-    return [...new Set([...custom, ...known, localSettings.translateTargetLanguage].filter(Boolean))];
-  }, [localSettings.customLanguages, localSettings.translateTargetLanguage]);
-
-  function loadVoices() {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      const voices = window.speechSynthesis.getVoices();
-      setAvailableVoices(voices.filter((v) => v.lang.startsWith('en') || v.lang.startsWith('vi')));
-    }
-  }
-
-  function applyStoreToLocal() {
-    setLocalSettings((prev) => {
-      const pendingSecrets: Partial<AppSettings> = {};
-      for (const key of SECRET_SETTING_KEYS) {
-        if (String(prev[key] || '').trim()) {
-          pendingSecrets[key] = prev[key] as never;
-        }
-      }
-      const merged = { ...settings, ...pendingSecrets };
-      setPausedSitesInput(Array.isArray(merged.pausedHostnames) ? merged.pausedHostnames.join('\n') : '');
-      setIsManualModelInput(Boolean(merged.aiModel && !presetModels.includes(merged.aiModel)));
-      return merged;
-    });
-    setFormHydrated(true);
-  }
-
-  async function syncLocalFromStore() {
-    await whenSettingsReady();
-    applyStoreToLocal();
-  }
-
-  useEffect(() => {
-    loadVoices();
-    const synth = typeof window !== 'undefined' && 'speechSynthesis' in window ? window.speechSynthesis : null;
-    synth?.addEventListener('voiceschanged', loadVoices);
-    void syncLocalFromStore();
-    return () => {
-      synth?.removeEventListener('voiceschanged', loadVoices);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!formHydrated) return;
-    setLocalSettings((prev) => {
-      let updated = false;
-      const next = { ...prev };
-      for (const [key, value] of Object.entries(settings) as Array<[keyof AppSettings, unknown]>) {
-        if (SECRET_SETTING_KEYS.includes(key as never)) continue;
-        if (next[key] !== value) {
-          next[key] = value as never;
-          updated = true;
-        }
-      }
-      return updated ? next : prev;
-    });
-  }, [settings, formHydrated]);
-
-  function patchLocalSettings(patch: Partial<AppSettings>) {
-    setLocalSettings((prev) => ({ ...prev, ...patch }));
-  }
-
-  function toggleManualModelMode() {
-    setIsManualModelInput((prev) => !prev);
-  }
-
-  function restorePrompt(promptKey: keyof AppSettings) {
-    const defaultPrompt = DEFAULT_AI_PROMPTS[promptKey as keyof typeof DEFAULT_AI_PROMPTS];
-    if (defaultPrompt) {
-      patchLocalSettings({ [promptKey]: defaultPrompt });
-    }
-  }
-
-  function restoreAllPrompts() {
-    patchLocalSettings({ ...DEFAULT_AI_PROMPTS });
-  }
-
-  async function handleSave() {
-    if (isSaving || !isDirty) return;
-    setIsSaving(true);
-    setSaveError(null);
-    const pausedList = pausedSitesInput
-      .split('\n')
-      .map((line) => line.trim().toLowerCase())
-      .filter((line) => line.length > 0 && !line.startsWith('#'));
-
-    const toSave: Partial<AppSettings> = {
-      ...localSettings,
-      pausedHostnames: pausedList,
-    };
-
-    if (!canEditApiKey) {
-      for (const key of SECRET_SETTING_KEYS) {
-        delete toSave[key];
-      }
-    }
-
-    try {
-      if (toSave.aiBaseUrl) {
-        const allowed = await requestOriginPermission(toSave.aiBaseUrl, MANIFEST_ENDPOINT_ORIGINS);
-        if (!allowed) throw new Error('Permission was not granted for the custom AI endpoint.');
-      }
-      if (toSave.translateProvider === 'libretranslate') {
-        const allowed = await requestOriginPermission(toSave.libreTranslateBaseUrl, MANIFEST_ENDPOINT_ORIGINS);
-        if (!allowed) throw new Error('Permission was not granted for the custom translation endpoint.');
-      }
-      await saveSettings(toSave);
-      setIsSavedNotice(true);
-      setTimeout(() => {
-        setIsSavedNotice(false);
-      }, 2000);
-    } catch (error) {
-      setSaveError(error instanceof Error ? error.message : 'Settings could not be saved.');
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  function handleClearLookupCaches() {
-    clearLookupCaches();
-    setCacheClearedNotice(true);
-    setTimeout(() => setCacheClearedNotice(false), 2000);
-  }
-
-  // Keyboard shortcut: Cmd/Ctrl + S to save
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-        e.preventDefault();
-        void handleSave();
-      }
-    }
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [localSettings, pausedSitesInput, isSaving, canEditApiKey, isDirty, formHydrated]);
-
-  useEffect(() => {
-    if (!isDirty) return;
-    function warnBeforeUnload(event: BeforeUnloadEvent) {
-      event.preventDefault();
-      event.returnValue = '';
-    }
-    window.addEventListener('beforeunload', warnBeforeUnload);
-    return () => window.removeEventListener('beforeunload', warnBeforeUnload);
-  }, [isDirty]);
-
-  function resetForm() {
-    applyStoreToLocal();
-  }
-
-  function exportSettings() {
-    const data = JSON.stringify(serializePublicSettings(localSettings), null, 2);
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `dictionary-settings-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function triggerImportFile() {
-    const input = document.getElementById('settings-import-input') as HTMLInputElement;
-    input?.click();
-  }
-
-  function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      try {
-        const text = evt.target?.result as string;
-        const parsed = parsePublicSettingsImport(text);
-        patchLocalSettings(parsed);
-      } catch (err) {
-        alert(err instanceof Error ? err.message : 'Invalid settings JSON file.');
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-  }
-
-  async function testAiConnection() {
-    setConnectionBusy((prev) => ({ ...prev, ai: true }));
-    setConnectionStatus((prev) => ({ ...prev, ai: 'Testing…' }));
-    try {
-      const result = await requestProviderValidation('ai', undefined, localSettings);
-      setConnectionStatus((prev) => ({
-        ...prev,
-        ai: result.ok ? result.message || 'Connected' : result.error || 'Failed',
-      }));
-    } catch (error) {
-      setConnectionStatus((prev) => ({
-        ...prev,
-        ai: error instanceof Error ? error.message : 'Connection failed.',
-      }));
-    } finally {
-      setConnectionBusy((prev) => ({ ...prev, ai: false }));
-    }
-  }
-
-  async function testDictionaryConnection(providerId: string) {
-    setConnectionBusy((prev) => ({ ...prev, [providerId]: true }));
-    setConnectionStatus((prev) => ({ ...prev, [providerId]: 'Testing…' }));
-    try {
-      const result = await requestProviderValidation('dictionary', providerId, localSettings);
-      setConnectionStatus((prev) => ({
-        ...prev,
-        [providerId]: result.ok ? result.message || 'Connected' : result.error || 'Failed',
-      }));
-    } catch (error) {
-      setConnectionStatus((prev) => ({
-        ...prev,
-        [providerId]: error instanceof Error ? error.message : 'Connection failed.',
-      }));
-    } finally {
-      setConnectionBusy((prev) => ({ ...prev, [providerId]: false }));
-    }
-  }
-
-  async function testTranslationConnection() {
-    const key = `translation:${localSettings.translateProvider || 'google'}`;
-    setConnectionBusy((prev) => ({ ...prev, [key]: true }));
-    setConnectionStatus((prev) => ({ ...prev, [key]: 'Testing…' }));
-    try {
-      const result = await requestProviderValidation('translation', undefined, localSettings);
-      setConnectionStatus((prev) => ({
-        ...prev,
-        [key]: result.ok ? result.message || 'Connected' : result.error || 'Failed',
-      }));
-    } catch (error) {
-      setConnectionStatus((prev) => ({
-        ...prev,
-        [key]: error instanceof Error ? error.message : 'Connection failed.',
-      }));
-    } finally {
-      setConnectionBusy((prev) => ({ ...prev, [key]: false }));
-    }
-  }
-
-  const { isDarkMode } = useAppTheme(localSettings.theme, { syncDocument: true });
+  const {
+    activeTab,
+    switchTab,
+    localSettings,
+    pausedSitesInput,
+    setPausedSitesInput,
+    languageOptions,
+    isManualModelInput,
+    connectionStatus,
+    connectionBusy,
+    availableVoices,
+    isDirty,
+    isSaving,
+    isSavedNotice,
+    saveError,
+    cacheClearedNotice,
+    patchLocalSettings,
+    toggleManualModelMode,
+    restorePrompt,
+    restoreAllPrompts,
+    handleSave,
+    handleClearLookupCaches,
+    resetForm,
+    exportSettings,
+    triggerImportFile,
+    handleImportFile,
+    testAiConnection,
+    testDictionaryConnection,
+    testTranslationConnection,
+    isDarkMode,
+  } = useSettingsForm();
 
   return (
     <div

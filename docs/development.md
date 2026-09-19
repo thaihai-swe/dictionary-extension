@@ -5,6 +5,7 @@
 **Dictionary** is engineered with a modern, high-performance web extension stack:
 - **Runtime Stack:** React 18, TypeScript 5, Vite 5, Tailwind CSS, Chrome and Firefox Manifest V3.
 - **Module Architecture:** Organized under `src/entrypoints/` (`background/`, `content-script/`, `toolbar-popup/`).
+- **Layering:** Browser-independent policies live under `src/domain/`, use-case coordination under `src/application/`, and Chrome/provider/storage adapters under `src/infrastructure/`.
 - **Isolation:** Content script overlay is mounted inside Shadow DOM (`#dictionary-extension-root`) with encapsulated Tailwind CSS, preventing style leaks into or out of host pages.
 - **Type Safety:** Full TypeScript interfaces defined in `src/types/index.ts` checked with `npm run typecheck` (`tsc --noEmit`).
 - **Node Requirement:** Node.js `>= 22` and npm `>= 10` (`package.json` engines).

@@ -1,7 +1,7 @@
+import { languageBadge } from '@/shared/ai-example-blocks';
+import { cx } from '@/ui/cx';
 import React from 'react';
 import { IconSpeaker } from './icons';
-import { cx } from '@/ui/cx';
-import { languageBadge } from '@/shared/ai-example-blocks';
 
 interface ExampleSentenceProps {
   english: string;
@@ -32,7 +32,7 @@ export const ExampleSentence: React.FC<ExampleSentenceProps> = ({
           EN
         </span>
         <p className="flex-1 font-serif text-[14.5px] leading-6 text-content min-w-0 tracking-[0.002em]">
-          “{english}”
+          {english}
         </p>
         <button
           type="button"

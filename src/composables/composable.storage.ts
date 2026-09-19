@@ -5,14 +5,13 @@ import {
   DEFAULT_SETTINGS,
   SECRET_KEYS,
   getPublicSettings,
-  loadFullSettings,
-  loadPublicSettings,
   normalizeSettings,
   parsePublicSettingsImport,
   saveSettingsPartial,
   serializePublicSettings,
 } from '../shared/settings';
 import { hasConfiguredAiApiKey, shouldPersistSecretValue } from '../shared/settings-export';
+import { settingsRepository } from '../infrastructure/storage/settings-repository';
 
 export {
   DEFAULT_SETTINGS,
@@ -168,7 +167,7 @@ export function canAccessSecretSettings(): boolean {
 async function loadSettingsFromStorage(): Promise<AppSettings> {
   try {
     if (typeof chrome !== 'undefined' && chrome.storage) {
-      const loaded = canAccessSecretSettings() ? await loadFullSettings() : await loadPublicSettings();
+      const loaded = await settingsRepository.load({ includeSecrets: canAccessSecretSettings() });
       return normalizeSettingsArrayFields(loaded);
     }
   } catch (e) {
@@ -227,7 +226,7 @@ export async function saveSettingsToStorage(partial: Partial<AppSettings>): Prom
 
   if (typeof chrome !== 'undefined' && chrome.storage) {
     try {
-      await saveSettingsPartial({
+      await settingsRepository.save({
         ...(writable as Partial<AppSettings>),
         ...(secretWrites as Partial<AppSettings>),
       });
