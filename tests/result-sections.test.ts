@@ -43,3 +43,4 @@ test('secondary term collection is unchanged', () => {
   assert.deepEqual(sections.synonyms.map(({ text }) => text), ['similar', 'related']);
   assert.deepEqual(sections.antonyms.map(({ text }) => text), ['different', 'opposite']);
 });
+

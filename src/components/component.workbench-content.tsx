@@ -33,7 +33,7 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
   return (
     <>
       <TabNavigation activeTab={activeTab} onChangeTab={onChangeTab} />
-      <main className="flex-1 overflow-y-auto">
+      <main className="workbench-main flex-1 overflow-y-auto">
         {activeTab === 'dictionary' ? (
           <WordLookupView
             initialQuery={query}

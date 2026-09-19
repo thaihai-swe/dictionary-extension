@@ -43,3 +43,4 @@ test('popup surfaces share the workbench content renderer', () => {
     assert.doesNotMatch(source, /features\/(dictionary|ai-assistant|rewriter)/, path);
   }
 });
+

@@ -98,7 +98,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   );
 
   return (
-    <header className="flex items-center justify-between gap-2 px-3 py-2 bg-surface/95 backdrop-blur-md border-b border-border select-none relative z-30 transition-colors min-w-0">
+    <header className="glass-toolbar flex items-center justify-between gap-2 px-3 py-2 select-none relative z-30 transition-colors min-w-0">
       {/* Brand Identity */}
       <div className="flex items-center gap-2 min-w-0 shrink-0">
         <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/30 flex items-center justify-center text-accent shadow-xs flex-shrink-0">
