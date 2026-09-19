@@ -15,6 +15,7 @@ export const PLAY_AUDIO = 'PLAY_AUDIO';
 export const STOP_AUDIO = 'STOP_AUDIO';
 export const SPEAK_TTS = 'SPEAK_TTS';
 export const OFFSCREEN_AUDIO = 'OFFSCREEN_AUDIO';
+export const CLEAR_DICTIONARY_CACHE = 'CLEAR_DICTIONARY_CACHE';
 
 export type LookupSource = 'dictionary' | 'ai';
 export type ProviderValidationKind = 'dictionary' | 'translation' | 'ai';
@@ -43,13 +44,30 @@ export interface AiLookupPayload {
   requestId?: string;
 }
 
-export interface LookupUpdatePayload {
+export interface DictionaryEntryPatch {
+  changed: Partial<DictionaryEntry>;
+  removed?: Array<keyof DictionaryEntry>;
+}
+
+export interface LookupSnapshotPayload {
   requestId: string;
   source: LookupSource;
   text: string;
   revision: number;
   result: DictionaryEntry | AiResult;
+  kind?: 'snapshot';
 }
+
+export interface LookupPatchPayload {
+  requestId: string;
+  source: 'dictionary';
+  revision: number;
+  baseRevision: number;
+  patch: DictionaryEntryPatch;
+  kind: 'patch';
+}
+
+export type LookupUpdatePayload = LookupSnapshotPayload | LookupPatchPayload;
 
 export interface ValidateProviderPayload {
   kind: ProviderValidationKind;

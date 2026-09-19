@@ -1,6 +1,6 @@
 import type { AppSettings, DictionaryEntry } from '../../types';
-import { getSecondaryDictionaryProviderIds, mergeLexicalProfiles } from '../../shared/query-utils';
-import { cloneDictionaryEntry, mergeDictionaryEntries } from '../../shared/enrichment';
+import { getSecondaryDictionaryProviderIds } from '../../shared/query-utils';
+import { createDictionaryEntryAccumulator } from '../../shared/enrichment';
 import { hasEnrichmentPayload } from '../../domain/dictionary/result-policy';
 import { collectProviderOutcomes } from './provider-aggregator';
 import { normalizeDictionaryResult, providerLabel } from './normalizer';
@@ -23,13 +23,14 @@ export async function runDictionaryEnrichment(
   const cacheKey = enrichmentCacheKey(word, settings, primaryProviderId, queryTerm);
 
   const cached = await dictionaryCacheRepository.readEnrichment(cacheKey);
-  let currentCombined = cloneDictionaryEntry(baseResult);
+  const accumulator = createDictionaryEntryAccumulator(baseResult);
+  let currentCombined = accumulator.snapshot();
 
   const applyResults = (results: DictionaryEntry[]) => {
     for (const item of results) {
-      currentCombined = mergeDictionaryEntries(currentCombined, item);
-      currentCombined.lexicalProfile = mergeLexicalProfiles(currentCombined.lexicalProfile, item.lexicalProfile);
+      accumulator.add(item);
     }
+    currentCombined = accumulator.snapshot();
     currentCombined.translation = currentCombined.translation || baseResult.translation;
     currentCombined.phraseExplanation = currentCombined.phraseExplanation?.length
       ? currentCombined.phraseExplanation
@@ -48,12 +49,23 @@ export async function runDictionaryEnrichment(
   await collectProviderOutcomes(
     secondaryProviders,
     queryTerm,
-    (providerId, query, options) => lookupSingleProvider(providerId, query, options.targetLang, options.signal, options.settings),
+    (providerId, query, options) => lookupSingleProvider(
+      providerId,
+      query,
+      options.targetLang,
+      options.signal,
+      options.settings,
+      options.onPartial,
+    ),
     {
       targetLang,
       settings,
       signal,
       concurrency: ENRICHMENT_CONCURRENCY,
+      onProviderPartial: (providerId, partial) => {
+        const normalized = normalizeDictionaryResult(partial, settings, word, providerId);
+        if (hasEnrichmentPayload(normalized)) applyResults([normalized]);
+      },
       onOutcome: (outcome) => {
         if (outcome.status === 'contributed') {
           const normalized = normalizeDictionaryResult(outcome.result, settings, word, outcome.providerId);
@@ -63,7 +75,7 @@ export async function runDictionaryEnrichment(
           }
           return;
         }
-        currentCombined = mergeDictionaryEntries(currentCombined, {
+        accumulator.add({
           word,
           meanings: [],
           sources: [{
@@ -72,6 +84,7 @@ export async function runDictionaryEnrichment(
             status: outcome.status === 'no_match' ? 'not_found' : outcome.status,
           }],
         });
+        currentCombined = accumulator.snapshot();
         onEnrichUpdate(currentCombined);
       },
     },

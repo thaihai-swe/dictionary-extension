@@ -1,4 +1,5 @@
 import { isExtensionPage } from '../shared/ext.ts';
+import { recordLookupMetric } from '../shared/performance/lookup-metrics.ts';
 
 let nextRequestId = 1;
 
@@ -17,6 +18,7 @@ export type SafeFetchOptions = RequestInit & {
   timeoutMs?: number;
   retries?: number;
   retryStatuses?: number[];
+  requestClass?: 'dictionary' | 'datamuse-relation' | 'translation' | 'ai' | 'other';
 };
 
 const DEFAULT_RETRY_STATUSES = [429, 500, 502, 503, 504];
@@ -232,7 +234,14 @@ async function safeFetchOnce(url: string, options?: SafeFetchOptions): Promise<R
     userSignal.addEventListener('abort', onUserAbort, { once: true });
   }
 
-  const { timeoutMs: _timeoutMs, signal: _signal, retries: _retries, retryStatuses: _retryStatuses, ...rest } = options || {};
+  const {
+    timeoutMs: _timeoutMs,
+    signal: _signal,
+    retries: _retries,
+    retryStatuses: _retryStatuses,
+    requestClass: _requestClass,
+    ...rest
+  } = options || {};
   const fetchOptions: RequestInit = { ...rest, signal: timeoutController.signal };
 
   const cleanup = () => {
@@ -321,12 +330,22 @@ async function safeFetchOnce(url: string, options?: SafeFetchOptions): Promise<R
 
 export async function safeFetch(url: string, options?: SafeFetchOptions): Promise<Response> {
   const timeoutMs = options?.timeoutMs ?? DICTIONARY_FETCH_TIMEOUT_MS;
+  const requestClass = options?.requestClass || 'other';
   const isAiRequest = timeoutMs >= AI_FETCH_TIMEOUT_MS;
   const isTranslationRequest = timeoutMs >= TRANSLATION_FETCH_TIMEOUT_MS && !isAiRequest;
-  const defaultRetries = isAiRequest || !isTranslationRequest ? 0 : 1;
+  const defaultRetries = requestClass === 'translation'
+    ? 1
+    : requestClass === 'dictionary' || requestClass === 'datamuse-relation' || requestClass === 'ai'
+      ? 0
+      : isAiRequest || !isTranslationRequest ? 0 : 1;
   const retries = Number.isFinite(options?.retries) ? Number(options?.retries) : defaultRetries;
   const retryStatuses = options?.retryStatuses || DEFAULT_RETRY_STATUSES;
   const maxAttempts = Math.max(1, retries + 1);
+  recordLookupMetric('http.request.start', {
+    requestClass,
+    retries,
+    maxAttempts,
+  });
   const cacheKey = getHttpCacheKey(url, options);
   const existing = inflightHttpMap.get(cacheKey);
   if (existing) {

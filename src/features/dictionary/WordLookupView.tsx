@@ -86,7 +86,7 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
   return (
     <div className="font-sans">
       {/* Modern Command-Palette Search Bar */}
-      <div className="px-3.5 py-3 bg-surface/90 backdrop-blur-md border-b border-border/80 sticky top-0 z-20 shadow-2xs">
+      <div className="px-3.5 py-3 bg-surface border-b border-border/80 sticky top-0 z-20 shadow-2xs">
         <div className="flex items-center gap-2 min-w-0">
           <div className="relative flex-1 min-w-0 flex items-center group">
             <IconSearch className="w-4 h-4 text-content-muted absolute left-3.5 pointer-events-none group-focus-within:text-accent transition-colors" />
@@ -194,4 +194,4 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
   );
 };
 
-export default WordLookupView;
+export default React.memo(WordLookupView);

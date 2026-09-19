@@ -30,7 +30,7 @@ providerRegistry.registerDictionary({
 providerRegistry.registerDictionary({
   id: 'datamuse',
   name: 'Datamuse',
-  lookup: (word, opts) => fetchDatamuse(word, opts.targetLang, opts.signal),
+  lookup: (word, opts) => fetchDatamuse(word, opts.targetLang, opts.signal, opts.onPartial),
 });
 
 providerRegistry.registerDictionary({

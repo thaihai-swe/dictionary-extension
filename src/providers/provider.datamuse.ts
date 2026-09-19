@@ -8,6 +8,7 @@ import {
 } from '../types';
 import { normalizeDictionaryTerm } from '../shared/query-utils';
 import { NotFoundError, throwForHttpStatus } from './errors';
+import { runBounded } from './provider-scheduler';
 
 const DATAMUSE_BASE = 'https://api.datamuse.com/words';
 const MAX_DEFINITIONS_PER_POS = 4;
@@ -33,20 +34,32 @@ function posCodeToName(code: string): string {
 
 async function fetchDatamuseList(url: string, signal?: AbortSignal): Promise<string[]> {
   try {
-    const res = await safeFetch(url, { signal, timeoutMs: DICTIONARY_FETCH_TIMEOUT_MS });
+    const res = await safeFetch(url, {
+      signal,
+      timeoutMs: DICTIONARY_FETCH_TIMEOUT_MS,
+      retries: 0,
+      requestClass: 'datamuse-relation',
+    });
     if (!res.ok) return [];
     const list = await res.json();
     if (!Array.isArray(list)) return [];
     return list.map((item: { word?: string }) => String(item.word || '').trim()).filter(Boolean);
-  } catch {
+  } catch (error) {
+    if (signal?.aborted) throw error;
     return [];
   }
+}
+
+interface DatamuseRelation {
+  kind: 'synonyms' | 'antonyms' | 'adjectives' | 'patterns';
+  url: string;
 }
 
 export async function fetchDatamuse(
   word: string,
   _targetLang = 'vi',
   signal?: AbortSignal,
+  onPartial?: (result: ProviderLookupDto) => void,
 ): Promise<ProviderLookupDto> {
   const clean = normalizeDictionaryTerm(word);
   if (!clean) {
@@ -55,7 +68,12 @@ export async function fetchDatamuse(
 
   // Query definitions and lexical metadata
   const defUrl = `${DATAMUSE_BASE}?sp=${encodeURIComponent(clean)}&md=d,p&max=3`;
-  const res = await safeFetch(defUrl, { signal });
+  const res = await safeFetch(defUrl, {
+    signal,
+    timeoutMs: DICTIONARY_FETCH_TIMEOUT_MS,
+    retries: 0,
+    requestClass: 'dictionary',
+  });
   if (!res.ok) {
     throwForHttpStatus(res.status, `Datamuse: No entry found for '${clean}'`, `Datamuse lookup failed (HTTP ${res.status}).`);
   }
@@ -96,12 +114,61 @@ export async function fetchDatamuse(
     groupCount += 1;
   }
 
-  const [synonymsList, antonymsList, jjbList, trgList] = await Promise.all([
-    fetchDatamuseList(`${DATAMUSE_BASE}?rel_syn=${encodeURIComponent(clean)}&max=10`, signal),
-    fetchDatamuseList(`${DATAMUSE_BASE}?rel_ant=${encodeURIComponent(clean)}&max=8`, signal),
-    fetchDatamuseList(`${DATAMUSE_BASE}?rel_jjb=${encodeURIComponent(clean)}&max=8`, signal),
-    fetchDatamuseList(`${DATAMUSE_BASE}?rel_trg=${encodeURIComponent(clean)}&max=8`, signal),
-  ]);
+  const core: ProviderLookupDto = {
+    word: exact.word || clean,
+    phonetics: [],
+    meanings,
+    providerId: 'datamuse',
+  };
+  onPartial?.(core);
+
+  const relationValues: Record<DatamuseRelation['kind'], string[]> = {
+    synonyms: [],
+    antonyms: [],
+    adjectives: [],
+    patterns: [],
+  };
+  const relations: DatamuseRelation[] = [
+    { kind: 'synonyms', url: `${DATAMUSE_BASE}?rel_syn=${encodeURIComponent(clean)}&max=10` },
+    { kind: 'antonyms', url: `${DATAMUSE_BASE}?rel_ant=${encodeURIComponent(clean)}&max=8` },
+    { kind: 'adjectives', url: `${DATAMUSE_BASE}?rel_jjb=${encodeURIComponent(clean)}&max=8` },
+    { kind: 'patterns', url: `${DATAMUSE_BASE}?rel_trg=${encodeURIComponent(clean)}&max=8` },
+  ];
+  await runBounded(
+    relations,
+    (relation) => fetchDatamuseList(relation.url, signal),
+    {
+      concurrency: 2,
+      signal,
+      onSettled: (relation, settled) => {
+        if (settled.status !== 'fulfilled') return;
+        relationValues[relation.kind] = settled.value;
+        const partial: ProviderLookupDto = {
+          word: exact.word || clean,
+          providerId: 'datamuse',
+        };
+        if (relation.kind === 'synonyms') {
+          partial.synonyms = settled.value.map((text) => ({ text }));
+        } else if (relation.kind === 'antonyms') {
+          partial.antonyms = settled.value.map((text) => ({ text }));
+        } else {
+          partial.lexicalProfile = {
+            collocations: {
+              ...(relation.kind === 'adjectives' ? { adjectives: settled.value } : {}),
+              ...(relation.kind === 'patterns' ? { patterns: settled.value } : {}),
+            },
+          };
+        }
+        if (settled.value.length) onPartial?.(partial);
+      },
+    },
+  );
+  if (signal?.aborted) throw new DOMException('The user aborted a request.', 'AbortError');
+
+  const synonymsList = relationValues.synonyms;
+  const antonymsList = relationValues.antonyms;
+  const jjbList = relationValues.adjectives;
+  const trgList = relationValues.patterns;
 
   const synonyms: AttributedItem[] = synonymsList.map((text) => ({ text }));
   const antonyms: AttributedItem[] = antonymsList.map((text) => ({ text }));

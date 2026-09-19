@@ -169,6 +169,8 @@ export async function fetchWiktionaryBilingual(
   const res = await safeFetch(url, {
     signal,
     timeoutMs: DICTIONARY_FETCH_TIMEOUT_MS,
+    requestClass: 'dictionary',
+    retries: 0,
     headers: {
       Accept: 'application/json',
       'Api-User-Agent': 'DictionaryExtension/2.0 (language-learning)',
@@ -209,6 +211,8 @@ export async function fetchWiktionaryBilingual(
   const revisionRes = await safeFetch(revisionUrl, {
     signal,
     timeoutMs: DICTIONARY_FETCH_TIMEOUT_MS,
+    requestClass: 'dictionary',
+    retries: 0,
     headers: {
       Accept: 'application/json',
       'Api-User-Agent': 'DictionaryExtension/2.0 (language-learning)',

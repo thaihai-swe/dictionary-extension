@@ -19,7 +19,7 @@ import {
 } from '@/composables/composable.dictionary';
 import { useStorage } from '@/composables/composable.storage';
 import { showToast } from '@/composables/composable.toast';
-import { Phonetic } from '@/types';
+import { Phonetic, TranslationResult } from '@/types';
 import { cx } from '@/ui/cx';
 import React, { Suspense, useMemo } from 'react';
 import SenseMatrixCard from './SenseMatrixCard';
@@ -31,6 +31,22 @@ interface WordLookupResultProps {
   onSelectWord?: (word: string) => void;
   contextSentence?: string;
 }
+
+const TranslationBanner = React.memo(({ translation }: { translation: TranslationResult }) => (
+  <section className="p-3.5 rounded-2xl border border-border/80 bg-gradient-to-r from-accent-subtle/50 to-transparent flex items-baseline justify-between gap-3 shadow-xs">
+    <div className="space-y-1 min-w-0 flex-1">
+      <span className="text-[10px] font-bold text-accent uppercase tracking-wider font-mono">
+        Translation
+      </span>
+      <p className="font-serif text-[16px] text-content font-semibold leading-6 break-words">
+        {translation.translatedText}
+      </p>
+    </div>
+    <span className="text-[10px] text-content-muted flex-shrink-0 font-mono px-2 py-0.5 rounded-md bg-surface border border-border/60 shadow-2xs">
+      {translation.sourceBadges?.map((badge) => badge.label).join(' · ') || 'Google'}
+    </span>
+  </section>
+));
 
 export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord, contextSentence }) => {
   const { result, isEnriching } = useDictionaryResult();
@@ -140,7 +156,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
   return (
     <div className="space-y-3.5">
       {/* Headword Hero Section */}
-      <div className="p-4 rounded-2xl border border-border/80 bg-surface/90 backdrop-blur-sm shadow-xs space-y-3">
+      <div className="p-4 rounded-2xl border border-border/80 bg-surface shadow-xs space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1 min-w-0">
             <h2 className="text-2xl sm:text-3xl font-bold text-content font-heading tracking-tight leading-tight min-w-0 break-words">
@@ -164,7 +180,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
               title="Copy definition as Markdown flashcard"
               aria-label="Copy definition as Markdown flashcard"
               className={cx(
-                'h-8 px-2.5 rounded-xl border text-[12.5px] font-semibold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs active:scale-95 select-none',
+                'h-8 px-2.5 rounded-xl border text-[12.5px] font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs active:scale-95 select-none',
                 hasCopied
                   ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-bold'
                   : 'bg-muted/60 hover:bg-elevated border-border/80 text-content-secondary hover:text-content',
@@ -206,7 +222,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                   })
                 }
                 className={cx(
-                  'h-8 pl-2 pr-3 py-1 rounded-xl border font-medium transition-all flex items-center gap-2 cursor-pointer shadow-2xs group active:scale-95',
+                  'h-8 pl-2 pr-3 py-1 rounded-xl border font-medium transition-colors flex items-center gap-2 cursor-pointer shadow-2xs group active:scale-95',
                   isPlaying
                     ? 'bg-accent text-accent-foreground border-accent font-bold audio-playing-indicator'
                     : 'bg-muted/40 hover:bg-accent-subtle hover:border-accent/40 text-content-secondary hover:text-content border-border/80',
@@ -247,7 +263,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
               type="button"
               onClick={() => startSpeechPractice(displayHeadword, 'en-US')}
               className={cx(
-                'h-8 px-3 rounded-xl border text-[11.5px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95',
+                'h-8 px-3 rounded-xl border text-[11.5px] font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95',
                 isPracticing
                   ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/40 animate-pulse font-bold'
                   : 'bg-muted/40 hover:bg-elevated text-content-secondary hover:text-content border-border/80 hover:border-amber-500/40',
@@ -276,19 +292,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
 
       {/* Bilingual Translation Banner */}
       {result.translation?.translatedText ? (
-        <section className="p-3.5 rounded-2xl border border-border/80 bg-gradient-to-r from-accent-subtle/50 to-transparent flex items-baseline justify-between gap-3 shadow-xs">
-          <div className="space-y-1 min-w-0 flex-1">
-            <span className="text-[10px] font-bold text-accent uppercase tracking-wider font-mono">
-              Translation
-            </span>
-            <p className="font-serif text-[16px] text-content font-semibold leading-6 break-words">
-              {result.translation.translatedText}
-            </p>
-          </div>
-          <span className="text-[10px] text-content-muted flex-shrink-0 font-mono px-2 py-0.5 rounded-md bg-surface border border-border/60 shadow-2xs">
-            {result.translation.sourceBadges?.map((b) => b.label).join(' · ') || 'Google'}
-          </span>
-        </section>
+        <TranslationBanner translation={result.translation} />
       ) : null}
 
       {/* Speech Practice Evaluation Feedback Banner */}
@@ -474,4 +478,4 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
   );
 };
 
-export default WordLookupResult;
+export default React.memo(WordLookupResult);

@@ -2,6 +2,7 @@ import { signal, useSignal } from '../ui/signal';
 import { registerCacheInvalidator, settingsStore } from './composable.storage';
 import {
   cancelDictionaryLookup,
+  clearDictionaryCacheRemote,
   createRequestId,
   startDictionaryLookup,
   subscribeLookupUpdates,
@@ -25,6 +26,7 @@ import {
   supportsSpeechPractice,
 } from './dictionary-practice';
 import { dictCache, dictPendingMap, dictPendingRequestIds, getDictCacheKey } from './dictionary-cache';
+import { applyDictionaryEntryPatch } from '../shared/lookup-updates';
 
 export { supportsSpeechPractice } from './dictionary-practice';
 
@@ -47,6 +49,7 @@ let activeLookupCleanup: (() => void) | null = null;
 export function clearDictionaryCache() {
   abortActiveDictRequest();
   dictCache.clear();
+  void clearDictionaryCacheRemote();
   dictPendingMap.clear();
   dictPendingRequestIds.clear();
 }
@@ -172,7 +175,10 @@ export async function searchWord(
   const unsubscribe = subscribeLookupUpdates((payload) => {
     if (!lookupGeneration.isCurrent(generation)) return;
     if (payload.requestId !== requestId || payload.source !== 'dictionary') return;
-    const enriched = payload.result as DictionaryEntry;
+    const enriched = payload.kind === 'patch'
+      ? applyDictionaryEntryPatch(resultRef.value, payload)
+      : (payload.result as DictionaryEntry);
+    if (!enriched) return;
     if ((resultRef.value?.revision || 0) > (enriched.revision || 0)) return;
     pendingUpdate = enriched;
     if (typeof requestAnimationFrame === 'function') {

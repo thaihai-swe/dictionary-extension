@@ -95,7 +95,12 @@ export async function fetchUrbanDictionary(
   if (!clean) throw new NotFoundError('Urban Dictionary: empty query');
 
   const url = `https://api.urbandictionary.com/v0/define?term=${encodeURIComponent(clean)}`;
-  const res = await safeFetch(url, { signal, timeoutMs: DICTIONARY_FETCH_TIMEOUT_MS });
+  const res = await safeFetch(url, {
+    signal,
+    timeoutMs: DICTIONARY_FETCH_TIMEOUT_MS,
+    requestClass: 'dictionary',
+    retries: 0,
+  });
   if (!res.ok) {
     throwForHttpStatus(
       res.status,

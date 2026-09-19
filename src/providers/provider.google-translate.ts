@@ -34,7 +34,7 @@ export async function lookupGoogleTranslation(text: string, targetLang = 'vi', s
   const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(target)}&dt=t&q=${encodeURIComponent(clean)}`;
   
   try {
-    const res = await safeFetch(url, { signal, timeoutMs: TRANSLATION_FETCH_TIMEOUT_MS });
+    const res = await safeFetch(url, { signal, timeoutMs: TRANSLATION_FETCH_TIMEOUT_MS, requestClass: 'translation' });
     const data = await res.json();
     let translation = clean;
     if (Array.isArray(data) && Array.isArray(data[0])) {

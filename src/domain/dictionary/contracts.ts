@@ -20,6 +20,7 @@ export interface DictionaryLookupContext {
   targetLang: string;
   settings?: DictionaryProviderSettings;
   signal?: AbortSignal;
+  onPartial?: (result: ProviderLookupDto) => void;
 }
 
 export type DictionaryProviderOutcome =

@@ -13,7 +13,7 @@ export async function fetchWiktionary(word: string, _targetLang = 'vi', signal?:
   const url = `https://en.wiktionary.org/api/rest_v1/page/definition/${encodeURIComponent(clean)}`;
 
   try {
-    const res = await safeFetch(url, { signal });
+    const res = await safeFetch(url, { signal, requestClass: 'dictionary', retries: 0 });
     if (!res.ok) {
       throwForHttpStatus(res.status, `Wiktionary: No entry found for '${clean}'`, `Wiktionary lookup failed (HTTP ${res.status}).`);
     }

@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { Meaning } from '@/types';
 import { useDictionaryAudio } from '@/composables/composable.dictionary';
 import { useStorage } from '@/composables/composable.storage';
-import { mergeMeanings } from '@/shared/enrichment';
 import { cx } from '@/ui/cx';
 import ExampleSentence from '@/components/component.example-sentence';
 
@@ -20,7 +19,7 @@ function getPosBadgeClass(pos: string): string {
 }
 
 export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings }) => {
-  const groupedMeanings = useMemo(() => mergeMeanings(meanings || [], []), [meanings]);
+  const groupedMeanings = meanings || [];
   const { playPronunciation, playingKey } = useDictionaryAudio();
   const { settings } = useStorage();
   const [selectedPos, setSelectedPos] = useState<string>('all');
@@ -54,12 +53,12 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings }) =>
   return (
     <div className="space-y-4 pt-0.5">
       {distinctPosList.length > 1 ? (
-        <div className="sticky top-0 z-10 -mx-1 px-1 py-1.5 bg-surface/95 dark:bg-surface/90 backdrop-blur-md border-b border-border flex items-center gap-1.5 overflow-x-auto select-none">
+        <div className="sticky top-0 z-10 -mx-1 px-1 py-1.5 bg-surface border-b border-border flex items-center gap-1.5 overflow-x-auto select-none">
           <button
             type="button"
             onClick={() => setSelectedPos('all')}
             className={cx(
-              'h-6 px-2.5 rounded-full text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1',
+              'h-6 px-2.5 rounded-full text-[11px] font-semibold transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1',
               selectedPos === 'all'
                 ? 'bg-accent text-accent-foreground shadow-2xs font-bold'
                 : 'bg-muted hover:bg-elevated text-content-secondary hover:text-content border border-border',
@@ -76,7 +75,7 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings }) =>
                 type="button"
                 onClick={() => setSelectedPos(item.pos)}
                 className={cx(
-                  'h-6 px-2.5 rounded-full text-[11px] font-semibold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap flex items-center gap-1',
+                  'h-6 px-2.5 rounded-full text-[11px] font-semibold uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1',
                   isActive
                     ? 'bg-accent text-accent-foreground shadow-2xs font-bold'
                     : 'bg-muted hover:bg-elevated text-content-secondary hover:text-content border border-border',
@@ -121,7 +120,7 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings }) =>
                     </span>
                   </div>
 
-                  {mIdx === 0 && dIdx === 0 && def.example ? (
+                  {def.example ? (
                     <ExampleSentence
                       className="ml-5"
                       english={def.example}
@@ -148,4 +147,4 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings }) =>
   );
 };
 
-export default SenseMatrixCard;
+export default React.memo(SenseMatrixCard);

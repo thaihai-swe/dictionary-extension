@@ -2,7 +2,7 @@ import type { AppSettings, ProviderValidationResult } from '../types';
 import { NotFoundError } from './errors';
 import { lookupSingleProvider, lookupTranslationResult } from './pipeline';
 
-export { clearEnrichmentCache } from './cache';
+export { clearEnrichmentCache, setDictionaryCachePersistenceEnabled } from './cache';
 export {
   fetchCombinedDictionaryResult,
   fetchDictionaryResult,

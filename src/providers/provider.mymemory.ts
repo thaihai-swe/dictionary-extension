@@ -20,7 +20,7 @@ export async function lookupMyMemoryTranslation(
 
   const target = resolveLanguageCode(targetLang);
   const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(clean)}&langpair=en|${encodeURIComponent(target)}`;
-  const res = await safeFetch(url, { signal, timeoutMs: TRANSLATION_FETCH_TIMEOUT_MS });
+  const res = await safeFetch(url, { signal, timeoutMs: TRANSLATION_FETCH_TIMEOUT_MS, requestClass: 'translation' });
   if (!res.ok) {
     throw new Error(`MyMemory lookup failed (HTTP ${res.status}).`);
   }

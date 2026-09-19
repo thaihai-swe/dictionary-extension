@@ -10,6 +10,7 @@ import type {
 } from '../types';
 import { mergeLexicalProfiles } from './query-utils.ts';
 import { splitBilingualExample } from './ai-example-blocks.ts';
+import { recordLookupMetric } from './performance/lookup-metrics.ts';
 
 export const MAX_DEFINITIONS_PER_POS = 8;
 export const MAX_MEANINGS = 6;
@@ -368,31 +369,143 @@ export function toDictionaryEntry(dto: ProviderLookupDto | DictionaryEntry): Dic
   };
 }
 
+export interface DictionaryEntryAccumulator {
+  add(incoming: ProviderLookupDto | DictionaryEntry): void;
+  snapshot(): DictionaryEntry;
+}
+
+function appendAttributedIndexed(
+  existing: AttributedItem[] | undefined,
+  incoming: AttributedItem[] | undefined,
+): AttributedItem[] | undefined {
+  if (!existing?.length && !incoming?.length) return existing;
+  const merged = [...(existing || [])];
+  const seen = new Set(merged.map((item) => normalizeText(item.text)));
+  for (const rawItem of incoming || []) {
+    const item = normalizeExampleItem(rawItem);
+    const text = String(item.text || '').trim();
+    const key = normalizeText(text);
+    if (!text || seen.has(key)) continue;
+    if (merged.length >= MAX_ITEMS_PER_SECTION) break;
+    seen.add(key);
+    merged.push(item.translation ? { text, translation: item.translation } : { text });
+  }
+  return merged;
+}
+
+function appendStringIndexed(
+  existing: string[] | undefined,
+  incoming: string[] | undefined,
+  limit = 12,
+): string[] | undefined {
+  if (!existing?.length && !incoming?.length) return existing;
+  const merged = [...(existing || [])];
+  const seen = new Set(merged.map((item) => normalizeText(item)));
+  for (const rawItem of incoming || []) {
+    const value = String(rawItem || '').trim();
+    const key = normalizeText(value);
+    if (!value || seen.has(key)) continue;
+    if (merged.length >= limit) break;
+    seen.add(key);
+    merged.push(value);
+  }
+  return merged;
+}
+
+function appendMeaningIndexed(
+  meanings: Meaning[],
+  incoming: Meaning[],
+): void {
+  const byPos = new Map<string, Meaning>();
+  for (const meaning of meanings) byPos.set(canonicalPartOfSpeech(meaning.partOfSpeech), meaning);
+
+  for (const incMeaning of incoming || []) {
+    if (isTranslationPartOfSpeech(incMeaning.partOfSpeech)) continue;
+    const pos = canonicalPartOfSpeech(incMeaning.partOfSpeech);
+    let target = byPos.get(pos);
+    if (!target) {
+      if (meanings.length >= MAX_MEANINGS) continue;
+      target = {
+        partOfSpeech: displayPartOfSpeech(incMeaning.partOfSpeech || pos),
+        definitions: [],
+        synonyms: [],
+        antonyms: [],
+      };
+      meanings.push(target);
+      byPos.set(pos, target);
+    }
+
+    const exactDefinitions = new Map<string, Meaning['definitions'][number]>();
+    for (const definition of target.definitions) {
+      exactDefinitions.set(normalizeComparableText(definition.definition), definition);
+    }
+    for (const incDef of incMeaning.definitions || []) {
+      const defText = String(incDef.definition || '').trim();
+      if (!defText) continue;
+      const normalized = normalizeComparableText(defText);
+      const exact = exactDefinitions.get(normalized);
+      const existing = exact || target.definitions.find((definition) => (
+        areDefinitionsEquivalent(definition.definition, defText)
+      ));
+      if (existing) {
+        if (!existing.example && incDef.example) {
+          existing.example = incDef.example;
+          existing.exampleTranslation = incDef.exampleTranslation;
+        }
+        continue;
+      }
+      if (target.definitions.length >= MAX_DEFINITIONS_PER_POS) break;
+      const nextDefinition = { ...incDef, definition: defText };
+      target.definitions.push(nextDefinition);
+      exactDefinitions.set(normalized, nextDefinition);
+    }
+    target.synonyms = appendStringIndexed(target.synonyms, incMeaning.synonyms);
+    target.antonyms = appendStringIndexed(target.antonyms, incMeaning.antonyms);
+  }
+}
+
+export function createDictionaryEntryAccumulator(
+  base: ProviderLookupDto | DictionaryEntry,
+): DictionaryEntryAccumulator {
+  const current = toDictionaryEntry(base);
+
+  return {
+    add(incoming) {
+      const startedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      const right = toDictionaryEntry(incoming);
+      if (!current.word) current.word = right.word;
+      current.phonetics = mergePhonetics(current.phonetics, right.phonetics);
+      appendMeaningIndexed(current.meanings, right.meanings || []);
+      current.examples = appendAttributedIndexed(current.examples, right.examples);
+      current.synonyms = appendAttributedIndexed(current.synonyms, right.synonyms);
+      current.antonyms = appendAttributedIndexed(current.antonyms, right.antonyms);
+      current.lexicalProfile = mergeLexicalProfiles(current.lexicalProfile, right.lexicalProfile);
+      const incomingTranslation = right.translation || extractTranslationFromMeanings(right.meanings || []);
+      current.translation = mergeTranslations(current.translation, incomingTranslation)
+        || extractTranslationFromMeanings(current.meanings);
+      current.sources = mergeDictionarySources(current.sources, right.sources);
+      current.phraseExplanation = current.phraseExplanation?.length
+        ? current.phraseExplanation
+        : right.phraseExplanation;
+      current.originalText = current.originalText || right.originalText;
+      recordLookupMetric('dictionary.merge', {
+        providerId: String((incoming as Partial<ProviderLookupDto>).providerId || 'unknown'),
+        durationMs: (typeof performance !== 'undefined' ? performance.now() : Date.now()) - startedAt,
+      });
+    },
+    snapshot() {
+      return cloneDictionaryEntry(current);
+    },
+  };
+}
+
 export function mergeDictionaryEntries(
   base: ProviderLookupDto | DictionaryEntry,
   incoming: ProviderLookupDto | DictionaryEntry,
 ): DictionaryEntry {
-  const left = toDictionaryEntry(base);
-  const right = toDictionaryEntry(incoming);
-  const translation = mergeTranslations(
-    left.translation,
-    right.translation,
-  ) || extractTranslationFromMeanings([...(left.meanings || []), ...(right.meanings || [])]);
-
-  return {
-    ...left,
-    phonetics: mergePhonetics(left.phonetics, right.phonetics),
-    meanings: mergeMeanings(left.meanings || [], right.meanings || []),
-    examples: mergeAttributed(left.examples, right.examples),
-    synonyms: mergeAttributed(left.synonyms, right.synonyms),
-    antonyms: mergeAttributed(left.antonyms, right.antonyms),
-    lexicalProfile: mergeLexicalProfiles(left.lexicalProfile, right.lexicalProfile),
-    translation,
-    sources: mergeDictionarySources(left.sources, right.sources),
-    phraseExplanation: left.phraseExplanation?.length ? left.phraseExplanation : right.phraseExplanation,
-    originalText: left.originalText || right.originalText,
-    enriched: left.enriched,
-  };
+  const accumulator = createDictionaryEntryAccumulator(base);
+  accumulator.add(incoming);
+  return accumulator.snapshot();
 }
 
 export function cloneDictionaryEntry(entry: DictionaryEntry): DictionaryEntry {

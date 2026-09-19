@@ -3,6 +3,7 @@ import { extractLexicalProfileFromMarkdown, mergeLexicalProfiles, parseLexicalPr
 import { mergeMeanings, toDictionaryEntry } from '../../shared/enrichment';
 import { hasEnrichmentPayload } from '../../domain/dictionary/result-policy';
 import { dictionaryProviderCatalog } from '../../infrastructure/providers/catalog';
+import { recordLookupMetric } from '../../shared/performance/lookup-metrics.ts';
 
 export function providerLabel(providerId: string): string {
   return dictionaryProviderCatalog.getLabel(providerId);
@@ -14,6 +15,7 @@ export function normalizeDictionaryResult(
   originalText?: string,
   sourceProviderId?: string,
 ): DictionaryEntry {
+  const startedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
   const entry = toDictionaryEntry(result);
   let lexicalProfile = settings?.enableLexicalProfile === false
     ? undefined
@@ -26,7 +28,7 @@ export function normalizeDictionaryResult(
     const extracted = extractLexicalProfileFromMarkdown(blob);
     if (extracted) lexicalProfile = mergeLexicalProfiles(lexicalProfile, extracted);
   }
-  return {
+  const normalized: DictionaryEntry = {
     ...entry,
     lexicalProfile,
     originalText: originalText || entry.originalText,
@@ -35,4 +37,9 @@ export function normalizeDictionaryResult(
       : entry.sources,
     meanings: mergeMeanings(entry.meanings || [], []),
   };
+  recordLookupMetric('dictionary.normalize', {
+    providerId: sourceProviderId || String((result as ProviderLookupDto).providerId || 'unknown'),
+    durationMs: (typeof performance !== 'undefined' ? performance.now() : Date.now()) - startedAt,
+  });
+  return normalized;
 }

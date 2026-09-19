@@ -1,6 +1,7 @@
 import type { AiIntentId, AiResult, AppSettings, DictionaryEntry } from '../types';
 import {
   AI_LOOKUP,
+  CLEAR_DICTIONARY_CACHE,
   CANCEL_LOOKUP,
   LOOKUP_TEXT,
   LOOKUP_UPDATE,
@@ -66,6 +67,14 @@ export async function requestDictionaryLookup(payload: LookupTextPayload): Promi
     payload: { ...payload, requestId },
   });
   return unwrap(response, `No dictionary definition found for "${payload.text}".`);
+}
+
+export async function clearDictionaryCacheRemote(): Promise<void> {
+  try {
+    await sendMessage<boolean>({ type: CLEAR_DICTIONARY_CACHE });
+  } catch {
+    // The service worker may be unavailable while the local context is closing.
+  }
 }
 
 export async function requestAiLookup(payload: AiLookupPayload): Promise<AiResult> {

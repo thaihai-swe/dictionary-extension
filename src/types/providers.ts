@@ -42,6 +42,7 @@ export interface DictionaryLookupOptions {
   targetLang: string;
   signal?: AbortSignal;
   settings?: DictionaryProviderSettings;
+  onPartial?: (result: ProviderLookupDto) => void;
 }
 
 /** Narrow options for translation adapters. */

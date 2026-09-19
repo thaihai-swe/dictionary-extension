@@ -327,7 +327,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
       </div>
 
       {/* Results */}
-      <div className="space-y-3 pt-1">
+      <div className="space-y-3 pt-1 [&_.reading-prose]:max-w-none">
         {isAiLoading ? (
           <div className="p-4 rounded-2xl border border-border/80 bg-surface/90 shadow-xs space-y-3.5" aria-busy="true" aria-live="polite">
             <div className="flex items-center justify-between pb-1.5 border-b border-border/60">

@@ -2,12 +2,13 @@ import type { DictionaryEntry } from '../types';
 import type { LookupTextPayload } from './messages';
 import {
   cancelDictionaryLookup,
+  clearDictionaryCacheRemote,
   createRequestId,
   requestDictionaryLookup,
   subscribeLookupUpdates,
 } from './runtime-client';
 
-export { cancelDictionaryLookup, createRequestId, subscribeLookupUpdates };
+export { cancelDictionaryLookup, clearDictionaryCacheRemote, createRequestId, subscribeLookupUpdates };
 
 const inflightLookups = new Map<string, Promise<DictionaryEntry>>();
 

@@ -6,7 +6,7 @@ interface SourcesDisclosureProps {
   sources: DictionarySourceSummary[];
 }
 
-export default function SourcesDisclosure({ sources }: SourcesDisclosureProps) {
+function SourcesDisclosure({ sources }: SourcesDisclosureProps) {
   if (!sources.length) return null;
 
   const contributedCount = sources.filter((source) => source.status === 'contributed').length;
@@ -49,3 +49,5 @@ export default function SourcesDisclosure({ sources }: SourcesDisclosureProps) {
     </details>
   );
 }
+
+export default React.memo(SourcesDisclosure);

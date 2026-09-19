@@ -23,13 +23,14 @@ export async function lookupSingleProvider(
   targetLang: string,
   signal?: AbortSignal,
   settings?: DictionaryProviderSettings,
+  onPartial?: (result: ProviderLookupDto) => void,
 ): Promise<ProviderLookupDto> {
   const adapter = dictionaryProviderCatalog.getDictionary(providerId)
     || dictionaryProviderCatalog.getDictionary('free_dictionary');
   if (!adapter) {
     throw new Error(`Unknown dictionary provider: ${providerId}`);
   }
-  return adapter.lookup(query, { targetLang, signal, settings });
+  return adapter.lookup(query, { targetLang, signal, settings, onPartial });
 }
 
 export async function fetchDictionaryResult(
@@ -40,6 +41,7 @@ export async function fetchDictionaryResult(
   userApiKey?: string,
   userModelName?: string,
   settings?: AppSettings,
+  onPartial?: (result: ProviderLookupDto) => void,
 ): Promise<DictionaryEntry> {
   const cleanWord = word.trim();
   const settingsWithKeys = settings || {
@@ -68,7 +70,14 @@ export async function fetchDictionaryResult(
   for (const attempt of attempts) {
     if (signal?.aborted) throw new DOMException('The user aborted a request.', 'AbortError');
     try {
-      const result = await lookupSingleProvider(attempt.providerId, attempt.query, targetLang, signal, settingsWithKeys);
+      const result = await lookupSingleProvider(
+        attempt.providerId,
+        attempt.query,
+        targetLang,
+        signal,
+        settingsWithKeys,
+        onPartial,
+      );
       const normalized = normalizeDictionaryResult(result, settingsWithKeys, cleanWord, attempt.providerId);
       if (hasUsableDefinitions(normalized)) return normalized;
       if (!bestPartial) bestPartial = normalized;

@@ -1,6 +1,7 @@
 import type { ProviderLookupDto } from '../../types';
 import { NotFoundError } from '../../providers/errors.ts';
 import { runBounded } from '../../providers/provider-scheduler.ts';
+import { recordLookupMetric } from '../../shared/performance/lookup-metrics.ts';
 import type {
   DictionaryLookupContext,
   DictionaryProviderLookup,
@@ -23,6 +24,7 @@ function isCancelled(error: unknown): boolean {
 export interface CollectProviderOptions extends DictionaryLookupContext {
   concurrency?: number;
   onOutcome?: (outcome: DictionaryProviderOutcome) => void;
+  onProviderPartial?: (providerId: string, result: ProviderLookupDto) => void;
 }
 
 /**
@@ -41,16 +43,29 @@ export async function collectProviderOutcomes(
     options.onOutcome?.(outcome);
   };
   const startedAt = new Map<string, number>();
+  let inFlight = 0;
   await runBounded(
     providerIds,
     (providerId) => {
       startedAt.set(providerId, Date.now());
-      return lookup(providerId, query, options);
+      inFlight += 1;
+      recordLookupMetric('dictionary.provider.start', { providerId, inFlight });
+      return lookup(providerId, query, {
+        ...options,
+        onPartial: (result) => options.onProviderPartial?.(providerId, result),
+      });
     },
     {
       concurrency: options.concurrency ?? DEFAULT_PROVIDER_CONCURRENCY,
       signal: options.signal,
       onSettled: (providerId, settled: PromiseSettledResult<ProviderLookupDto>) => {
+        inFlight = Math.max(0, inFlight - 1);
+        recordLookupMetric('dictionary.provider.settled', {
+          providerId,
+          inFlight,
+          status: settled.status,
+          latencyMs: Date.now() - (startedAt.get(providerId) || Date.now()),
+        });
         if (settled.status === 'fulfilled') {
           const result = settled.value;
           const latencyMs = Date.now() - (startedAt.get(providerId) || Date.now());

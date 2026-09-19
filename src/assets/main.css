@@ -287,6 +287,10 @@ html.light {
 }
 .ui-disclosure > summary::-webkit-details-marker { display: none; }
 .ui-disclosure > summary:focus-visible { outline: 2px solid var(--ring-focus); outline-offset: 2px; }
+.dictionary-detail-content {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 180px;
+}
 .ui-status-live { color: var(--color-primary); }
 .ui-status-success { color: var(--color-success); }
 .ui-status-warning { color: var(--color-warning); }

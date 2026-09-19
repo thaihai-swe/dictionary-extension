@@ -62,16 +62,11 @@ export function collectSecondaryResultSections(result?: ResultEntryLike | null):
     list.push({ text: String(value || '') });
   };
 
-  for (const [meaningIndex, meaning] of (result?.meanings || []).entries()) {
-    for (const [definitionIndex, definition] of (meaning.definitions || []).entries()) {
-      // The first definition's attached example stays beside the primary sense.
+  for (const meaning of result?.meanings || []) {
+    for (const definition of meaning.definitions || []) {
+      // Definition examples are rendered beside their senses, so reserve them here.
       if (definition.example) {
-        const primaryExample = { text: definition.example, translation: definition.exampleTranslation };
-        if (meaningIndex === 0 && definitionIndex === 0) {
-          seenExamples.add(normalizeExample(definition.example));
-        } else {
-          addExample(primaryExample);
-        }
+        seenExamples.add(normalizeExample(definition.example));
       }
       for (const value of definition.synonyms || []) addTerm(synonyms, seenSynonyms, value);
       for (const value of definition.antonyms || []) addTerm(antonyms, seenAntonyms, value);

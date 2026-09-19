@@ -6,7 +6,7 @@ import type {
 } from '../../types';
 import { NotFoundError } from '../../providers/errors';
 import { isPhraseLike, splitPhraseExplanation, getSecondaryDictionaryProviderIds } from '../../shared/query-utils';
-import { mergeMeanings } from '../../shared/enrichment';
+import { createDictionaryEntryAccumulator, mergeDictionaryEntries, mergeMeanings } from '../../shared/enrichment';
 import { hasUsableDefinitions } from '../../domain/dictionary/result-policy';
 import { fetchAiAnalysis } from '../../infrastructure/providers/ai';
 import { combinedResultCacheKey } from '../../providers/cache';
@@ -14,7 +14,7 @@ import { dictionaryCacheRepository } from '../../infrastructure/storage/cache-re
 import { fetchDictionaryResult } from './primary-lookup';
 import { lookupTranslationResult } from './translation-service';
 import { runDictionaryEnrichment } from './enrichment-service';
-import { providerLabel } from './normalizer';
+import { normalizeDictionaryResult, providerLabel } from './normalizer';
 
 function emitUpdate(
   onUpdate: ((entry: DictionaryEntry) => void) | undefined,
@@ -64,8 +64,32 @@ export async function fetchCombinedDictionaryResult(
   }
 
   let primaryError: unknown = null;
+  let primaryPartial: DictionaryEntry | null = null;
+  let primaryAccumulator: ReturnType<typeof createDictionaryEntryAccumulator> | null = null;
+  let primaryPartialRevision = 0;
   const dictionaryPromise = settings.enableDictionary !== false
-    ? fetchDictionaryResult(cleanWord, provider, targetLang, signal, settings.aiApiKey, settings.aiModel, settings)
+    ? fetchDictionaryResult(
+      cleanWord,
+      provider,
+      targetLang,
+      signal,
+      settings.aiApiKey,
+      settings.aiModel,
+      settings,
+      (partial) => {
+        const normalized = normalizeDictionaryResult(partial, settings, cleanWord, partial.providerId);
+        if (!hasUsableDefinitions(normalized) && !normalized.synonyms?.length && !normalized.lexicalProfile) return;
+        if (!primaryAccumulator) primaryAccumulator = createDictionaryEntryAccumulator(normalized);
+        else primaryAccumulator.add(normalized);
+        primaryPartial = primaryAccumulator.snapshot();
+        primaryPartialRevision += 1;
+        emitUpdate(onEnrichUpdate, {
+          ...primaryPartial,
+          originalText: cleanWord,
+          revision: primaryPartialRevision,
+        }, primaryPartialRevision);
+      },
+    )
       .catch((error) => {
         if (error instanceof Error && error.name === 'AbortError') throw error;
         primaryError = error;
@@ -113,6 +137,12 @@ export async function fetchCombinedDictionaryResult(
         }] : undefined,
         revision: 0,
       };
+
+  if (primaryPartial) {
+    current = mergeDictionaryEntries(primaryPartial, current);
+    current.originalText = cleanWord;
+    current.revision = primaryPartialRevision;
+  }
 
   if (dictionary && settledTranslation) current.translation = settledTranslation;
   if (!current.translation && dictionary?.translation) current.translation = dictionary.translation;
