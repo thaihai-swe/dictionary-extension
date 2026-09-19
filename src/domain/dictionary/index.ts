@@ -12,3 +12,4 @@ export {
   isConfiguredDictionaryProvider,
 } from './policies';
 export { hasEnrichmentPayload, hasUsableDefinitions } from './result-policy';
+export { NotFoundError, isFatalDictionaryError } from './errors';

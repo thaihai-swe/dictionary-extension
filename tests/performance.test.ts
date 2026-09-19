@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { applyDictionaryEntryPatch, createDictionaryEntryPatch } from '../src/shared/lookup-updates.ts';
 import { mergeDictionaryEntries } from '../src/shared/enrichment.ts';
-import { runBounded } from '../src/providers/provider-scheduler.ts';
+import { runBounded } from '../src/application/runtime/run-bounded.ts';
 
 test('dictionary patches preserve unchanged fields and revisions', () => {
   const previous = {

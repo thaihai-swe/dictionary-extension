@@ -10,9 +10,6 @@ import {
   type ValidateProviderPayload,
 } from '../../shared/messages';
 import { canonicalAiIntent } from '../../shared/ai-prompts';
-import { fetchAiAnalysis, validateAiProvider } from '../../infrastructure/providers/ai';
-import { fetchCombinedDictionaryResult } from '../dictionary';
-import { validateDictionaryProvider, validateTranslationProvider } from '../../providers/provider.index';
 import { normalizeSettings } from '../../shared/settings';
 import { requestKey } from './request-coordinator';
 
@@ -29,6 +26,27 @@ export interface LookupHandlerDependencies {
     sender?: RuntimeSender;
   }) => Promise<void>;
   dictionaryRequests: Map<string, Promise<DictionaryEntry & { requestId: string }>>;
+  lookupDictionary: (
+    text: string,
+    settings: AppSettings,
+    signal?: AbortSignal,
+    onUpdate?: (entry: DictionaryEntry) => void,
+    enrichmentSignal?: AbortSignal,
+    onBackgroundComplete?: () => void,
+  ) => Promise<DictionaryEntry>;
+  analyzeAi: (
+    intent: AiIntentId,
+    text: string,
+    targetLang: string,
+    apiKey?: string,
+    model?: string,
+    signal?: AbortSignal,
+    context?: string,
+    settings?: AppSettings,
+  ) => Promise<AiResult>;
+  validateDictionary: (providerId: string, settings: AppSettings) => Promise<RuntimeProviderValidationResult>;
+  validateTranslation: (settings: AppSettings) => Promise<RuntimeProviderValidationResult>;
+  validateAi: (settings: AppSettings) => Promise<RuntimeProviderValidationResult>;
 }
 
 function mergeValidationSettings(stored: AppSettings, incoming?: Partial<AppSettings>): AppSettings {
@@ -62,7 +80,7 @@ export function createLookupHandlers(deps: LookupHandlerDependencies) {
 
       let backgroundStarted = false;
       try {
-        const result = await fetchCombinedDictionaryResult(
+        const result = await deps.lookupDictionary(
           text,
           lookupSettings,
           controller.signal,
@@ -112,7 +130,7 @@ export function createLookupHandlers(deps: LookupHandlerDependencies) {
     const controller = deps.registerController(tabId, scope, requestId);
 
     try {
-      const result = await fetchAiAnalysis(
+      const result = await deps.analyzeAi(
         intent as AiIntentId,
         text,
         payload.targetLang || settings.translateTargetLanguage || 'Vietnamese',
@@ -136,10 +154,10 @@ export function createLookupHandlers(deps: LookupHandlerDependencies) {
     const kind = payload.kind || 'dictionary';
 
     if (kind === 'dictionary') {
-      return validateDictionaryProvider(payload.providerId || settings.dictionaryProvider, settings);
+      return deps.validateDictionary(payload.providerId || settings.dictionaryProvider, settings);
     }
-    if (kind === 'translation') return validateTranslationProvider(settings);
-    if (kind === 'ai') return validateAiProvider(settings);
+    if (kind === 'translation') return deps.validateTranslation(settings);
+    if (kind === 'ai') return deps.validateAi(settings);
     return { ok: false, error: `Unknown validation kind: ${kind}` };
   }
 

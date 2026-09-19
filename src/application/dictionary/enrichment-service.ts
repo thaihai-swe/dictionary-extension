@@ -5,8 +5,8 @@ import { hasEnrichmentPayload } from '../../domain/dictionary/result-policy';
 import { collectProviderOutcomes } from './provider-aggregator';
 import { normalizeDictionaryResult, providerLabel } from './normalizer';
 import { lookupSingleProvider } from './primary-lookup';
-import { dictionaryCacheRepository } from '../../infrastructure/storage/cache-repository';
-import { enrichmentCacheKey } from '../../providers/cache';
+import { enrichmentCacheKey } from './cache-keys';
+import { getDictionaryCache } from './runtime-ports';
 
 export const ENRICHMENT_CONCURRENCY = 2;
 
@@ -17,6 +17,7 @@ export async function runDictionaryEnrichment(
   onEnrichUpdate: (enriched: DictionaryEntry) => void,
   signal?: AbortSignal,
 ) {
+  const dictionaryCacheRepository = getDictionaryCache();
   const primaryProviderId = settings.dictionaryProvider || 'wiktionary';
   const queryTerm = word.trim();
   const targetLang = settings.translateTargetLanguage || 'Vietnamese';

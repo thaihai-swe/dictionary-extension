@@ -1,7 +1,7 @@
 import { defineConfig, build as viteBuild, Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
-import { copyFileSync, cpSync, existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { copyFileSync, cpSync, existsSync, rmSync } from 'fs';
 
 function buildExtensionScriptsPlugin(): Plugin {
   return {
@@ -121,22 +121,6 @@ function buildExtensionScriptsPlugin(): Plugin {
         },
       });
 
-      const overlayCssParts: string[] = [];
-      const assetsDir = resolve(__dirname, 'dist/assets');
-      if (existsSync(assetsDir)) {
-        const mainCss = readdirSync(assetsDir).find((name) => /^main-.*\.css$/.test(name));
-        if (mainCss) overlayCssParts.push(readFileSync(resolve(assetsDir, mainCss), 'utf8'));
-      }
-      const distDir = resolve(__dirname, 'dist');
-      for (const name of readdirSync(distDir)) {
-        if ((name === 'overlay.css' || (name.startsWith('overlay-') && name.endsWith('.css'))) && existsSync(resolve(distDir, name))) {
-          overlayCssParts.push(readFileSync(resolve(distDir, name), 'utf8'));
-        }
-      }
-      if (overlayCssParts.length) {
-        writeFileSync(resolve(distDir, 'overlay.css'), overlayCssParts.join('\n'));
-      }
-
       if (existsSync('manifest.json')) {
         copyFileSync('manifest.json', 'dist/manifest.json');
       }
@@ -144,6 +128,7 @@ function buildExtensionScriptsPlugin(): Plugin {
         copyFileSync('offscreen.html', 'dist/offscreen.html');
       }
 
+      const distDir = resolve(__dirname, 'dist');
       const firefoxDir = resolve(__dirname, 'dist-firefox');
       if (existsSync(firefoxDir)) rmSync(firefoxDir, { recursive: true, force: true });
       cpSync(distDir, firefoxDir, { recursive: true });

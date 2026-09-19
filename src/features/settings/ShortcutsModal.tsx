@@ -58,7 +58,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ show, onClose })
               <h3 id="shortcuts-title" className="text-sm font-bold text-content font-heading">
                 Keyboard Shortcuts
               </h3>
-              <p className="text-[11px] text-content-muted">Quick keys to navigate the workbench</p>
+              <p className="text-[13px] text-content-muted">Quick keys to navigate the workbench</p>
             </div>
           </div>
           <button
@@ -79,13 +79,13 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ show, onClose })
             >
               <div>
                 <span className="text-content font-semibold block text-xs">{item.label}</span>
-                <span className="text-content-muted text-[10px] block mt-0.5">{item.sub}</span>
+                <span className="text-content-muted text-[12px] block mt-0.5">{item.sub}</span>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
                 {item.keys.map((k, kIdx) => (
                   <kbd
                     key={kIdx}
-                    className="px-2 py-1 rounded-md bg-surface text-accent font-mono font-bold border border-border text-[11px] shadow-xs"
+                    className="px-2 py-1 rounded-md bg-surface text-accent font-mono font-bold border border-border text-[13px] shadow-xs"
                   >
                     {k}
                   </kbd>

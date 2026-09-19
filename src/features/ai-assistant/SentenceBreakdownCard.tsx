@@ -33,11 +33,11 @@ export const SentenceBreakdownCard: React.FC<SentenceBreakdownCardProps> = ({
   return (
     <div className="space-y-4 pt-1">
       <div className="flex items-center justify-between pb-1 border-b border-border/40">
-        <span className="flex items-center gap-1.5 text-[12px] font-extrabold uppercase tracking-wider text-accent">
+        <span className="flex items-center gap-1.5 text-[13px] font-extrabold uppercase tracking-wider text-accent">
           <IconPuzzle className="w-4 h-4 text-accent" />
           <span>Sentence Breakdown</span>
         </span>
-        <span className="text-[11px] text-content-muted font-mono font-medium">Clause Analysis</span>
+        <span className="text-[12px] text-content-muted font-mono font-medium">Clause Analysis</span>
       </div>
 
       <div className="space-y-2">
@@ -47,7 +47,7 @@ export const SentenceBreakdownCard: React.FC<SentenceBreakdownCardProps> = ({
             className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1.5 pl-3.5 py-2.5 pr-3 rounded-lg border border-border bg-surface text-sm group"
           >
             <div className="flex-1 min-w-[200px] space-y-0.5">
-              <div className="text-content text-[14px] leading-relaxed flex items-center justify-between gap-2">
+              <div className="text-content text-[15px] leading-relaxed flex items-center justify-between gap-2">
                 <span className="font-medium text-content">{item.text}</span>
                 <button
                   type="button"
@@ -59,12 +59,12 @@ export const SentenceBreakdownCard: React.FC<SentenceBreakdownCardProps> = ({
                 </button>
               </div>
               {item.explanation ? (
-                <p className="text-[12px] text-content-secondary leading-normal">
+                <p className="text-[13px] text-content-secondary leading-normal">
                   {item.explanation}
                 </p>
               ) : null}
             </div>
-            <span className="ml-auto flex-shrink-0 px-2.5 py-0.5 rounded-full text-[11px] font-semibold text-accent bg-accent-subtle border border-accent/25 capitalize font-mono">
+            <span className="ml-auto flex-shrink-0 px-2.5 py-0.5 rounded-full text-[12px] font-semibold text-accent bg-accent-subtle border border-accent/25 capitalize font-mono">
               {item.role}
             </span>
           </div>
@@ -72,9 +72,9 @@ export const SentenceBreakdownCard: React.FC<SentenceBreakdownCardProps> = ({
       </div>
 
       {translation && (
-        <div className="px-3 py-2.5 rounded-lg border border-border bg-muted text-[14px] leading-relaxed text-content-secondary space-y-1.5">
+        <div className="px-3 py-2.5 rounded-lg border border-border bg-muted text-[15px] leading-relaxed text-content-secondary space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="font-extrabold text-emerald-600 dark:text-emerald-400 text-[11px] uppercase tracking-wider">
+            <span className="font-extrabold text-emerald-600 dark:text-emerald-400 text-[12px] uppercase tracking-wider">
               Context Translation:
             </span>
             <div className="flex items-center gap-1.5">
@@ -82,7 +82,7 @@ export const SentenceBreakdownCard: React.FC<SentenceBreakdownCardProps> = ({
                 type="button"
                 onClick={() => speakText(translation)}
                 title="Read translation aloud"
-                className="h-[28px] px-2.5 rounded-lg bg-muted hover:bg-elevated text-content-secondary hover:text-content text-[12px] cursor-pointer font-medium flex items-center gap-1.5 border border-border"
+                className="h-[28px] px-2.5 rounded-lg bg-muted hover:bg-elevated text-content-secondary hover:text-content text-[13px] cursor-pointer font-medium flex items-center gap-1.5 border border-border"
               >
                 <IconSpeaker className="w-3.5 h-3.5 text-accent" />
                 <span>Read</span>
@@ -91,7 +91,7 @@ export const SentenceBreakdownCard: React.FC<SentenceBreakdownCardProps> = ({
                 type="button"
                 onClick={() => copyTranslation(translation)}
                 title="Copy translation"
-                className="h-[28px] px-2.5 rounded-lg bg-muted hover:bg-elevated text-content-secondary hover:text-content text-[12px] cursor-pointer font-medium flex items-center gap-1.5 border border-border"
+                className="h-[28px] px-2.5 rounded-lg bg-muted hover:bg-elevated text-content-secondary hover:text-content text-[13px] cursor-pointer font-medium flex items-center gap-1.5 border border-border"
               >
                 {copied ? (
                   <>
@@ -107,7 +107,7 @@ export const SentenceBreakdownCard: React.FC<SentenceBreakdownCardProps> = ({
               </button>
             </div>
           </div>
-          <p className="font-medium text-[15px] text-content leading-relaxed">{translation}</p>
+          <p className="font-medium text-[16px] text-content leading-relaxed">{translation}</p>
         </div>
       )}
     </div>

@@ -51,6 +51,7 @@ const DICTIONARY_PROVIDERS = new Set<string>([
 
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'dark',
+  textSize: 'comfortable',
   selectionTriggerMode: 'icon',
   postSelectionModifier: 'shift',
   enableContextMenuTrigger: true,
@@ -129,6 +130,11 @@ export function normalizeSettings(input?: Partial<AppSettings> | Record<string, 
   merged.selectionTriggerMode = mode === 'off' || mode === 'direct' || mode === 'icon'
     ? mode
     : DEFAULT_SETTINGS.selectionTriggerMode;
+
+  const textSize = String(merged.textSize || '').trim().toLowerCase();
+  merged.textSize = textSize === 'small' || textSize === 'large' || textSize === 'comfortable'
+    ? textSize
+    : DEFAULT_SETTINGS.textSize;
 
   const modifier = String(merged.postSelectionModifier || '').trim().toLowerCase();
   merged.postSelectionModifier = modifier === 'alt' || modifier === 'ctrl' || modifier === 'shift'

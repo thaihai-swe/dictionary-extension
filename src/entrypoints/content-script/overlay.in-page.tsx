@@ -1,17 +1,14 @@
 import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
-import { useStorage } from '@/composables/composable.storage';
+import { setActiveTab, useActiveTab, useSetting } from '@/composables/composable.storage';
 import { useLookupSession } from '@/composables/composable.lookup-session';
 import AppHeader from '@/components/component.app-header';
-import TabNavigation from '@/components/component.tab-navigation';
-import WordLookupView from '@/features/dictionary/WordLookupView';
-import { AppTheme, TabId } from '@/types';
+import WorkbenchContent from '@/components/component.workbench-content';
+import { TabId } from '@/types';
 import { isDistinctContext } from '@/shared/page-context';
 import { cx } from '@/ui/cx';
-import { useAppTheme } from '@/ui/theme';
 import ToastContainer from '@/components/component.toast';
+import { useWorkbenchPreferences } from '@/components/use-workbench-preferences';
 
-const AiAssistantView = lazy(() => import('@/features/ai-assistant/AiAssistantView'));
-const ContextualRewriter = lazy(() => import('@/features/rewriter/ContextualRewriter'));
 const ShortcutsModal = lazy(() => import('@/features/settings/ShortcutsModal'));
 
 interface InPageOverlayProps {
@@ -46,41 +43,25 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
   onStartDrag,
   onStartResize,
 }) => {
-  const { activeTab, settings, setActiveTab } = useStorage();
+  const activeTab = useActiveTab();
+  const defaultTab = useSetting('defaultTab');
   const session = useLookupSession();
-  const [theme, setTheme] = useState<AppTheme>(settings.theme);
-  const { isDarkMode, toggleTheme } = useAppTheme(theme, { onThemeChange: setTheme });
+  const {
+    isDarkMode,
+    provider: currentProvider,
+    setProvider: setCurrentProvider,
+    targetLang: currentLang,
+    setTargetLang: setCurrentLang,
+    toggleTheme,
+    textSizeStyle,
+  } = useWorkbenchPreferences({ targetLang });
   const [showShortcuts, setShowShortcuts] = useState(false);
-  const [aiVisited, setAiVisited] = useState(activeTab === 'ai_assistant');
-  const [rewriterVisited, setRewriterVisited] = useState(activeTab === 'rewriter');
-  const [currentProvider, setCurrentProvider] = useState(settings.dictionaryProvider || 'wiktionary');
   const [currentText, setCurrentText] = useState(selectedText || '');
   const [currentContext, setCurrentContext] = useState(
     isDistinctContext(selectedText || '', contextSentence) ? String(contextSentence || '').trim() : '',
   );
-  const [currentLang, setCurrentLang] = useState(
-    targetLang || settings.translateTargetLanguage || 'Vietnamese',
-  );
   const overlayRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    if (settings.dictionaryProvider) setCurrentProvider(settings.dictionaryProvider);
-  }, [settings.dictionaryProvider]);
-
-  useEffect(() => {
-    if (settings.translateTargetLanguage && !targetLang) {
-      setCurrentLang(settings.translateTargetLanguage);
-    }
-  }, [settings.translateTargetLanguage, targetLang]);
-
-  useEffect(() => {
-    setTheme(settings.theme);
-  }, [settings.theme]);
-
-  useEffect(() => {
-    if (activeTab === 'ai_assistant') setAiVisited(true);
-    if (activeTab === 'rewriter') setRewriterVisited(true);
-  }, [activeTab]);
 
   useEffect(() => {
     if (!overlayRef.current) return;
@@ -110,8 +91,8 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
     const trimmed = text.trim();
     setCurrentText(trimmed);
     setCurrentContext(distinctContext(trimmed, context));
-    if (settings.defaultTab) {
-      setActiveTab(settings.defaultTab);
+    if (defaultTab) {
+      setActiveTab(defaultTab);
     }
   }
 
@@ -167,10 +148,6 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
     setCurrentContext(distinctContext(currentText, contextSentence));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contextSentence]);
-
-  useEffect(() => {
-    if (targetLang) setCurrentLang(targetLang);
-  }, [targetLang]);
 
   useEffect(() => {
     const root = overlayRef.current;
@@ -240,11 +217,12 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
       aria-label="Dictionary lookup"
       tabIndex={-1}
       className={cx(
-        'app-shell bg-paper/95 backdrop-blur-xl border border-border/80 rounded-2xl shadow-card-elevated overflow-hidden flex flex-col select-none text-content text-[15px] font-sans relative inpage-popup-card w-full h-full transition-colors outline-none',
+        'app-shell bg-paper/95 backdrop-blur-xl border border-border/80 rounded-2xl shadow-card-elevated overflow-hidden flex flex-col select-none text-content text-[16px] font-sans relative inpage-popup-card w-full h-full transition-colors outline-none',
         isDarkMode ? 'dark' : 'light-theme light',
         isMaximized ? 'max-w-5xl max-h-[90vh]' : '',
       )}
       data-theme={isDarkMode ? 'dark' : 'light'}
+      style={textSizeStyle}
       onClick={(e) => e.stopPropagation()}
       onKeyDown={handleOverlayKeyDown}
     >
@@ -268,45 +246,16 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
         />
       </div>
 
-      {/* Navigation Bar */}
-      <TabNavigation activeTab={activeTab} onChangeTab={handleTabChange} />
-
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
-        {activeTab === 'dictionary' ? (
-          <WordLookupView
-            initialQuery={currentText}
-            initialContext={currentContext}
-            lookupRequestId={lookupRequestId}
-            targetLang={currentLang}
-            provider={currentProvider}
-          />
-        ) : null}
-        {aiVisited ? (
-          activeTab === 'ai_assistant' ? (
-            <Suspense fallback={<div className="p-4 text-[13px] text-content-muted">Loading AI assistant…</div>}>
-              <AiAssistantView
-                initialQuery={currentText}
-                initialContext={currentContext}
-                targetLang={currentLang}
-                isVisible={activeTab === 'ai_assistant'}
-                onSwitchTab={handleTabChange}
-              />
-            </Suspense>
-          ) : null
-        ) : null}
-        {rewriterVisited ? (
-          activeTab === 'rewriter' ? (
-            <Suspense fallback={<div className="p-4 text-[13px] text-content-muted">Loading rewriter…</div>}>
-              <ContextualRewriter
-                initialText={currentText}
-                contextSentence={currentContext}
-                targetLang={currentLang}
-              />
-            </Suspense>
-          ) : null
-        ) : null}
-      </main>
+      <WorkbenchContent
+        activeTab={activeTab}
+        query={currentText}
+        context={currentContext}
+        lookupRequestId={lookupRequestId}
+        targetLang={currentLang}
+        provider={currentProvider}
+        loadingSize="regular"
+        onChangeTab={handleTabChange}
+      />
 
       {/* Bottom-Right Resize Handle */}
       {!isMaximized ? (

@@ -692,6 +692,9 @@ button:disabled { cursor: not-allowed; }
 .demo-word { margin: 0; color: #172534; font-family: var(--display); font-size: 1.7rem; font-weight: 700; line-height: 1.1; }
 .demo-source-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
 .source-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
     padding: 3px 6px;
     color: #476079;
     border: 1px solid #d4ccb8;
@@ -701,6 +704,9 @@ button:disabled { cursor: not-allowed; }
     font-weight: 700;
 }
 .source-chip.enriched { color: #0b6a58; border-color: #9bd6c3; background: #e8fbef; }
+.source-chip.no-match { color: #667482; border-color: #d4ccb8; background: #fbfaf7; }
+.source-chip.failed { color: #9a4a42; border-color: #e3b6ae; background: #fff3f0; }
+.source-chip small { font-size: 0.52rem; font-weight: 600; opacity: 0.78; }
 .demo-result-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 7px; }
 .demo-phonetic { display: inline-flex; align-items: center; gap: 4px; color: #536477; font-family: var(--mono); font-size: 0.74rem; }
 .demo-detected { margin: 6px 0 0; color: #64748b; font-size: 0.76rem; }

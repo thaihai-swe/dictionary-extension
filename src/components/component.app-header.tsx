@@ -62,7 +62,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         value={provider || 'wiktionary'}
         onChange={handleProviderChange}
         aria-label="Choose preferred dictionary source"
-        className="select-muted w-full text-[11.5px] font-medium"
+        className="select-muted w-full text-[12.5px] font-medium"
         title="Choose which dictionary source is shown first; all enabled sources are combined"
       >
         <option value="wiktionary">Wiktionary</option>
@@ -82,7 +82,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         value={targetLanguage || 'Vietnamese'}
         onChange={handleTargetLangChange}
         aria-label="Select Translation Target Language"
-        className="select-muted w-full text-[11.5px] font-medium"
+        className="select-muted w-full text-[12.5px] font-medium"
         title="Select Translation Target Language"
       >
         <option value="Vietnamese">Vietnamese</option>
@@ -105,10 +105,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <IconBook className="w-4 h-4 text-accent" />
         </div>
         <div className="flex items-baseline gap-1.5 hidden min-[400px]:flex">
-          <span className="text-[14px] font-bold text-content tracking-tight font-heading">
+          <span className="text-[15px] font-bold text-content tracking-tight font-heading">
             AI Dictionary Assistant
           </span>
-          <span className="text-[10px] font-medium font-mono text-content-muted/80 uppercase px-1 py-0.2 rounded bg-muted/60 border border-border/50">
+          <span className="text-[11px] font-medium font-mono text-content-muted/80 uppercase px-1 py-0.2 rounded bg-muted/60 border border-border/50">
             NTH
           </span>
         </div>
@@ -127,7 +127,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <button
             type="button"
             onClick={() => stopAllAudio()}
-            className="h-7 px-2.5 rounded-full border text-[12px] font-bold flex items-center gap-1.5 transition-all cursor-pointer bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-500/30 whitespace-nowrap shadow-xs active:scale-95"
+            className="h-7 px-2.5 rounded-full border text-[13px] font-bold flex items-center gap-1.5 transition-all cursor-pointer bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-500/30 whitespace-nowrap shadow-xs active:scale-95"
             title="Cancel voice playback (Esc)"
             aria-label="Cancel voice playback"
             aria-pressed="true"
@@ -151,11 +151,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             </summary>
             <div className="header-overflow-panel">
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-content-muted">Preferred Source</label>
+                <label className="text-[12px] font-bold uppercase tracking-wider text-content-muted">Preferred Source</label>
                 {providerSelect}
               </div>
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-content-muted">Target Language</label>
+                <label className="text-[12px] font-bold uppercase tracking-wider text-content-muted">Target Language</label>
                 {langSelect}
               </div>
               <div className="flex items-center gap-1.5 pt-1.5 border-t border-border">

@@ -1,4 +1,9 @@
 import { providerRegistry } from './registry';
+import { configureDictionaryProviderPorts } from '../../application/dictionary/provider-ports';
+import { configureDictionaryRuntimePorts } from '../../application/dictionary/runtime-ports';
+import { dictionaryProviderCatalog } from './catalog';
+import { dictionaryCacheRepository } from '../storage/cache-repository';
+import { fetchAiAnalysis } from './ai';
 import {
   fetchDatamuse,
   fetchFreeDictionary,
@@ -79,4 +84,14 @@ providerRegistry.registerTranslation({
   id: 'mymemory',
   name: 'MyMemory',
   lookup: (text, opts) => lookupMyMemoryTranslation(text, opts.targetLang, opts.signal),
+});
+
+configureDictionaryProviderPorts({
+  dictionary: dictionaryProviderCatalog,
+  translation: providerRegistry,
+});
+
+configureDictionaryRuntimePorts({
+  cache: dictionaryCacheRepository,
+  analyzeWithAi: fetchAiAnalysis,
 });

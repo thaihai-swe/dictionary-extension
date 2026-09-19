@@ -1,4 +1,5 @@
 import type { DictionaryEntry } from '../../types';
+import type { DictionaryCachePort } from '../../application/dictionary/runtime-ports';
 import {
   clearEnrichmentCache,
   readSessionCombinedResult,
@@ -7,16 +8,8 @@ import {
   writeSessionEnrichment,
 } from '../../providers/cache';
 
-export interface DictionaryCacheRepository {
-  readCombined(key: string): Promise<DictionaryEntry | undefined>;
-  writeCombined(key: string, result: DictionaryEntry): void;
-  readEnrichment(key: string): Promise<DictionaryEntry[] | null>;
-  writeEnrichment(key: string, results: DictionaryEntry[]): Promise<void>;
-  clear(): void;
-}
-
 /** Browser-storage implementation kept behind the application cache port. */
-export const dictionaryCacheRepository: DictionaryCacheRepository = {
+export const dictionaryCacheRepository: DictionaryCachePort = {
   readCombined: readSessionCombinedResult,
   writeCombined: writeCombinedResultCache,
   readEnrichment: readSessionEnrichment,

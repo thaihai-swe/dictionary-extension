@@ -1,6 +1,6 @@
 import type { ProviderLookupDto } from '../../types';
-import { NotFoundError } from '../../providers/errors.ts';
-import { runBounded } from '../../providers/provider-scheduler.ts';
+import { NotFoundError } from '../../domain/dictionary/errors.ts';
+import { runBounded } from '../runtime/run-bounded.ts';
 import { recordLookupMetric } from '../../shared/performance/lookup-metrics.ts';
 import type {
   DictionaryLookupContext,

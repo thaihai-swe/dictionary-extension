@@ -28,7 +28,7 @@ export const TokenizedContext: React.FC<TokenizedContextProps> = ({ text, query,
   }, [text, query]);
 
   return (
-    <div className={cx('text-[13px] leading-relaxed font-sans text-content', className || 'p-3 rounded-lg border border-border bg-muted/60')}>
+    <div className={cx('text-[14px] leading-relaxed font-sans text-content', className || 'p-3 rounded-lg border border-border bg-muted/60')}>
       {tokens.map((token, idx) =>
         token.isWord ? (
           <span

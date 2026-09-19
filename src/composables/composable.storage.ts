@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { signal, useSignal } from '../ui/signal';
+import { signal, useSignal, useSignalSelector } from '../ui/signal';
 import { TabId, AiIntentId, AppSettings } from '../types';
 import {
   DEFAULT_SETTINGS,
@@ -210,7 +210,7 @@ export async function saveSettingsToStorage(partial: Partial<AppSettings>): Prom
   } else {
     delete writable.hasAiApiKey;
   }
-  const nextSettings = { ...settingsRef.value, ...writable };
+  const nextSettings = normalizeSettings({ ...settingsRef.value, ...writable });
   if (trustedSecrets) {
     Object.assign(nextSettings, secretWrites);
   }
@@ -232,6 +232,7 @@ export async function saveSettingsToStorage(partial: Partial<AppSettings>): Prom
       });
     } catch (e) {
       console.warn('Chrome storage write failed:', e);
+      throw e;
     }
   }
 
@@ -285,26 +286,43 @@ export function initStorage() {
   }
 }
 
-export function useStorage() {
+function useStorageInitialization(): void {
   useEffect(() => {
     initStorage();
   }, []);
+}
 
-  return {
-    settings: useSignal(settingsRef),
-    settingsHydrated: useSignal(settingsHydratedRef),
-    saveSettings: saveSettingsToStorage,
-    activeTab: useSignal(activeTabRef),
-    activeIntent: useSignal(activeIntentRef),
-    setActiveTab: (tab: TabId) => {
-      activeTabRef.value = tab;
-    },
-    setActiveIntent: (intent: AiIntentId) => {
-      activeIntentRef.value = intent;
-    },
-    readSessionKey,
-    writeSessionKey,
-  };
+export function useSettings(): AppSettings {
+  useStorageInitialization();
+  return useSignal(settingsRef);
+}
+
+export function useSetting<K extends keyof AppSettings>(key: K): AppSettings[K] {
+  useStorageInitialization();
+  return useSignalSelector(settingsRef, (settings) => settings[key]);
+}
+
+export function useSettingsHydrated(): boolean {
+  useStorageInitialization();
+  return useSignal(settingsHydratedRef);
+}
+
+export function useActiveTab(): TabId {
+  useStorageInitialization();
+  return useSignal(activeTabRef);
+}
+
+export function useActiveIntent(): AiIntentId {
+  useStorageInitialization();
+  return useSignal(activeIntentRef);
+}
+
+export function setActiveTab(tab: TabId): void {
+  activeTabRef.value = tab;
+}
+
+export function setActiveIntent(intent: AiIntentId): void {
+  activeIntentRef.value = intent;
 }
 
 export const settingsStore = settingsRef;

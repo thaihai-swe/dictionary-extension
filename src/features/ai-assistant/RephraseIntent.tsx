@@ -46,11 +46,11 @@ export const RephraseIntent: React.FC<RephraseIntentProps> = ({ result, targetLa
       {styles?.length ? (
         <div className="space-y-3">
           <div className="flex items-center justify-between pb-1 border-b border-border/40">
-            <span className="flex items-center gap-1.5 text-[12px] font-extrabold uppercase tracking-wider text-accent">
+            <span className="flex items-center gap-1.5 text-[13px] font-extrabold uppercase tracking-wider text-accent">
               <IconEdit className="w-3.5 h-3.5 text-accent" />
               <span>Three Rewrite Styles</span>
             </span>
-            <span className="text-[11px] text-content-muted font-mono">1 Click · 3 Tones</span>
+            <span className="text-[12px] text-content-muted font-mono">1 Click · 3 Tones</span>
           </div>
 
           <div className="space-y-2.5">
@@ -60,12 +60,12 @@ export const RephraseIntent: React.FC<RephraseIntentProps> = ({ result, targetLa
               return (
                 <article
                   key={`${item.style}-${idx}`}
-                  className="rounded-lg border border-border bg-surface p-3.5 space-y-2 text-[13.5px]"
+                  className="rounded-lg border border-border bg-surface p-3.5 space-y-2 text-[14.5px]"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span
                       className={cx(
-                        'px-2 py-0.5 rounded-full text-[11px] font-bold tracking-wider uppercase border font-mono',
+                        'px-2 py-0.5 rounded-full text-[12px] font-bold tracking-wider uppercase border font-mono',
                         getStyleBadgeClass(item.style),
                       )}
                     >
@@ -101,7 +101,7 @@ export const RephraseIntent: React.FC<RephraseIntentProps> = ({ result, targetLa
                   </p>
 
                   {item.note ? (
-                    <p className="text-[12px] text-content-secondary leading-normal pt-0.5">
+                    <p className="text-[13px] text-content-secondary leading-normal pt-0.5">
                       {item.note}
                     </p>
                   ) : null}

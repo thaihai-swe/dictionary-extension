@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { TabId } from '../types';
-import { useStorage } from '../composables/composable.storage';
+import { useSetting } from '../composables/composable.storage';
 import { cx } from '../ui/cx';
 import {
   IconBook,
@@ -22,9 +22,9 @@ interface TabItem {
 }
 
 export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChangeTab }) => {
-  const { settings } = useStorage();
+  const enableAI = useSetting('enableAI');
   const currentActive = activeTab || 'dictionary';
-  const showAiTab = settings.enableAI !== false;
+  const showAiTab = enableAI !== false;
   const navRef = useRef<HTMLElement | null>(null);
 
   const tabs: TabItem[] = [
@@ -88,7 +88,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
     >
       <div
         className={cx(
-          'grid gap-1.5 p-1 rounded-xl bg-muted/60 border border-border/70 text-[13px] shadow-inner-light',
+          'grid gap-1.5 p-1 rounded-xl bg-muted/60 border border-border/70 text-[14px] shadow-inner-light',
           tabs.length === 3 ? 'grid-cols-3' : tabs.length === 2 ? 'grid-cols-2' : 'grid-cols-1',
         )}
       >
@@ -105,7 +105,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
               tabIndex={isActive ? 0 : -1}
               onClick={() => selectTab(tab.id)}
               className={cx(
-                'min-w-0 py-1.5 px-1.5 sm:px-3 rounded-lg flex items-center justify-center gap-1 text-[13px] transition-colors duration-fast outline-none cursor-pointer whitespace-nowrap select-none relative group overflow-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-paper',
+                'min-w-0 py-1.5 px-1.5 sm:px-3 rounded-lg flex items-center justify-center gap-1 text-[14px] transition-colors duration-fast outline-none cursor-pointer whitespace-nowrap select-none relative group overflow-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-paper',
                 isActive
                   ? 'bg-surface text-accent font-bold shadow-xs border border-accent/40'
                   : 'text-content-secondary hover:text-content hover:bg-surface/60 border border-transparent font-medium',

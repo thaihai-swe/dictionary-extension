@@ -47,7 +47,7 @@ const SectionAccordion: React.FC<{ section: RewriteSection }> = ({ section }) =>
         aria-controls={headingId}
         className="w-full px-3.5 py-2.5 flex items-center justify-between gap-3 text-left hover:bg-muted/40 transition-colors cursor-pointer"
       >
-        <span className="text-[12.5px] font-semibold text-content">
+        <span className="text-[13.5px] font-semibold text-content">
           {section.title}
         </span>
         <span
@@ -103,7 +103,7 @@ const BlockRenderer: React.FC<{ block: RewriteBlock }> = ({ block }) => {
               <thead className="bg-muted/60 text-content-secondary border-b border-border">
                 <tr>
                   {block.headers.map((h, idx) => (
-                    <th key={idx} className="px-2.5 py-1.5 font-semibold text-[11px]">
+                    <th key={idx} className="px-2.5 py-1.5 font-semibold text-[12px]">
                       {h}
                     </th>
                   ))}
@@ -116,7 +116,7 @@ const BlockRenderer: React.FC<{ block: RewriteBlock }> = ({ block }) => {
                   {row.map((cell, cIdx) => (
                     <td
                       key={cIdx}
-                      className="px-2.5 py-1.5 text-content text-[11.5px] leading-snug align-top"
+                      className="px-2.5 py-1.5 text-content text-[12.5px] leading-snug align-top"
                       dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(cell) }}
                     />
                   ))}
@@ -141,7 +141,7 @@ const BlockRenderer: React.FC<{ block: RewriteBlock }> = ({ block }) => {
     case 'paragraph':
       return (
         <p
-          className="font-serif text-[13.5px] text-content-secondary leading-6"
+          className="font-serif text-reading-compact text-content-secondary"
           dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(block.text) }}
         />
       );

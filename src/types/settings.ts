@@ -3,6 +3,7 @@ import type { TabId, AiIntentId } from './models';
 export type SelectionTriggerMode = 'off' | 'icon' | 'direct';
 export type PostSelectionModifier = 'shift' | 'alt' | 'ctrl';
 export type AppTheme = 'system' | 'light' | 'dark';
+export type TextSizePreference = 'small' | 'comfortable' | 'large';
 export type AiProviderId = 'gemini' | 'openai';
 export type TranslationProviderId = 'google' | 'libretranslate' | 'mymemory';
 export type DictionaryProviderId =
@@ -16,6 +17,7 @@ export type DictionaryProviderId =
 
 export interface AppSettings {
   theme: AppTheme;
+  textSize: TextSizePreference;
   selectionTriggerMode: SelectionTriggerMode;
   postSelectionModifier: PostSelectionModifier;
   enableContextMenuTrigger: boolean;

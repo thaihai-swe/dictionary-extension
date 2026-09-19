@@ -11,7 +11,7 @@ export const PresetChips: React.FC<PresetChipsProps> = ({ onSelect }) => {
     <div className="rounded-2xl border border-border/80 bg-surface/90 backdrop-blur-sm p-4 space-y-3 shadow-xs">
       <div className="flex items-center gap-2 text-content-muted">
         <IconSparkles className="w-4 h-4 text-accent" />
-        <span className="text-[11px] font-bold uppercase tracking-wider">
+        <span className="text-[12px] font-bold uppercase tracking-wider">
           Explore Examples &amp; Nuances
         </span>
       </div>
@@ -27,7 +27,7 @@ export const PresetChips: React.FC<PresetChipsProps> = ({ onSelect }) => {
             <span className="px-1.5 py-0.5 rounded-md text-[9px] font-bold font-mono uppercase tracking-wider text-accent bg-accent-subtle border border-accent/20 group-hover:bg-accent group-hover:text-accent-foreground transition-colors">
               {preset.tag}
             </span>
-            <span className="text-[12.5px] font-semibold text-content group-hover:text-accent transition-colors truncate">
+            <span className="text-[13.5px] font-semibold text-content group-hover:text-accent transition-colors truncate">
               {preset.label}
             </span>
           </button>

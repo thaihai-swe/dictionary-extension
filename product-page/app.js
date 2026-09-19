@@ -35,9 +35,12 @@
                     ["resistance", "Resistance means opposing something; resilience emphasizes recovering or adapting after difficulty."]
                 ],
                 sources: [
-                    ["Free Dictionary API", false],
-                    ["Google Translate", false],
-                    ["Wiktionary · enriched", true]
+                    { label: "Wiktionary", status: "contributed" },
+                    { label: "Free Dictionary API", status: "contributed" },
+                    { label: "Datamuse", status: "contributed" },
+                    { label: "RhymeBrain", status: "contributed" },
+                    { label: "Urban Dictionary", status: "no_match" },
+                    { label: "Wiktionary Bilingual", status: "contributed" }
                 ]
             },
             senses: [
@@ -162,8 +165,12 @@
                     ["let the cat out of the bag", "A close informal alternative; both mean to reveal a secret, usually by accident or too early."]
                 ],
                 sources: [
-                    ["Google Translate", false],
-                    ["AI · phrase fallback", true]
+                    { label: "Wiktionary", status: "no_match" },
+                    { label: "Free Dictionary API", status: "no_match" },
+                    { label: "Datamuse", status: "contributed" },
+                    { label: "RhymeBrain", status: "contributed" },
+                    { label: "Urban Dictionary", status: "contributed" },
+                    { label: "Wiktionary Bilingual", status: "no_match" }
                 ]
             },
             ai: {
@@ -282,8 +289,12 @@
                     ["adopt", "Adopt means begin to use something; adapt means change to suit a new condition."]
                 ],
                 sources: [
-                    ["Google Translate", false],
-                    ["AI · sentence breakdown", true]
+                    { label: "Wiktionary", status: "no_match" },
+                    { label: "Free Dictionary API", status: "contributed" },
+                    { label: "Datamuse", status: "contributed" },
+                    { label: "RhymeBrain", status: "no_match" },
+                    { label: "Urban Dictionary", status: "no_match" },
+                    { label: "Wiktionary Bilingual", status: "no_match" }
                 ]
             },
             senses: [
@@ -409,8 +420,12 @@
                     ["impact", "Impact can be a noun or verb and is often used in business writing; affect/effect remain more precise in careful prose."]
                 ],
                 sources: [
-                    ["Free Dictionary API", false],
-                    ["AI · Compare Confusables", true]
+                    { label: "Wiktionary", status: "contributed" },
+                    { label: "Free Dictionary API", status: "contributed" },
+                    { label: "Datamuse", status: "contributed" },
+                    { label: "RhymeBrain", status: "no_match" },
+                    { label: "Urban Dictionary", status: "no_match" },
+                    { label: "Wiktionary Bilingual", status: "contributed" }
                 ]
             },
             ai: {
@@ -569,10 +584,31 @@
         return demoData[state.query] || demoData.resilience;
     }
 
+    function normalizeSource(source) {
+        if (Array.isArray(source)) {
+            return { label: source[0], status: source[1] ? "contributed" : "no_match" };
+        }
+        return source || { label: "Unknown source", status: "failed" };
+    }
+
+    function sourceStatusLabel(status) {
+        if (status === "contributed") return "contributed";
+        if (status === "failed") return "failed";
+        return "no usable match";
+    }
+
     function renderSources(sources, className = "source-chip") {
-        return sources.map(([label, enriched]) =>
-            `<span class="${className}${enriched ? " enriched" : ""}">${escapeHtml(label)}</span>`
-        ).join("");
+        return sources.map((source) => {
+            const item = normalizeSource(source);
+            const status = item.status || "no_match";
+            const statusClass = status === "contributed" ? " enriched" : status === "failed" ? " failed" : " no-match";
+            const statusText = sourceStatusLabel(status);
+            return `<span class="${className}${statusClass}" title="${escapeHtml(`${item.label}: ${statusText}`)}">${escapeHtml(item.label)}<small>${escapeHtml(statusText)}</small></span>`;
+        }).join("");
+    }
+
+    function sourceLabel(source) {
+        return normalizeSource(source).label;
     }
 
     function renderSenseMatrix(senses) {
@@ -675,7 +711,7 @@
             <section class="demo-definition-card">
                 <div class="demo-card-heading">
                     <p class="demo-section-label">${escapeHtml(result.partOfSpeech || "Meaning")}</p>
-                    <span class="demo-card-source">${escapeHtml(result.sources[0][0])}</span>
+                    <span class="demo-card-source">${escapeHtml(sourceLabel(result.sources[0]))}</span>
                 </div>
                 <ol class="demo-meaning-list">${meanings}</ol>
             </section>

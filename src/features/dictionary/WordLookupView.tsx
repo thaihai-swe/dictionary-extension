@@ -1,6 +1,6 @@
 import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { abortActiveDictRequest, searchWord, stopAllAudio, useDictionaryQuery, useDictionaryResult } from '@/composables/composable.dictionary';
-import { useStorage } from '@/composables/composable.storage';
+import { useSetting } from '@/composables/composable.storage';
 import { IconClose, IconSearch, IconSpinner } from '@/components/icons';
 import PresetChips from '@/components/component.preset-chips';
 import type { DemoPreset } from '@/shared/presets';
@@ -26,16 +26,17 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
 }) => {
   const { result, isLoading, error } = useDictionaryResult();
   const query = useDictionaryQuery();
-  const { settings } = useStorage();
+  const configuredProvider = useSetting('dictionaryProvider');
+  const configuredTargetLang = useSetting('translateTargetLanguage');
   const [searchInput, setSearchInput] = useState('');
   const searchInputElement = useRef<HTMLInputElement | null>(null);
 
   function getActiveProvider(): string {
-    return provider || settings.dictionaryProvider || 'wiktionary';
+    return provider || configuredProvider || 'wiktionary';
   }
 
   function getActiveLang(): string {
-    return targetLang || settings.translateTargetLanguage || 'Vietnamese';
+    return targetLang || configuredTargetLang || 'Vietnamese';
   }
 
   function runLookup(wordToSearch: string, attachedRequestId?: string) {
@@ -77,7 +78,7 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
     const target = (initialQuery || searchInput || query || '').trim();
     if (target) runLookup(target, lookupRequestId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialQuery, lookupRequestId, provider, targetLang, settings.dictionaryProvider, settings.translateTargetLanguage]);
+  }, [initialQuery, lookupRequestId, provider, targetLang, configuredProvider, configuredTargetLang]);
 
   useEffect(() => () => {
     abortActiveDictRequest();
@@ -100,7 +101,7 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
               type="text"
               placeholder="Type a word, phrase, or sentence…"
               aria-label="Look up a word, phrase, or sentence"
-              className="ui-control w-full h-10 pl-10 pr-20 text-[15px] placeholder:text-content-muted shadow-inner-light"
+              className="ui-control w-full h-10 pl-10 pr-20 text-[16px] placeholder:text-content-muted shadow-inner-light"
             />
 
             {searchInput ? (
@@ -114,7 +115,7 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
                 <IconClose className="w-3.5 h-3.5" />
               </button>
             ) : (
-              <span className="hidden sm:inline-flex absolute right-3 px-1.5 py-0.5 rounded-md text-[10.5px] font-mono text-content-muted/70 border border-border/70 bg-surface select-none pointer-events-none shadow-2xs">
+              <span className="hidden sm:inline-flex absolute right-3 px-1.5 py-0.5 rounded-md text-[11.5px] font-mono text-content-muted/70 border border-border/70 bg-surface select-none pointer-events-none shadow-2xs">
                 ↵ Enter
               </span>
             )}
@@ -124,7 +125,7 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
             type="button"
             onClick={() => handleSearch()}
             disabled={!searchInput.trim() || isLoading}
-            className="ui-button-primary h-10 px-2.5 sm:px-4 text-[13.5px] font-bold cursor-pointer shadow-xs flex items-center gap-1.5 shrink-0 disabled:pointer-events-none"
+            className="ui-button-primary h-10 px-2.5 sm:px-4 text-[14.5px] font-bold cursor-pointer shadow-xs flex items-center gap-1.5 shrink-0 disabled:pointer-events-none"
           >
             {isLoading ? (
               <IconSpinner className="w-4 h-4" />
@@ -138,19 +139,19 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
       {/* Main Content Area */}
       <div className="p-4 space-y-4">
         {error ? (
-          <div role="alert" className="p-4 rounded-2xl bg-rose-500/8 border border-rose-500/25 text-[14px] text-rose-700 dark:text-rose-400 space-y-2">
+          <div role="alert" className="p-4 rounded-2xl bg-rose-500/8 border border-rose-500/25 text-[15px] text-rose-700 dark:text-rose-400 space-y-2">
             <div className="flex items-center gap-2 font-semibold">
               <span className="w-2 h-2 rounded-full bg-rose-500" aria-hidden="true" />
               <span>Lookup failed</span>
             </div>
-            <p className="text-[13.5px] text-content-secondary leading-relaxed pl-4">
+            <p className="text-[14.5px] text-content-secondary leading-relaxed pl-4">
               {error}
             </p>
             <div className="pl-4 pt-1">
               <button
                 type="button"
                 onClick={() => handleSearch()}
-                className="btn-accent h-7 px-3 text-[12px] font-bold cursor-pointer"
+                className="btn-accent h-7 px-3 text-[13px] font-bold cursor-pointer"
               >
                 Try Again
               </button>

@@ -3,6 +3,7 @@ import type {
   DictionaryLookupOptions,
   DictionaryProviderSettings,
   IDictionaryProvider,
+  ITranslationProvider,
   ProviderLookupDto,
 } from '../../types';
 
@@ -14,6 +15,10 @@ export interface DictionaryProviderCatalog {
   getDictionary(id: string): IDictionaryProvider | undefined;
   listDictionaryIds(): string[];
   getLabel(id: string): string;
+}
+
+export interface TranslationProviderCatalog {
+  getTranslation(id: string): ITranslationProvider | undefined;
 }
 
 export interface DictionaryLookupContext {

@@ -34,7 +34,7 @@ export const LearnerMistakesCard: React.FC<LearnerMistakesCardProps> = ({ mistak
         onClick={() => playPronunciation({ text: listenText(item), language: 'en-US', key })}
         title={title}
         className={cx(
-          'h-[24px] px-2 rounded border text-[11px] font-medium transition-colors flex items-center gap-1 ml-auto cursor-pointer not-italic',
+          'h-[24px] px-2 rounded border text-[12px] font-medium transition-colors flex items-center gap-1 ml-auto cursor-pointer not-italic',
           isPlaying
             ? 'bg-accent-subtle text-accent border-accent/40 audio-playing-indicator'
             : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
@@ -49,7 +49,7 @@ export const LearnerMistakesCard: React.FC<LearnerMistakesCardProps> = ({ mistak
 
   return (
     <div className="p-3.5 rounded-lg border border-border bg-surface space-y-2.5 font-sans">
-      <div className="flex items-center gap-1.5 text-[11px] font-bold text-content-muted uppercase tracking-wider">
+      <div className="flex items-center gap-1.5 text-[12px] font-bold text-content-muted uppercase tracking-wider">
         <IconAlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
         <span>Common Learner Mistakes</span>
       </div>
@@ -58,28 +58,28 @@ export const LearnerMistakesCard: React.FC<LearnerMistakesCardProps> = ({ mistak
         {calculatedMistakes.map((item, idx) => (
           <div
             key={idx}
-            className="pl-3 py-2 pr-2.5 rounded-r-md border-l-2 border-amber-500/60 bg-amber-500/6 text-[12.5px] space-y-1"
+            className="pl-3 py-2 pr-2.5 rounded-r-md border-l-2 border-amber-500/60 bg-amber-500/6 text-[13.5px] space-y-1"
           >
             <div className="text-rose-700 dark:text-rose-300 font-medium leading-relaxed flex items-baseline gap-2">
-              <span className="font-bold uppercase text-[10px] px-1 py-0.2 rounded bg-rose-500/15 border border-rose-500/25 flex-shrink-0">
+              <span className="font-bold uppercase text-[11px] px-1 py-0.2 rounded bg-rose-500/15 border border-rose-500/25 flex-shrink-0">
                 Avoid
               </span>
               <span className="line-through opacity-85">{item.mistake}</span>
             </div>
             <div className="text-emerald-700 dark:text-emerald-300 font-medium leading-relaxed flex items-baseline gap-2">
-              <span className="font-bold uppercase text-[10px] px-1 py-0.2 rounded bg-emerald-500/15 border border-emerald-500/25 flex-shrink-0">
+              <span className="font-bold uppercase text-[11px] px-1 py-0.2 rounded bg-emerald-500/15 border border-emerald-500/25 flex-shrink-0">
                 Prefer
               </span>
               <span className="font-semibold">{item.correction}</span>
             </div>
 
             {item.example ? (
-              <blockquote className="text-content-secondary text-[13px] leading-relaxed pt-0.5 flex items-center justify-between flex-wrap gap-2">
+              <blockquote className="text-content-secondary text-[14px] leading-relaxed pt-0.5 flex items-center justify-between flex-wrap gap-2">
                 <span>"{item.example}"</span>
                 {listenButton(idx, item, 'Listen example')}
               </blockquote>
             ) : item.exampleIncorrect || item.exampleCorrect ? (
-              <div className="text-content-secondary text-[13px] leading-relaxed pt-0.5 flex items-center justify-between flex-wrap gap-2">
+              <div className="text-content-secondary text-[14px] leading-relaxed pt-0.5 flex items-center justify-between flex-wrap gap-2">
                 <div>
                   {item.exampleIncorrect ? (
                     <span className="mr-3">

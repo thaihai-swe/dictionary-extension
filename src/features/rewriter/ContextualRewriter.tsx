@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useStorage } from '@/composables/composable.storage';
+import { useSettings } from '@/composables/composable.storage';
 import { useDictionaryAudio } from '@/composables/composable.dictionary';
 import { cx } from '@/ui/cx';
 import { IconCheck, IconCopy, IconSparkles, IconSpeaker } from '@/components/icons';
@@ -40,7 +40,7 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
   contextSentence = '',
   targetLang,
 }) => {
-  const { settings } = useStorage();
+  const settings = useSettings();
   const { playPronunciation } = useDictionaryAudio();
   const [inputText, setInputText] = useState(() => seedRewriterText(initialText, contextSentence));
   const [activeStyle, setActiveStyle] = useState('natural');
@@ -131,13 +131,13 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
         </div>
         <div>
           <h2 className="text-sm font-bold text-content tracking-tight">Rewrite studio</h2>
-          <p className="text-[11px] text-content-muted">Shape your words for the moment</p>
+          <p className="text-[12px] text-content-muted">Shape your words for the moment</p>
         </div>
       </div>
       {/* Input Composer */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="text-[11px] font-bold uppercase tracking-wider text-content-muted">
+          <label className="text-[12px] font-bold uppercase tracking-wider text-content-muted">
             Text to polish
           </label>
           {inputText ? (
@@ -148,7 +148,7 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
                 setRewriteResult(null);
                 setRewriteError(null);
               }}
-              className="text-[11px] text-content-muted hover:text-content cursor-pointer"
+              className="text-[12px] text-content-muted hover:text-content cursor-pointer"
             >
               Clear
             </button>
@@ -158,14 +158,14 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           placeholder="Paste a sentence, email draft, or short paragraph. Selecting one word on a page seeds the full sentence when available."
-          className="ui-control w-full rounded-2xl p-3.5 text-[13px] placeholder:text-content-muted resize-y min-h-[112px] shadow-inner-light"
+          className="ui-control w-full rounded-2xl p-3.5 text-[15px] placeholder:text-content-muted resize-y min-h-[112px] shadow-inner-light"
           rows={5}
         />
       </div>
 
       {/* Preset Style Buttons */}
       <div className="space-y-1.5">
-        <span className="text-[10px] uppercase font-bold tracking-wider text-content-muted block">
+        <span className="text-[11px] uppercase font-bold tracking-wider text-content-muted block">
           Select Desired Tone & Style:
         </span>
         <div className="grid grid-cols-2 gap-2">
@@ -184,7 +184,7 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
                 )}
               >
                 <div className="text-xs text-content font-semibold">{st.label}</div>
-                <div className="text-[10.5px] text-content-muted">{st.desc}</div>
+                <div className="text-[11.5px] text-content-muted">{st.desc}</div>
               </button>
             );
           })}
@@ -193,7 +193,7 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
           type="button"
           onClick={() => handleRewrite(activeStyle)}
           disabled={!inputText.trim() || isRewriting}
-          className="ui-button-primary w-full h-10 mt-1 text-[13px] font-bold disabled:pointer-events-none cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+          className="ui-button-primary w-full h-10 mt-1 text-[14px] font-bold disabled:pointer-events-none cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
         >
           {isRewriting ? (
             <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -218,16 +218,16 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
             </div>
           </div>
         ) : rewriteError ? (
-          <div role="alert" className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/25 text-[12.5px] text-rose-600 dark:text-rose-400 shadow-xs">
+          <div role="alert" className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/25 text-[13.5px] text-rose-600 dark:text-rose-400 shadow-xs">
             {rewriteError}
           </div>
         ) : !rewriteResult ? (
-          <div className="p-4 rounded-2xl border border-dashed border-border/80 bg-muted/20 text-[12.5px] text-content-muted leading-relaxed text-center">
+          <div className="p-4 rounded-2xl border border-dashed border-border/80 bg-muted/20 text-[13.5px] text-content-muted leading-relaxed text-center">
             Choose a tone, then click Rewrite. Nothing is sent until you ask.
           </div>
         ) : (
           <div className="space-y-3">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-accent font-mono block">
+            <span className="text-[12px] font-bold uppercase tracking-wider text-accent font-mono block">
               Rewritten Suggestions
             </span>
 
@@ -265,7 +265,7 @@ function RewriteResultDeck({
       {polished ? (
         <div className="p-4 rounded-2xl border border-accent/30 bg-accent-subtle/40 shadow-xs space-y-2.5">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[10.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-accent-subtle text-accent border border-accent/20 font-mono">
+            <span className="text-[11.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-accent-subtle text-accent border border-accent/20 font-mono">
               Polished rewrite
             </span>
             <div className="flex items-center gap-1.5">
@@ -280,7 +280,7 @@ function RewriteResultDeck({
               <button
                 type="button"
                 onClick={() => onCopy(polished, 'polished')}
-                className="h-7 px-2.5 rounded-lg border border-border/80 bg-surface hover:bg-elevated text-[10.5px] font-semibold flex items-center gap-1 text-content-secondary hover:text-content cursor-pointer transition-colors shadow-2xs active:scale-95"
+                className="h-7 px-2.5 rounded-lg border border-border/80 bg-surface hover:bg-elevated text-[11.5px] font-semibold flex items-center gap-1 text-content-secondary hover:text-content cursor-pointer transition-colors shadow-2xs active:scale-95"
               >
                 {copiedId === 'polished' ? (
                   <IconCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
@@ -291,7 +291,7 @@ function RewriteResultDeck({
               </button>
             </div>
           </div>
-          <p className="font-serif text-[14.5px] text-content leading-7 whitespace-pre-wrap">
+          <p className="font-serif text-reading text-content whitespace-pre-wrap">
             {polished}
           </p>
         </div>
@@ -300,13 +300,13 @@ function RewriteResultDeck({
       {parsed.sections.length ? (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10.5px] uppercase font-bold tracking-wider text-content-muted">
+            <span className="text-[11.5px] uppercase font-bold tracking-wider text-content-muted">
               Coaching notes
             </span>
             <button
               type="button"
               onClick={() => onCopy(markdown, 'summary')}
-              className="h-6 px-2 rounded border border-border bg-surface hover:bg-elevated text-[10.5px] font-semibold flex items-center gap-1 cursor-pointer"
+              className="h-6 px-2 rounded border border-border bg-surface hover:bg-elevated text-[11.5px] font-semibold flex items-center gap-1 cursor-pointer"
             >
               {copiedId === 'summary' ? (
                 <IconCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />

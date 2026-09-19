@@ -32,7 +32,7 @@ export const CollocationsCard: React.FC<CollocationsCardProps> = ({
 
   return (
     <section className="p-3.5 rounded-lg border border-border bg-surface space-y-2.5 font-sans">
-      <div className="flex items-center gap-1.5 text-[11px] font-bold text-content-muted uppercase tracking-wider">
+      <div className="flex items-center gap-1.5 text-[12px] font-bold text-content-muted uppercase tracking-wider">
         <IconLink className="w-3.5 h-3.5 text-accent" />
         <span>Collocations</span>
       </div>
@@ -40,7 +40,7 @@ export const CollocationsCard: React.FC<CollocationsCardProps> = ({
       <div className="space-y-2">
         {groups.map((group) => (
           <div key={group.key} className="grid grid-cols-[118px_minmax(0,1fr)] gap-2 items-start">
-            <span className="text-[11.5px] font-bold text-content-secondary pt-0.5">
+            <span className="text-[12.5px] font-bold text-content-secondary pt-0.5">
               {group.label}:
             </span>
             <div className="flex flex-wrap gap-1">
@@ -50,7 +50,7 @@ export const CollocationsCard: React.FC<CollocationsCardProps> = ({
                   type="button"
                   onClick={() => onSelectWord?.(item)}
                   title={word ? `Look up “${item}”` : `Look up ${item}`}
-                  className="h-[22px] px-2 rounded-full bg-accent-subtle hover:bg-accent/20 border border-accent/25 text-accent text-[11.5px] font-semibold whitespace-nowrap cursor-pointer transition-colors"
+                  className="h-[22px] px-2 rounded-full bg-accent-subtle hover:bg-accent/20 border border-accent/25 text-accent text-[12.5px] font-semibold whitespace-nowrap cursor-pointer transition-colors"
                 >
                   {item}
                 </button>

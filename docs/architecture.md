@@ -27,7 +27,7 @@ Domain code must not import React, Chrome APIs, or concrete network adapters. Pr
     - `dictionary-preload.ts`: Debounced, generation-guarded AI preload scheduling for dictionary selections.
    - `composable.ai-assistant.ts`: Intent facade; persistent AI cache/key normalization lives in `ai-cache.ts` while preload and request lifecycle remain feature-owned.
    - `composable.storage.ts`: Reactive `chrome.storage` settings synchronization.
-5. **Provider Adapters** (`src/providers/` + `src/infrastructure/providers/`) — Vendor adapters are registered through the infrastructure catalog. `src/application/dictionary/provider-aggregator.ts` runs every secondary dictionary source with bounded concurrency and records per-provider outcomes. L1/L2 cache access is exposed through `src/infrastructure/storage/cache-repository.ts`.
+5. **Provider Adapters** (`src/providers/` + `src/infrastructure/providers/`) — Vendor implementations remain in `src/providers/` behind compatibility exports, while infrastructure owns registration and configures the provider, cache, and AI ports consumed by the application layer. `src/application/dictionary/provider-aggregator.ts` runs every secondary dictionary source with bounded concurrency and records per-provider outcomes. L1/L2 cache access is exposed through `src/infrastructure/storage/cache-repository.ts`.
 6. **Feature UI** (`src/features/`) — Domain-sliced React views: dictionary cards (`src/features/dictionary/`), AI intents (`src/features/ai-assistant/`), and settings (`src/features/settings/`). Shared primitives (`AppHeader`, `TabNavigation`, `MarkdownRenderer`, `RelatedWords`, `TokenizedContext`) remain in `src/components/`.
 
 ---
@@ -209,9 +209,9 @@ The AI subsystem (`src/composables/composable.ai-assistant.ts` and `src/provider
 5. **Persistent 24-Hour LRU Cache (`chrome.storage.local`):**
    - Up to 50 AI responses are cached locally with a **24-hour TTL and 8 MiB cap** (`ai_lookup_cache`) when `persistLookupCache` is enabled.
    - Keys are hashed compound representations of `intent`, `text`, `targetLang`, `context`, `model`, `baseUrl`, and `enableLexicalProfile`.
-6. **Keep-Alive UI Mounting & Lazy Code Splitting:**
-   - The `<AiAssistantView />` chunk is loaded lazily on first tab visit (`aiVisited` state).
-   - The AI and Rewriter subtrees are mounted only while their tab is active. Shared lookup/cache state prevents repeat network work; tab-local drafts and rendered trees are released when inactive.
+6. **Lazy UI Mounting & Code Splitting:**
+   - The shared workbench renderer lazy-loads `<AiAssistantView />` and `<ContextualRewriter />` when their tab becomes active.
+   - Inactive feature subtrees are unmounted. Shared lookup/cache state prevents repeat network work while releasing tab-local rendered trees.
 7. **Tab-Scoped Abort & Context Invalidation:**
    - Each AI lookup creates a unique `requestId` and registers an `AbortController`.
    - Selecting a new word or closing the overlay aborts in-flight AI requests via `abortAllAiRequests()` / `useLookupSession().abortAllLookups()`.

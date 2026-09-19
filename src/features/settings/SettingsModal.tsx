@@ -10,6 +10,7 @@ import {
   IconSun,
 } from '@/components/icons';
 import { useSettingsForm, type SettingsTab } from './use-settings-form';
+import { getTextSizeStyle } from '@/ui/text-size';
 
 const TabGeneral = lazy(() => import('./tabs/TabGeneral'));
 const TabAppearance = lazy(() => import('./tabs/TabAppearance'));
@@ -74,6 +75,7 @@ export const SettingsModal: React.FC = () => {
         isDarkMode ? 'dark' : 'light-theme light',
       )}
       data-theme={isDarkMode ? 'dark' : 'light'}
+      style={getTextSizeStyle(localSettings.textSize)}
     >
       {/* Top App Bar */}
       <header className="sticky top-0 z-30 bg-surface/90 backdrop-blur-md border-b border-border">
@@ -83,10 +85,10 @@ export const SettingsModal: React.FC = () => {
               <IconSettings className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <h1 className="font-bold text-[17px] sm:text-lg text-content font-heading truncate tracking-tight">
+              <h1 className="font-bold text-[18px] sm:text-lg text-content font-heading truncate tracking-tight">
                 Preferences
               </h1>
-              <p className="text-[11.5px] text-content-muted truncate hidden sm:block">
+              <p className="text-[13.5px] text-content-muted truncate hidden sm:block">
                 Triggers, dictionaries, AI, and appearance
               </p>
             </div>
@@ -96,7 +98,7 @@ export const SettingsModal: React.FC = () => {
             role="status"
             aria-live="polite"
             className={cx(
-              'text-[11px] font-semibold whitespace-nowrap',
+              'text-[13px] font-semibold whitespace-nowrap',
               isDirty ? 'text-amber-700 dark:text-amber-300' : 'text-content-muted',
             )}
           >
@@ -163,7 +165,7 @@ export const SettingsModal: React.FC = () => {
 
             {/* Backup & Tools Card */}
             <div className="bg-surface border border-border rounded-2xl p-4 space-y-3 shadow-card">
-              <span className="text-[10.5px] font-bold text-content-muted uppercase tracking-wider block font-mono">
+              <span className="text-[12.5px] font-bold text-content-muted uppercase tracking-wider block font-mono">
                 Data &amp; Backup
               </span>
               <div className="space-y-1.5">
@@ -174,7 +176,7 @@ export const SettingsModal: React.FC = () => {
                   className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted/70 text-xs text-content-secondary hover:text-content font-medium transition-colors cursor-pointer flex items-center justify-between border border-transparent hover:border-border"
                 >
                   <span>Export JSON</span>
-                  <span className="text-[10px] text-content-muted font-mono">↓</span>
+                  <span className="text-[12px] text-content-muted font-mono">↓</span>
                 </button>
                 <button
                   type="button"
@@ -183,7 +185,7 @@ export const SettingsModal: React.FC = () => {
                   className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted/70 text-xs text-content-secondary hover:text-content font-medium transition-colors cursor-pointer flex items-center justify-between border border-transparent hover:border-border"
                 >
                   <span>Import JSON</span>
-                  <span className="text-[10px] text-content-muted font-mono">↑</span>
+                  <span className="text-[12px] text-content-muted font-mono">↑</span>
                 </button>
                 <button
                   type="button"
@@ -192,7 +194,7 @@ export const SettingsModal: React.FC = () => {
                   className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted/70 text-xs text-content-secondary hover:text-content font-medium transition-colors cursor-pointer flex items-center justify-between border border-transparent hover:border-border"
                 >
                   <span>{cacheClearedNotice ? 'Cache cleared' : 'Clear lookup cache'}</span>
-                  <span className="text-[10px] text-content-muted font-mono">×</span>
+                  <span className="text-[12px] text-content-muted font-mono">×</span>
                 </button>
               </div>
             </div>
@@ -271,7 +273,7 @@ export const SettingsModal: React.FC = () => {
               Import
             </button>
             <span className="hidden sm:inline">Press</span>
-            <kbd className="hidden sm:inline px-1.5 py-0.5 rounded-md bg-muted text-content border border-border font-mono text-[10.5px]">
+            <kbd className="hidden sm:inline px-1.5 py-0.5 rounded-md bg-muted text-content border border-border font-mono text-[12.5px]">
               ⌘S
             </kbd>
             <span className="hidden sm:inline">or Ctrl+S to save</span>

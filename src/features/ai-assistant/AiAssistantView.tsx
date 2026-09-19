@@ -9,7 +9,7 @@ import TokenizedContext from '@/components/component.tokenized-context';
 import { IconCheck, IconClose, IconCopy, IconSearch } from '@/components/icons';
 import { AI_INTENTS, AiIntentStatus, useAiAssistant } from '@/composables/composable.ai-assistant';
 import { searchWord, stopAllAudio, useDictionaryQuery } from '@/composables/composable.dictionary';
-import { useStorage } from '@/composables/composable.storage';
+import { useSetting } from '@/composables/composable.storage';
 import type { DemoPreset } from '@/shared/presets';
 import { AiIntentId, TabId } from '@/types';
 import { cx } from '@/ui/cx';
@@ -71,7 +71,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
     abortActiveAiRequest,
   } = useAiAssistant();
   const dictionaryQuery = useDictionaryQuery();
-  const { settings } = useStorage();
+  const configuredTargetLang = useSetting('translateTargetLanguage');
 
   const [queryInput, setQueryInput] = useState('');
   const [contextInput, setContextInput] = useState('');
@@ -79,7 +79,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
   const [contextError, setContextError] = useState('');
   const [isEditingContext, setIsEditingContext] = useState(false);
 
-  const resultTargetLang = targetLang || settings.translateTargetLanguage;
+  const resultTargetLang = targetLang || configuredTargetLang;
   const resolvedQuery = resolveQuery(queryInput, contextInput);
   const intentChips = useMemo(
     () => AI_INTENTS.map((item) => ({
@@ -220,7 +220,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
           type="text"
           placeholder="Analyze a word or sentence…"
           aria-label="Analyze a word or sentence"
-          className="ui-control w-full h-11 pl-10 pr-24 text-[13.5px] placeholder:text-content-muted font-sans shadow-inner-light"
+          className="ui-control w-full h-11 pl-10 pr-24 text-[14.5px] placeholder:text-content-muted font-sans shadow-inner-light"
         />
 
         {queryInput ? (
@@ -242,7 +242,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
           type="button"
           onClick={() => handleIntentSelect(activeIntent)}
           disabled={!queryInput || isAiLoading}
-          className="ui-button-primary absolute right-1.5 !min-h-7 h-7 px-3 rounded-md text-[12px] font-semibold cursor-pointer"
+          className="ui-button-primary absolute right-1.5 !min-h-7 h-7 px-3 rounded-md text-[13px] font-semibold cursor-pointer"
         >
           <span>{isAiLoading ? 'Analyzing…' : 'Analyze'}</span>
         </button>
@@ -253,7 +253,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
           <button
             type="button"
             onClick={() => setIsEditingContext(true)}
-            className="text-[11px] text-accent hover:underline font-medium cursor-pointer"
+            className="text-[12px] text-accent hover:underline font-medium cursor-pointer"
           >
             + Add context
           </button>
@@ -262,7 +262,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
         <button
           type="button"
           onClick={() => setIsEditingContext(true)}
-          className="max-w-full inline-flex items-center gap-1.5 min-h-[28px] px-2.5 rounded-full border border-accent/25 bg-accent-subtle text-accent text-[11px] font-medium cursor-pointer whitespace-nowrap"
+          className="max-w-full inline-flex items-center gap-1.5 min-h-[28px] px-2.5 rounded-full border border-accent/25 bg-accent-subtle text-accent text-[12px] font-medium cursor-pointer whitespace-nowrap"
           title="Edit context sentence"
         >
           <span className="truncate max-w-[22rem]">{contextInput.trim()}</span>
@@ -270,13 +270,13 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
       ) : (
         <div className="rounded-2xl border border-border/80 bg-surface/90 p-3 space-y-2.5 shadow-xs">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-content-muted">
+            <span className="text-[12px] font-bold uppercase tracking-wider text-content-muted">
               Context Sentence
             </span>
             <button
               type="button"
               onClick={() => setIsEditingContext(false)}
-              className="text-[11px] font-medium text-content-secondary hover:text-content cursor-pointer"
+              className="text-[12px] font-medium text-content-secondary hover:text-content cursor-pointer"
             >
               Done
             </button>
@@ -286,7 +286,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
             onChange={(e) => setContextInput(e.target.value)}
             rows={2}
             placeholder="Paste the sentence that contains this word..."
-            className="ui-control w-full px-2.5 py-1.5 text-[12.5px] placeholder:text-content-muted resize-y min-h-[44px]"
+            className="ui-control w-full px-2.5 py-1.5 text-[13.5px] placeholder:text-content-muted resize-y min-h-[44px]"
           />
           {contextInput.trim() ? (
             <TokenizedContext
@@ -295,7 +295,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
               onSelectToken={handleTokenSelect}
             />
           ) : null}
-          {contextError ? <p className="text-[11px] text-rose-600 dark:text-rose-400">{contextError}</p> : null}
+          {contextError ? <p className="text-[12px] text-rose-600 dark:text-rose-400">{contextError}</p> : null}
         </div>
       )}
 
@@ -314,7 +314,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
             }}
             aria-pressed={item.isActive}
             className={cx(
-              'inline-flex items-center gap-1.5 min-h-[30px] px-3 rounded-xl border text-[11px] font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap focus-visible:ring-2 focus-visible:ring-accent',
+              'inline-flex items-center gap-1.5 min-h-[30px] px-3 rounded-xl border text-[12px] font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap focus-visible:ring-2 focus-visible:ring-accent',
               item.isActive
                 ? 'chip-active font-semibold'
                 : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
@@ -342,13 +342,13 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
             <div className="h-16 skeleton-shimmer rounded-lg mt-2"></div>
           </div>
         ) : aiError ? (
-          <div role="alert" className="p-4 rounded-2xl bg-rose-500/8 border border-rose-500/25 text-[12.5px] text-rose-700 dark:text-rose-400 shadow-xs">
+          <div role="alert" className="p-4 rounded-2xl bg-rose-500/8 border border-rose-500/25 text-[13.5px] text-rose-700 dark:text-rose-400 shadow-xs">
             {aiError}
           </div>
         ) : aiResult ? (
           <div className="space-y-3">
             <div className="flex items-center justify-between pb-1 border-b border-border">
-              <h3 className="text-[12px] font-semibold text-content uppercase tracking-wider font-mono">
+              <h3 className="text-[13px] font-semibold text-content uppercase tracking-wider font-mono">
                 {intentTitleMap[aiResult.type as AiIntentId] || 'AI Explanation'}
               </h3>
 
@@ -356,14 +356,14 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
                 type="button"
                 onClick={() => copyResult(aiResult.summary)}
                 title="Copy response"
-                className="h-7 px-2 rounded bg-surface hover:bg-elevated text-content-secondary hover:text-content border border-border text-[11px] font-medium transition-colors cursor-pointer inline-flex items-center gap-1"
+                className="h-7 px-2 rounded bg-surface hover:bg-elevated text-content-secondary hover:text-content border border-border text-[12px] font-medium transition-colors cursor-pointer inline-flex items-center gap-1"
               >
                 {copied ? <IconCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> : <IconCopy className="w-3 h-3" />}
                 <span>{copied ? 'Copied' : 'Copy'}</span>
               </button>
             </div>
 
-            <Suspense fallback={<div className="p-3 text-[12.5px] text-content-muted">Loading analysis…</div>}>
+            <Suspense fallback={<div className="p-3 text-[13.5px] text-content-muted">Loading analysis…</div>}>
               {aiResult.type === 'sentence_breakdown' ? (
                 <SentenceBreakdownIntent result={aiResult} targetLang={resultTargetLang} />
               ) : aiResult.type === 'confusables' ? (

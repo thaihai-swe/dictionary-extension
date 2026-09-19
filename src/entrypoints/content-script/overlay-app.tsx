@@ -1,5 +1,6 @@
 import { createRoot, Root } from 'react-dom/client';
 import Overlay from './overlay.in-page';
+import '@/assets/main.css';
 
 interface OverlayProps {
   selectedText?: string;

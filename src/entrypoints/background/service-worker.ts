@@ -27,12 +27,17 @@ import { recordLookupMetric } from '../../shared/performance/lookup-metrics.ts';
 import {
   clearEnrichmentCache,
   setDictionaryCachePersistenceEnabled,
+  validateDictionaryProvider,
+  validateTranslationProvider,
 } from '../../providers/provider.index';
 import { clearHttpCache } from '../../providers/provider.http';
 import { settingsRepository } from '../../infrastructure/storage/settings-repository';
+import '../../infrastructure/providers/register-adapters';
 import { canInjectIntoUrl } from '../../shared/ext';
 import { RequestCoordinator } from '../../application/runtime/request-coordinator';
 import { createLookupHandlers } from '../../application/runtime/lookup-handlers';
+import { fetchCombinedDictionaryResult } from '../../application/dictionary';
+import { fetchAiAnalysis, validateAiProvider } from '../../infrastructure/providers/ai';
 import { createTtlCache } from './ttl-cache';
 import { abortAllFetchProxies, abortFetchProxy, handleFetchProxy } from './fetch-proxy';
 import { handleAudioMessage, releaseOffscreenAudio } from './offscreen-audio';
@@ -257,6 +262,11 @@ const {
   unregisterController,
   publishLookupUpdate,
   dictionaryRequests: inflightDictionaryLookups,
+  lookupDictionary: fetchCombinedDictionaryResult,
+  analyzeAi: fetchAiAnalysis,
+  validateDictionary: validateDictionaryProvider,
+  validateTranslation: validateTranslationProvider,
+  validateAi: validateAiProvider,
 });
 
 async function injectContentScript(tabId: number) {

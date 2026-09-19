@@ -17,7 +17,7 @@ import {
   useDictionaryQuery,
   useDictionaryResult,
 } from '@/composables/composable.dictionary';
-import { useStorage } from '@/composables/composable.storage';
+import { useSetting } from '@/composables/composable.storage';
 import { showToast } from '@/composables/composable.toast';
 import { Phonetic, TranslationResult } from '@/types';
 import { cx } from '@/ui/cx';
@@ -35,14 +35,14 @@ interface WordLookupResultProps {
 const TranslationBanner = React.memo(({ translation }: { translation: TranslationResult }) => (
   <section className="p-3.5 rounded-2xl border border-border/80 bg-gradient-to-r from-accent-subtle/50 to-transparent flex items-baseline justify-between gap-3 shadow-xs">
     <div className="space-y-1 min-w-0 flex-1">
-      <span className="text-[10px] font-bold text-accent uppercase tracking-wider font-mono">
+      <span className="text-[11px] font-bold text-accent uppercase tracking-wider font-mono">
         Translation
       </span>
-      <p className="font-serif text-[16px] text-content font-semibold leading-6 break-words">
+      <p className="font-serif text-reading text-content font-semibold break-words">
         {translation.translatedText}
       </p>
     </div>
-    <span className="text-[10px] text-content-muted flex-shrink-0 font-mono px-2 py-0.5 rounded-md bg-surface border border-border/60 shadow-2xs">
+    <span className="text-[11px] text-content-muted flex-shrink-0 font-mono px-2 py-0.5 rounded-md bg-surface border border-border/60 shadow-2xs">
       {translation.sourceBadges?.map((badge) => badge.label).join(' · ') || 'Google'}
     </span>
   </section>
@@ -53,7 +53,8 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
   const query = useDictionaryQuery();
   const { playingKey } = useDictionaryAudio();
   const { practiceResult, isPracticing, supportsSpeechPractice } = useDictionaryPractice();
-  const { settings } = useStorage();
+  const targetLang = useSetting('translateTargetLanguage');
+  const enableLexicalProfile = useSetting('enableLexicalProfile');
   const [hasCopied, setHasCopied] = React.useState(false);
 
   const displayHeadword = useMemo(() => {
@@ -164,7 +165,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
             </h2>
             {isEnriching ? (
               <span
-                className="inline-flex items-center gap-1.5 text-[11px] font-bold font-mono uppercase tracking-wider text-accent bg-accent-subtle px-2 py-0.5 rounded-full border border-accent/25"
+                className="inline-flex items-center gap-1.5 text-[12px] font-bold font-mono uppercase tracking-wider text-accent bg-accent-subtle px-2 py-0.5 rounded-full border border-accent/25"
                 aria-live="polite"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" aria-hidden="true" />
@@ -180,7 +181,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
               title="Copy definition as Markdown flashcard"
               aria-label="Copy definition as Markdown flashcard"
               className={cx(
-                'h-8 px-2.5 rounded-xl border text-[12.5px] font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs active:scale-95 select-none',
+                'h-8 px-2.5 rounded-xl border text-[13.5px] font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs active:scale-95 select-none',
                 hasCopied
                   ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-bold'
                   : 'bg-muted/60 hover:bg-elevated border-border/80 text-content-secondary hover:text-content',
@@ -231,7 +232,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                 title={`Listen pronunciation (${phoneticLabel(item)})`}
               >
                 <span className={cx(
-                  'text-[9.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-md font-mono transition-colors',
+                  'text-[10.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-md font-mono transition-colors',
                   isPlaying
                     ? 'bg-paper/20 text-accent-foreground'
                     : 'bg-surface text-content-muted border border-border/60 group-hover:text-accent',
@@ -248,7 +249,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                   <IconSpeaker className="w-3.5 h-3.5 text-accent shrink-0 group-hover:scale-110 transition-transform" />
                 )}
                 <span className={cx(
-                  'font-mono text-[13.5px] leading-none tracking-wide font-medium',
+                  'font-mono text-[14.5px] leading-none tracking-wide font-medium',
                   isPlaying ? 'text-accent-foreground' : 'text-content',
                 )}>
                   {ipa ? `/${ipa.replace(/^\/+|\/+$/g, '')}/` : 'Audio'}
@@ -263,7 +264,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
               type="button"
               onClick={() => startSpeechPractice(displayHeadword, 'en-US')}
               className={cx(
-                'h-8 px-3 rounded-xl border text-[11.5px] font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95',
+                'h-8 px-3 rounded-xl border text-[12.5px] font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95',
                 isPracticing
                   ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/40 animate-pulse font-bold'
                   : 'bg-muted/40 hover:bg-elevated text-content-secondary hover:text-content border-border/80 hover:border-amber-500/40',
@@ -281,10 +282,10 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
       {/* Page Selection Context Banner */}
       {showContextBanner ? (
         <section className="p-3.5 rounded-2xl border border-border/80 bg-surface/80 shadow-xs space-y-1">
-          <span className="text-[10px] font-bold uppercase tracking-wider font-mono text-content-muted">
+          <span className="text-[11px] font-bold uppercase tracking-wider font-mono text-content-muted">
             Selection Context
           </span>
-          <p className="font-serif text-[14.5px] text-content leading-6">
+          <p className="font-serif text-reading text-content">
             {pageContext}
           </p>
         </section>
@@ -299,7 +300,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
       {practiceResult ? (
         <div
           className={cx(
-            'rounded-2xl border p-3.5 text-[12.5px] space-y-2 shadow-xs',
+            'rounded-2xl border p-3.5 text-[13.5px] space-y-2 shadow-xs',
             practiceResult.grade === 'excellent'
               ? 'border-emerald-500/30 bg-emerald-500/8 text-emerald-800 dark:text-emerald-200'
               : practiceResult.grade === 'good'
@@ -323,7 +324,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                 <span
                   key={`${detail.word}-${index}`}
                   className={cx(
-                    'px-2 py-0.5 rounded-lg text-[11px] font-mono font-medium border shadow-2xs',
+                    'px-2 py-0.5 rounded-lg text-[12px] font-mono font-medium border shadow-2xs',
                     detail.matched
                       ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-bold'
                       : detail.closeMatch
@@ -347,19 +348,19 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
       {/* Phrase Explanation Fallback */}
       {result.phraseExplanation?.length ? (
         <section className="p-4 rounded-2xl border border-border/80 bg-surface shadow-xs space-y-2.5">
-          <p className="text-[11px] font-bold uppercase tracking-wider font-mono text-accent">
+          <p className="text-[12px] font-bold uppercase tracking-wider font-mono text-accent">
             Phrase Explanation
           </p>
           {result.phraseExplanation.map((section, index) => (
             <div key={index} className="space-y-1.5">
               {section.title && index > 0 ? (
-                <div className="font-bold text-[13px] text-content">{section.title}</div>
+                <div className="font-bold text-[14px] text-content">{section.title}</div>
               ) : null}
               {section.markdown || section.text ? (
                 <MarkdownRenderer content={section.text || ''} />
               ) : null}
               {section.items?.length ? (
-                <ul className="space-y-1 text-[13.5px] text-content list-disc pl-4">
+                <ul className="space-y-1 text-reading-compact text-content list-disc pl-4">
                   {section.items.map((item) => (
                     <li key={item}>{item}</li>
                   ))}
@@ -380,7 +381,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                 key={`${example.text}-${index}`}
                 english={example.text}
                 translation={example.translation}
-                targetLang={settings.translateTargetLanguage}
+                targetLang={targetLang}
                 isPlaying={playingKey === listenKey}
                 onListen={() =>
                   playPronunciation({
@@ -417,7 +418,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
         </LexicalDisclosure>
       ) : null}
 
-      {settings.enableLexicalProfile !== false && result.lexicalProfile?.wordFamily ? (
+      {enableLexicalProfile !== false && result.lexicalProfile?.wordFamily ? (
         <LexicalDisclosure label="Word family">
           <Suspense fallback={null}>
             <WordFamilyCard
@@ -429,7 +430,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
         </LexicalDisclosure>
       ) : null}
 
-      {settings.enableLexicalProfile !== false && result.lexicalProfile?.collocations ? (
+      {enableLexicalProfile !== false && result.lexicalProfile?.collocations ? (
         <LexicalDisclosure label="Collocations">
           <Suspense fallback={null}>
             <CollocationsCard
@@ -441,7 +442,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
         </LexicalDisclosure>
       ) : null}
 
-      {settings.enableLexicalProfile !== false && (formationText || formationPrefixes.length || formationSuffixes.length) ? (
+      {enableLexicalProfile !== false && (formationText || formationPrefixes.length || formationSuffixes.length) ? (
         <LexicalDisclosure label="Word formation">
           <Suspense fallback={null}>
             <WordFormationCard
@@ -453,7 +454,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
         </LexicalDisclosure>
       ) : null}
 
-      {settings.enableLexicalProfile !== false && (result.lexicalProfile?.usageNotes || usageWarnings.length || result.lexicalProfile?.confusablePairs) ? (
+      {enableLexicalProfile !== false && (result.lexicalProfile?.usageNotes || usageWarnings.length || result.lexicalProfile?.confusablePairs) ? (
         <LexicalDisclosure label="Usage and nuance">
           <Suspense fallback={null}>
             <UsageNotesCard
@@ -465,7 +466,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
         </LexicalDisclosure>
       ) : null}
 
-      {settings.enableLexicalProfile !== false && result.lexicalProfile?.learnerMistakes?.length ? (
+      {enableLexicalProfile !== false && result.lexicalProfile?.learnerMistakes?.length ? (
         <LexicalDisclosure label="Learner mistakes" count={result.lexicalProfile.learnerMistakes.length}>
           <Suspense fallback={null}>
             <LearnerMistakesCard mistakes={result.lexicalProfile.learnerMistakes} />

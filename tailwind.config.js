@@ -86,6 +86,10 @@ export default {
         serif: ['Charter', 'Bitstream Charter', 'Cambria', 'Georgia', 'serif'],
         mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', '"Liberation Mono"', '"Courier New"', 'monospace'],
       },
+      fontSize: {
+        xs: ['0.9375rem', { lineHeight: '1.4375rem' }],
+        sm: ['1.0625rem', { lineHeight: '1.625rem' }],
+      },
       transitionTimingFunction: {
         spring: 'cubic-bezier(0.16, 1, 0.3, 1)',
         bounce: 'cubic-bezier(0.34, 1.56, 0.64, 1)',

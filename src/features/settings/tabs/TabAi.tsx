@@ -42,7 +42,7 @@ export const TabAi: React.FC<TabAiProps> = ({
       <section className="bg-surface border border-border rounded-xl p-5 space-y-3 shadow-xs">
         <div>
           <h3 className="text-sm font-bold text-content font-heading">AI features</h3>
-          <p className="text-[11.5px] text-content-muted">
+          <p className="text-[13.5px] text-content-muted">
             Contextual analysis, grammar, breakdown, and confusable comparison.
           </p>
         </div>
@@ -50,7 +50,7 @@ export const TabAi: React.FC<TabAiProps> = ({
           <label className="flex items-center justify-between cursor-pointer py-2.5 hover:bg-muted/30 px-1 rounded-lg transition-colors">
             <div className="pr-4">
               <span className="font-semibold text-content text-xs block">Enable AI Assistant</span>
-              <span className="text-[11px] text-content-muted block">
+              <span className="text-[13px] text-content-muted block">
                 Smart analysis tab and related intents
               </span>
             </div>
@@ -64,7 +64,7 @@ export const TabAi: React.FC<TabAiProps> = ({
           <label className="flex items-center justify-between cursor-pointer py-2.5 hover:bg-muted/30 px-1 rounded-lg transition-colors">
             <div className="pr-4">
               <span className="font-semibold text-content text-xs block">Phrase fallback</span>
-              <span className="text-[11px] text-content-muted block">
+              <span className="text-[13px] text-content-muted block">
                 Use AI when a multi-word phrase has no dictionary entry
               </span>
             </div>
@@ -81,7 +81,7 @@ export const TabAi: React.FC<TabAiProps> = ({
       <section className="bg-surface border border-border rounded-xl p-5 space-y-4 shadow-xs">
         <div>
           <h3 className="text-sm font-bold text-content font-heading">Provider</h3>
-          <p className="text-[11.5px] text-content-muted">
+          <p className="text-[13.5px] text-content-muted">
             Gemini by default, or any OpenAI-compatible server (Ollama, local proxy).
           </p>
         </div>
@@ -103,7 +103,7 @@ export const TabAi: React.FC<TabAiProps> = ({
             )}
           >
             <span>Google Gemini</span>
-            <span className="text-[10px] opacity-75 font-normal">Default</span>
+            <span className="text-[12px] opacity-75 font-normal">Default</span>
           </button>
           <button
             type="button"
@@ -122,17 +122,17 @@ export const TabAi: React.FC<TabAiProps> = ({
             )}
           >
             <span>OpenAI-compatible</span>
-            <span className="text-[10px] opacity-75 font-normal">Ollama, etc.</span>
+            <span className="text-[12px] opacity-75 font-normal">Ollama, etc.</span>
           </button>
         </div>
 
         {isOpenAi ? (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="font-bold text-content-secondary uppercase tracking-wider text-[11px]">
+              <label className="font-bold text-content-secondary uppercase tracking-wider text-[13px]">
                 API base URL
               </label>
-              <span className="text-[10px] text-content-muted">POST /chat/completions</span>
+              <span className="text-[12px] text-content-muted">POST /chat/completions</span>
             </div>
             <input
               value={localSettings.aiBaseUrl || DEFAULT_OPENAI_BASE_URL}
@@ -151,7 +151,7 @@ export const TabAi: React.FC<TabAiProps> = ({
                   key={url}
                   type="button"
                   onClick={() => onChange({ aiBaseUrl: url })}
-                  className="text-[11px] px-2 py-0.5 rounded-md bg-muted hover:bg-elevated border border-border text-content-secondary hover:text-accent font-mono cursor-pointer transition-colors"
+                  className="text-[13px] px-2 py-0.5 rounded-md bg-muted hover:bg-elevated border border-border text-content-secondary hover:text-accent font-mono cursor-pointer transition-colors"
                 >
                   {label}
                 </button>
@@ -162,7 +162,7 @@ export const TabAi: React.FC<TabAiProps> = ({
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <label className="font-bold text-content-secondary uppercase tracking-wider text-[11px]">
+            <label className="font-bold text-content-secondary uppercase tracking-wider text-[13px]">
               {isOpenAi ? 'API key (optional for local)' : 'Gemini API key'}
             </label>
             {!isOpenAi ? (
@@ -184,21 +184,21 @@ export const TabAi: React.FC<TabAiProps> = ({
             placeholder={isOpenAi ? 'sk-… (blank for local Ollama)' : 'AIzaSy…'}
             className="w-full bg-muted border border-border rounded-xl px-3 py-2.5 text-xs text-content placeholder:text-content-muted outline-none focus:border-accent font-mono shadow-xs"
           />
-          <p className="text-[11px] text-content-muted">
+          <p className="text-[13px] text-content-muted">
             Stored locally. Never included in JSON backups.
           </p>
         </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <label className="font-bold text-content-secondary uppercase tracking-wider text-[11px]">
+            <label className="font-bold text-content-secondary uppercase tracking-wider text-[13px]">
               {isOpenAi ? 'Model' : 'Gemini model'}
             </label>
             {!isOpenAi ? (
               <button
                 type="button"
                 onClick={onToggleManualModel}
-                className="text-[11px] px-2.5 py-1 rounded-lg bg-muted hover:bg-elevated text-accent font-semibold border border-border cursor-pointer transition-colors"
+                className="text-[13px] px-2.5 py-1 rounded-lg bg-muted hover:bg-elevated text-accent font-semibold border border-border cursor-pointer transition-colors"
               >
                 {isManualModelInput ? 'Use preset' : 'Custom ID'}
               </button>
@@ -240,7 +240,7 @@ export const TabAi: React.FC<TabAiProps> = ({
             <span>Test {isOpenAi ? 'OpenAI' : 'Gemini'} connection</span>
           </button>
           {connectionStatus.ai ? (
-            <span className="text-[11px] px-2 py-0.5 rounded-md bg-muted border border-border text-accent font-mono">
+            <span className="text-[13px] px-2 py-0.5 rounded-md bg-muted border border-border text-accent font-mono">
               {connectionStatus.ai}
             </span>
           ) : null}
@@ -251,13 +251,13 @@ export const TabAi: React.FC<TabAiProps> = ({
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="text-sm font-bold text-content font-heading">Prompt templates</h3>
-            <p className="text-[11.5px] text-content-muted">
+            <p className="text-[13.5px] text-content-muted">
               Edit prompts per intent. Enable Preload only for intents you want fetched in the background — this uses tokens.
             </p>
           </div>
           <button
             type="button"
-            className="text-[11px] px-2.5 py-1 rounded-lg bg-muted hover:bg-elevated text-accent font-semibold border border-border cursor-pointer transition-colors shrink-0"
+            className="text-[13px] px-2.5 py-1 rounded-lg bg-muted hover:bg-elevated text-accent font-semibold border border-border cursor-pointer transition-colors shrink-0"
             onClick={onRestoreAllPrompts}
           >
             Reset all
@@ -295,7 +295,7 @@ export const TabAi: React.FC<TabAiProps> = ({
                           }}
                           className="w-3.5 h-3.5 cursor-pointer"
                         />
-                        <span className="text-[11px] font-semibold text-content-secondary">Preload</span>
+                        <span className="text-[13px] font-semibold text-content-secondary">Preload</span>
                       </label>
                     ) : null}
                     <button
@@ -304,14 +304,14 @@ export const TabAi: React.FC<TabAiProps> = ({
                         e.preventDefault();
                         onRestorePrompt(key);
                       }}
-                      className="text-[11px] text-content-muted hover:text-accent underline cursor-pointer"
+                      className="text-[13px] text-content-muted hover:text-accent underline cursor-pointer"
                     >
                       Restore default
                     </button>
                   </span>
                 </summary>
                 <div className="px-3 pb-3 space-y-2">
-                  <p className="text-[11px] text-content-muted">
+                  <p className="text-[13px] text-content-muted">
                     {intent === 'default'
                       ? 'Preload fetches this intent after selection so Dictionary → AI feels instant.'
                       : intent === 'rewrite'

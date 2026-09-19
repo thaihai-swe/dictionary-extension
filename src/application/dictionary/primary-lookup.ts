@@ -4,14 +4,13 @@ import type {
   DictionaryProviderSettings,
   ProviderLookupDto,
 } from '../../types';
-import { NotFoundError, isFatalDictionaryError } from '../../providers/errors';
+import { NotFoundError, isFatalDictionaryError } from '../../domain/dictionary/errors';
 import {
   getPrimaryDictionaryLookupAttempts,
 } from '../../shared/query-utils';
 import { hasUsableDefinitions } from '../../domain/dictionary/result-policy';
 import { normalizeDictionaryResult } from './normalizer';
-import { dictionaryProviderCatalog } from '../../infrastructure/providers/catalog';
-import '../../infrastructure/providers/register-adapters';
+import { getDictionaryProviderCatalog } from './provider-ports';
 
 export function resolvePrimaryProviderId(provider: string, settings?: AppSettings): string {
   return provider || settings?.dictionaryProvider || 'wiktionary';
@@ -25,8 +24,9 @@ export async function lookupSingleProvider(
   settings?: DictionaryProviderSettings,
   onPartial?: (result: ProviderLookupDto) => void,
 ): Promise<ProviderLookupDto> {
-  const adapter = dictionaryProviderCatalog.getDictionary(providerId)
-    || dictionaryProviderCatalog.getDictionary('free_dictionary');
+  const catalog = getDictionaryProviderCatalog();
+  const adapter = catalog.getDictionary(providerId)
+    || catalog.getDictionary('free_dictionary');
   if (!adapter) {
     throw new Error(`Unknown dictionary provider: ${providerId}`);
   }

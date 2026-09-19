@@ -2,11 +2,15 @@ import type { AppSettings, DictionaryEntry, ProviderLookupDto } from '../../type
 import { extractLexicalProfileFromMarkdown, mergeLexicalProfiles, parseLexicalProfile } from '../../shared/query-utils';
 import { mergeMeanings, toDictionaryEntry } from '../../shared/enrichment';
 import { hasEnrichmentPayload } from '../../domain/dictionary/result-policy';
-import { dictionaryProviderCatalog } from '../../infrastructure/providers/catalog';
+import { getDictionaryProviderCatalog } from './provider-ports';
 import { recordLookupMetric } from '../../shared/performance/lookup-metrics.ts';
 
 export function providerLabel(providerId: string): string {
-  return dictionaryProviderCatalog.getLabel(providerId);
+  try {
+    return getDictionaryProviderCatalog().getLabel(providerId);
+  } catch {
+    return providerId.replace(/_/g, ' ');
+  }
 }
 
 export function normalizeDictionaryResult(

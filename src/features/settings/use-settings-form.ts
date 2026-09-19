@@ -5,7 +5,9 @@ import {
   clearLookupCaches,
   parsePublicSettingsImport,
   serializePublicSettings,
-  useStorage,
+  saveSettingsToStorage,
+  settingsStore,
+  useSettings,
   whenSettingsReady,
 } from '@/composables/composable.storage';
 import { SECRET_SETTING_KEYS } from '@/shared/settings-export';
@@ -13,6 +15,7 @@ import { requestProviderValidation } from '@/shared/runtime-client';
 import { requestOriginPermission } from '@/shared/permissions';
 import { DEFAULT_AI_PROMPTS } from '@/prompts/prompt-templates';
 import { KNOWN_LANGUAGE_MAPPINGS } from '@/shared/languages';
+import { normalizeSettings } from '@/shared/settings';
 import type { AppSettings } from '@/types';
 import { useAppTheme } from '@/ui/theme';
 
@@ -30,6 +33,13 @@ function areSettingValuesEqual(left: unknown, right: unknown): boolean {
   return left.every((value, index) => Object.is(value, right[index]));
 }
 
+function normalizePausedSitesInput(value: string): string[] {
+  return value
+    .split('\n')
+    .map((line) => line.trim().toLowerCase())
+    .filter((line) => line.length > 0 && !line.startsWith('#'));
+}
+
 function getInitialTab(): SettingsTab {
   if (typeof window !== 'undefined') {
     const hash = window.location.hash.replace('#', '') as SettingsTab;
@@ -42,7 +52,7 @@ function getInitialTab(): SettingsTab {
 
 export function useSettingsForm() {
   const [activeTab, setActiveTab] = useState<SettingsTab>(getInitialTab);
-  const { settings, saveSettings } = useStorage();
+  const settings = useSettings();
   const [localSettings, setLocalSettings] = useState<AppSettings>({ ...settings });
   const [formHydrated, setFormHydrated] = useState(false);
   const [isSavedNotice, setIsSavedNotice] = useState(false);
@@ -61,7 +71,7 @@ export function useSettingsForm() {
     return (Object.keys(localSettings) as Array<keyof AppSettings>).some((key) => {
       if (SECRET_SETTING_KEYS.includes(key as never) && !canEditApiKey) return false;
       return !areSettingValuesEqual(localSettings[key], settings[key]);
-    }) || pausedSitesInput !== (settings.pausedHostnames || []).join('\n');
+    }) || normalizePausedSitesInput(pausedSitesInput).join('\n') !== (settings.pausedHostnames || []).join('\n');
   }, [localSettings, settings, pausedSitesInput, canEditApiKey, formHydrated]);
 
   function switchTab(tab: SettingsTab) {
@@ -92,13 +102,13 @@ export function useSettingsForm() {
     }
   }
 
-  function applyStoreToLocal() {
+  function applyStoreToLocal(source: AppSettings = settings) {
     setLocalSettings((prev) => {
       const pendingSecrets: Partial<AppSettings> = {};
       for (const key of SECRET_SETTING_KEYS) {
         if (String(prev[key] || '').trim()) pendingSecrets[key] = prev[key] as never;
       }
-      const merged = { ...settings, ...pendingSecrets };
+      const merged = { ...source, ...pendingSecrets };
       setPausedSitesInput(Array.isArray(merged.pausedHostnames) ? merged.pausedHostnames.join('\n') : '');
       setIsManualModelInput(Boolean(merged.aiModel && !presetModels.includes(merged.aiModel)));
       return merged;
@@ -108,7 +118,7 @@ export function useSettingsForm() {
 
   async function syncLocalFromStore() {
     await whenSettingsReady();
-    applyStoreToLocal();
+    applyStoreToLocal(settingsStore.value);
   }
 
   useEffect(() => {
@@ -121,6 +131,7 @@ export function useSettingsForm() {
 
   useEffect(() => {
     if (!formHydrated) return;
+    setPausedSitesInput((settings.pausedHostnames || []).join('\n'));
     setLocalSettings((prev) => {
       let updated = false;
       const next = { ...prev };
@@ -156,10 +167,7 @@ export function useSettingsForm() {
     if (isSaving || !isDirty) return;
     setIsSaving(true);
     setSaveError(null);
-    const pausedList = pausedSitesInput
-      .split('\n')
-      .map((line) => line.trim().toLowerCase())
-      .filter((line) => line.length > 0 && !line.startsWith('#'));
+    const pausedList = normalizePausedSitesInput(pausedSitesInput);
     const toSave: Partial<AppSettings> = { ...localSettings, pausedHostnames: pausedList };
 
     if (!canEditApiKey) {
@@ -175,7 +183,10 @@ export function useSettingsForm() {
         const allowed = await requestOriginPermission(toSave.libreTranslateBaseUrl, MANIFEST_ENDPOINT_ORIGINS);
         if (!allowed) throw new Error('Permission was not granted for the custom translation endpoint.');
       }
-      await saveSettings(toSave);
+      await saveSettingsToStorage(toSave);
+      const savedSettings = normalizeSettings({ ...settings, ...toSave });
+      setLocalSettings(savedSettings);
+      setPausedSitesInput(savedSettings.pausedHostnames.join('\n'));
       setIsSavedNotice(true);
       setTimeout(() => setIsSavedNotice(false), 2000);
     } catch (error) {

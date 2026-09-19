@@ -1,6 +1,5 @@
-import type { AppSettings, DictionaryEntry } from '../types';
+import type { DictionaryEntry } from '../types';
 import { createBoundedLruCache } from '../shared/bounded-cache.ts';
-import { hashCacheKey } from '../shared/lookup-cache.ts';
 import { recordLookupMetric } from '../shared/performance/lookup-metrics.ts';
 import { clearHttpCache } from './provider.http';
 
@@ -121,13 +120,7 @@ function hydrate(): Promise<void> {
   return hydrationPromise;
 }
 
-export function combinedResultCacheKey(word: string, settings: AppSettings): string {
-  return hashCacheKey(`${word.toLowerCase().trim()}|${settings.dictionaryProvider || 'wiktionary'}|${String(settings.translateTargetLanguage || '').toLowerCase()}|${Boolean(settings.enableTranslate)}|${Boolean(settings.enableDictionary)}|${Boolean(settings.enablePhraseFallback)}|${settings.enableLexicalProfile !== false}`);
-}
-
-export function enrichmentCacheKey(word: string, settings: AppSettings, primaryId: string, lemma: string): string {
-  return `enrich_${primaryId}_${lemma || word}_${settings.translateTargetLanguage || ''}`.toLowerCase();
-}
+export { combinedResultCacheKey, enrichmentCacheKey } from '../application/dictionary/cache-keys';
 
 function readCombinedMemory(key: string): DictionaryEntry | undefined {
   const record = dictionaryCache.get(key);

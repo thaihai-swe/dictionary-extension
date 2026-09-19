@@ -1,6 +1,5 @@
 import type { AppSettings, TranslationResult } from '../../types';
-import { providerRegistry } from '../../infrastructure/providers/registry';
-import '../../infrastructure/providers/register-adapters';
+import { getTranslationProviderCatalog } from './provider-ports';
 
 /** Translation is a separate application capability from dictionary lookup. */
 export async function lookupTranslationResult(
@@ -11,7 +10,8 @@ export async function lookupTranslationResult(
   if (settings && settings.enableTranslate === false) return null;
   const targetLang = settings?.translateTargetLanguage || 'Vietnamese';
   const providerId = settings?.translateProvider || 'google';
-  const adapter = providerRegistry.getTranslation(providerId) || providerRegistry.getTranslation('google');
+  const catalog = getTranslationProviderCatalog();
+  const adapter = catalog.getTranslation(providerId) || catalog.getTranslation('google');
   const lookupPrimary = async (): Promise<TranslationResult | null> => {
     if (!adapter) return null;
     return adapter.lookup(text, {
@@ -26,7 +26,7 @@ export async function lookupTranslationResult(
   } catch {
     if (providerId === 'mymemory') return null;
     try {
-      const fallback = providerRegistry.getTranslation('mymemory');
+      const fallback = catalog.getTranslation('mymemory');
       if (!fallback) return null;
       return await fallback.lookup(text, { targetLang, signal });
     } catch {

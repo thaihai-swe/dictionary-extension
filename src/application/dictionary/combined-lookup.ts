@@ -4,13 +4,12 @@ import type {
   PhraseExplanationSection,
   TranslationResult,
 } from '../../types';
-import { NotFoundError } from '../../providers/errors';
+import { NotFoundError } from '../../domain/dictionary/errors';
 import { isPhraseLike, splitPhraseExplanation, getSecondaryDictionaryProviderIds } from '../../shared/query-utils';
 import { createDictionaryEntryAccumulator, mergeDictionaryEntries, mergeMeanings } from '../../shared/enrichment';
 import { hasUsableDefinitions } from '../../domain/dictionary/result-policy';
-import { fetchAiAnalysis } from '../../infrastructure/providers/ai';
-import { combinedResultCacheKey } from '../../providers/cache';
-import { dictionaryCacheRepository } from '../../infrastructure/storage/cache-repository';
+import { combinedResultCacheKey } from './cache-keys';
+import { getAiAnalysis, getDictionaryCache } from './runtime-ports';
 import { fetchDictionaryResult } from './primary-lookup';
 import { lookupTranslationResult } from './translation-service';
 import { runDictionaryEnrichment } from './enrichment-service';
@@ -30,7 +29,7 @@ async function lookupPhraseFallback(
   signal?: AbortSignal,
 ): Promise<PhraseExplanationSection[] | null> {
   if (!settings.enableAI || settings.enablePhraseFallback === false) return null;
-  const result = await fetchAiAnalysis(
+  const result = await getAiAnalysis()(
     'phrase_fallback',
     text,
     settings.translateTargetLanguage || 'Vietnamese',
@@ -55,6 +54,7 @@ export async function fetchCombinedDictionaryResult(
   const cleanWord = word.trim();
   const provider = settings.dictionaryProvider || 'wiktionary';
   const targetLang = settings.translateTargetLanguage || 'Vietnamese';
+  const dictionaryCacheRepository = getDictionaryCache();
   const combinedKey = combinedResultCacheKey(cleanWord, settings);
   const cachedCombined = await dictionaryCacheRepository.readCombined(combinedKey);
   if (cachedCombined?.enriched) {

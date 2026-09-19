@@ -14,11 +14,11 @@ function SourcesDisclosure({ sources }: SourcesDisclosureProps) {
 
   return (
     <details className="ui-disclosure group rounded-xl border border-border/70 bg-muted/25 px-3 py-2">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-[12px] font-semibold text-content-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent/40 rounded-lg">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-[13px] font-semibold text-content-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent/40 rounded-lg">
         <span className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
           <span>Sources</span>
-          <span className="font-mono text-[11px] text-content-muted" aria-live="polite">
+          <span className="font-mono text-[12px] text-content-muted" aria-live="polite">
             {contributedCount} contributed
             {noUsableResultCount ? ` · ${noUsableResultCount} no usable result` : ''}
           </span>
@@ -30,7 +30,7 @@ function SourcesDisclosure({ sources }: SourcesDisclosureProps) {
           <span
             key={source.providerId}
             className={[
-              'rounded-full border px-2 py-1 text-[11px] font-medium capitalize',
+              'rounded-full border px-2 py-1 text-[12px] font-medium capitalize',
               source.status === 'contributed'
                 ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
                 : source.status === 'cancelled'

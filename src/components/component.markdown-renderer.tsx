@@ -15,7 +15,7 @@ interface MarkdownRendererProps {
 }
 
 const IN_CONTEXT_BADGE =
-  '<span class="inline-flex items-center px-2 py-0.5 ml-1.5 rounded-full text-[10.5px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 uppercase tracking-wide font-mono select-none">Used in context</span>';
+  '<span class="inline-flex items-center px-2 py-0.5 ml-1.5 rounded-full text-[11.5px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 uppercase tracking-wide font-mono select-none">Used in context</span>';
 
 const RE_USED_IN_CONTEXT_BOLD = /\*\*(?:used in this context|in context)\*\*/gi;
 const RE_USED_IN_CONTEXT_BRACKET = /\[(?:used in this context|in context)\]/gi;
@@ -30,7 +30,7 @@ function formatInlineMarkdown(text: string): string {
     .replace(RE_USED_IN_CONTEXT_BRACKET, IN_CONTEXT_BADGE)
     .replace(RE_BOLD, '<strong class="text-content font-bold">$1</strong>')
     .replace(RE_ITALIC, '<em class="text-accent italic">$1</em>')
-    .replace(RE_CODE, '<code class="px-1.5 py-0.5 rounded bg-muted border border-border text-accent font-mono text-[12px]">$1</code>');
+    .replace(RE_CODE, '<code class="px-1.5 py-0.5 rounded bg-muted border border-border text-accent font-mono text-[13px]">$1</code>');
 }
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, targetLang }) => {
@@ -53,20 +53,20 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, tar
   }
 
   return (
-    <div className="reading-prose space-y-4 text-[14px]">
+    <div className="reading-prose space-y-4">
       {parsedBlocks.map((block, bIdx) => (
         <div
           key={bIdx}
           className="space-y-2.5 pb-3.5 border-b border-border/40 last:border-b-0 last:pb-0"
         >
           {block.title && (
-            <h4 className="font-extrabold text-[12px] flex items-center gap-1.5 text-accent uppercase tracking-wider pb-0.5">
+            <h4 className="font-extrabold text-[13px] flex items-center gap-1.5 text-accent uppercase tracking-wider pb-0.5">
               <span className="w-1.5 h-1.5 rounded-full bg-accent" />
               <span>{block.title}</span>
             </h4>
           )}
 
-          <div className="space-y-2 text-content leading-relaxed text-[14px]">
+          <div className="space-y-2 text-content leading-relaxed">
             {block.items.map((item, lIdx) => {
               if (item.kind === 'pattern_rule') {
                 const key = listenKey(bIdx, lIdx);
@@ -78,17 +78,17 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, tar
                   >
                     <div className="p-3.5 bg-surface space-y-1.5">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="px-2 py-0.5 rounded text-[10.5px] font-bold uppercase tracking-wider bg-accent-subtle text-accent border border-accent/25 font-mono">
+                        <span className="px-2 py-0.5 rounded text-[11.5px] font-bold uppercase tracking-wider bg-accent-subtle text-accent border border-accent/25 font-mono">
                           Pattern {lIdx + 1}
                         </span>
                         {item.title ? (
-                          <span className="font-bold text-[13.5px] text-content">
+                        <span className="font-bold text-reading-compact text-content">
                             {item.title}
                           </span>
                         ) : null}
                       </div>
                       <p
-                        className="text-[13px] text-content-secondary leading-relaxed"
+                        className="text-reading-compact text-content"
                         dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(item.description) }}
                       />
                     </div>
@@ -96,17 +96,17 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, tar
                     {item.example ? (
                       <div className="border-t border-border/60 bg-muted/20">
                         <div className="flex items-start gap-3 px-3.5 py-2.5 bg-accent-subtle/40 border-l-2 border-accent">
-                          <span className="mt-0.5 px-1.5 py-0.5 rounded text-[11px] font-extrabold tracking-wider bg-accent-subtle text-accent border border-accent/30 flex-shrink-0">
+                          <span className="mt-0.5 px-1.5 py-0.5 rounded text-[12px] font-extrabold tracking-wider bg-accent-subtle text-accent border border-accent/30 flex-shrink-0">
                             EN
                           </span>
-                          <p className="flex-1 text-[13.5px] leading-relaxed text-content font-medium">
+                          <p className="flex-1 text-reading-compact text-content font-medium">
                             "{item.example.english}"
                           </p>
                           <button
                             type="button"
                             onClick={() => listenExample(item.example!.english, bIdx, lIdx)}
                             title="Listen to English example"
-                            className={`h-[28px] px-2.5 rounded-lg border text-[12px] font-semibold flex-shrink-0 cursor-pointer transition-colors flex items-center gap-1.5 not-italic shadow-xs ${
+                            className={`h-[28px] px-2.5 rounded-lg border text-[13px] font-semibold flex-shrink-0 cursor-pointer transition-colors flex items-center gap-1.5 not-italic shadow-xs ${
                               isPlaying
                                 ? 'bg-accent-subtle text-accent border-accent/40'
                                 : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border'
@@ -119,10 +119,10 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, tar
                         </div>
                         {item.example.translation ? (
                           <div className="flex items-start gap-3 px-3.5 py-2 bg-muted/30 border-t border-border/50 border-l-2 border-border">
-                            <span className="mt-0.5 px-1.5 py-0.5 rounded text-[11px] font-extrabold tracking-wider bg-muted text-content-secondary border border-border flex-shrink-0">
+                            <span className="mt-0.5 px-1.5 py-0.5 rounded text-[12px] font-extrabold tracking-wider bg-muted text-content-secondary border border-border flex-shrink-0">
                               {languageBadge(targetLang)}
                             </span>
-                            <p className="flex-1 text-[13px] leading-relaxed text-content-secondary font-normal">
+                            <p className="flex-1 text-reading-compact text-content-secondary font-normal">
                               {item.example.translation}
                             </p>
                           </div>
@@ -153,7 +153,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, tar
                 return (
                   <blockquote
                     key={lIdx}
-                    className="pl-3.5 py-1.5 border-l-2 border-accent/60 text-content-secondary text-[14px] my-1 bg-accent-subtle rounded-r-lg"
+                    className="pl-3.5 py-1.5 border-l-2 border-accent/60 text-content-secondary my-1 bg-accent-subtle rounded-r-lg"
                     dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(item.text) }}
                   />
                 );
@@ -161,7 +161,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, tar
 
               if (item.kind === 'bullet') {
                 return (
-                  <div key={lIdx} className="flex items-start gap-2 text-[14px] text-content">
+                  <div key={lIdx} className="flex items-start gap-2 text-content">
                     <span className="text-accent font-bold mt-0.5">•</span>
                     <span dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(item.text) }} />
                   </div>
@@ -171,7 +171,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, tar
               return (
                 <p
                   key={lIdx}
-                  className="text-[14px] text-content-secondary leading-relaxed"
+                  className="text-content-secondary leading-relaxed"
                   dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(item.text) }}
                 />
               );
