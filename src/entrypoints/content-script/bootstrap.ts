@@ -1,17 +1,7 @@
 import { extractSelectionContext } from '../../shared/page-context';
 import { isExtensionContextInvalidated } from '../../shared/messages';
 import { cancelDictionaryLookup, createRequestId, startDictionaryLookup } from '../../shared/dictionary-lookup-client';
-
-type BootSettings = {
-  theme: string;
-  dockPosition: 'none' | 'left' | 'right';
-  selectionTriggerMode: 'off' | 'icon' | 'direct';
-  postSelectionModifier: 'shift' | 'alt' | 'ctrl';
-  pausedHostnames: string[];
-  popupWidth: number;
-  popupHeight: number;
-  disablePageContextExtraction: boolean;
-};
+import { BOOT_DEFAULTS, loadBootSettings, normalizeHostnames, type BootSettings } from './boot-settings';
 
 type OverlayApi = {
   update: (props: Record<string, unknown>) => void;
@@ -43,17 +33,6 @@ type BootUi = {
 };
 
 const BOOT_FLAG = '__dictionaryAssistantBoot';
-
-const BOOT_DEFAULTS: BootSettings = {
-  theme: 'dark',
-  dockPosition: 'none',
-  selectionTriggerMode: 'icon',
-  postSelectionModifier: 'shift',
-  pausedHostnames: [],
-  popupWidth: 620,
-  popupHeight: 720,
-  disablePageContextExtraction: false,
-};
 
 const TRIGGER_CSS = `
 .dictionary-trigger-icon-btn {
@@ -164,7 +143,7 @@ function startBootstrap() {
   let pendingPointerX = 0;
   let pendingPointerY = 0;
 
-  void loadBootSettings();
+  void hydrateBootSettings();
 
   function onWindowClick(event: MouseEvent) {
     if (isDragging || isResizing || !showPopup || !bootUi) return;
@@ -682,43 +661,8 @@ function startBootstrap() {
     }
   });
 
-  async function loadBootSettings() {
-    if (typeof chrome === 'undefined' || !chrome.storage?.sync) return;
-    try {
-      const stored = await chrome.storage.sync.get({
-        theme: BOOT_DEFAULTS.theme,
-        dockPosition: BOOT_DEFAULTS.dockPosition,
-        selectionTriggerMode: BOOT_DEFAULTS.selectionTriggerMode,
-        postSelectionModifier: BOOT_DEFAULTS.postSelectionModifier,
-        pausedHostnames: BOOT_DEFAULTS.pausedHostnames,
-        popupWidth: BOOT_DEFAULTS.popupWidth,
-        popupHeight: BOOT_DEFAULTS.popupHeight,
-        disablePageContextExtraction: BOOT_DEFAULTS.disablePageContextExtraction,
-      });
-      const mode = stored.selectionTriggerMode;
-      const modifier = stored.postSelectionModifier;
-      const dock = stored.dockPosition;
-      settings = {
-        theme: String(stored.theme || BOOT_DEFAULTS.theme),
-        dockPosition: dock === 'left' || dock === 'right' ? dock : 'none',
-        selectionTriggerMode: mode === 'off' || mode === 'direct' || mode === 'icon' ? mode : BOOT_DEFAULTS.selectionTriggerMode,
-        postSelectionModifier: modifier === 'alt' || modifier === 'ctrl' || modifier === 'shift' ? modifier : BOOT_DEFAULTS.postSelectionModifier,
-        pausedHostnames: normalizeHostnames(stored.pausedHostnames),
-        popupWidth: Number(stored.popupWidth) || BOOT_DEFAULTS.popupWidth,
-        popupHeight: Number(stored.popupHeight) || BOOT_DEFAULTS.popupHeight,
-        disablePageContextExtraction: Boolean(stored.disablePageContextExtraction),
-      };
-      applyTheme();
-    } catch {
-      settings = { ...BOOT_DEFAULTS };
-    }
+  async function hydrateBootSettings() {
+    settings = await loadBootSettings();
+    applyTheme();
   }
-}
-
-function normalizeHostnames(value: unknown): string[] {
-  if (Array.isArray(value)) return value.map((item) => String(item).trim().toLowerCase()).filter(Boolean);
-  if (typeof value === 'string' && value.trim()) {
-    return value.split('\n').map((item) => item.trim().toLowerCase()).filter(Boolean);
-  }
-  return [];
 }

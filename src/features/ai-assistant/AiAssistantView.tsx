@@ -220,7 +220,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
           type="text"
           placeholder="Analyze a word or sentence…"
           aria-label="Analyze a word or sentence"
-          className="w-full h-11 bg-muted/40 hover:bg-muted/60 focus:bg-surface border border-border/80 rounded-xl pl-10 pr-24 text-[13.5px] text-content placeholder:text-content-muted outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all font-sans shadow-inner-light"
+          className="ui-control w-full h-11 pl-10 pr-24 text-[13.5px] placeholder:text-content-muted font-sans shadow-inner-light"
         />
 
         {queryInput ? (
@@ -242,7 +242,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
           type="button"
           onClick={() => handleIntentSelect(activeIntent)}
           disabled={!queryInput || isAiLoading}
-          className="absolute right-1.5 h-7 px-3 rounded-md bg-accent hover:opacity-90 text-white dark:text-[#002b36] active:scale-95 text-[12px] font-semibold transition-all disabled:opacity-50 cursor-pointer"
+          className="ui-button-primary absolute right-1.5 !min-h-7 h-7 px-3 rounded-md text-[12px] font-semibold cursor-pointer"
         >
           <span>{isAiLoading ? 'Analyzing…' : 'Analyze'}</span>
         </button>
@@ -286,7 +286,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
             onChange={(e) => setContextInput(e.target.value)}
             rows={2}
             placeholder="Paste the sentence that contains this word..."
-            className="w-full bg-muted/50 border border-border rounded-md px-2.5 py-1.5 text-[12.5px] text-content placeholder:text-content-muted outline-none focus:border-accent resize-y min-h-[44px]"
+            className="ui-control w-full px-2.5 py-1.5 text-[12.5px] placeholder:text-content-muted resize-y min-h-[44px]"
           />
           {contextInput.trim() ? (
             <TokenizedContext
@@ -314,7 +314,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
             }}
             aria-pressed={item.isActive}
             className={cx(
-              'inline-flex items-center gap-1.5 min-h-[30px] px-3 rounded-xl border text-[11px] font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap active:scale-95',
+              'inline-flex items-center gap-1.5 min-h-[30px] px-3 rounded-xl border text-[11px] font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap focus-visible:ring-2 focus-visible:ring-accent',
               item.isActive
                 ? 'chip-active font-semibold'
                 : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',

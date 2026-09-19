@@ -4,7 +4,7 @@ import type { AppSettings, DictionaryEntry } from '../types';
 
 const MAX_DICT_CACHE_SIZE = 80;
 const DICT_CACHE_TTL_MS = 48 * 60 * 60 * 1000;
-const DICT_STORAGE_KEY = 'dict_lookup_cache_v6';
+const DICT_STORAGE_KEY = 'dict_lookup_cache';
 
 export const dictCache = createPersistedLruCache<DictionaryEntry>({
   maxSize: MAX_DICT_CACHE_SIZE,

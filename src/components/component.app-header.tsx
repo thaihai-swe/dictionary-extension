@@ -26,7 +26,6 @@ interface AppHeaderProps {
   onToggleTheme?: () => void;
   provider?: AppSettings['dictionaryProvider'];
   targetLanguage?: string;
-  hasUnsavedSettings?: boolean;
   onClose?: () => void;
   onUpdateProvider?: (value: string) => void;
   onUpdateTargetLang?: (value: string) => void;
@@ -41,7 +40,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onToggleTheme,
   provider,
   targetLanguage,
-  hasUnsavedSettings = false,
   onClose,
   onUpdateProvider,
   onUpdateTargetLang,
@@ -63,18 +61,15 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       <select
         value={provider || 'wiktionary'}
         onChange={handleProviderChange}
-        aria-label="Select primary dictionary source"
+        aria-label="Choose preferred dictionary source"
         className="select-muted w-full text-[11.5px] font-medium"
-        title="Select primary dictionary source"
+        title="Choose which dictionary source is shown first; all enabled sources are combined"
       >
         <option value="wiktionary">Wiktionary</option>
         <option value="free_dictionary">FreeDict</option>
         <option value="datamuse">Datamuse</option>
-        <option value="wikipedia">Wikipedia</option>
         <option value="urban_dictionary">UrbanDict</option>
-        <option value="wiktionary_etymology">Etymology</option>
         <option value="wiktionary_bilingual">Bilingual</option>
-        <option value="tatoeba">Tatoeba</option>
         <option value="google_translate">Translate</option>
       </select>
       <IconChevronDown className="w-3 h-3 text-content-muted pointer-events-none absolute right-2" />
@@ -110,7 +105,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <IconBook className="w-4 h-4 text-accent" />
         </div>
         <div className="flex items-baseline gap-1.5 hidden min-[400px]:flex">
-          <span className="text-[13px] font-bold text-content tracking-tight font-heading">
+          <span className="text-[14px] font-bold text-content tracking-tight font-heading">
             AI Dictionary Assistant
           </span>
           <span className="text-[10px] font-medium font-mono text-content-muted/80 uppercase px-1 py-0.2 rounded bg-muted/60 border border-border/50">
@@ -121,17 +116,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
       {/* Header Actions & Controls */}
       <div className="flex items-center gap-1.5 justify-end min-w-0 flex-1">
-        {hasUnsavedSettings ? (
-          <button
-            type="button"
-            onClick={() => openExtensionSettings()}
-            className="hidden min-[400px]:inline-flex items-center h-7 px-2 rounded-lg border border-amber-500/30 bg-amber-500/10 text-[10px] font-semibold text-amber-700 dark:text-amber-300 whitespace-nowrap cursor-pointer hover:bg-amber-500/20"
-            title="These quick controls are not saved. Open Settings to save defaults."
-          >
-            <span className="hidden min-[520px]:inline">Not saved · </span>Settings
-          </button>
-        ) : null}
-
         {/* Desktop Quick Selectors */}
         <div className="hidden min-[520px]:flex items-center gap-1.5 min-w-0 max-w-[17rem]">
           <div className="min-w-0 flex-1 max-w-[8.5rem]">{providerSelect}</div>
@@ -143,7 +127,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <button
             type="button"
             onClick={() => stopAllAudio()}
-            className="h-7 px-2.5 rounded-full border text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-500/30 whitespace-nowrap shadow-xs active:scale-95"
+            className="h-7 px-2.5 rounded-full border text-[12px] font-bold flex items-center gap-1.5 transition-all cursor-pointer bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-500/30 whitespace-nowrap shadow-xs active:scale-95"
             title="Cancel voice playback (Esc)"
             aria-label="Cancel voice playback"
             aria-pressed="true"
@@ -167,16 +151,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             </summary>
             <div className="header-overflow-panel">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-content-muted">Primary Source</label>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-content-muted">Preferred Source</label>
                 {providerSelect}
               </div>
-              {hasUnsavedSettings ? (
-                <p role="status" className="text-[10px] text-amber-700 dark:text-amber-300">
-                  Not saved. Open Extension Settings to save these defaults.
-                </p>
-              ) : null}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-content-muted">Target Language</label>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-content-muted">Target Language</label>
                 {langSelect}
               </div>
               <div className="flex items-center gap-1.5 pt-1.5 border-t border-border">

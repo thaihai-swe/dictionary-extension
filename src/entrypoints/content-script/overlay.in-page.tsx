@@ -240,7 +240,7 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
       aria-label="Dictionary lookup"
       tabIndex={-1}
       className={cx(
-        'bg-paper/95 dark:bg-paper/90 backdrop-blur-xl border border-border/80 rounded-2xl shadow-card-elevated overflow-hidden flex flex-col select-none text-content text-sm font-sans relative inpage-popup-card w-full h-full transition-colors outline-none',
+        'app-shell bg-paper/95 backdrop-blur-xl border border-border/80 rounded-2xl shadow-card-elevated overflow-hidden flex flex-col select-none text-content text-[15px] font-sans relative inpage-popup-card w-full h-full transition-colors outline-none',
         isDarkMode ? 'dark' : 'light-theme light',
         isMaximized ? 'max-w-5xl max-h-[90vh]' : '',
       )}
@@ -259,11 +259,6 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
           isDarkMode={isDarkMode}
           provider={currentProvider}
           targetLanguage={currentLang}
-          hasUnsavedSettings={
-            theme !== settings.theme
-            || currentProvider !== settings.dictionaryProvider
-            || currentLang !== settings.translateTargetLanguage
-          }
           onToggleShortcuts={() => setShowShortcuts((v) => !v)}
           onToggleMaximize={onToggleMaximize}
           onToggleTheme={toggleTheme}

@@ -52,9 +52,13 @@ export default {
         accent: {
           DEFAULT: withOpacity('--color-primary', '--color-primary-rgb'),
           hover: 'var(--color-primary-hover, #0f766e)',
+          foreground: 'var(--color-on-primary, #ffffff)',
           light: 'var(--color-primary-light, rgba(13, 148, 136, 0.12))',
           subtle: 'var(--color-primary-light, rgba(13, 148, 136, 0.08))',
         },
+        success: 'var(--color-success)',
+        warning: 'var(--color-warning)',
+        danger: 'var(--color-danger)',
       },
       textColor: {
         content: withOpacity('--text-primary', '--text-primary-rgb'),
@@ -85,6 +89,14 @@ export default {
       transitionTimingFunction: {
         spring: 'cubic-bezier(0.16, 1, 0.3, 1)',
         bounce: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+      },
+      spacing: {
+        component: 'var(--spacing-card)',
+        section: 'var(--spacing-section)',
+      },
+      transitionDuration: {
+        fast: 'var(--duration-fast)',
+        normal: 'var(--duration-normal)',
       },
       boxShadow: {
         'xs': '0 1px 2px 0 rgba(0, 0, 0, 0.04)',

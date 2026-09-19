@@ -35,27 +35,16 @@ import { clearHttpCache } from '../../providers/provider.http';
 import { loadFullSettings, normalizeSettings } from '../../shared/settings';
 import { canonicalAiIntent } from '../../shared/ai-prompts';
 import { canInjectIntoUrl } from '../../shared/ext';
-import { getOriginPermissionPattern } from '../../shared/permissions';
 import { AbortRegistry } from '../../shared/abort-registry';
 import { createTtlCache } from './ttl-cache';
+import { abortAllFetchProxies, abortFetchProxy, handleFetchProxy } from './fetch-proxy';
+import { handleAudioMessage, releaseOffscreenAudio } from './offscreen-audio';
 
 const CONTENT_SCRIPT_JS = ['content-script.js'];
 const SETTINGS_TTL_MS = 15_000;
 
-const activeProxyRequests = new Map<string, AbortController>();
 const lookupControllers = new AbortRegistry();
 const inflightDictionaryLookups = new Map<string, Promise<DictionaryEntry & { requestId: string }>>();
-
-async function hasProxyPermission(rawUrl: string): Promise<boolean> {
-  const pattern = getOriginPermissionPattern(rawUrl);
-  if (!pattern) return false;
-  if (typeof chrome.permissions?.contains !== 'function') return true;
-  try {
-    return await chrome.permissions.contains({ origins: [pattern] });
-  } catch {
-    return false;
-  }
-}
 
 const settingsCache = createTtlCache(loadFullSettings, SETTINGS_TTL_MS);
 
@@ -73,86 +62,13 @@ function unregisterController(tabId: number | undefined, scope: string, requestI
   lookupControllers.unregister(getRequestKey(tabId, scope, requestId));
 }
 
-let creatingOffscreen: Promise<void> | null = null;
-let offscreenIdleTimer: ReturnType<typeof setTimeout> | null = null;
-const OFFSCREEN_IDLE_TIMEOUT_MS = 5_000;
-
-async function ensureOffscreenDocument(): Promise<boolean> {
-  const offscreenApi = (chrome as typeof chrome & {
-    offscreen?: {
-      hasDocument: () => Promise<boolean>;
-      createDocument: (options: { url: string; reasons: string[]; justification: string }) => Promise<void>;
-      closeDocument: () => Promise<void>;
-    };
-  }).offscreen;
-  if (!offscreenApi?.createDocument) return false;
-
-  if (offscreenIdleTimer) {
-    clearTimeout(offscreenIdleTimer);
-    offscreenIdleTimer = null;
-  }
-
-  try {
-    if (await offscreenApi.hasDocument()) return true;
-  } catch {
-    // Continue creation
-  }
-
-  if (creatingOffscreen) {
-    await creatingOffscreen;
-    return true;
-  }
-
-  creatingOffscreen = offscreenApi.createDocument({
-    url: 'offscreen.html',
-    reasons: ['AUDIO_PLAYBACK'],
-    justification: 'Playback pronunciation audio and speech synthesis without content script overhead.',
-  }).finally(() => {
-    creatingOffscreen = null;
-  });
-
-  try {
-    await creatingOffscreen;
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function scheduleOffscreenClose() {
-  const offscreenApi = (chrome as typeof chrome & {
-    offscreen?: {
-      hasDocument: () => Promise<boolean>;
-      closeDocument: () => Promise<void>;
-    };
-  }).offscreen;
-  if (!offscreenApi?.closeDocument) return;
-
-  if (offscreenIdleTimer) clearTimeout(offscreenIdleTimer);
-  offscreenIdleTimer = setTimeout(async () => {
-    offscreenIdleTimer = null;
-    try {
-      if (await offscreenApi.hasDocument?.()) {
-        await offscreenApi.closeDocument();
-      }
-    } catch {
-      // Ignore
-    }
-  }, OFFSCREEN_IDLE_TIMEOUT_MS);
-}
-
 function releaseIdleState() {
   lookupControllers.cancelAll();
   inflightDictionaryLookups.clear();
-  for (const controller of activeProxyRequests.values()) controller.abort();
-  activeProxyRequests.clear();
+  abortAllFetchProxies();
   clearHttpCache();
   settingsCache.clear();
-  if (offscreenIdleTimer) {
-    clearTimeout(offscreenIdleTimer);
-    offscreenIdleTimer = null;
-  }
-  void (chrome as typeof chrome & { offscreen?: { closeDocument?: () => Promise<void> } }).offscreen?.closeDocument?.().catch(() => undefined);
+  releaseOffscreenAudio();
 }
 
 function cancelRequestsForScope(tabId: number | undefined, scope: string, exceptRequestId?: string) {
@@ -236,6 +152,7 @@ async function handleDictionaryLookup(payload: LookupTextPayload, sender: chrome
     });
     const controller = registerController(tabId, scope, requestId);
 
+    let backgroundStarted = false;
     try {
       const result = await fetchCombinedDictionaryResult(
         text,
@@ -255,11 +172,19 @@ async function handleDictionaryLookup(payload: LookupTextPayload, sender: chrome
           }
         },
         controller.signal,
+        () => {
+          unregisterController(tabId, scope, requestId);
+          inflightDictionaryLookups.delete(requestKey);
+        },
       );
+      backgroundStarted = true;
       return { ...result, requestId };
-    } finally {
-      unregisterController(tabId, scope, requestId);
-      inflightDictionaryLookups.delete(requestKey);
+    } catch (error) {
+      if (!backgroundStarted) {
+        unregisterController(tabId, scope, requestId);
+        inflightDictionaryLookups.delete(requestKey);
+      }
+      throw error;
     }
   })();
 
@@ -488,38 +413,12 @@ chrome.commands?.onCommand.addListener(async (command) => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === FETCH_PROXY && message.url) {
-    const requestId = String(message.requestId || createRequestId('proxy'));
-    void hasProxyPermission(String(message.url)).then((allowed) => {
-      if (!allowed) {
-        sendResponse({ ok: false, status: 403, error: 'Endpoint permission is not granted.' });
-        return;
-      }
-      const controller = new AbortController();
-      activeProxyRequests.set(requestId, controller);
-      const timeoutMs = Math.max(1000, Math.min(Number(message.timeoutMs) || 60000, 60000));
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-      fetch(message.url, { ...(message.options || {}), signal: controller.signal })
-        .then(async (res) => {
-          const text = await res.text();
-          let data: unknown = text;
-          try { data = JSON.parse(text); } catch { /* keep text */ }
-          sendResponse({ ok: res.ok, status: res.status, data });
-        })
-        .catch((err: Error) => {
-          sendResponse({ ok: false, status: 0, error: err.message });
-        })
-        .finally(() => {
-          clearTimeout(timeoutId);
-          activeProxyRequests.delete(requestId);
-        });
-    });
+    void handleFetchProxy(message, sendResponse);
     return true;
   }
 
   if (message?.type === ABORT_FETCH_PROXY && message.requestId) {
-    const controller = activeProxyRequests.get(String(message.requestId));
-    controller?.abort();
-    activeProxyRequests.delete(String(message.requestId));
+    abortFetchProxy(String(message.requestId));
     sendResponse({ ok: true });
     return false;
   }
@@ -573,20 +472,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message?.type === PLAY_AUDIO || message?.type === SPEAK_TTS || message?.type === STOP_AUDIO) {
-    const action = message.type === PLAY_AUDIO ? 'play' : message.type === SPEAK_TTS ? 'speak' : 'stop';
-    ensureOffscreenDocument()
-      .then(async (ok) => {
-        if (!ok) {
-          sendResponse({ ok: false, error: 'Offscreen audio is unavailable.' });
-          return;
-        }
-        const response = await chrome.runtime.sendMessage({
-          type: OFFSCREEN_AUDIO,
-          payload: { ...(message.payload || {}), action },
-        });
-        scheduleOffscreenClose();
-        sendResponse(response || { ok: Boolean(response?.ok) });
-      })
+    handleAudioMessage(message.type, message.payload)
+      .then(sendResponse)
       .catch((error) => sendResponse({
         ok: false,
         error: error instanceof Error ? error.message : 'Audio playback failed.',

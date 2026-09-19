@@ -62,7 +62,7 @@ export function hasSessionStorage(): boolean {
 }
 
 export function combinedResultCacheKey(word: string, settings: AppSettings): string {
-  return `v2|${word.toLowerCase().trim()}|${settings.dictionaryProvider || 'wiktionary'}|${String(settings.translateTargetLanguage || '').toLowerCase()}|${Boolean(settings.enableTranslate)}|${Boolean(settings.enableDictionary)}|${Boolean(settings.enablePhraseFallback)}|${settings.enableLexicalProfile !== false}`;
+  return `${word.toLowerCase().trim()}|${settings.dictionaryProvider || 'wiktionary'}|${String(settings.translateTargetLanguage || '').toLowerCase()}|${Boolean(settings.enableTranslate)}|${Boolean(settings.enableDictionary)}|${Boolean(settings.enablePhraseFallback)}|${settings.enableLexicalProfile !== false}`;
 }
 
 export function combinedSessionStorageKey(key: string): string {
@@ -70,7 +70,7 @@ export function combinedSessionStorageKey(key: string): string {
 }
 
 export function enrichmentCacheKey(word: string, settings: AppSettings, primaryId: string, lemma: string): string {
-  return `enrich_v2_${primaryId}_${lemma || word}_${settings.translateTargetLanguage || ''}`.toLowerCase();
+  return `enrich_${primaryId}_${lemma || word}_${settings.translateTargetLanguage || ''}`.toLowerCase();
 }
 
 export function readCombinedResultCache(key: string): DictionaryEntry | undefined {

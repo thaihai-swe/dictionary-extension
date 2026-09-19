@@ -13,7 +13,7 @@ This document outlines completed milestones and future enhancements for **Dictio
 
 ### Phase 2: Dual-Phase Lookup & Progressive Lazy Enrichment
 - [x] Phase 1 fast primary lookup returning within sub-second thresholds.
-- [x] Phase 2 lazy enrichment executing secondary keyless providers (`wiktionary`, `datamuse`, `wikipedia`, `urban_dictionary`, `rhymebrain`) in concurrent batches of 2.
+- [x] Phase 2 lazy enrichment executing secondary keyless providers (`wiktionary`, `datamuse`, `urban_dictionary`, `rhymebrain`, `wiktionary_bilingual`) in concurrent batches of 2.
 - [x] Phonetic IPA backfilling, definition merging, and example expansion.
 - [x] Two-level caching: L1 in-memory LRU + L2 session storage (`enrich_*`).
 - [x] Exact selection lookup handling for inflected terms and multi-word phrases.

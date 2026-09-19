@@ -9,13 +9,10 @@ export type DictionaryProviderId =
   | 'free_dictionary'
   | 'google_translate'
   | 'wiktionary'
-  | 'wiktionary_etymology'
   | 'wiktionary_bilingual'
   | 'datamuse'
-  | 'wikipedia'
   | 'rhymebrain'
-  | 'urban_dictionary'
-  | 'tatoeba';
+  | 'urban_dictionary';
 
 export interface AppSettings {
   theme: AppTheme;

@@ -32,6 +32,10 @@ import {
 export const ENRICHMENT_CONCURRENCY = 2;
 export { getSecondaryDictionaryProviderIds };
 
+function providerLabel(providerId: string): string {
+  return providerRegistry.getDictionary(providerId)?.name || providerId.replace(/_/g, ' ');
+}
+
 export function resolvePrimaryProviderId(provider: string, settings?: AppSettings): string {
   return provider || settings?.dictionaryProvider || 'wiktionary';
 }
@@ -56,6 +60,7 @@ export function normalizeDictionaryResult(
   result: ProviderLookupDto | DictionaryEntry,
   settings?: AppSettings,
   originalText?: string,
+  sourceProviderId?: string,
 ): DictionaryEntry {
   const entry = toDictionaryEntry(result);
   let lexicalProfile = settings?.enableLexicalProfile === false ? undefined : parseLexicalProfile(entry.lexicalProfile) || entry.lexicalProfile;
@@ -71,6 +76,9 @@ export function normalizeDictionaryResult(
     ...entry,
     lexicalProfile,
     originalText: originalText || entry.originalText,
+    sources: sourceProviderId
+      ? [{ providerId: sourceProviderId, label: providerLabel(sourceProviderId), status: hasEnrichmentPayload(entry) ? 'contributed' : 'empty' }]
+      : entry.sources,
     meanings: mergeMeanings(entry.meanings || [], []),
   };
 }
@@ -160,7 +168,7 @@ export async function fetchDictionaryResult(
     if (signal?.aborted) throw new DOMException('The user aborted a request.', 'AbortError');
     try {
       const result = await lookupSingleProvider(attempt.providerId, attempt.query, targetLang, signal, settingsWithKeys);
-      const normalized = normalizeDictionaryResult(result, settingsWithKeys, cleanWord);
+      const normalized = normalizeDictionaryResult(result, settingsWithKeys, cleanWord, attempt.providerId);
       if (hasUsableDefinitions(normalized)) return normalized;
       if (!bestPartial) bestPartial = normalized;
     } catch (error) {
@@ -248,17 +256,37 @@ export async function runDictionaryEnrichment(
   const secondaryProviders = getSecondaryDictionaryProviderIds(primaryProviderId);
   const collected: DictionaryEntry[] = [];
 
-  const collectSettled = (settled: PromiseSettledResult<ProviderLookupDto>[]) => {
+  const collectSettled = (providerId: string, settled: PromiseSettledResult<ProviderLookupDto>[]) => {
     const batchResults: DictionaryEntry[] = [];
     for (const item of settled) {
-      if (item.status !== 'fulfilled' || !item.value) continue;
-      const normalized = normalizeDictionaryResult(item.value, settings, word);
-      if (hasEnrichmentPayload(normalized)) batchResults.push(normalized);
+      if (item.status === 'fulfilled' && item.value) {
+        const normalized = normalizeDictionaryResult(item.value, settings, word, providerId);
+        if (hasEnrichmentPayload(normalized)) batchResults.push(normalized);
+        else {
+          currentCombined = mergeDictionaryEntries(currentCombined, {
+            word,
+            meanings: [],
+            sources: [{ providerId, label: providerLabel(providerId), status: 'empty' }],
+          });
+        }
+        continue;
+      }
+      const reason = item.status === 'rejected' ? item.reason : undefined;
+      const status = reason instanceof NotFoundError
+        ? 'not_found'
+        : reason instanceof Error && reason.name === 'AbortError'
+          ? 'cancelled'
+          : 'failed';
+      currentCombined = mergeDictionaryEntries(currentCombined, {
+        word,
+        meanings: [],
+        sources: [{ providerId, label: providerLabel(providerId), status }],
+      });
     }
     if (batchResults.length) {
       collected.push(...batchResults);
       applyResults(batchResults);
-    }
+    } else onEnrichUpdate(currentCombined);
   };
 
   await runBounded(
@@ -267,7 +295,7 @@ export async function runDictionaryEnrichment(
     {
       concurrency: ENRICHMENT_CONCURRENCY,
       signal,
-      onSettled: (_providerId, settled) => collectSettled([settled]),
+      onSettled: (providerId, settled) => collectSettled(providerId, [settled]),
     },
   );
   if (!signal?.aborted && collected.length) await writeSessionEnrichment(cacheKey, collected);
@@ -279,6 +307,7 @@ export async function fetchCombinedDictionaryResult(
   signal?: AbortSignal,
   onEnrichUpdate?: (enriched: DictionaryEntry) => void,
   enrichSignal?: AbortSignal,
+  onBackgroundComplete?: () => void,
 ): Promise<DictionaryEntry> {
   const cleanWord = word.trim();
   const provider = settings.dictionaryProvider || 'wiktionary';
@@ -287,6 +316,7 @@ export async function fetchCombinedDictionaryResult(
   const cachedCombined = await readSessionCombinedResult(combinedKey);
   if (cachedCombined?.enriched) {
     emitUpdate(onEnrichUpdate, cachedCombined, cachedCombined.revision || 0);
+    onBackgroundComplete?.();
     return cachedCombined;
   }
 
@@ -389,20 +419,21 @@ export async function fetchCombinedDictionaryResult(
     })
     : Promise.resolve();
 
-  const backgroundWork = Promise.allSettled([translationTask, enrichmentTask, phraseTask]).then(() => {
+  void Promise.allSettled([translationTask, enrichmentTask, phraseTask]).then(() => {
     if (backgroundSignal?.aborted) return latest;
     latest = {
       ...latest,
       enriched: true,
       revision: (latest.revision || 0) + 1,
     };
-    writeCombinedResultCache(combinedKey, latest);
+    void writeCombinedResultCache(combinedKey, latest);
     emitUpdate(onEnrichUpdate, latest, latest.revision || 0);
     return latest;
   }).catch((error) => {
     if (error instanceof Error && error.name === 'AbortError') return latest;
-    throw error;
-  });
+    // Enrichment must never reject after the initial lookup has been delivered.
+    return latest;
+  }).finally(onBackgroundComplete);
 
-  return backgroundWork;
+  return current;
 }

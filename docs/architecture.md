@@ -14,7 +14,7 @@ The runtime architecture is organized into clean, decoupled layers following mod
    - `composable.dictionary.ts`: Lookup/audio facade; cache policy and speech-practice scoring live in `dictionary-cache.ts` and `dictionary-practice.ts`.
    - `composable.ai-assistant.ts`: Intent facade; persistent AI cache/key normalization lives in `ai-cache.ts` while preload and request lifecycle remain feature-owned.
    - `composable.storage.ts`: Reactive `chrome.storage` settings synchronization.
-5. **Provider Adapters** (`src/providers/`) — Keyless vendor adapters registered through `ProviderRegistry` (`src/providers/registry.ts` + `register-adapters.ts`). Dictionary providers (`free_dictionary`, `wiktionary`, `wiktionary_etymology`, `wiktionary_bilingual`, `datamuse`, `wikipedia`, `urban_dictionary`, `rhymebrain`, `tatoeba`), translation (`google_translate`, `mymemory`, `libre_translate`), and Gemini AI (`gemini-3.5-flash-lite`). Lookup orchestration lives in `pipeline.ts`, bounded scheduling in `provider-scheduler.ts`, and L1/L2 caches live in `cache.ts`.
+5. **Provider Adapters** (`src/providers/`) — Keyless vendor adapters registered through `ProviderRegistry` (`src/providers/registry.ts` + `register-adapters.ts`). Dictionary providers (`free_dictionary`, `wiktionary`, `wiktionary_bilingual`, `datamuse`, `urban_dictionary`, `rhymebrain`), translation (`google_translate`, `mymemory`, `libre_translate`), and Gemini AI (`gemini-3.5-flash-lite`). Lookup orchestration lives in `pipeline.ts`, bounded scheduling in `provider-scheduler.ts`, and L1/L2 caches live in `cache.ts`.
 6. **Feature UI** (`src/features/`) — Domain-sliced React views: dictionary cards (`src/features/dictionary/`), AI intents (`src/features/ai-assistant/`), and settings (`src/features/settings/`). Shared primitives (`AppHeader`, `TabNavigation`, `MarkdownRenderer`, `RelatedWords`, `TokenizedContext`) remain in `src/components/`.
 
 ---
@@ -73,7 +73,7 @@ User selects text on webpage OR types query in toolbar popup
 │  1. Attach late translation via LOOKUP_UPDATE (revision: 1)  │
 │  2. If phrase-like & no defs: run AI Phrase Fallback         │
 │  3. Always-enrich remaining keyless providers (batch N=2)    │
-│     Wiktionary, Datamuse, RhymeBrain, Wikipedia, Urban Dict  │
+│     Wiktionary, Datamuse, RhymeBrain, Urban Dictionary       │
 │  4. Merge definitions, examples, syns/ants, IPA, & profile   │
 │  5. Update SW combined-result memory cache                   │
 │  6. UI coalesces LOOKUP_UPDATE onto requestAnimationFrame    │
@@ -99,7 +99,7 @@ User selects text on webpage OR types query in toolbar popup
 2. **Primary Provider Selection:** The configured `dictionaryProvider` (`wiktionary` by default) is attempted first.
 3. **Provider Fallback Chain:** All remaining dictionary backends are keyless. `NotFoundError` and transient network/5xx/429/timeout continue to the next provider. The fallback chain evaluates in order:
    ```text
-   wiktionary ➔ free_dictionary ➔ datamuse ➔ rhymebrain ➔ wikipedia ➔ urban_dictionary ➔ wiktionary_etymology ➔ wiktionary_bilingual ➔ tatoeba
+   wiktionary ➔ free_dictionary ➔ datamuse ➔ rhymebrain ➔ urban_dictionary ➔ wiktionary_bilingual
    ```
    *(The primary provider is prioritized at the front of this sequence.)*
 4. **Primary Exact Query:** The primary provider looks up the selected text as-is. Inflections and phrases are not rewritten to a root lemma.
@@ -115,7 +115,7 @@ After the initial result is dispatched to the popup, the background service work
 1. **Late Translation Merge:** If translation was still in flight at first paint, it is merged via `LOOKUP_UPDATE` (`revision: 1`) before phrase fallback or dictionary enrichment.
 2. **AI Phrase Fallback (Multi-word Lookups):** After a ~300ms delay when translation was already included (so a dismissed card can cancel), if the query is phrase-like, lacks usable definitions, and both `enableAI` and `enablePhraseFallback` are on, `lookupAiProvider(text, settings, { intent: "phrase_fallback" })` runs first. Upon completion, the phrase explanation is merged and broadcast via `LOOKUP_UPDATE` before secondary dictionary enrichment.
 3. **Always-enrich:** Every provider in `DICTIONARY_FALLBACK_ORDER` runs after Phase 1, except the selected primary provider, even when the primary entry already has definitions. There is no thin-entry or provider-cost gate.
-4. **Secondary Provider Filtering:** Remaining keyless dictionary providers (Datamuse, Wiktionary, Wikipedia, Urban Dictionary, RhymeBrain, Wiktionary Etymology, Wiktionary Bilingual, and Tatoeba) participate in progressive enrichment without requiring API keys. Google Translate and LibreTranslate are translation adapters and remain in the separate translation path.
+4. **Secondary Provider Filtering:** Remaining keyless dictionary providers (Datamuse, Wiktionary, Urban Dictionary, RhymeBrain, and Wiktionary Bilingual) participate in progressive enrichment without requiring API keys. Google Translate and LibreTranslate are translation adapters and remain in the separate translation path.
 5. **Bounded Concurrency:** Remaining unqueried providers run through `runBounded()` with a hard maximum of 2 active requests (`ENRICHMENT_CONCURRENCY = 2`), so slow providers cannot raise total concurrency above the limit.
 6. **Resilient Failure Handling:** Secondary `NotFoundError` results and operational errors are caught and logged silently without disrupting the displayed primary result.
 7. **Cumulative Merge Engine (`mergeDictionaryEntries`):**
@@ -125,7 +125,7 @@ After the initial result is dispatched to the popup, the background service work
    - **Attributed Lists:** Synonyms, antonyms, and examples are deduplicated and clamped to `MAX_ITEMS_PER_SECTION = 16`.
    - **Phonetics:** IPA is stored only on `phonetics[]` (`text` = IPA, `audio` = URL). Entries match IPA first, then region. Distinct IPAs are preserved without collisions. Clamped to `MAX_PHONETICS = 8`.
    - **Lexical Profiles:** Normalized word family forms, word formation, warnings, learner mistakes, and collocations merge via `mergeLexicalProfiles`.
-   - **Specialized POS:** Urban Dictionary slang and Wikipedia encyclopedia stay as separate POS groups, not mixed into general lexical categories.
+   - **Specialized POS:** Urban Dictionary slang stays as a separate POS group, not mixed into general lexical categories.
    - **Lifecycle:** Intermediate merges keep `enriched: false`. The final service-worker task sets `enriched: true`. Dictionary `sourceBadges`, top-level `phonetic`, `pronunciations`, and `syllables` are removed from the model.
 8. **Incremental Broadcast:** The enriched payload is sent to the originating tab/frame via `LOOKUP_UPDATE`. The UI coalesces revisions onto `requestAnimationFrame` and ignores equal-or-older revisions.
 
@@ -194,7 +194,7 @@ The AI subsystem (`src/composables/composable.ai-assistant.ts` and `src/provider
 4. **In-Flight Request Deduplication (`aiPendingMap`):**
    - If a background preload is already in flight when the user switches to the AI tab or clicks an intent, the UI attaches to the running promise (`aiPendingMap.get(cacheKey)`), preventing duplicate API calls.
 5. **Persistent 24-Hour LRU Cache (`chrome.storage.local`):**
-   - Up to 50 AI responses are cached locally with a **24-hour TTL and 8 MiB cap** (`ai_lookup_cache_v2`) when `persistLookupCache` is enabled.
+   - Up to 50 AI responses are cached locally with a **24-hour TTL and 8 MiB cap** (`ai_lookup_cache`) when `persistLookupCache` is enabled.
    - Keys are hashed compound representations of `intent`, `text`, `targetLang`, `context`, `model`, `baseUrl`, and `enableLexicalProfile`.
 6. **Keep-Alive UI Mounting & Lazy Code Splitting:**
    - The `<AiAssistantView />` chunk is loaded lazily on first tab visit (`aiVisited` state).

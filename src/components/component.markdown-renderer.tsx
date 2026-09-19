@@ -53,7 +53,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, tar
   }
 
   return (
-    <div className="space-y-4 text-[14px]">
+    <div className="reading-prose space-y-4 text-[14px]">
       {parsedBlocks.map((block, bIdx) => (
         <div
           key={bIdx}

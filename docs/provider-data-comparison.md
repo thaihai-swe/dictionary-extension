@@ -14,7 +14,6 @@ The table below summarizes what data each provider yields when invoked directly 
 | **Wiktionary** (`wiktionary`) | English Dictionary | Primary & Enrichment | ✅ Yes (Rich senses) | ✅ Yes (first parsed example) | ✅ Yes (up to 6) | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | None (Free) |
 | **Datamuse** (`datamuse`) | WordNet Lexical Engine | Enrichment | ✅ Yes (WordNet glosses) | ❌ No | ❌ No | ✅ Yes (`rel_syn`, `rel_ant`) | ❌ No | ❌ No | ❌ No | ✅ Yes (Adjectives `rel_jjb`, patterns `rel_trg`) | ❌ No | ❌ No | None (Free) |
 | **RhymeBrain** (`rhymebrain`) | Phonetics & Prosody | Enrichment | ❌ No | ❌ No | ❌ No | ❌ No | ✅ Yes (Clean IPA) | ❌ No | ✅ Yes (Syllable count) | ❌ No | ❌ No | ❌ No | None (Free) |
-| **Wikipedia** (`wikipedia`) | Encyclopedia | Fallback / Enrichment | ✅ Yes (Summary gloss) | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ✅ Yes | None (Free) |
 | **Urban Dictionary** (`urban_dictionary`) | Slang & Idioms | Fallback / Enrichment | ✅ Yes (Top-voted slang) | ✅ Yes (Top slang example) | ✅ Yes (All ranked examples) | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | None (Free) |
 | **Google Translate** (`google_translate`) | Neural Translation | Primary Translation & Dictionary Fallback | ✅ (Translation gloss) | ❌ No | ❌ No | ❌ No | ❌ No | ❌ (Free TTS fallback) | ❌ No | ❌ No | ✅ Yes (Multi-language) | ❌ No | None (Free) |
 | **MyMemory** (`mymemory`) | Translation Memory | Fallback Translation | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ✅ Yes (Ranked match pairs) | ❌ No | None (Free) |
@@ -31,7 +30,7 @@ The table below summarizes what data each provider yields when invoked directly 
   - Provides direct URLs to authentic audio recordings (e.g. `https://api.dictionaryapi.dev/media/pronunciations/en/...-us.mp3`).
 * **RhymeBrain (`rhymebrain`)**:
   - Returns raw phonetic notation converted to standardized IPA transcriptions.
-* **Wiktionary, Datamuse, Wikipedia, Urban Dictionary**:
+* **Wiktionary, Datamuse, Urban Dictionary**:
   - Do not provide direct audio URLs. If Wiktionary or Datamuse is used as the primary provider, the UI triggers Phase B enrichment to backfill phonetics from Free Dictionary or RhymeBrain.
 
 ### B. Meanings & Definitions (`meanings[]`)
@@ -43,8 +42,6 @@ The table below summarizes what data each provider yields when invoked directly 
 * **Datamuse**:
   - Parses WordNet definition glosses formatted as `pos\tdefinition`.
   - Groups definitions into `noun`, `verb`, `adjective`, `adverb`, and `general`.
-* **Wikipedia**:
-  - Produces a single `encyclopedia` part-of-speech entry containing an introductory sentence plus a summarized excerpt (up to 420 characters).
 * **Urban Dictionary**:
   - Produces a `slang` part-of-speech entry containing definitions filtered to items with at least 5 thumbs-up votes, sorted by net score.
 

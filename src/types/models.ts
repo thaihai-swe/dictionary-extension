@@ -143,6 +143,12 @@ export interface SourceBadge {
   providerId?: string;
 }
 
+export interface DictionarySourceSummary {
+  providerId: string;
+  label: string;
+  status: 'contributed' | 'empty' | 'not_found' | 'failed' | 'cancelled';
+}
+
 export interface PhraseExplanationSection {
   title?: string;
   kind?: string;
@@ -176,6 +182,7 @@ export interface DictionaryEntry {
   antonyms?: AttributedItem[];
   lexicalProfile?: LexicalProfile;
   translation?: TranslationResult;
+  sources?: DictionarySourceSummary[];
   originalText?: string;
   phraseExplanation?: PhraseExplanationSection[];
   enriched?: boolean;

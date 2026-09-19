@@ -141,7 +141,7 @@ const BlockRenderer: React.FC<{ block: RewriteBlock }> = ({ block }) => {
     case 'paragraph':
       return (
         <p
-          className="text-xs text-content-secondary leading-relaxed"
+          className="font-serif text-[13.5px] text-content-secondary leading-6"
           dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(block.text) }}
         />
       );

@@ -1,0 +1,92 @@
+[
+  {
+    "word": "ghost",
+    "score": 169102,
+    "tags": [
+      "n",
+      "adj",
+      "v"
+    ],
+    "defs": [
+      "n\tA disembodied soul; a soul or spirit of a deceased person; a spirit appearing after death. ",
+      "n\t(by extension) Any faint shadowy semblance; an unsubstantial image. ",
+      "n\tA false image formed in a telescope, camera, or other optical device by reflection from the surfaces of one or more lenses. ",
+      "n\tAn unwanted image similar to and overlapping or adjacent to the main one on a television screen, caused by the transmitted image being received both directly and via reflection. ",
+      "n\tA nonexistent person invented to obtain some (typically fraudulent) benefit. ",
+      "n\tA dead person whose identity is stolen by another (see ghosting). ",
+      "n\t(Internet) An unresponsive user on IRC, resulting from the user's client disconnecting without notifying the server. ",
+      "n\t(computing) A copy of a file or record. ",
+      "n\t(theater) An understudy. ",
+      "n\t(espionage) A covert (and deniable) agent. ",
+      "n\t(cleaning) A faint image that remains after an attempt to remove graffiti. ",
+      "n\t(video games) An opponent in a racing game that follows a previously recorded route, allowing players to compete against previous best times. ",
+      "n\tSomeone whose identity cannot be established because there are no records of such a person. ",
+      "n\t(quantum mechanics) An unphysical state in a gauge theory. ",
+      "n\t(computing, linguistics, attributive) A formerly nonexistent character that was at some point mistakenly encoded into a character set standard, which might have since become used opportunistically for some genuine purpose. ",
+      "n\t(uncountable) A game in which players take turns to add a letter to a possible word, trying not to complete a word. ",
+      "n\t(attributive, in names of species) White or pale. ",
+      "n\t(attributive, in names of species) Transparent or translucent. ",
+      "n\t(attributive) Abandoned. ",
+      "n\t(attributive) Remnant; remains. ",
+      "n\t(attributive) Perceived or listed but not real. ",
+      "n\t(attributive) Of cryptid, supernatural or extraterrestrial nature. ",
+      "n\t(attributive) Substitute. ",
+      "adj\t(African-American Vernacular, slang) In the form be ghost: not present or involved; absent, gone. ",
+      "v\t(transitive) (literary, poetic) Of a disembodied soul: to appear (somewhere or to someone) in the form of an apparition; to haunt. ",
+      "v\t(transitive) (literary, poetic) To imbue (something) with a ghost-like effect or hue. ",
+      "v\t(transitive) (by extension, figurative) To continuously cause (someone or something) trouble; specifically, to continuously be in the thoughts of (someone) in a disturbing manner; to perturb, to trouble. ",
+      "v\t(transitive) (by extension, figurative) (slang) To kill (someone). ",
+      "v\t(transitive) (by extension, figurative) (computing) (graphical user interface) To gray out (a visual element) to indicate that it is unavailable. ",
+      "v\t(transitive) (by extension, figurative) (computing) (Internet) To forcibly disconnect (an IRC user) who is using one's reserved nickname. ",
+      "v\t(transitive) (by extension, figurative) (chiefly social media, slang) To stop communicating with (someone) on social media, though text messages, etc., without explanation, especially as a way of ending a relationship; hence, to end a relationship with (someone) by stopping all communication without explanation. ",
+      "v\t(transitive) (by extension, figurative) (chiefly UK, law enforcement) To transfer (a prisoner) to another prison, usually without first informing the prisoner. ",
+      "v\t(transitive) Synonym of ghostwrite (“to write (a literary work or speech), or produce (an artistic work)), in the place of someone”); also, to carry out (an artistic performance) in the place of someone. ",
+      "v\t(intransitive) To appear suddenly or move like a disembodied soul; specifically (often sports); also (transitive, dated) followed by the dummy subject it: to move easily and quietly without anyone noticing; to slip. ",
+      "v\t(intransitive) Followed by for: synonym of ghostwrite (“to write a literary work or speech, or produce an artistic work, in the place of someone”); also, to carry out an artistic performance in the place of someone. ",
+      "v\t(intransitive) (nautical) Of a sailing vessel: to sail seemingly with very little or no wind. ",
+      "n\t(Christianity, literary, chiefly archaic) A spirit; a human soul. ",
+      "v\t(intransitive) (obsolete) Apparently only in the writings of the Dutch-English physician Gideon Harvey (c. 1636–1640 – c. 1700–1702): to die, to expire. ",
+      "n\t(writing) Ellipsis of ghostwriter. [A professional writer who is paid to write material that is officially credited to another person; one who writes on behalf of someone else, often for a celebrity.] ",
+      "n\t(countable) Ellipsis of ghost pepper. [Synonym of bhut jolokia.] "
+    ]
+  },
+  {
+    "word": "host",
+    "score": 33084,
+    "tags": [
+      "n",
+      "v"
+    ],
+    "defs": [
+      "n\tOne which receives or entertains a guest, socially, commercially, or officially. ",
+      "n\tOne that provides a facility for an event. ",
+      "n\tA person or organization responsible for running an event. ",
+      "v\tTo perform the role of a host. ",
+      "n\t(computing, Internet) Any computer attached to a network. ",
+      "v\t(computing, Internet) To run software made available to a remote user or process. ",
+      "n\t(ecology) A cell or organism which harbors another organism or biological entity, usually a parasite. ",
+      "n\t(multiplicity) The primary member of a system, typically the member who fronts most often. ",
+      "n\tA multitude of people arrayed as an army; used also in religious senses, as: Heavenly host (of angels) ",
+      "n\tA large number of items; a large inventory. ",
+      "n\tA paid male companion offering conversation and in some cases sex, as in certain types of bar in Japan. ",
+      "n\t(Christianity) The consecrated bread of the Eucharist. ",
+      "n\tA moderator or master of ceremonies for a performance. ",
+      "n\t(evolution, genetics) An organism bearing certain genetic material, with respect to its cells. ",
+      "v\t(obsolete, intransitive) To lodge at an inn. "
+    ]
+  },
+  {
+    "word": "ghast",
+    "score": 16012,
+    "tags": [
+      "n",
+      "adj",
+      "v"
+    ],
+    "defs": [
+      "adj\tHaving a ghastly appearance; weird. ",
+      "n\t(fantasy) An evil spirit or monster; a ghoul. ",
+      "v\tAlternative form of gast. [(obsolete) To frighten.] "
+    ]
+  }
+]

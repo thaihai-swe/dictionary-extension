@@ -88,7 +88,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
     >
       <div
         className={cx(
-          'grid gap-1.5 p-1 rounded-xl bg-muted/60 border border-border/70 text-xs shadow-inner-light',
+          'grid gap-1.5 p-1 rounded-xl bg-muted/60 border border-border/70 text-[13px] shadow-inner-light',
           tabs.length === 3 ? 'grid-cols-3' : tabs.length === 2 ? 'grid-cols-2' : 'grid-cols-1',
         )}
       >
@@ -105,13 +105,13 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
               tabIndex={isActive ? 0 : -1}
               onClick={() => selectTab(tab.id)}
               className={cx(
-                'min-w-0 py-1.5 px-1.5 sm:px-3 rounded-lg flex items-center justify-center gap-1 text-xs transition-all duration-150 outline-none cursor-pointer whitespace-nowrap select-none relative group overflow-hidden',
+                'min-w-0 py-1.5 px-1.5 sm:px-3 rounded-lg flex items-center justify-center gap-1 text-[13px] transition-colors duration-fast outline-none cursor-pointer whitespace-nowrap select-none relative group overflow-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-paper',
                 isActive
-                  ? 'bg-surface text-accent font-bold shadow-xs border border-border/90 dark:border-accent/30 scale-[1.01]'
-                  : 'text-content-secondary hover:text-content hover:bg-surface/60 border border-transparent font-medium active:scale-[0.98]',
+                  ? 'bg-surface text-accent font-bold shadow-xs border border-accent/40'
+                  : 'text-content-secondary hover:text-content hover:bg-surface/60 border border-transparent font-medium',
               )}
             >
-              <Icon className={cx('w-3.5 h-3.5 shrink-0 transition-transform group-hover:scale-105', isActive ? 'text-accent' : 'text-content-muted')} />
+              <Icon aria-hidden="true" className={cx('w-3.5 h-3.5 shrink-0', isActive ? 'text-accent' : 'text-content-muted')} />
               <span className="tracking-tight truncate">{tab.label}</span>
               {tab.badge ? (
                 <span className={cx(

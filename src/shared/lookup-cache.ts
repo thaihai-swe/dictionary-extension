@@ -21,7 +21,7 @@ export function hashCacheKey(value: string): string {
     hash ^= input.charCodeAt(index);
     hash = Math.imul(hash, 16777619);
   }
-  return `v1_${(hash >>> 0).toString(16).padStart(8, '0')}_${input.length.toString(16)}`;
+  return `${(hash >>> 0).toString(16).padStart(8, '0')}_${input.length.toString(16)}`;
 }
 
 function canUseLocalStorage(): boolean {

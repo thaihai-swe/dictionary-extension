@@ -19,18 +19,14 @@ export const TabAppearance: React.FC<TabAppearanceProps> = ({ localSettings, onC
             Light, dark, or follow the operating system. Preview applies immediately.
           </p>
         </div>
-        <div className="grid grid-cols-3 gap-2.5 pt-1">
+        <div className="grid grid-cols-1 min-[420px]:grid-cols-3 gap-2.5 pt-1">
           {(['dark', 'light', 'system'] as const).map((mode) => {
             const isSelected = localSettings.theme === mode;
             return (
               <label
                 key={mode}
-                className={cx(
-                  'p-3 rounded-xl border text-center cursor-pointer transition-all font-semibold flex items-center justify-center gap-2 shadow-2xs',
-                  isSelected
-                    ? 'chip-active font-bold ring-1 ring-accent/30'
-                    : 'bg-muted/40 border-border text-content-secondary hover:border-accent/40',
-                )}
+                data-selected={isSelected}
+                className="theme-choice shadow-2xs"
               >
                 <input
                   type="radio"
@@ -38,16 +34,19 @@ export const TabAppearance: React.FC<TabAppearanceProps> = ({ localSettings, onC
                   value={mode}
                   checked={isSelected}
                   onChange={() => onChange({ theme: mode })}
-                  className="hidden"
+                  className="sr-only"
                 />
-                {mode === 'dark' ? (
-                  <IconMoon className="w-4 h-4 text-accent" />
-                ) : mode === 'light' ? (
-                  <IconSun className="w-4 h-4 text-accent" />
-                ) : (
-                  <IconMonitor className="w-4 h-4 text-content-secondary" />
-                )}
-                <span className="capitalize">{mode}</span>
+                <span aria-hidden="true" className={cx('theme-preview', `theme-preview-${mode}`)} />
+                <span className="flex items-center justify-center gap-1.5">
+                  {mode === 'dark' ? (
+                    <IconMoon aria-hidden="true" className="w-4 h-4" />
+                  ) : mode === 'light' ? (
+                    <IconSun aria-hidden="true" className="w-4 h-4" />
+                  ) : (
+                    <IconMonitor aria-hidden="true" className="w-4 h-4" />
+                  )}
+                  <span className="capitalize font-semibold">{mode}</span>
+                </span>
               </label>
             );
           })}

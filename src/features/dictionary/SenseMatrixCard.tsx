@@ -61,7 +61,7 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings }) =>
             className={cx(
               'h-6 px-2.5 rounded-full text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1',
               selectedPos === 'all'
-                ? 'bg-accent text-white dark:text-[#002b36] shadow-2xs font-bold'
+                ? 'bg-accent text-accent-foreground shadow-2xs font-bold'
                 : 'bg-muted hover:bg-elevated text-content-secondary hover:text-content border border-border',
             )}
           >
@@ -78,7 +78,7 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings }) =>
                 className={cx(
                   'h-6 px-2.5 rounded-full text-[11px] font-semibold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap flex items-center gap-1',
                   isActive
-                    ? 'bg-accent text-white dark:text-[#002b36] shadow-2xs font-bold'
+                    ? 'bg-accent text-accent-foreground shadow-2xs font-bold'
                     : 'bg-muted hover:bg-elevated text-content-secondary hover:text-content border border-border',
                 )}
               >
@@ -116,7 +116,7 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings }) =>
                     <span className="font-semibold text-accent text-[13px] mt-0.5 flex-shrink-0 font-mono select-none">
                       {dIdx + 1}.
                     </span>
-                    <span className="text-[14.5px] text-content leading-relaxed">
+                    <span className="font-serif text-[15px] text-content leading-7 tracking-[0.002em]">
                       {def.definition}
                     </span>
                   </div>

@@ -356,7 +356,7 @@ export const SettingsModal: React.FC = () => {
   return (
     <div
       className={cx(
-        'settings-shell min-h-screen bg-paper text-content font-sans transition-colors selection:bg-accent/20',
+        'app-shell settings-shell min-h-screen bg-paper text-content font-sans transition-colors selection:bg-accent/20',
         isDarkMode ? 'dark' : 'light-theme light',
       )}
       data-theme={isDarkMode ? 'dark' : 'light'}
@@ -583,7 +583,7 @@ export const SettingsModal: React.FC = () => {
               type="button"
               onClick={handleSave}
               disabled={isSaving || !isDirty}
-              className="px-5 py-2 rounded-xl bg-accent hover:opacity-90 text-white dark:text-[#002b36] text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
+              className="ui-button-primary px-5 py-2 text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer disabled:pointer-events-none"
             >
               {isSaving ? (
                 <span>Saving…</span>

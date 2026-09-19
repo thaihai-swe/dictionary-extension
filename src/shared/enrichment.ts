@@ -5,6 +5,7 @@ import type {
   Phonetic,
   ProviderLookupDto,
   SourceBadge,
+  DictionarySourceSummary,
   TranslationResult,
 } from '../types';
 import { mergeLexicalProfiles } from './query-utils.ts';
@@ -284,6 +285,26 @@ function mergeSourceBadges(existing: SourceBadge[] = [], incoming: SourceBadge[]
   return merged;
 }
 
+function mergeDictionarySources(existing: DictionarySourceSummary[] = [], incoming: DictionarySourceSummary[] = []): DictionarySourceSummary[] {
+  const merged = [...existing];
+  for (const source of incoming) {
+    if (!source?.providerId) continue;
+    const index = merged.findIndex((item) => item.providerId === source.providerId);
+    if (index < 0) merged.push(source);
+    else {
+      const rank = (status: DictionarySourceSummary['status']) => (
+        status === 'contributed' ? 4
+          : status === 'failed' ? 3
+            : status === 'cancelled' ? 2
+              : status === 'not_found' ? 1
+                : 0
+      );
+      if (rank(source.status) >= rank(merged[index].status)) merged[index] = source;
+    }
+  }
+  return merged;
+}
+
 function mergeTranslations(
   base?: TranslationResult,
   incoming?: TranslationResult,
@@ -339,6 +360,7 @@ export function toDictionaryEntry(dto: ProviderLookupDto | DictionaryEntry): Dic
     antonyms: dto.antonyms,
     lexicalProfile: dto.lexicalProfile,
     translation: dto.translation || extractTranslationFromMeanings(meanings),
+    sources: extra.sources,
     originalText: extra.originalText,
     phraseExplanation: dto.phraseExplanation,
     enriched: extra.enriched,
@@ -366,6 +388,7 @@ export function mergeDictionaryEntries(
     antonyms: mergeAttributed(left.antonyms, right.antonyms),
     lexicalProfile: mergeLexicalProfiles(left.lexicalProfile, right.lexicalProfile),
     translation,
+    sources: mergeDictionarySources(left.sources, right.sources),
     phraseExplanation: left.phraseExplanation?.length ? left.phraseExplanation : right.phraseExplanation,
     originalText: left.originalText || right.originalText,
     enriched: left.enriched,
@@ -387,5 +410,6 @@ export function cloneDictionaryEntry(entry: DictionaryEntry): DictionaryEntry {
     antonyms: entry.antonyms ? [...entry.antonyms] : undefined,
     phraseExplanation: entry.phraseExplanation ? [...entry.phraseExplanation] : undefined,
     translation: entry.translation ? { ...entry.translation } : undefined,
+    sources: entry.sources ? entry.sources.map((source) => ({ ...source })) : undefined,
   };
 }

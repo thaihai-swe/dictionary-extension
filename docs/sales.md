@@ -60,7 +60,7 @@ API keys live in `chrome.storage.local`. The content script and public sync payl
 
 | Area | What ships today |
 |---|---|
-| Dictionary | Keyless: Free Dictionary, Wiktionary, Datamuse, Wikipedia, Urban Dictionary, RhymeBrain enrichment |
+| Dictionary | Keyless: Free Dictionary, Wiktionary, Datamuse, Urban Dictionary, RhymeBrain, and Wiktionary enrichment |
 | Translation | Google Translate (default), LibreTranslate, MyMemory fallback |
 | AI | `gemini-3.5-flash-lite` or custom OpenAI-compatible URL; 7 UI intents + phrase fallback |
 | Audio | MP3 / Google TTS / SpeechSynthesis; Stop Voice; speech practice |

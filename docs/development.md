@@ -110,7 +110,7 @@ Run this comprehensive verification protocol before submitting code changes:
    - Query `apple`, then immediately type `orange` before `apple` finishes enrichment.
    - Confirm `apple` enrichment updates never overwrite `orange` (stale-response guard via `requestId`).
 4. Free keyless provider pipeline:
-   - Confirm lookups succeed and enrich across Free Dictionary, Wiktionary, Datamuse, Wikipedia, Urban Dictionary, and RhymeBrain without requiring API keys.
+   - Confirm lookups succeed and enrich across Free Dictionary, Wiktionary, Datamuse, Urban Dictionary, and RhymeBrain without requiring API keys.
    - A transient 5xx/timeout from an upstream provider falls through gracefully without failing the overall result.
 
 ---

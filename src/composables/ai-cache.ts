@@ -3,7 +3,7 @@ import { AiIntentId, AiResult, AppSettings } from '../types';
 import { canonicalAiIntent } from '../shared/ai-prompts';
 import { createPersistedLruCache, hashCacheKey } from '../shared/lookup-cache';
 
-const AI_STORAGE_KEY = 'ai_lookup_cache_v2';
+const AI_STORAGE_KEY = 'ai_lookup_cache';
 const MAX_AI_CACHE_SIZE = 50;
 const AI_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 

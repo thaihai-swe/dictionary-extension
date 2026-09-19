@@ -130,7 +130,7 @@ export const ToolbarPopupApp: React.FC = () => {
   return (
     <div
       className={cx(
-        'bg-paper text-content font-sans flex flex-col select-none overflow-hidden transition-colors duration-150',
+        'app-shell bg-paper text-content font-sans flex flex-col select-none overflow-hidden transition-colors duration-fast',
         isFullTab
           ? 'w-full max-w-5xl min-h-[calc(100vh-2rem)] mx-auto my-4 rounded-xl border border-border shadow-card-elevated'
           : 'w-full h-full',
@@ -147,11 +147,6 @@ export const ToolbarPopupApp: React.FC = () => {
         isMaximized={isFullTab}
         provider={currentProvider}
         targetLanguage={targetLang}
-        hasUnsavedSettings={
-          theme !== settings.theme
-          || currentProvider !== settings.dictionaryProvider
-          || targetLang !== settings.translateTargetLanguage
-        }
         onToggleShortcuts={() => setShowShortcuts((v) => !v)}
         onToggleMaximize={openFullTab}
         onToggleTheme={toggleTheme}

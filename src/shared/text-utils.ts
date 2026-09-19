@@ -15,11 +15,8 @@ export const DICTIONARY_FALLBACK_ORDER = [
   'free_dictionary',
   'datamuse',
   'rhymebrain',
-  'wikipedia',
   'urban_dictionary',
-  'wiktionary_etymology',
   'wiktionary_bilingual',
-  'tatoeba',
 ];
 
 export function getSecondaryDictionaryProviderIds(primaryProviderId: string): string[] {

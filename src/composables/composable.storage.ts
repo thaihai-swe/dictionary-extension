@@ -71,13 +71,13 @@ export function clearLookupCaches() {
     }
   }
   if (typeof chrome !== 'undefined' && chrome.storage?.local?.remove) {
-    void chrome.storage.local.remove(['dict_lookup_cache_v5', 'dict_lookup_cache_v6', 'ai_lookup_cache_v2']).catch(() => undefined);
+    void chrome.storage.local.remove(['dict_lookup_cache', 'ai_lookup_cache']).catch(() => undefined);
   }
 }
 
 const STORAGE_KEYS = {
-  ACTIVE_TAB: 'dict_last_tab_v2',
-  ACTIVE_INTENT: 'dict_last_intent_v2',
+  ACTIVE_TAB: 'dict_last_tab',
+  ACTIVE_INTENT: 'dict_last_intent',
 };
 
 export function readSessionKey(key: string): string | null {

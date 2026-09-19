@@ -124,7 +124,7 @@ Dictionary lookups execute in two synchronized phases:
    - Translation starts in parallel and appears on first paint when it is already ready; otherwise it fills in a moment later.
    - Initial definitions, examples, and phonetic audio appear immediately under a clean headword header.
 2. **Phase 2 — Asynchronous Lazy Enrichment (Non-blocking):**
-   - Remaining keyless providers (**Wiktionary**, **Datamuse**, **Wikipedia**, **Urban Dictionary**, **RhymeBrain**) always run in concurrent batches of 2.
+   - Remaining keyless providers (**Wiktionary**, **Datamuse**, **Urban Dictionary**, **RhymeBrain**, and Wiktionary enrichment adapters) always run in concurrent batches of 2.
    - New definitions, additional example sentences, missing synonyms/antonyms, and phonetic transcriptions are merged dynamically.
    - Extra lexical cards (collocations, word family, common learner mistakes) mount on subsequent animation frames so they do not block first paint.
 

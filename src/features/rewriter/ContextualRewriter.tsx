@@ -158,7 +158,7 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           placeholder="Paste a sentence, email draft, or short paragraph. Selecting one word on a page seeds the full sentence when available."
-          className="w-full bg-muted/40 hover:bg-muted/60 focus:bg-surface border border-border/80 focus:border-accent rounded-2xl p-3.5 text-[13px] text-content placeholder:text-content-muted outline-none transition-all resize-y min-h-[112px] shadow-inner-light"
+          className="ui-control w-full rounded-2xl p-3.5 text-[13px] placeholder:text-content-muted resize-y min-h-[112px] shadow-inner-light"
           rows={5}
         />
       </div>
@@ -177,7 +177,7 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
                 type="button"
                 onClick={() => setActiveStyle(st.id)}
                 className={cx(
-                  'p-3 rounded-2xl border text-left cursor-pointer transition-all shadow-xs active:scale-[0.98]',
+                  'p-3 rounded-2xl border text-left cursor-pointer transition-colors shadow-xs focus-visible:ring-2 focus-visible:ring-accent',
                   isSelected
                     ? 'chip-active ring-1 ring-accent/30 font-bold'
                     : 'bg-surface hover:bg-elevated text-content-secondary border-border',
@@ -193,7 +193,7 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
           type="button"
           onClick={() => handleRewrite(activeStyle)}
           disabled={!inputText.trim() || isRewriting}
-          className="w-full h-10 mt-1 rounded-xl bg-accent hover:opacity-90 text-white dark:text-[#090d16] text-[13px] font-bold transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer shadow-xs flex items-center justify-center gap-1.5 active:scale-[0.99]"
+          className="ui-button-primary w-full h-10 mt-1 text-[13px] font-bold disabled:pointer-events-none cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
         >
           {isRewriting ? (
             <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -291,7 +291,7 @@ function RewriteResultDeck({
               </button>
             </div>
           </div>
-          <p className="text-[13px] text-content leading-relaxed font-medium whitespace-pre-wrap">
+          <p className="font-serif text-[14.5px] text-content leading-7 whitespace-pre-wrap">
             {polished}
           </p>
         </div>

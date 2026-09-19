@@ -43,13 +43,10 @@ const DICTIONARY_PROVIDERS = new Set<string>([
   'free_dictionary',
   'google_translate',
   'wiktionary',
-  'wiktionary_etymology',
   'wiktionary_bilingual',
   'datamuse',
-  'wikipedia',
   'rhymebrain',
   'urban_dictionary',
-  'tatoeba',
 ]);
 
 export const DEFAULT_SETTINGS: AppSettings = {

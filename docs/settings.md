@@ -79,7 +79,7 @@ To guarantee that private credentials can never leak across browser sync channel
 | Setting Key | Type | Storage | Default | Description |
 |---|---|---|---|---|
 | `enableDictionary` | `boolean` | `sync` | `true` | Displays structured dictionary definitions in the Dictionary tab. |
-| `dictionaryProvider` | `string` | `sync` | `"free_dictionary"` | Primary dictionary backend: `"free_dictionary"`, `"wiktionary"`, `"datamuse"`, `"wikipedia"`, `"urban_dictionary"`, or `"google_translate"`. |
+| `dictionaryProvider` | `string` | `sync` | `"wiktionary"` | Primary dictionary backend: `"free_dictionary"`, `"wiktionary"`, `"wiktionary_bilingual"`, `"datamuse"`, `"rhymebrain"`, `"urban_dictionary"`, or `"google_translate"`. |
 | `enableTranslate` | `boolean` | `sync` | `true` | Shows translation card alongside dictionary definitions in the Dictionary tab. |
 | `translateProvider` | `string` | `sync` | `"google"` | Translation service: `"google"` (Google Translate), `"libretranslate"`, or `"mymemory"`. |
 | `translateTargetLanguage`| `string`| `sync` | `"Vietnamese"` | Target language display name (e.g. `Vietnamese`, `English`, `Japanese`, `Chinese`, `Korean`, `French`, `German`, `Spanish`). |
@@ -156,7 +156,7 @@ Click **Export settings** in the Settings modal to download a sanitized `diction
     "popupWidth": 620,
     "popupHeight": 720,
     "translateTargetLanguage": "Vietnamese",
-    "dictionaryProvider": "free_dictionary",
+    "dictionaryProvider": "wiktionary",
     "aiModel": "gemini-3.5-flash-lite"
   }
 }

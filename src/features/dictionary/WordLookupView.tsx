@@ -100,7 +100,7 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
               type="text"
               placeholder="Type a word, phrase, or sentence…"
               aria-label="Look up a word, phrase, or sentence"
-              className="w-full h-10 bg-muted/40 hover:bg-muted/60 focus:bg-surface border border-border/80 focus:border-accent rounded-xl pl-10 pr-20 text-[13.5px] text-content placeholder:text-content-muted outline-none focus-visible:ring-2 focus-visible:ring-accent/25 transition-all shadow-inner-light"
+              className="ui-control w-full h-10 pl-10 pr-20 text-[15px] placeholder:text-content-muted shadow-inner-light"
             />
 
             {searchInput ? (
@@ -124,7 +124,7 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
             type="button"
             onClick={() => handleSearch()}
             disabled={!searchInput.trim() || isLoading}
-            className="h-10 px-2.5 sm:px-4 rounded-xl bg-accent hover:opacity-90 text-white dark:text-[#090d16] active:scale-95 text-[12.5px] font-bold transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer shadow-xs flex items-center gap-1.5 shrink-0"
+            className="ui-button-primary h-10 px-2.5 sm:px-4 text-[13.5px] font-bold cursor-pointer shadow-xs flex items-center gap-1.5 shrink-0 disabled:pointer-events-none"
           >
             {isLoading ? (
               <IconSpinner className="w-4 h-4" />
@@ -138,19 +138,19 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
       {/* Main Content Area */}
       <div className="p-4 space-y-4">
         {error ? (
-          <div role="alert" className="p-4 rounded-2xl bg-rose-500/8 border border-rose-500/25 text-[13px] text-rose-700 dark:text-rose-400 space-y-2">
+          <div role="alert" className="p-4 rounded-2xl bg-rose-500/8 border border-rose-500/25 text-[14px] text-rose-700 dark:text-rose-400 space-y-2">
             <div className="flex items-center gap-2 font-semibold">
               <span className="w-2 h-2 rounded-full bg-rose-500" aria-hidden="true" />
               <span>Lookup failed</span>
             </div>
-            <p className="text-[12.5px] text-content-secondary leading-relaxed pl-4">
+            <p className="text-[13.5px] text-content-secondary leading-relaxed pl-4">
               {error}
             </p>
             <div className="pl-4 pt-1">
               <button
                 type="button"
                 onClick={() => handleSearch()}
-                className="btn-accent h-7 px-3 text-[11px] font-bold cursor-pointer"
+                className="btn-accent h-7 px-3 text-[12px] font-bold cursor-pointer"
               >
                 Try Again
               </button>
