@@ -29,7 +29,12 @@ export async function fetchRhymeBrain(
 
   // Dummy trailing param: some RhymeBrain CGI builds append " HTTP/1.1" to the last query value.
   const url = `https://rhymebrain.com/talk?function=getWordInfo&word=${encodeURIComponent(clean)}&maxResults=1`;
-  const res = await safeFetch(url, { signal, timeoutMs: DICTIONARY_FETCH_TIMEOUT_MS });
+  const res = await safeFetch(url, {
+    signal,
+    timeoutMs: DICTIONARY_FETCH_TIMEOUT_MS,
+    requestClass: 'dictionary',
+    retries: 0,
+  });
   if (!res.ok) {
     throwForHttpStatus(
       res.status,

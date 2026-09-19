@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:xpi": "npm run build && (cd dist-firefox && zip -q -r ../dictionary-assistant.xpi ./*)",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test tests/*.test.ts"
   },

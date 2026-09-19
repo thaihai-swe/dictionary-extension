@@ -17,20 +17,20 @@ export const WordFormationCard: React.FC<WordFormationCardProps> = ({
   if (!hasData) return null;
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-3 space-y-2 shadow-card">
-      <div className="flex items-center gap-1.5 text-[11px] font-bold text-content-muted uppercase tracking-wider">
+    <div className="rounded-lg border border-border bg-surface p-3.5 space-y-2">
+      <div className="flex items-center gap-1.5 text-[12px] font-bold text-content-muted uppercase tracking-wider">
         <IconDna className="w-3.5 h-3.5 text-accent" />
         <span>Word Formation</span>
       </div>
       {(prefixes?.length || suffixes?.length) ? (
         <div className="flex flex-wrap gap-1">
           {prefixes?.map((item) => (
-            <span key={`p-${item}`} className="h-[24px] px-2 rounded bg-muted border border-border text-content text-[11.5px] font-mono inline-flex items-center">
+            <span key={`p-${item}`} className="h-[24px] px-2 rounded bg-muted border border-border text-content text-[12.5px] font-mono inline-flex items-center">
               prefix: {item}
             </span>
           ))}
           {suffixes?.map((item) => (
-            <span key={`s-${item}`} className="h-[24px] px-2 rounded bg-muted border border-border text-content text-[11.5px] font-mono inline-flex items-center">
+            <span key={`s-${item}`} className="h-[24px] px-2 rounded bg-muted border border-border text-content text-[12.5px] font-mono inline-flex items-center">
               suffix: {item}
             </span>
           ))}

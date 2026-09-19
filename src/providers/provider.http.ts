@@ -1,3 +1,6 @@
+import { isExtensionPage } from '../shared/ext.ts';
+import { recordLookupMetric } from '../shared/performance/lookup-metrics.ts';
+
 let nextRequestId = 1;
 
 export const DICTIONARY_FETCH_TIMEOUT_MS = 60000;
@@ -15,6 +18,7 @@ export type SafeFetchOptions = RequestInit & {
   timeoutMs?: number;
   retries?: number;
   retryStatuses?: number[];
+  requestClass?: 'dictionary' | 'datamuse-relation' | 'translation' | 'ai' | 'other';
 };
 
 const DEFAULT_RETRY_STATUSES = [429, 500, 502, 503, 504];
@@ -55,31 +59,75 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
     return Promise.reject(new DOMException('The user aborted a request.', 'AbortError'));
   }
   return new Promise((resolve, reject) => {
-    const timeoutId = setTimeout(resolve, ms);
-    if (!signal) return;
     const abort = () => {
       clearTimeout(timeoutId);
-      const error = new DOMException('The user aborted a request.', 'AbortError');
-      reject(error);
+      reject(new DOMException('The user aborted a request.', 'AbortError'));
     };
+    const timeoutId = setTimeout(() => {
+      signal?.removeEventListener('abort', abort);
+      resolve();
+    }, ms);
+    if (!signal) return;
     signal.addEventListener('abort', abort, { once: true });
   });
 }
 
 const HTTP_CACHE_TTL_MS = 10 * 60 * 1000;
-const MAX_HTTP_CACHE_SIZE = 200;
+const MAX_HTTP_CACHE_SIZE = 80;
+const MAX_HTTP_CACHE_BODY = 256 * 1024;
+const MAX_HTTP_CACHE_CHARS = 4 * 1024 * 1024;
 const httpCacheMap = new Map<string, HttpCacheEntry>();
 const inflightHttpMap = new Map<string, Promise<Response>>();
+let httpCacheChars = 0;
+let httpCacheGeneration = 0;
+
+function deleteHttpCacheEntry(key: string): boolean {
+  const entry = httpCacheMap.get(key);
+  if (!entry) return false;
+  httpCacheMap.delete(key);
+  httpCacheChars = Math.max(0, httpCacheChars - entry.bodyText.length);
+  return true;
+}
 
 export function clearHttpCache() {
+  httpCacheGeneration += 1;
   httpCacheMap.clear();
   inflightHttpMap.clear();
+  httpCacheChars = 0;
+}
+
+function getHttpMethod(options?: RequestInit): string {
+  return (options?.method || 'GET').toUpperCase();
+}
+
+function isCacheableMethod(method: string): boolean {
+  return method === 'GET' || method === 'HEAD';
 }
 
 function getHttpCacheKey(url: string, options?: RequestInit): string {
-  const method = (options?.method || 'GET').toUpperCase();
+  const method = getHttpMethod(options);
+  if (isCacheableMethod(method)) return `${method}:${url}`;
   const body = options?.body ? String(options.body) : '';
   return `${method}:${url}:${body}`;
+}
+
+function pruneHttpCache() {
+  const now = Date.now();
+  for (const [key, entry] of httpCacheMap.entries()) {
+    if (now - entry.timestamp >= HTTP_CACHE_TTL_MS) deleteHttpCacheEntry(key);
+  }
+}
+
+function evictHttpCache(requiredChars = 0) {
+  pruneHttpCache();
+  while (
+    httpCacheMap.size >= MAX_HTTP_CACHE_SIZE
+    || httpCacheChars + requiredChars > MAX_HTTP_CACHE_CHARS
+  ) {
+    const oldestKey = httpCacheMap.keys().next().value;
+    if (!oldestKey) break;
+    deleteHttpCacheEntry(oldestKey);
+  }
 }
 
 export function shouldProxyThroughServiceWorker(): boolean {
@@ -87,7 +135,7 @@ export function shouldProxyThroughServiceWorker(): boolean {
   try {
     if (!chrome.runtime?.id) return false;
     if (typeof window === 'undefined') return false;
-    if (window.location?.protocol === 'chrome-extension:') return false;
+    if (isExtensionPage()) return false;
   } catch {
     return false;
   }
@@ -104,18 +152,26 @@ function timeoutError(timeoutMs: number): Error {
   return error;
 }
 
-function rememberResponse(cacheKey: string, status: number, statusText: string, bodyText: string) {
+function rememberResponse(
+  cacheKey: string,
+  status: number,
+  statusText: string,
+  bodyText: string,
+  generation = httpCacheGeneration,
+) {
+  if (generation !== httpCacheGeneration) return;
   if (!isCacheableStatus(status)) return;
-  if (httpCacheMap.size >= MAX_HTTP_CACHE_SIZE) {
-    const oldestKey = httpCacheMap.keys().next().value;
-    if (oldestKey) httpCacheMap.delete(oldestKey);
-  }
+  if (!cacheKey.startsWith('GET:') && !cacheKey.startsWith('HEAD:')) return;
+  if (bodyText.length > MAX_HTTP_CACHE_BODY) return;
+  deleteHttpCacheEntry(cacheKey);
+  evictHttpCache(bodyText.length);
   httpCacheMap.set(cacheKey, {
     status,
     statusText,
     bodyText,
     timestamp: Date.now(),
   });
+  httpCacheChars += bodyText.length;
 }
 
 function cachedResponse(entry: HttpCacheEntry): Response {
@@ -135,6 +191,7 @@ async function safeFetchOnce(url: string, options?: SafeFetchOptions): Promise<R
 
   const timeoutMs = options?.timeoutMs ?? DICTIONARY_FETCH_TIMEOUT_MS;
   const cacheKey = getHttpCacheKey(url, options);
+  const cacheGeneration = httpCacheGeneration;
 
   const cached = httpCacheMap.get(cacheKey);
   if (cached) {
@@ -143,7 +200,7 @@ async function safeFetchOnce(url: string, options?: SafeFetchOptions): Promise<R
       httpCacheMap.set(cacheKey, cached);
       return cachedResponse(cached);
     }
-    httpCacheMap.delete(cacheKey);
+    deleteHttpCacheEntry(cacheKey);
   }
 
   const inflight = inflightHttpMap.get(cacheKey);
@@ -177,7 +234,14 @@ async function safeFetchOnce(url: string, options?: SafeFetchOptions): Promise<R
     userSignal.addEventListener('abort', onUserAbort, { once: true });
   }
 
-  const { timeoutMs: _timeoutMs, signal: _signal, retries: _retries, retryStatuses: _retryStatuses, ...rest } = options || {};
+  const {
+    timeoutMs: _timeoutMs,
+    signal: _signal,
+    retries: _retries,
+    retryStatuses: _retryStatuses,
+    requestClass: _requestClass,
+    ...rest
+  } = options || {};
   const fetchOptions: RequestInit = { ...rest, signal: timeoutController.signal };
 
   const cleanup = () => {
@@ -234,7 +298,7 @@ async function safeFetchOnce(url: string, options?: SafeFetchOptions): Promise<R
           const bodyText = typeof response.data === 'string' ? response.data : JSON.stringify(response.data);
           const status = response.status || (response.ok ? 200 : 400);
           const statusText = response.error || (response.ok ? 'OK' : 'Error');
-          rememberResponse(cacheKey, status, statusText, bodyText);
+          rememberResponse(cacheKey, status, statusText, bodyText, cacheGeneration);
           return new Response(bodyText, {
             status,
             statusText,
@@ -250,7 +314,7 @@ async function safeFetchOnce(url: string, options?: SafeFetchOptions): Promise<R
 
     const directRes = await fetch(url, fetchOptions);
     const bodyText = await directRes.text();
-    rememberResponse(cacheKey, directRes.status, directRes.statusText, bodyText);
+    rememberResponse(cacheKey, directRes.status, directRes.statusText, bodyText, cacheGeneration);
     return new Response(bodyText, {
       status: directRes.status,
       statusText: directRes.statusText,
@@ -266,12 +330,22 @@ async function safeFetchOnce(url: string, options?: SafeFetchOptions): Promise<R
 
 export async function safeFetch(url: string, options?: SafeFetchOptions): Promise<Response> {
   const timeoutMs = options?.timeoutMs ?? DICTIONARY_FETCH_TIMEOUT_MS;
+  const requestClass = options?.requestClass || 'other';
   const isAiRequest = timeoutMs >= AI_FETCH_TIMEOUT_MS;
   const isTranslationRequest = timeoutMs >= TRANSLATION_FETCH_TIMEOUT_MS && !isAiRequest;
-  const defaultRetries = isAiRequest || !isTranslationRequest ? 0 : 1;
+  const defaultRetries = requestClass === 'translation'
+    ? 1
+    : requestClass === 'dictionary' || requestClass === 'datamuse-relation' || requestClass === 'ai'
+      ? 0
+      : isAiRequest || !isTranslationRequest ? 0 : 1;
   const retries = Number.isFinite(options?.retries) ? Number(options?.retries) : defaultRetries;
   const retryStatuses = options?.retryStatuses || DEFAULT_RETRY_STATUSES;
   const maxAttempts = Math.max(1, retries + 1);
+  recordLookupMetric('http.request.start', {
+    requestClass,
+    retries,
+    maxAttempts,
+  });
   const cacheKey = getHttpCacheKey(url, options);
   const existing = inflightHttpMap.get(cacheKey);
   if (existing) {

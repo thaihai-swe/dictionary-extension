@@ -1,10 +1,14 @@
-import type { AppSettings, DictionaryEntry } from '../types';
-import { cloneDictionaryEntry } from '../shared/enrichment.ts';
+import type { DictionaryEntry } from '../types';
+import { createBoundedLruCache } from '../shared/bounded-cache.ts';
+import { recordLookupMetric } from '../shared/performance/lookup-metrics.ts';
+import { clearHttpCache } from './provider.http';
 
 export const ENRICHMENT_TTL_MS = 10 * 60 * 1000;
 export const MAX_ENRICHMENT_CACHE = 20;
-export const COMBINED_RESULT_TTL_MS = 10 * 60 * 1000;
-export const MAX_COMBINED_RESULT_CACHE = 20;
+export const COMBINED_RESULT_TTL_MS = 48 * 60 * 60 * 1000;
+export const MAX_COMBINED_RESULT_CACHE = 32;
+const MAX_DICTIONARY_CACHE_CHARS = 6 * 1024 * 1024;
+const DICTIONARY_STORAGE_KEY = 'dict_lookup_cache';
 
 export interface CombinedResultCacheEntry {
   result: DictionaryEntry;
@@ -16,116 +20,173 @@ export interface EnrichmentCacheEntry {
   timestamp: number;
 }
 
-const combinedResultCache = new Map<string, CombinedResultCacheEntry>();
-const enrichmentMemoryCache = new Map<string, EnrichmentCacheEntry>();
+type DictionaryCacheRecord =
+  | { kind: 'combined'; value: DictionaryEntry; timestamp: number }
+  | { kind: 'enrichment'; value: DictionaryEntry[]; timestamp: number };
 
-export function hasSessionStorage(): boolean {
+const dictionaryCache = createBoundedLruCache<string, DictionaryCacheRecord>({
+  maxSize: MAX_COMBINED_RESULT_CACHE,
+  maxBytes: MAX_DICTIONARY_CACHE_CHARS,
+  estimateSize: (value) => {
+    try {
+      return JSON.stringify(value).length;
+    } catch {
+      return 0;
+    }
+  },
+});
+
+let persistenceEnabled = true;
+let hydrated = false;
+let hydrationPromise: Promise<void> | null = null;
+let persistTimer: ReturnType<typeof setTimeout> | null = null;
+let dirty = false;
+
+function canUseLocalStorage(): boolean {
   try {
-    if (typeof chrome === 'undefined' || typeof chrome.storage?.session?.get !== 'function') return false;
-    if (typeof window !== 'undefined' && window.location?.protocol !== 'chrome-extension:') return false;
-    return true;
+    return typeof chrome !== 'undefined' && typeof chrome.storage?.local?.get === 'function';
   } catch {
     return false;
   }
 }
 
-export function combinedResultCacheKey(word: string, settings: AppSettings): string {
-  return `${word.toLowerCase().trim()}|${settings.dictionaryProvider || 'wiktionary'}|${String(settings.translateTargetLanguage || '').toLowerCase()}|${Boolean(settings.enableTranslate)}|${Boolean(settings.enableDictionary)}|${Boolean(settings.enablePhraseFallback)}|${settings.enableLexicalProfile !== false}`;
+function estimateCacheChars(value: unknown): number {
+  try {
+    return JSON.stringify(value).length;
+  } catch {
+    return 0;
+  }
 }
 
-export function combinedSessionStorageKey(key: string): string {
-  return `comb_${key.replace(/[^a-z0-9_]/gi, '_')}`.toLowerCase().slice(0, 100);
+export function setDictionaryCachePersistenceEnabled(value: boolean): void {
+  if (persistenceEnabled === value) return;
+  if (value) {
+    hydrated = false;
+    hydrationPromise = null;
+  }
+  persistenceEnabled = value;
+  if (!value && canUseLocalStorage()) {
+    void Promise.resolve(chrome.storage.local.remove(DICTIONARY_STORAGE_KEY)).catch(() => undefined);
+  }
 }
 
-export function enrichmentCacheKey(word: string, settings: AppSettings, primaryId: string, lemma: string): string {
-  return `enrich_${primaryId}_${lemma || word}_${settings.translateTargetLanguage || ''}`.toLowerCase();
+function persistNow() {
+  persistTimer = null;
+  if (!dirty || !canUseLocalStorage()) return;
+  dirty = false;
+  if (!persistenceEnabled) {
+    void Promise.resolve(chrome.storage.local.remove(DICTIONARY_STORAGE_KEY)).catch(() => undefined);
+    return;
+  }
+  const snapshot: Record<string, { value: DictionaryEntry; timestamp: number }> = {};
+  for (const [key, record] of dictionaryCache.entries()) {
+    if (record.kind === 'combined' && record.value.enriched) {
+      snapshot[key] = { value: record.value, timestamp: record.timestamp };
+    }
+  }
+  recordLookupMetric('dictionary.cache.persist', {
+    entries: Object.keys(snapshot).length,
+    bytes: estimateCacheChars(snapshot),
+  });
+  void Promise.resolve(chrome.storage.local.set({ [DICTIONARY_STORAGE_KEY]: snapshot })).catch(() => undefined);
+}
+
+function schedulePersist() {
+  if (!canUseLocalStorage()) return;
+  dirty = true;
+  if (persistTimer) clearTimeout(persistTimer);
+  persistTimer = setTimeout(persistNow, 1500);
+}
+
+function hydrate(): Promise<void> {
+  if (hydrated) return Promise.resolve();
+  hydrated = true;
+  if (!canUseLocalStorage() || !persistenceEnabled) return Promise.resolve();
+  hydrationPromise = Promise.resolve(chrome.storage.local.get(DICTIONARY_STORAGE_KEY))
+    .then((stored) => {
+      const snapshot = (stored as Record<string, unknown>)?.[DICTIONARY_STORAGE_KEY];
+      if (!snapshot || typeof snapshot !== 'object') return;
+      const now = Date.now();
+      for (const [key, raw] of Object.entries(snapshot as Record<string, unknown>)) {
+        const entry = raw as { value?: DictionaryEntry; timestamp?: number; createdAt?: number } | undefined;
+        const timestamp = entry?.timestamp || entry?.createdAt;
+        if (!entry?.value?.enriched || !timestamp) continue;
+        if (now - timestamp > COMBINED_RESULT_TTL_MS) continue;
+        dictionaryCache.set(key, { kind: 'combined', value: entry.value, timestamp });
+      }
+    })
+    .catch(() => undefined)
+    .then(() => undefined);
+  return hydrationPromise;
+}
+
+export { combinedResultCacheKey, enrichmentCacheKey } from '../application/dictionary/cache-keys';
+
+function readCombinedMemory(key: string): DictionaryEntry | undefined {
+  const record = dictionaryCache.get(key);
+  if (!record || record.kind !== 'combined') return undefined;
+  if (Date.now() - record.timestamp > COMBINED_RESULT_TTL_MS) {
+    dictionaryCache.delete(key);
+    return undefined;
+  }
+  return record.value;
 }
 
 export function readCombinedResultCache(key: string): DictionaryEntry | undefined {
-  const entry = combinedResultCache.get(key);
-  if (!entry) return undefined;
-  if (Date.now() - entry.timestamp > COMBINED_RESULT_TTL_MS) {
-    combinedResultCache.delete(key);
-    return undefined;
-  }
-  combinedResultCache.delete(key);
-  combinedResultCache.set(key, entry);
-  return cloneDictionaryEntry(entry.result);
+  return readCombinedMemory(key);
 }
 
 export async function readSessionCombinedResult(key: string): Promise<DictionaryEntry | undefined> {
-  const mem = readCombinedResultCache(key);
-  if (mem) return mem;
-  if (!hasSessionStorage()) return undefined;
-  try {
-    const sKey = combinedSessionStorageKey(key);
-    const stored = await Promise.resolve(chrome.storage.session.get(sKey)).catch(() => ({})) as Record<string, CombinedResultCacheEntry | undefined>;
-    const entry = stored?.[sKey];
-    if (!entry || Date.now() - entry.timestamp > COMBINED_RESULT_TTL_MS) return undefined;
-    combinedResultCache.set(key, entry);
-    return cloneDictionaryEntry(entry.result);
-  } catch {
-    return undefined;
+  const memory = readCombinedMemory(key);
+  if (memory) {
+    recordLookupMetric('dictionary.cache.read', { kind: 'combined', hit: true, source: 'memory' });
+    return memory;
   }
+  await hydrate();
+  const hydratedResult = readCombinedMemory(key);
+  recordLookupMetric('dictionary.cache.read', { kind: 'combined', hit: Boolean(hydratedResult), source: 'persistent' });
+  return hydratedResult;
 }
 
 export function writeCombinedResultCache(key: string, result: DictionaryEntry) {
   if (!result.enriched) return;
-  const entry: CombinedResultCacheEntry = { result: cloneDictionaryEntry(result), timestamp: Date.now() };
-  combinedResultCache.delete(key);
-  combinedResultCache.set(key, entry);
-  while (combinedResultCache.size > MAX_COMBINED_RESULT_CACHE) {
-    const oldest = combinedResultCache.keys().next().value;
-    if (!oldest) break;
-    combinedResultCache.delete(oldest);
-  }
-  if (hasSessionStorage()) {
-    const sKey = combinedSessionStorageKey(key);
-    void Promise.resolve(chrome.storage.session.set({ [sKey]: entry })).catch(() => undefined);
-  }
+  dictionaryCache.set(key, { kind: 'combined', value: result, timestamp: Date.now() });
+  recordLookupMetric('dictionary.cache.write', { kind: 'combined', bytes: estimateCacheChars(result) });
+  schedulePersist();
 }
 
 export async function readSessionEnrichment(key: string): Promise<DictionaryEntry[] | null> {
-  const memory = enrichmentMemoryCache.get(key);
-  if (memory && Date.now() - memory.timestamp < ENRICHMENT_TTL_MS) return memory.results;
-  if (!hasSessionStorage()) return null;
-  try {
-    const stored = await Promise.resolve(chrome.storage.session.get(key)).catch(() => ({})) as Record<string, EnrichmentCacheEntry | undefined>;
-    const entry = stored?.[key];
-    if (!entry || Date.now() - entry.timestamp >= ENRICHMENT_TTL_MS) return null;
-    enrichmentMemoryCache.set(key, entry);
-    return entry.results;
-  } catch {
+  const record = dictionaryCache.get(key);
+  if (!record || record.kind !== 'enrichment') return null;
+  if (Date.now() - record.timestamp >= ENRICHMENT_TTL_MS) {
+    dictionaryCache.delete(key);
     return null;
   }
+  recordLookupMetric('dictionary.cache.read', { kind: 'enrichment', hit: true, source: 'memory' });
+  return record.value;
 }
 
 export async function writeSessionEnrichment(key: string, results: DictionaryEntry[]) {
-  const entry: EnrichmentCacheEntry = { results, timestamp: Date.now() };
-  if (enrichmentMemoryCache.size >= MAX_ENRICHMENT_CACHE) {
-    const oldest = enrichmentMemoryCache.keys().next().value;
-    if (oldest) enrichmentMemoryCache.delete(oldest);
-  }
-  enrichmentMemoryCache.set(key, entry);
-  if (!hasSessionStorage()) return;
-  try {
-    await Promise.resolve(chrome.storage.session.set({ [key]: entry })).catch(() => undefined);
-  } catch {
-    // Memory cache suffices if session storage is unavailable.
-  }
+  dictionaryCache.set(key, { kind: 'enrichment', value: results, timestamp: Date.now() });
 }
 
 export function clearEnrichmentCache() {
-  enrichmentMemoryCache.clear();
-  combinedResultCache.clear();
-  if (hasSessionStorage()) {
-    try {
-      void chrome.storage.session.get(null).then((all) => {
-        const keysToRemove = Object.keys(all || {}).filter((k) => k.startsWith('enrich_') || k.startsWith('comb_'));
-        if (keysToRemove.length) void chrome.storage.session.remove(keysToRemove);
-      }).catch(() => undefined);
-    } catch {
-      // Ignore
-    }
+  dictionaryCache.clear();
+  clearHttpCache();
+  dirty = false;
+  if (persistTimer) {
+    clearTimeout(persistTimer);
+    persistTimer = null;
   }
+  if (canUseLocalStorage()) {
+    void Promise.resolve(chrome.storage.local.remove(DICTIONARY_STORAGE_KEY)).catch(() => undefined);
+  }
+}
+
+export function dictionaryCacheStats() {
+  return {
+    entries: dictionaryCache.size,
+    estimatedChars: Array.from(dictionaryCache.entries()).reduce((total, [, value]) => total + estimateCacheChars(value), 0),
+    hydrated,
+  };
 }

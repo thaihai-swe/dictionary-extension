@@ -30,3 +30,11 @@ export function signal<T>(initial: T): Signal<T> {
 export function useSignal<T>(source: Signal<T>): T {
   return useSyncExternalStore(source.subscribe, () => source.value, () => source.value);
 }
+
+export function useSignalSelector<T, S>(source: Signal<T>, select: (value: T) => S): S {
+  return useSyncExternalStore(
+    source.subscribe,
+    () => select(source.value),
+    () => select(source.value),
+  );
+}

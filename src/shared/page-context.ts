@@ -1,8 +1,8 @@
 export const MAX_CONTEXT_CHARS = 800;
-const MAX_CANDIDATE_TEXT_LENGTH = 12000;
-const MAX_FALLBACK_TEXT_LENGTH = 50000;
-const MAX_SCAN_ELEMENTS = 120;
-const MAX_ANCESTOR_HOPS = 12;
+const MAX_CANDIDATE_TEXT_LENGTH = 6000;
+const MAX_FALLBACK_TEXT_LENGTH = 20000;
+const MAX_SCAN_ELEMENTS = 60;
+const MAX_ANCESTOR_HOPS = 6;
 const LEAF_CONTENT_SELECTOR = 'p, li, blockquote, td, th, figcaption, dd, dt, h1, h2, h3, h4, h5, h6, pre';
 const SEMANTIC_CONTAINER_SELECTOR = "main, article, section, [role='main'], [role='article'], .content, #content";
 const BLOCK_SELECTOR = "p, li, td, th, blockquote, figcaption, dd, dt, h1, h2, h3, h4, h5, h6, pre, article, section, main, [role='article'], div";
@@ -38,11 +38,30 @@ function escapeRegExp(value: string): string {
   return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function buildWordBoundaryPattern(value: string): RegExp | null {
+const ASCII_NEEDLE_RE = /^[\x00-\x7F]+$/;
+const MAX_WORD_BOUNDARY_CACHE = 20;
+const wordBoundaryCache = new Map<string, RegExp>();
+
+export function buildWordBoundaryPattern(value: string): RegExp | null {
   const normalized = String(value || '').replace(/\s+/g, ' ').trim();
   if (!normalized) return null;
+  const cached = wordBoundaryCache.get(normalized);
+  if (cached) {
+    wordBoundaryCache.delete(normalized);
+    wordBoundaryCache.set(normalized, cached);
+    return cached;
+  }
   const escaped = escapeRegExp(normalized).replace(/ /g, '\\s+');
-  return new RegExp(`(^|[^\\p{L}\\p{N}_])${escaped}(?=$|[^\\p{L}\\p{N}_])`, 'iu');
+  const pattern = ASCII_NEEDLE_RE.test(normalized)
+    ? new RegExp(`(^|[^A-Za-z0-9_])${escaped}(?=$|[^A-Za-z0-9_])`, 'i')
+    : new RegExp(`(^|[^\\p{L}\\p{N}_])${escaped}(?=$|[^\\p{L}\\p{N}_])`, 'iu');
+  wordBoundaryCache.set(normalized, pattern);
+  while (wordBoundaryCache.size > MAX_WORD_BOUNDARY_CACHE) {
+    const oldest = wordBoundaryCache.keys().next().value;
+    if (!oldest) break;
+    wordBoundaryCache.delete(oldest);
+  }
+  return pattern;
 }
 
 function isDecimalDot(text: string, index: number): boolean {

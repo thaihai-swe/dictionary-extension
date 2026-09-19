@@ -7,7 +7,7 @@ import type {
   PhraseExplanationSection,
   TranslationResult,
 } from './models';
-import type { AppSettings, DictionaryProviderId, TranslationProviderId } from './settings';
+import type { DictionaryProviderId, TranslationProviderId } from './settings';
 
 export interface ProviderValidationResult {
   ok: boolean;
@@ -34,10 +34,15 @@ export interface ProviderLookupDto {
 }
 
 /** Narrow options for dictionary adapters — do not pass full AppSettings. */
+export interface DictionaryProviderSettings {
+  enableLexicalProfile?: boolean;
+}
+
 export interface DictionaryLookupOptions {
   targetLang: string;
   signal?: AbortSignal;
-  settings?: AppSettings;
+  settings?: DictionaryProviderSettings;
+  onPartial?: (result: ProviderLookupDto) => void;
 }
 
 /** Narrow options for translation adapters. */

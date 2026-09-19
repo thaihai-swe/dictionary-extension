@@ -11,10 +11,22 @@ export const OPEN_LOOKUP_POPUP = 'OPEN_LOOKUP_POPUP';
 export const OPEN_OPTIONS = 'OPEN_OPTIONS';
 export const FETCH_PROXY = 'FETCH_PROXY';
 export const ABORT_FETCH_PROXY = 'ABORT_FETCH_PROXY';
+export const PLAY_AUDIO = 'PLAY_AUDIO';
+export const STOP_AUDIO = 'STOP_AUDIO';
+export const SPEAK_TTS = 'SPEAK_TTS';
+export const OFFSCREEN_AUDIO = 'OFFSCREEN_AUDIO';
+export const CLEAR_DICTIONARY_CACHE = 'CLEAR_DICTIONARY_CACHE';
 
 export type LookupSource = 'dictionary' | 'ai';
 export type ProviderValidationKind = 'dictionary' | 'translation' | 'ai';
 export type CancelLookupScope = 'dictionary' | 'ai' | `ai:${string}`;
+
+/** Minimal sender contract shared by application handlers and browser adapters. */
+export interface RuntimeSender {
+  tab?: {
+    id?: number;
+  };
+}
 
 export interface LookupTextPayload {
   text: string;
@@ -32,13 +44,30 @@ export interface AiLookupPayload {
   requestId?: string;
 }
 
-export interface LookupUpdatePayload {
+export interface DictionaryEntryPatch {
+  changed: Partial<DictionaryEntry>;
+  removed?: Array<keyof DictionaryEntry>;
+}
+
+export interface LookupSnapshotPayload {
   requestId: string;
   source: LookupSource;
   text: string;
   revision: number;
   result: DictionaryEntry | AiResult;
+  kind?: 'snapshot';
 }
+
+export interface LookupPatchPayload {
+  requestId: string;
+  source: 'dictionary';
+  revision: number;
+  baseRevision: number;
+  patch: DictionaryEntryPatch;
+  kind: 'patch';
+}
+
+export type LookupUpdatePayload = LookupSnapshotPayload | LookupPatchPayload;
 
 export interface ValidateProviderPayload {
   kind: ProviderValidationKind;
@@ -62,6 +91,32 @@ export interface FetchProxyPayload {
   url: string;
   options?: Omit<RequestInit, 'signal'>;
   timeoutMs?: number;
+}
+
+export interface PlayAudioPayload {
+  url: string;
+  rate?: number;
+  requestId?: string;
+}
+
+export interface SpeakTtsPayload {
+  text: string;
+  lang?: string;
+  rate?: number;
+  voiceURI?: string;
+  requestId?: string;
+}
+
+export type OffscreenAudioAction = 'play' | 'stop' | 'speak';
+
+export interface OffscreenAudioPayload {
+  action: OffscreenAudioAction;
+  url?: string;
+  rate?: number;
+  text?: string;
+  lang?: string;
+  voiceURI?: string;
+  requestId?: string;
 }
 
 export interface RuntimeOkResponse<T> {
@@ -98,7 +153,7 @@ export function isMissingReceiverError(error: unknown): boolean {
 
 export function isExtensionContextInvalidated(error?: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error || '');
-  if (/Extension context invalidated/i.test(message)) return true;
+  if (/Extension context invalidated|Context is invalidated|can't access dead object/i.test(message)) return true;
   try {
     return typeof chrome !== 'undefined' && Boolean(chrome.runtime?.id) === false && typeof chrome.runtime?.sendMessage === 'function';
   } catch {

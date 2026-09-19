@@ -19,11 +19,11 @@ export const UsageNotesCard: React.FC<UsageNotesCardProps> = ({ notes, warnings,
 
   return (
     <div className="rounded-lg border border-amber-500/25 bg-amber-500/6 p-3 space-y-1.5">
-      <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
+      <div className="flex items-center gap-1.5 text-[12px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
         <IconAlertTriangle className="w-3.5 h-3.5" />
         <span>Usage &amp; Register</span>
       </div>
-      <ul className="space-y-1 text-[13px] leading-relaxed text-content-secondary">
+      <ul className="space-y-1 text-[14px] leading-relaxed text-content-secondary">
         {warningItems.map((warning) => (
           <li key={warning} className="flex items-start gap-2">
             <span className="text-amber-600 dark:text-amber-400 mt-0.5">•</span>

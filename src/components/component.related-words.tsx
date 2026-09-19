@@ -29,9 +29,9 @@ export const RelatedWords: React.FC<RelatedWordsProps> = ({
         : 'badge-pos-other';
 
   return (
-    <div className={cx('flex flex-wrap items-baseline gap-x-1.5 gap-y-1 text-[13.5px] leading-relaxed', className)}>
+    <div className={cx('flex flex-wrap items-baseline gap-x-1.5 gap-y-1 text-[14.5px] leading-relaxed', className)}>
       {label ? (
-        <span className={cx('inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider shrink-0', badgeClass)}>
+        <span className={cx('inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider shrink-0', badgeClass)}>
           {label}
         </span>
       ) : null}

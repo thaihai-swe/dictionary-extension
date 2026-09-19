@@ -36,7 +36,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ show, onClose })
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 font-sans"
+      className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-md flex items-center justify-center p-4 font-sans"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose?.();
       }}
@@ -47,7 +47,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ show, onClose })
         aria-modal="true"
         aria-labelledby="shortcuts-title"
         tabIndex={-1}
-        className="w-full max-w-sm rounded-2xl border border-border bg-surface p-5 space-y-4 shadow-card-elevated select-none outline-none"
+        className="w-full max-w-sm rounded-3xl border border-border/80 bg-surface p-5 space-y-4 shadow-card-elevated select-none outline-none"
       >
         <div className="flex items-center justify-between border-b border-border/60 pb-3">
           <div className="flex items-center gap-2.5">
@@ -58,7 +58,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ show, onClose })
               <h3 id="shortcuts-title" className="text-sm font-bold text-content font-heading">
                 Keyboard Shortcuts
               </h3>
-              <p className="text-[11px] text-content-muted">Quick keys to navigate the workbench</p>
+              <p className="text-[13px] text-content-muted">Quick keys to navigate the workbench</p>
             </div>
           </div>
           <button
@@ -79,13 +79,13 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ show, onClose })
             >
               <div>
                 <span className="text-content font-semibold block text-xs">{item.label}</span>
-                <span className="text-content-muted text-[10px] block mt-0.5">{item.sub}</span>
+                <span className="text-content-muted text-[12px] block mt-0.5">{item.sub}</span>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
                 {item.keys.map((k, kIdx) => (
                   <kbd
                     key={kIdx}
-                    className="px-2 py-1 rounded-md bg-surface text-accent font-mono font-bold border border-border text-[11px] shadow-xs"
+                    className="px-2 py-1 rounded-md bg-surface text-accent font-mono font-bold border border-border text-[13px] shadow-xs"
                   >
                     {k}
                   </kbd>
@@ -98,7 +98,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ show, onClose })
         <button
           type="button"
           onClick={onClose}
-          className="w-full py-2.5 rounded-xl bg-accent hover:opacity-90 text-white dark:text-neutral-950 text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95"
+          className="ui-button-primary w-full py-2.5 text-xs font-bold cursor-pointer shadow-xs"
         >
           Got it
         </button>

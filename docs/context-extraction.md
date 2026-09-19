@@ -169,7 +169,7 @@ When context is used, AI results render a dedicated quote section:
 - **Scriptable HTML5 PDF Text Layers:** Online or local PDFs rendered with HTML5 text layers (`.textLayer`, `.pdfViewer`) expose DOM nodes. Range offset and candidate extraction operate seamlessly over text-layer spans.
 - **Hyphenation & Pagination Healing:** Line-break hyphens (`trans-\nportation` → `transportation`) and soft hyphens are healed automatically before boundary scanning.
 - **Multi-Frame Selection Coordination:** Context-menu lookups transmit `frameId` from the background worker. When `frameId > 0`, the background queries context on that selection frame and opens the popup.
-- **Restricted Chrome Pages:** For pages where content script injection is impossible (`chrome://`, Chrome Web Store, internal browser PDF viewer), the toolbar popup prompts users to paste their sentence directly.
+- **Restricted Browser Pages:** For pages where content script injection is impossible (`chrome://`, `about:`, Chrome Web Store, AMO, internal browser PDF viewer), the toolbar popup prompts users to paste their sentence directly.
 
 ---
 

@@ -7,7 +7,7 @@ This guide provides actionable solutions for common issues across extension relo
 ## 1. Extension Reload & Context Invalidation
 
 ### Symptom: `Extension context invalidated` or clicking triggers does nothing after updating code.
-- **Cause:** When you reload an unpacked extension in `chrome://extensions`, the background service worker is replaced, but existing webpage tabs still hold references to the old, disconnected content script instance.
+- **Cause:** When you reload an unpacked extension in Chrome (`chrome://extensions`) or Firefox (`about:debugging`), the background worker is replaced, but existing webpage tabs still hold references to the old, disconnected content script instance.
 - **Solution:**
   1. Refresh all open webpage tabs where you want to test the extension.
   2. The content script automatically catches disconnection errors and displays an inline top banner: **"Extension reloaded — Refresh this tab."**
@@ -24,7 +24,7 @@ This guide provides actionable solutions for common issues across extension relo
 - **Check 4 — Viewport Positioning & Screen Edges:** If text is at the extreme edge of the screen, the positioning engine flips the card. Ensure browser zoom or high-DPI scaling is not hiding the card off-screen.
 - **Check 5 — Paused site:** The toolbar **Pause site** button or Settings → paused hostnames turns off in-page icons on that host. Toolbar search and the context menu still work.
 - **Check 6 — Iframes:** Content scripts load in the top frame. A same-origin iframe injects on first selection. Cross-origin iframes cannot be read; use the toolbar or context menu.
-- **Check 7 — Keyboard command:** Highlight text and press your configured shortcut (`chrome://extensions/shortcuts`).
+- **Check 7 — Keyboard command:** Highlight text and press your configured shortcut (`chrome://extensions/shortcuts` in Chrome, or `about:addons` → Dictionary → Manage Extension Shortcuts in Firefox).
 
 ---
 
@@ -37,7 +37,7 @@ This guide provides actionable solutions for common issues across extension relo
   - **AI model name:** Default and recommended is `gemini-3.5-flash-lite`.
 - **Check 2 — Test Connection Action:** In Settings, click **Test AI connection** to run a non-destructive latency and authentication check.
 - **Check 3 — Older Gemini Models in Local Cache:**
-  - If you previously tested older models (e.g. `gemini-2.5-flash` or `gemini-1.5-pro`) and the UI still references them, open Settings → AI tab, select `gemini-3.5-flash-lite` from the dropdown, and click **Save settings**.
+  - If you previously tested older models (e.g. `gemini-2.5-flash` or `gemini-1.5-pro`) and the UI still references them, open Settings → AI tab, select `gemini-3.5-flash-lite` from the dropdown, and click **Save Changes**.
 - **Check 4 — Host Permission Prompts:** If using custom self-hosted base URLs (e.g. `http://localhost:11434` or custom domain proxies), ensure you accepted the browser's dynamic origin permission prompt when saving settings.
 
 ### Symptom: Context Explain or Grammar & Nuance buttons are disabled.
@@ -55,7 +55,7 @@ This guide provides actionable solutions for common issues across extension relo
 - Transient 5xx/timeout from a free provider continues to the next free provider. Dictionary HTTP runs in the background service worker (inspect that worker's Network tab, not the page).
 
 ### Symptom: Secondary providers don't enrich results.
-- **Check 1 — Network Connectivity:** All dictionary providers (`free_dictionary`, `wiktionary`, `wiktionary_etymology`, `wiktionary_bilingual`, `datamuse`, `rhymebrain`, `wikipedia`, `urban_dictionary`, `tatoeba`) are keyless and require open network access.
+- **Check 1 — Network Connectivity:** All dictionary providers (`free_dictionary`, `wiktionary`, `wiktionary_bilingual`, `datamuse`, `rhymebrain`, `urban_dictionary`) are keyless and require open network access.
 - **Check 2 — Enrichment Diagnostics:** In Settings, click the test buttons under **Test dictionary connection** to verify reachability and latency.
 - **Check 3 — Graceful Degradation:** When an upstream endpoint is temporarily unavailable or returns 5xx/timeout, enrichment silently skips that provider without breaking the displayed Free Dictionary or Wiktionary results.
 
@@ -93,10 +93,10 @@ This guide provides actionable solutions for common issues across extension relo
 ## 7. PDFs, Web Readers, and Local Files
 
 ### Symptom: Selection triggers do not appear on PDF files or local documents.
-- **Local `file://` Documents:** Open `chrome://extensions`, locate **Dictionary**, click **Details**, and toggle on **Allow access to file URLs**. Reload the file tab.
+- **Local `file://` Documents:** In Chrome, open `chrome://extensions`, locate **Dictionary**, click **Details**, and toggle on **Allow access to file URLs**. In Firefox, use `about:addons` → Dictionary. Reload the file tab.
 - **Online HTML5 PDFs:** Ensure the PDF reader exposes a selectable DOM text layer (e.g. PDF.js viewer). If selectable, exact sentence Range extraction operates automatically.
 - **Chrome Built-in PDF Viewer Frame:** Chrome strictly isolates its proprietary internal PDF viewer frame from extension content scripts. Right-click the highlighted word and select **Look up in Dictionary** from the context menu, or type the word in the toolbar popup.
-- **Browser-Owned Pages:** Pages starting with `chrome://`, `chrome-extension://`, or the Chrome Web Store cannot be injected with content scripts by browser security policy. Use the toolbar popup for vocabulary queries while on these pages.
+- **Browser-Owned Pages:** Pages starting with `chrome://`, `about:`, `chrome-extension://`, `moz-extension://`, the Chrome Web Store, or addons.mozilla.org cannot be injected with content scripts by browser security policy. Use the toolbar popup for vocabulary queries while on these pages.
 
 ---
 

@@ -8,7 +8,7 @@ This document provides the complete technical specification for all external and
 
 All dictionary, translation, and AI providers produce or normalize into canonical TypeScript models (`src/types/index.ts`).
 
-Dictionary backends return a sparse `ProviderLookupDto`. `toDictionaryEntry()` (`src/shared/enrichment.ts`) converts that into a complete `DictionaryEntry` so `mergeDictionaryEntries()` can consolidate Phase A + Phase B results without provider-specific branches.
+Dictionary backends return a sparse `ProviderLookupDto`. `normalizeDictionaryResult()` (`src/application/dictionary/normalizer.ts`) converts that into a complete `DictionaryEntry`; `mergeDictionaryEntries()` (`src/shared/enrichment.ts`) consolidates Phase A + Phase B results without provider-specific branches. Provider execution and status tracking live in `src/application/dictionary/provider-aggregator.ts`.
 
 ```typescript
 export interface ProviderLookupDto {
@@ -89,18 +89,15 @@ export interface AiResult {
 
 ## 2. Dictionary & Translation Providers
 
-The dictionary provider facade (`src/providers/provider.index.ts`) routes requests through `ProviderRegistry` (`src/providers/registry.ts`) across definition, lexical-enrichment, and translation adapters. Pipeline orchestration lives in `src/providers/pipeline.ts`. All dictionary backends are keyless. Remaining sources always run in Phase B enrichment after the primary result paints.
+The dictionary provider facade (`src/providers/provider.index.ts`) routes requests through the infrastructure provider catalog across definition, lexical-enrichment, and translation adapters. Dictionary orchestration is split between the application normalizer, provider aggregator, and the existing progressive lookup coordinator. All dictionary backends are keyless. Remaining sources always run in Phase B enrichment after the primary result paints.
 
 | Provider ID | Provider Module | Authentication | Description |
 |---|---|---|---|
 | `free_dictionary` | `provider.free-dictionary.ts` | None (`api.dictionaryapi.dev`) | Definitions, examples, synonyms/antonyms, US/UK audio MP3s, and phonetic transcriptions. |
 | `wiktionary` | `provider.wiktionary.ts` | None (`en.wiktionary.org`) | Multi-sense English definitions, examples, and etymological glosses. Default primary provider. |
-| `wiktionary_etymology` | `provider.wiktionary-etymology.ts` | None (`en.wiktionary.org` Action API) | English etymology / origin note merged into `lexicalProfile.usageNotes`. Enrichment-only by default. |
 | `wiktionary_bilingual` | `provider.wiktionary-bilingual.ts` | None (`{lang}.wiktionary.org`) | Target-language Wiktionary intro extract (skipped when the target is English). |
-| `tatoeba` | `provider.tatoeba.ts` | None (`tatoeba.org`) | Learner example sentences with optional target-language translations. |
 | `datamuse` | `provider.datamuse.ts` | None (`api.datamuse.com`) | WordNet-style definitions, synonyms, antonyms, and collocations. |
 | `rhymebrain` | `provider.rhymebrain.ts` | None (`rhymebrain.com`) | IPA transcription and pronunciation. Enrichment-only. |
-| `wikipedia` | `provider.wikipedia.ts` | None (`en.wikipedia.org`) | Encyclopedic summary for terms, names, and concepts. |
 | `urban_dictionary` | `provider.urban-dictionary.ts` | None (`api.urbandictionary.com`) | Ranked slang/idiom definitions (top thumbs-up). |
 | `google_translate` | `provider.google-translate.ts` | None (`translate.googleapis.com`) | Instant Google Translate neural translation & multi-language definitions. |
 | `mymemory` | `provider.mymemory.ts` | None (`api.mymemory.translated.net`) | Keyless translation provider and automatic fallback if Google/Libre fail. |
@@ -164,7 +161,7 @@ The AI subsystem operates in two user-selectable providers (`aiProvider`):
 Primary lookup uses the configured `dictionaryProvider` (`wiktionary` by default). Remaining keyless backends run after first paint in concurrent batches of 2:
 
 ```text
-wiktionary ➔ free_dictionary ➔ datamuse ➔ rhymebrain ➔ wikipedia ➔ urban_dictionary ➔ wiktionary_etymology ➔ wiktionary_bilingual ➔ tatoeba
+wiktionary ➔ free_dictionary ➔ datamuse ➔ rhymebrain ➔ urban_dictionary ➔ wiktionary_bilingual
 ```
 
 `NotFoundError` and transient network/5xx/429/timeout continue to the next provider. Dictionary HTTP timeout is 60s.

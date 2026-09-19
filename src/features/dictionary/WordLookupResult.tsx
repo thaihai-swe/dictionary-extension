@@ -1,4 +1,14 @@
-import React, { Suspense, useMemo } from 'react';
+import {
+  CollocationsCard,
+  LearnerMistakesCard,
+  UsageNotesCard,
+  WordFamilyCard,
+  WordFormationCard,
+} from '@/components/async-views';
+import ExampleSentence from '@/components/component.example-sentence';
+import MarkdownRenderer from '@/components/component.markdown-renderer';
+import RelatedWords from '@/components/component.related-words';
+import { IconCheck, IconCopy, IconMic, IconSpeaker } from '@/components/icons';
 import {
   playPronunciation,
   startSpeechPractice,
@@ -7,47 +17,44 @@ import {
   useDictionaryQuery,
   useDictionaryResult,
 } from '@/composables/composable.dictionary';
-import { AttributedItem, Phonetic } from '@/types';
-import SenseMatrixCard from './SenseMatrixCard';
-import MarkdownRenderer from '@/components/component.markdown-renderer';
-import {
-  CollocationsCard,
-  LearnerMistakesCard,
-  UsageNotesCard,
-  WordFamilyCard,
-  WordFormationCard,
-} from '@/components/async-views';
-import { cx } from '@/ui/cx';
-import { useStorage } from '@/composables/composable.storage';
-import { IconCheck, IconChevronDown, IconCopy, IconMic, IconQuote, IconSparkles, IconSpeaker } from '@/components/icons';
-import RelatedWords from '@/components/component.related-words';
+import { useSetting } from '@/composables/composable.storage';
 import { showToast } from '@/composables/composable.toast';
+import { Phonetic, TranslationResult } from '@/types';
+import { cx } from '@/ui/cx';
+import React, { Suspense, useMemo } from 'react';
+import SenseMatrixCard from './SenseMatrixCard';
+import { collectSecondaryResultSections } from './result-sections';
+import LexicalDisclosure from './LexicalDisclosure';
+import SourcesDisclosure from './SourcesDisclosure';
 
 interface WordLookupResultProps {
   onSelectWord?: (word: string) => void;
   contextSentence?: string;
 }
 
-function normalizeExample(text?: string): string {
-  return String(text || '')
-    .toLowerCase()
-    .replace(/["“”'‘’.,/#!$%^&*;:{}=\-_`~()]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function normalizeTerm(term?: string): string {
-  return String(term || '')
-    .toLowerCase()
-    .trim();
-}
+const TranslationBanner = React.memo(({ translation }: { translation: TranslationResult }) => (
+  <section className="p-3.5 rounded-2xl border border-border/80 bg-gradient-to-r from-accent-subtle/50 to-transparent flex items-baseline justify-between gap-3 shadow-xs">
+    <div className="space-y-1 min-w-0 flex-1">
+      <span className="text-[11px] font-bold text-accent uppercase tracking-wider font-mono">
+        Translation
+      </span>
+      <p className="font-serif text-reading text-content font-semibold break-words">
+        {translation.translatedText}
+      </p>
+    </div>
+    <span className="text-[11px] text-content-muted flex-shrink-0 font-mono px-2 py-0.5 rounded-md bg-surface border border-border/60 shadow-2xs">
+      {translation.sourceBadges?.map((badge) => badge.label).join(' · ') || 'Google'}
+    </span>
+  </section>
+));
 
 export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord, contextSentence }) => {
   const { result, isEnriching } = useDictionaryResult();
   const query = useDictionaryQuery();
   const { playingKey } = useDictionaryAudio();
   const { practiceResult, isPracticing, supportsSpeechPractice } = useDictionaryPractice();
-  const { settings } = useStorage();
+  const targetLang = useSetting('translateTargetLanguage');
+  const enableLexicalProfile = useSetting('enableLexicalProfile');
   const [hasCopied, setHasCopied] = React.useState(false);
 
   const displayHeadword = useMemo(() => {
@@ -126,7 +133,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
     }
 
     if (result.translation) {
-      md += `*Translation:* ${result.translation}\n`;
+      md += `*Translation:* ${result.translation.translatedText || result.translation}\n`;
     }
 
     void navigator.clipboard.writeText(md.trim()).then(() => {
@@ -136,69 +143,10 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
     });
   }
 
-  const { filteredExamples, filteredSynonyms, filteredAntonyms } = useMemo(() => {
-    if (!result) {
-      return { filteredExamples: [], filteredSynonyms: [], filteredAntonyms: [] };
-    }
-
-    const seenExamples = new Set<string>();
-    const seenSynonyms = new Set<string>();
-    const seenAntonyms = new Set<string>();
-
-    for (const meaning of result.meanings || []) {
-      for (const s of meaning.synonyms || []) {
-        const norm = normalizeTerm(s);
-        if (norm) seenSynonyms.add(norm);
-      }
-      for (const a of meaning.antonyms || []) {
-        const norm = normalizeTerm(a);
-        if (norm) seenAntonyms.add(norm);
-      }
-      for (const def of meaning.definitions || []) {
-        if (def.example) {
-          const normEx = normalizeExample(def.example);
-          if (normEx) seenExamples.add(normEx);
-        }
-        for (const s of def.synonyms || []) {
-          const norm = normalizeTerm(s);
-          if (norm) seenSynonyms.add(norm);
-        }
-        for (const a of def.antonyms || []) {
-          const norm = normalizeTerm(a);
-          if (norm) seenAntonyms.add(norm);
-        }
-      }
-    }
-
-    const filteredExamples: AttributedItem[] = [];
-    for (const ex of result.examples || []) {
-      const norm = normalizeExample(ex.text);
-      if (norm && !seenExamples.has(norm)) {
-        seenExamples.add(norm);
-        filteredExamples.push(ex);
-      }
-    }
-
-    const filteredSynonyms: AttributedItem[] = [];
-    for (const syn of result.synonyms || []) {
-      const norm = normalizeTerm(syn.text);
-      if (norm && !seenSynonyms.has(norm)) {
-        seenSynonyms.add(norm);
-        filteredSynonyms.push(syn);
-      }
-    }
-
-    const filteredAntonyms: AttributedItem[] = [];
-    for (const ant of result.antonyms || []) {
-      const norm = normalizeTerm(ant.text);
-      if (norm && !seenAntonyms.has(norm)) {
-        seenAntonyms.add(norm);
-        filteredAntonyms.push(ant);
-      }
-    }
-
-    return { filteredExamples, filteredSynonyms, filteredAntonyms };
-  }, [result]);
+  const { examples: filteredExamples, synonyms: filteredSynonyms, antonyms: filteredAntonyms } = useMemo(
+    () => collectSecondaryResultSections(result),
+    [result],
+  );
 
   if (!result) return null;
 
@@ -206,74 +154,62 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
   const showContextBanner = Boolean(
     pageContext && pageContext.toLowerCase() !== displayHeadword.toLowerCase(),
   );
-  const hasExtraLexical = Boolean(
-    settings.enableLexicalProfile !== false && (
-      result.lexicalProfile?.wordFamily
-      || result.lexicalProfile?.collocations
-      || result.lexicalProfile?.usageNotes
-      || usageWarnings.length
-      || result.lexicalProfile?.confusablePairs
-      || formationText
-      || formationPrefixes.length
-      || formationSuffixes.length
-      || result.lexicalProfile?.learnerMistakes
-    ),
-  );
-  const hasMoreDetails = Boolean(
-    filteredExamples.length
-    || filteredSynonyms.length
-    || filteredAntonyms.length
-    || hasExtraLexical,
-  );
-
   return (
-    <div className="space-y-3">
-      <div className="pb-2.5 border-b border-border space-y-1.5">
-        <div className="flex items-start justify-between gap-2">
-          <h2 className="text-xl font-semibold text-content font-heading tracking-tight leading-tight min-w-0">
-            {displayHeadword}
-          </h2>
-          <div className="flex items-center gap-1 shrink-0 mt-0.5">
+    <div className="space-y-3.5">
+      {/* Headword Hero Section */}
+      <div className="p-4 rounded-2xl border border-border/80 bg-surface shadow-xs space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1 min-w-0">
+            <h2 className="text-2xl sm:text-3xl font-bold text-content font-heading tracking-tight leading-tight min-w-0 break-words">
+              {displayHeadword}
+            </h2>
+            {isEnriching ? (
+              <span
+                className="inline-flex items-center gap-1.5 text-[12px] font-bold font-mono uppercase tracking-wider text-accent bg-accent-subtle px-2 py-0.5 rounded-full border border-accent/25"
+                aria-live="polite"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" aria-hidden="true" />
+                Enriching Lexical Data…
+              </span>
+            ) : null}
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
               type="button"
               onClick={copyAsMarkdown}
-              title="Copy as Markdown flashcard"
-              aria-label="Copy as Markdown flashcard"
+              title="Copy definition as Markdown flashcard"
+              aria-label="Copy definition as Markdown flashcard"
               className={cx(
-                'h-[22px] px-1.5 rounded-md border text-[11px] font-semibold transition-all cursor-pointer flex items-center gap-1 shadow-2xs active:scale-95 select-none',
+                'h-8 px-2.5 rounded-xl border text-[13.5px] font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs active:scale-95 select-none',
                 hasCopied
-                  ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
-                  : 'bg-muted hover:bg-elevated border-border text-content-secondary hover:text-content',
+                  ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-bold'
+                  : 'bg-muted/60 hover:bg-elevated border-border/80 text-content-secondary hover:text-content',
               )}
             >
               {hasCopied ? (
-                <IconCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                <>
+                  <IconCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Copied</span>
+                </>
               ) : (
-                <IconCopy className="w-3 h-3 text-content-muted" />
+                <>
+                  <IconCopy className="w-3.5 h-3.5 text-content-muted" />
+                  <span className="hidden sm:inline">Copy MD</span>
+                </>
               )}
             </button>
-            <span
-              className={cx(
-                'h-[18px] px-1.5 rounded text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1 whitespace-nowrap',
-                isEnriching
-                  ? 'bg-accent-subtle text-accent border border-accent/25'
-                  : 'invisible border border-transparent',
-              )}
-              aria-live="polite"
-              aria-atomic="true"
-              aria-hidden={!isEnriching}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" aria-hidden="true" />
-              Enriching
-            </span>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Phonetics & Voice Audio Chips */}
+        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-border/60">
           {phoneticsList.map((item, index) => {
             const listenKey = `phonetic-${index}-${item.region || item.language || 'audio'}`;
             const ipa = phoneticText(item);
             const lang = item.language || (item.region === 'uk' ? 'en-GB' : 'en-US');
+            const isPlaying = playingKey === listenKey;
+
             return (
               <button
                 key={listenKey}
@@ -287,94 +223,110 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                   })
                 }
                 className={cx(
-                  'min-h-8 pl-1.5 pr-2.5 py-1 rounded-md border font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs',
-                  playingKey === listenKey
-                    ? 'bg-accent-subtle text-accent border-accent/40 audio-playing-indicator'
-                    : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
+                  'h-8 pl-2 pr-3 py-1 rounded-xl border font-medium transition-colors flex items-center gap-2 cursor-pointer shadow-2xs group active:scale-95',
+                  isPlaying
+                    ? 'bg-accent text-accent-foreground border-accent font-bold audio-playing-indicator'
+                    : 'bg-muted/40 hover:bg-accent-subtle hover:border-accent/40 text-content-secondary hover:text-content border-border/80',
                 )}
-                aria-pressed={playingKey === listenKey}
-                title={`Listen (${phoneticLabel(item)})`}
+                aria-pressed={isPlaying}
+                title={`Listen pronunciation (${phoneticLabel(item)})`}
               >
-                <span className="text-[10px] font-bold uppercase px-1 py-0.5 rounded bg-muted text-content-muted font-sans border border-border/60">
+                <span className={cx(
+                  'text-[10.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-md font-mono transition-colors',
+                  isPlaying
+                    ? 'bg-paper/20 text-accent-foreground'
+                    : 'bg-surface text-content-muted border border-border/60 group-hover:text-accent',
+                )}>
                   {phoneticLabel(item)}
                 </span>
-                <IconSpeaker className="w-3.5 h-3.5 text-accent shrink-0" />
-                <span className="font-mono text-[16px] leading-none tracking-wide text-content">
+                {isPlaying ? (
+                  <span className="soundwave-bars text-accent-foreground">
+                    <span className="soundwave-bar" />
+                    <span className="soundwave-bar" />
+                    <span className="soundwave-bar" />
+                  </span>
+                ) : (
+                  <IconSpeaker className="w-3.5 h-3.5 text-accent shrink-0 group-hover:scale-110 transition-transform" />
+                )}
+                <span className={cx(
+                  'font-mono text-[14.5px] leading-none tracking-wide font-medium',
+                  isPlaying ? 'text-accent-foreground' : 'text-content',
+                )}>
                   {ipa ? `/${ipa.replace(/^\/+|\/+$/g, '')}/` : 'Audio'}
                 </span>
               </button>
             );
           })}
 
+          {/* Speech Practice Voice Button */}
           {supportsSpeechPractice ? (
             <button
               type="button"
               onClick={() => startSpeechPractice(displayHeadword, 'en-US')}
               className={cx(
-                'h-6 px-2 rounded-md border text-[11px] font-medium transition-all flex items-center gap-1 cursor-pointer shadow-2xs',
+                'h-8 px-3 rounded-xl border text-[12.5px] font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95',
                 isPracticing
-                  ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/40 animate-pulse'
-                  : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
+                  ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/40 animate-pulse font-bold'
+                  : 'bg-muted/40 hover:bg-elevated text-content-secondary hover:text-content border-border/80 hover:border-amber-500/40',
               )}
               aria-pressed={isPracticing}
-              title="Speech practice evaluator"
+              title="Practice speaking and get a speech similarity score"
             >
-              <IconMic className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-              <span>{isPracticing ? 'Listening…' : 'Practice'}</span>
+              <IconMic className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <span>{isPracticing ? 'Listening…' : 'Practice Pronunciation'}</span>
             </button>
           ) : null}
         </div>
-
-        {showContextBanner ? (
-          <p className="text-[12px] text-content-muted italic leading-snug line-clamp-2">
-            “{pageContext}”
-          </p>
-        ) : null}
       </div>
 
-      {result.translation?.translatedText ? (
-        <section className="px-3 py-2.5 rounded-lg border border-accent/25 bg-accent-subtle flex items-baseline justify-between gap-3 shadow-2xs">
-          <div className="space-y-0.5 min-w-0 flex-1">
-            <span className="text-[10px] font-bold text-accent uppercase tracking-wider font-mono">
-              Translation
-            </span>
-            <p className="text-[14px] text-content font-medium leading-snug">
-              {result.translation.translatedText}
-            </p>
-          </div>
-          <span className="text-[10px] text-content-muted flex-shrink-0 font-mono px-1.5 py-0.5 rounded bg-surface/70 border border-border/50">
-            {result.translation.sourceBadges?.map((b) => b.label).join(' · ') || 'Google'}
+      {/* Page Selection Context Banner */}
+      {showContextBanner ? (
+        <section className="p-3.5 rounded-2xl border border-border/80 bg-surface/80 shadow-xs space-y-1">
+          <span className="text-[11px] font-bold uppercase tracking-wider font-mono text-content-muted">
+            Selection Context
           </span>
+          <p className="font-serif text-reading text-content">
+            {pageContext}
+          </p>
         </section>
       ) : null}
 
-      {/* Speech Practice Result Badge */}
+      {/* Bilingual Translation Banner */}
+      {result.translation?.translatedText ? (
+        <TranslationBanner translation={result.translation} />
+      ) : null}
+
+      {/* Speech Practice Evaluation Feedback Banner */}
       {practiceResult ? (
         <div
           className={cx(
-            'rounded-lg border px-3 py-2 text-[12.5px] space-y-1',
+            'rounded-2xl border p-3.5 text-[13.5px] space-y-2 shadow-xs',
             practiceResult.grade === 'excellent'
-              ? 'border-emerald-500/30 bg-emerald-500/8 text-emerald-700 dark:text-emerald-300'
+              ? 'border-emerald-500/30 bg-emerald-500/8 text-emerald-800 dark:text-emerald-200'
               : practiceResult.grade === 'good'
                 ? 'border-accent/30 bg-accent-subtle text-accent'
                 : practiceResult.grade === 'almost'
-                  ? 'border-amber-500/30 bg-amber-500/8 text-amber-700 dark:text-amber-300'
-                  : 'border-rose-500/30 bg-rose-500/8 text-rose-700 dark:text-rose-300',
+                  ? 'border-amber-500/30 bg-amber-500/8 text-amber-800 dark:text-amber-200'
+                  : 'border-rose-500/30 bg-rose-500/8 text-rose-800 dark:text-rose-200',
           )}
         >
-          <div className="font-semibold">
-            {practiceResult.score}% · {practiceResult.gradeLabel}
-            {practiceResult.spoken ? <span> · heard “{practiceResult.spoken}”</span> : null}
+          <div className="flex items-center justify-between font-bold text-sm">
+            <span>Score: {practiceResult.score}% · {practiceResult.gradeLabel}</span>
+            {practiceResult.spoken ? (
+              <span className="text-xs font-normal opacity-85 font-mono">
+                Heard: “{practiceResult.spoken}”
+              </span>
+            ) : null}
           </div>
           {practiceResult.details && practiceResult.details.length > 1 ? (
-            <div className="flex flex-wrap gap-1 pt-0.5">
+            <div className="flex flex-wrap gap-1.5 pt-1">
               {practiceResult.details.map((detail, index) => (
                 <span
                   key={`${detail.word}-${index}`}
                   className={cx(
-                    'px-1.5 py-0.2 rounded text-[11px] font-mono font-medium border',
+                    'px-2 py-0.5 rounded-lg text-[12px] font-mono font-medium border shadow-2xs',
                     detail.matched
-                      ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
+                      ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-bold'
                       : detail.closeMatch
                         ? 'bg-amber-500/15 border-amber-500/30 text-amber-700 dark:text-amber-300'
                         : 'bg-rose-500/15 border-rose-500/30 text-rose-700 dark:text-rose-300',
@@ -388,28 +340,27 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
         </div>
       ) : null}
 
+      {/* Main Definitions (Sense Matrix Card) */}
       {result.meanings?.length ? (
-        <section className="p-3.5 rounded-lg border border-border bg-surface space-y-3 shadow-card">
-          <SenseMatrixCard meanings={result.meanings} onSelectWord={handleSearch} />
-        </section>
+        <SenseMatrixCard meanings={result.meanings} />
       ) : null}
 
-      {/* 6. Phrase Fallback Explanation */}
+      {/* Phrase Explanation Fallback */}
       {result.phraseExplanation?.length ? (
-        <section className="p-3.5 rounded-lg border border-border bg-surface space-y-2 shadow-card">
-          <p className="text-[11px] font-bold uppercase tracking-wider font-mono text-accent">
+        <section className="p-4 rounded-2xl border border-border/80 bg-surface shadow-xs space-y-2.5">
+          <p className="text-[12px] font-bold uppercase tracking-wider font-mono text-accent">
             Phrase Explanation
           </p>
           {result.phraseExplanation.map((section, index) => (
             <div key={index} className="space-y-1.5">
               {section.title && index > 0 ? (
-                <div className="font-semibold text-[12.5px] text-content">{section.title}</div>
+                <div className="font-bold text-[14px] text-content">{section.title}</div>
               ) : null}
               {section.markdown || section.text ? (
                 <MarkdownRenderer content={section.text || ''} />
               ) : null}
               {section.items?.length ? (
-                <ul className="space-y-0.5 text-[13.5px] text-content list-disc pl-4">
+                <ul className="space-y-1 text-reading-compact text-content list-disc pl-4">
                   {section.items.map((item) => (
                     <li key={item}>{item}</li>
                   ))}
@@ -420,115 +371,112 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
         </section>
       ) : null}
 
-      {/* Progressive Disclosure: Collapsible Secondary Details */}
-      {hasMoreDetails ? (
-        <details className="lexical-accordion rounded-lg border border-border bg-surface shadow-card">
-          <summary className="px-3.5 py-2.5 text-[11px] font-bold text-content-muted uppercase tracking-wider flex items-center justify-between gap-2 cursor-pointer select-none">
-            <span>More details & context</span>
-            <IconChevronDown className="w-3.5 h-3.5" />
-          </summary>
-          <div className="px-3.5 pb-3.5 space-y-3.5 border-t border-border pt-3">
-            {filteredExamples.length ? (
-              <div className="space-y-2">
-                <div className="flex items-center gap-1.5 text-[11px] font-bold text-content-muted uppercase tracking-wider">
-                  <IconQuote className="w-3.5 h-3.5 text-accent" />
-                  <span>Examples</span>
-                </div>
-                <ul className="space-y-2">
-                  {filteredExamples.map((example, index) => {
-                    const listenKey = `example-${index}`;
-                    const isPlaying = playingKey === listenKey;
-                    return (
-                      <li
-                        key={`${example.text}-${index}`}
-                        className="flex items-start justify-between gap-3 text-[13px] leading-relaxed text-content-secondary"
-                      >
-                        <span className="flex-1 min-w-0">“{example.text}”</span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            playPronunciation({
-                              text: example.text,
-                              language: 'en-US',
-                              key: listenKey,
-                            })
-                          }
-                          className={cx(
-                            'h-6 px-2 rounded-full border text-[10.5px] font-semibold flex items-center gap-1 cursor-pointer transition-colors flex-shrink-0',
-                            isPlaying
-                              ? 'bg-accent-subtle text-accent border-accent/40 audio-playing-indicator'
-                              : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
-                          )}
-                          aria-pressed={isPlaying}
-                          title="Listen to example"
-                        >
-                          <IconSpeaker className="w-2.5 h-2.5" />
-                          <span>{isPlaying ? 'Playing…' : 'Listen'}</span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ) : null}
-
-            {filteredSynonyms.length || filteredAntonyms.length ? (
-              <div className="space-y-2 pt-1 border-t border-border/60">
-                <div className="flex items-center gap-1.5 text-[11px] font-bold text-content-muted uppercase tracking-wider">
-                  <IconSparkles className="w-3.5 h-3.5 text-accent" />
-                  <span>Related</span>
-                </div>
-                {filteredSynonyms.length ? (
-                  <RelatedWords
-                    label="Synonyms"
-                    tone="synonym"
-                    words={filteredSynonyms.map((s) => s.text)}
-                    onSelectWord={handleSearch}
-                  />
-                ) : null}
-                {filteredAntonyms.length ? (
-                  <RelatedWords
-                    label="Antonyms"
-                    tone="antonym"
-                    words={filteredAntonyms.map((a) => a.text)}
-                    onSelectWord={handleSearch}
-                  />
-                ) : null}
-              </div>
-            ) : null}
-
-            {hasExtraLexical ? (
-              <div className="space-y-3 pt-1 border-t border-border/60">
-                <Suspense fallback={null}>
-                  <WordFamilyCard
-                    word={displayHeadword}
-                    family={result.lexicalProfile?.wordFamily}
-                    onSelectWord={handleSearch}
-                  />
-                  <CollocationsCard
-                    word={displayHeadword}
-                    collocations={result.lexicalProfile?.collocations}
-                    onSelectWord={handleSearch}
-                  />
-                  <UsageNotesCard
-                    notes={result.lexicalProfile?.usageNotes}
-                    warnings={usageWarnings}
-                    pairs={result.lexicalProfile?.confusablePairs}
-                  />
-                  <WordFormationCard
-                    formation={formationText}
-                    prefixes={formationPrefixes}
-                    suffixes={formationSuffixes}
-                  />
-                  <LearnerMistakesCard mistakes={result.lexicalProfile?.learnerMistakes} />
-                </Suspense>
-              </div>
-            ) : null}
-          </div>
-        </details>
+      {/* Independent secondary disclosures */}
+      {filteredExamples.length ? (
+        <LexicalDisclosure label="Examples" count={filteredExamples.length}>
+          {filteredExamples.map((example, index) => {
+            const listenKey = `example-${index}`;
+            return (
+              <ExampleSentence
+                key={`${example.text}-${index}`}
+                english={example.text}
+                translation={example.translation}
+                targetLang={targetLang}
+                isPlaying={playingKey === listenKey}
+                onListen={() =>
+                  playPronunciation({
+                    text: example.text,
+                    language: 'en-US',
+                    key: listenKey,
+                  })
+                }
+              />
+            );
+          })}
+        </LexicalDisclosure>
       ) : null}
+
+      {filteredSynonyms.length ? (
+        <LexicalDisclosure label="Synonyms" count={filteredSynonyms.length}>
+          <RelatedWords
+            label="Synonyms"
+            tone="synonym"
+            words={filteredSynonyms.map((s) => s.text)}
+            onSelectWord={handleSearch}
+          />
+        </LexicalDisclosure>
+      ) : null}
+
+      {filteredAntonyms.length ? (
+        <LexicalDisclosure label="Antonyms" count={filteredAntonyms.length}>
+          <RelatedWords
+            label="Antonyms"
+            tone="antonym"
+            words={filteredAntonyms.map((a) => a.text)}
+            onSelectWord={handleSearch}
+          />
+        </LexicalDisclosure>
+      ) : null}
+
+      {enableLexicalProfile !== false && result.lexicalProfile?.wordFamily ? (
+        <LexicalDisclosure label="Word family">
+          <Suspense fallback={null}>
+            <WordFamilyCard
+              word={displayHeadword}
+              family={result.lexicalProfile.wordFamily}
+              onSelectWord={handleSearch}
+            />
+          </Suspense>
+        </LexicalDisclosure>
+      ) : null}
+
+      {enableLexicalProfile !== false && result.lexicalProfile?.collocations ? (
+        <LexicalDisclosure label="Collocations">
+          <Suspense fallback={null}>
+            <CollocationsCard
+              word={displayHeadword}
+              collocations={result.lexicalProfile.collocations}
+              onSelectWord={handleSearch}
+            />
+          </Suspense>
+        </LexicalDisclosure>
+      ) : null}
+
+      {enableLexicalProfile !== false && (formationText || formationPrefixes.length || formationSuffixes.length) ? (
+        <LexicalDisclosure label="Word formation">
+          <Suspense fallback={null}>
+            <WordFormationCard
+              formation={formationText}
+              prefixes={formationPrefixes}
+              suffixes={formationSuffixes}
+            />
+          </Suspense>
+        </LexicalDisclosure>
+      ) : null}
+
+      {enableLexicalProfile !== false && (result.lexicalProfile?.usageNotes || usageWarnings.length || result.lexicalProfile?.confusablePairs) ? (
+        <LexicalDisclosure label="Usage and nuance">
+          <Suspense fallback={null}>
+            <UsageNotesCard
+              notes={result.lexicalProfile?.usageNotes}
+              warnings={usageWarnings}
+              pairs={result.lexicalProfile?.confusablePairs}
+            />
+          </Suspense>
+        </LexicalDisclosure>
+      ) : null}
+
+      {enableLexicalProfile !== false && result.lexicalProfile?.learnerMistakes?.length ? (
+        <LexicalDisclosure label="Learner mistakes" count={result.lexicalProfile.learnerMistakes.length}>
+          <Suspense fallback={null}>
+            <LearnerMistakesCard mistakes={result.lexicalProfile.learnerMistakes} />
+          </Suspense>
+        </LexicalDisclosure>
+      ) : null}
+
+      <SourcesDisclosure sources={result.sources || []} />
     </div>
   );
 };
 
-export default WordLookupResult;
+export default React.memo(WordLookupResult);

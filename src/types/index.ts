@@ -18,6 +18,7 @@ export type {
   LexicalProfile,
   AiResult,
   SourceBadge,
+  DictionarySourceSummary,
   PhraseExplanationSection,
   PracticeResult,
   TranslationResult,
@@ -28,7 +29,7 @@ export type {
   SelectionTriggerMode,
   PostSelectionModifier,
   AppTheme,
-  AppFontFamily,
+  TextSizePreference,
   AiProviderId,
   TranslationProviderId,
   DictionaryProviderId,
@@ -38,8 +39,17 @@ export type {
 export type {
   ProviderValidationResult,
   ProviderLookupDto,
+  DictionaryProviderSettings,
   DictionaryLookupOptions,
   TranslationLookupOptions,
   IDictionaryProvider,
   ITranslationProvider,
 } from './providers';
+
+export type {
+  DictionaryProviderCatalog,
+  DictionaryLookupContext,
+  DictionaryProviderOutcome,
+  DictionaryAggregate,
+  DictionaryProviderLookup,
+} from '../domain/dictionary/contracts';

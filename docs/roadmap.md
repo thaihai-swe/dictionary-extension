@@ -13,7 +13,7 @@ This document outlines completed milestones and future enhancements for **Dictio
 
 ### Phase 2: Dual-Phase Lookup & Progressive Lazy Enrichment
 - [x] Phase 1 fast primary lookup returning within sub-second thresholds.
-- [x] Phase 2 lazy enrichment executing secondary keyless providers (`wiktionary`, `datamuse`, `wikipedia`, `urban_dictionary`, `rhymebrain`) in concurrent batches of 2.
+- [x] Phase 2 lazy enrichment executing secondary keyless providers (`wiktionary`, `datamuse`, `urban_dictionary`, `rhymebrain`, `wiktionary_bilingual`) in concurrent batches of 2.
 - [x] Phonetic IPA backfilling, definition merging, and example expansion.
 - [x] Two-level caching: L1 in-memory LRU + L2 session storage (`enrich_*`).
 - [x] Exact selection lookup handling for inflected terms and multi-word phrases.
@@ -77,5 +77,6 @@ This document outlines completed milestones and future enhancements for **Dictio
 
 - [ ] **On-Device LLM Integration (Chrome Built-in AI / Gemini Nano):**
   - Integrate with Chrome's experimental `window.ai` / Prompt API to offer zero-latency, private, keyless local AI explanations when supported by hardware.
-- [ ] **Cross-Browser Packaging:**
-  - Verify and package Firefox (Manifest V2/V3) and Safari Web Extension distributions.
+- [x] **Firefox Manifest V3 packaging:** Dual output (`dist/` Chrome service worker, `dist-firefox/` gecko event page). Safari remains later.
+- [ ] **Safari Web Extension:**
+  - Verify and package a Safari Web Extension distribution.

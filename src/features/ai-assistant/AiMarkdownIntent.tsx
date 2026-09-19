@@ -17,9 +17,9 @@ export const AiMarkdownIntent: React.FC<AiMarkdownIntentProps> = ({
   return (
     <div className="space-y-4">
       {result.summary ? (
-        <div className="pt-2 border-t border-border/50 space-y-3">
+        <section className="p-3.5 rounded-lg border border-border bg-surface space-y-3">
           <MarkdownRenderer content={result.summary} targetLang={targetLang} />
-        </div>
+        </section>
       ) : null}
       <AiLexicalExtras
         query={result.query}

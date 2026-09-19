@@ -24,7 +24,7 @@ export const TabGeneral: React.FC<TabGeneralProps> = ({
           <h3 className="text-sm font-bold text-content font-heading">
             Text Selection Trigger
           </h3>
-          <p className="text-[11.5px] text-content-muted">
+          <p className="text-[13.5px] text-content-muted">
             Choose what happens when you highlight text on any web page.
           </p>
         </div>
@@ -51,7 +51,7 @@ export const TabGeneral: React.FC<TabGeneralProps> = ({
             </div>
             <div className="space-y-0.5">
               <div className="font-semibold text-xs text-content">Floating Action Icon</div>
-              <div className="text-[11.5px] text-content-muted font-normal leading-relaxed">
+              <div className="text-[13.5px] text-content-muted font-normal leading-relaxed">
                 Displays a discreet lookup button near your selection. Clicking it opens the card.
               </div>
             </div>
@@ -78,7 +78,7 @@ export const TabGeneral: React.FC<TabGeneralProps> = ({
             </div>
             <div className="space-y-0.5">
               <div className="font-semibold text-xs text-content">Instant Floating Card</div>
-              <div className="text-[11.5px] text-content-muted font-normal leading-relaxed">
+              <div className="text-[13.5px] text-content-muted font-normal leading-relaxed">
                 Immediately pops up definitions as soon as you finish selecting text.
               </div>
             </div>
@@ -92,14 +92,14 @@ export const TabGeneral: React.FC<TabGeneralProps> = ({
           <h3 className="text-sm font-bold text-content font-heading">
             Shortcuts & Default View
           </h3>
-          <p className="text-[11.5px] text-content-muted">
+          <p className="text-[13.5px] text-content-muted">
             Configure key combos and the initial tab displayed on new lookups.
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
           <div className="space-y-1.5">
-            <label className="font-bold text-content-secondary block text-[11px] uppercase tracking-wider">
+            <label className="font-bold text-content-secondary block text-[13px] uppercase tracking-wider">
               Quick Selection Modifier
             </label>
             <select
@@ -115,11 +115,11 @@ export const TabGeneral: React.FC<TabGeneralProps> = ({
               <option value="alt">Hold Alt + Press Q (Alt+Q)</option>
               <option value="ctrl">Hold Ctrl + Press Q (Ctrl+Q)</option>
             </select>
-            <p className="text-[11px] text-content-muted">Triggers immediate lookup for any highlighted text.</p>
+            <p className="text-[13px] text-content-muted">Triggers immediate lookup for any highlighted text.</p>
           </div>
 
           <div className="space-y-1.5">
-            <label className="font-bold text-content-secondary block text-[11px] uppercase tracking-wider">
+            <label className="font-bold text-content-secondary block text-[13px] uppercase tracking-wider">
               Default Start Tab
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -163,7 +163,7 @@ export const TabGeneral: React.FC<TabGeneralProps> = ({
                 <span>AI Assistant</span>
               </label>
             </div>
-            <p className="text-[11px] text-content-muted">Which tab opens first when popup appears.</p>
+            <p className="text-[13px] text-content-muted">Which tab opens first when popup appears.</p>
           </div>
         </div>
       </section>
@@ -174,7 +174,7 @@ export const TabGeneral: React.FC<TabGeneralProps> = ({
           <h3 className="text-sm font-bold text-content font-heading">
             Browser & Context Integration
           </h3>
-          <p className="text-[11.5px] text-content-muted">
+          <p className="text-[13.5px] text-content-muted">
             Fine-tune how the extension interacts with page menus and neighboring sentences.
           </p>
         </div>
@@ -185,7 +185,7 @@ export const TabGeneral: React.FC<TabGeneralProps> = ({
               <span className="font-semibold text-content text-xs block">
                 Right-Click Context Menu Entry
               </span>
-              <span className="text-[11px] text-content-muted block">
+              <span className="text-[13px] text-content-muted block">
                 Adds "Lookup in Dictionary" to Chrome’s native context menu
               </span>
             </div>
@@ -202,7 +202,7 @@ export const TabGeneral: React.FC<TabGeneralProps> = ({
               <span className="font-semibold text-content text-xs block">
                 Disable Surrounding Sentence Extraction
               </span>
-              <span className="text-[11px] text-content-muted block">
+              <span className="text-[13px] text-content-muted block">
                 Only look up the exact selected word without capturing neighboring context
               </span>
             </div>
@@ -222,7 +222,7 @@ export const TabGeneral: React.FC<TabGeneralProps> = ({
           <h3 className="text-sm font-bold text-content font-heading">
             Paused Web Hostnames
           </h3>
-          <p className="text-[11.5px] text-content-muted">
+          <p className="text-[13.5px] text-content-muted">
             The floating lookup trigger will not appear on these websites (one hostname per line).
           </p>
         </div>

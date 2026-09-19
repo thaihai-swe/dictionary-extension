@@ -1,18 +1,17 @@
 import { useEffect } from 'react';
-import { signal, useSignal } from '../ui/signal';
+import { signal, useSignal, useSignalSelector } from '../ui/signal';
 import { TabId, AiIntentId, AppSettings } from '../types';
 import {
   DEFAULT_SETTINGS,
   SECRET_KEYS,
   getPublicSettings,
-  loadFullSettings,
-  loadPublicSettings,
   normalizeSettings,
   parsePublicSettingsImport,
   saveSettingsPartial,
   serializePublicSettings,
 } from '../shared/settings';
 import { hasConfiguredAiApiKey, shouldPersistSecretValue } from '../shared/settings-export';
+import { settingsRepository } from '../infrastructure/storage/settings-repository';
 
 export {
   DEFAULT_SETTINGS,
@@ -28,6 +27,7 @@ const CACHE_INVALIDATION_KEYS = new Set([
   'enablePhraseFallback',
   'enableLexicalProfile',
   'enableAI',
+  'persistLookupCache',
   'translateTargetLanguage',
   'translateProvider',
   'libreTranslateBaseUrl',
@@ -61,7 +61,7 @@ export function registerCacheInvalidator(invalidate: CacheInvalidator): () => vo
   };
 }
 
-function invalidateLookupCaches() {
+export function clearLookupCaches() {
   for (const invalidate of cacheInvalidators) {
     try {
       invalidate();
@@ -69,11 +69,14 @@ function invalidateLookupCaches() {
       console.warn('Lookup cache invalidation failed:', error);
     }
   }
+  if (typeof chrome !== 'undefined' && chrome.storage?.local?.remove) {
+    void chrome.storage.local.remove(['dict_lookup_cache', 'ai_lookup_cache']).catch(() => undefined);
+  }
 }
 
 const STORAGE_KEYS = {
-  ACTIVE_TAB: 'dict_last_tab_v2',
-  ACTIVE_INTENT: 'dict_last_intent_v2',
+  ACTIVE_TAB: 'dict_last_tab',
+  ACTIVE_INTENT: 'dict_last_intent',
 };
 
 export function readSessionKey(key: string): string | null {
@@ -147,6 +150,10 @@ function normalizeSettingsArrayFields(settings: AppSettings): AppSettings {
   return settings;
 }
 
+function assignSettingValue<K extends keyof AppSettings>(settings: AppSettings, key: K, value: unknown): void {
+  settings[key] = value as AppSettings[K];
+}
+
 export function canAccessSecretSettings(): boolean {
   try {
     if (typeof window === 'undefined') return false;
@@ -160,7 +167,7 @@ export function canAccessSecretSettings(): boolean {
 async function loadSettingsFromStorage(): Promise<AppSettings> {
   try {
     if (typeof chrome !== 'undefined' && chrome.storage) {
-      const loaded = canAccessSecretSettings() ? await loadFullSettings() : await loadPublicSettings();
+      const loaded = await settingsRepository.load({ includeSecrets: canAccessSecretSettings() });
       return normalizeSettingsArrayFields(loaded);
     }
   } catch (e) {
@@ -174,9 +181,9 @@ async function loadSettingsFromStorage(): Promise<AppSettings> {
       const val = localStorage.getItem(`dict_setting_${key}`);
       if (val !== null) {
         try {
-          (current as any)[key] = JSON.parse(val);
+          assignSettingValue(current, key, JSON.parse(val));
         } catch {
-          (current as any)[key] = val;
+          assignSettingValue(current, key, val);
         }
       }
     }
@@ -203,7 +210,7 @@ export async function saveSettingsToStorage(partial: Partial<AppSettings>): Prom
   } else {
     delete writable.hasAiApiKey;
   }
-  const nextSettings = { ...settingsRef.value, ...writable };
+  const nextSettings = normalizeSettings({ ...settingsRef.value, ...writable });
   if (trustedSecrets) {
     Object.assign(nextSettings, secretWrites);
   }
@@ -219,17 +226,18 @@ export async function saveSettingsToStorage(partial: Partial<AppSettings>): Prom
 
   if (typeof chrome !== 'undefined' && chrome.storage) {
     try {
-      await saveSettingsPartial({
+      await settingsRepository.save({
         ...(writable as Partial<AppSettings>),
         ...(secretWrites as Partial<AppSettings>),
       });
     } catch (e) {
       console.warn('Chrome storage write failed:', e);
+      throw e;
     }
   }
 
   if (shouldInvalidateLookupCache([...Object.keys(writable), ...Object.keys(secretWrites)])) {
-    invalidateLookupCaches();
+    clearLookupCaches();
   }
 }
 
@@ -241,6 +249,7 @@ export function initStorage() {
     .then((s) => {
       if (settingsWriteEpoch !== loadEpoch) return;
       settingsRef.value = s;
+      if (s.persistLookupCache === false) clearLookupCaches();
     })
     .catch((error) => {
       console.warn('Settings load failed:', error);
@@ -251,12 +260,16 @@ export function initStorage() {
 
   if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
     chrome.storage.onChanged.addListener((changes, areaName) => {
+      const changedKeys = Object.keys(changes);
+      if (!changedKeys.some((key) => key in DEFAULT_SETTINGS || key === 'hasAiApiKey' || SECRET_KEYS.has(key))) {
+        return;
+      }
       const allowSecrets = canAccessSecretSettings();
       const nextSettings = { ...settingsRef.value };
       for (const [key, change] of Object.entries(changes)) {
         if (SECRET_KEYS.has(key) && (!allowSecrets || areaName !== 'local')) continue;
         if (key in nextSettings) {
-          (nextSettings as any)[key] = change.newValue ?? DEFAULT_SETTINGS[key as keyof AppSettings];
+          assignSettingValue(nextSettings, key as keyof AppSettings, change.newValue ?? DEFAULT_SETTINGS[key as keyof AppSettings]);
         }
       }
       if (allowSecrets) {
@@ -267,32 +280,49 @@ export function initStorage() {
       normalizeSettingsArrayFields(nextSettings);
       settingsRef.value = nextSettings;
       if (shouldInvalidateLookupCache(Object.keys(changes))) {
-        invalidateLookupCaches();
+        clearLookupCaches();
       }
     });
   }
 }
 
-export function useStorage() {
+function useStorageInitialization(): void {
   useEffect(() => {
     initStorage();
   }, []);
+}
 
-  return {
-    settings: useSignal(settingsRef),
-    settingsHydrated: useSignal(settingsHydratedRef),
-    saveSettings: saveSettingsToStorage,
-    activeTab: useSignal(activeTabRef),
-    activeIntent: useSignal(activeIntentRef),
-    setActiveTab: (tab: TabId) => {
-      activeTabRef.value = tab;
-    },
-    setActiveIntent: (intent: AiIntentId) => {
-      activeIntentRef.value = intent;
-    },
-    readSessionKey,
-    writeSessionKey,
-  };
+export function useSettings(): AppSettings {
+  useStorageInitialization();
+  return useSignal(settingsRef);
+}
+
+export function useSetting<K extends keyof AppSettings>(key: K): AppSettings[K] {
+  useStorageInitialization();
+  return useSignalSelector(settingsRef, (settings) => settings[key]);
+}
+
+export function useSettingsHydrated(): boolean {
+  useStorageInitialization();
+  return useSignal(settingsHydratedRef);
+}
+
+export function useActiveTab(): TabId {
+  useStorageInitialization();
+  return useSignal(activeTabRef);
+}
+
+export function useActiveIntent(): AiIntentId {
+  useStorageInitialization();
+  return useSignal(activeIntentRef);
+}
+
+export function setActiveTab(tab: TabId): void {
+  activeTabRef.value = tab;
+}
+
+export function setActiveIntent(intent: AiIntentId): void {
+  activeIntentRef.value = intent;
 }
 
 export const settingsStore = settingsRef;

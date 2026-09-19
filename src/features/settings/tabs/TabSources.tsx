@@ -17,12 +17,9 @@ const DICTIONARY_TESTS = [
   ['wiktionary', 'Wiktionary'],
   ['free_dictionary', 'Free Dictionary'],
   ['datamuse', 'Datamuse'],
-  ['wikipedia', 'Wikipedia'],
   ['urban_dictionary', 'Urban Dictionary'],
   ['rhymebrain', 'RhymeBrain'],
-  ['wiktionary_etymology', 'Etymology'],
   ['wiktionary_bilingual', 'Bilingual'],
-  ['tatoeba', 'Tatoeba'],
 ] as const;
 
 export const TabSources: React.FC<TabSourcesProps> = ({
@@ -48,7 +45,7 @@ export const TabSources: React.FC<TabSourcesProps> = ({
       <section className="bg-surface border border-border rounded-xl p-5 space-y-3 shadow-xs">
         <div>
           <h3 className="text-sm font-bold text-content font-heading">Dictionary View</h3>
-          <p className="text-[11.5px] text-content-muted">
+          <p className="text-[13.5px] text-content-muted">
             What appears on a word lookup besides the headword.
           </p>
         </div>
@@ -56,7 +53,7 @@ export const TabSources: React.FC<TabSourcesProps> = ({
           <label className="flex items-center justify-between cursor-pointer py-2.5 hover:bg-muted/30 px-1 rounded-lg transition-colors">
             <div className="pr-4">
               <span className="font-semibold text-content text-xs block">Show translation</span>
-              <span className="text-[11px] text-content-muted block">
+              <span className="text-[13px] text-content-muted block">
                 Localized gloss above meanings
               </span>
             </div>
@@ -70,7 +67,7 @@ export const TabSources: React.FC<TabSourcesProps> = ({
           <label className="flex items-center justify-between cursor-pointer py-2.5 hover:bg-muted/30 px-1 rounded-lg transition-colors">
             <div className="pr-4">
               <span className="font-semibold text-content text-xs block">Show definitions</span>
-              <span className="text-[11px] text-content-muted block">
+              <span className="text-[13px] text-content-muted block">
                 Sense cards and example sentences
               </span>
             </div>
@@ -87,13 +84,13 @@ export const TabSources: React.FC<TabSourcesProps> = ({
       <section className="bg-surface border border-border rounded-xl p-5 space-y-4 shadow-xs">
         <div>
           <h3 className="text-sm font-bold text-content font-heading">Translation</h3>
-          <p className="text-[11.5px] text-content-muted">
+          <p className="text-[13.5px] text-content-muted">
             Target language and engine used for the gloss line.
           </p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <label className="font-bold text-content-secondary block text-[11px] uppercase tracking-wider">
+            <label className="font-bold text-content-secondary block text-[13px] uppercase tracking-wider">
               Target language
             </label>
             <select
@@ -109,7 +106,7 @@ export const TabSources: React.FC<TabSourcesProps> = ({
             </select>
           </div>
           <div className="space-y-1.5">
-            <label className="font-bold text-content-secondary block text-[11px] uppercase tracking-wider">
+            <label className="font-bold text-content-secondary block text-[13px] uppercase tracking-wider">
               Engine
             </label>
             <select
@@ -124,7 +121,7 @@ export const TabSources: React.FC<TabSourcesProps> = ({
           </div>
         </div>
         <div className="space-y-1.5">
-          <label className="font-bold text-content-secondary block text-[11px] uppercase tracking-wider">
+          <label className="font-bold text-content-secondary block text-[13px] uppercase tracking-wider">
             Extra languages (comma-separated)
           </label>
           <input
@@ -150,7 +147,7 @@ export const TabSources: React.FC<TabSourcesProps> = ({
             <span>Test translation</span>
           </button>
           {connectionStatus[translationKey] ? (
-            <span className="text-[11px] px-2 py-0.5 rounded-md bg-muted border border-border text-accent font-mono">
+            <span className="text-[13px] px-2 py-0.5 rounded-md bg-muted border border-border text-accent font-mono">
               {connectionStatus[translationKey]}
             </span>
           ) : null}
@@ -159,8 +156,8 @@ export const TabSources: React.FC<TabSourcesProps> = ({
 
       <section className="bg-surface border border-border rounded-xl p-5 space-y-4 shadow-xs">
         <div>
-          <h3 className="text-sm font-bold text-content font-heading">Dictionary provider</h3>
-          <p className="text-[11.5px] text-content-muted">
+          <h3 className="text-sm font-bold text-content font-heading">Primary dictionary source</h3>
+          <p className="text-[13.5px] text-content-muted">
             Primary source for definitions. Others still enrich in the background.
           </p>
         </div>
@@ -174,15 +171,12 @@ export const TabSources: React.FC<TabSourcesProps> = ({
           <option value="wiktionary" className="bg-surface text-content">Wiktionary (default)</option>
           <option value="free_dictionary" className="bg-surface text-content">Free Dictionary API</option>
           <option value="datamuse" className="bg-surface text-content">Datamuse</option>
-          <option value="wikipedia" className="bg-surface text-content">Wikipedia Summary</option>
           <option value="urban_dictionary" className="bg-surface text-content">Urban Dictionary</option>
-          <option value="wiktionary_etymology" className="bg-surface text-content">Wiktionary Etymology</option>
           <option value="wiktionary_bilingual" className="bg-surface text-content">Wiktionary Bilingual</option>
-          <option value="tatoeba" className="bg-surface text-content">Tatoeba Sentences</option>
           <option value="google_translate" className="bg-surface text-content">Google Translate API</option>
         </select>
         <details className="rounded-lg border border-border bg-muted/30">
-          <summary className="px-3 py-2 text-[11px] font-bold text-content-muted uppercase tracking-wider cursor-pointer">
+          <summary className="px-3 py-2 text-[13px] font-bold text-content-muted uppercase tracking-wider cursor-pointer">
             Test connectivity
           </summary>
           <div className="px-3 pb-3 space-y-2">
@@ -205,7 +199,7 @@ export const TabSources: React.FC<TabSourcesProps> = ({
               ))}
             </div>
             {lastDictStatus ? (
-              <p className="text-[11px] text-accent font-mono">{lastDictStatus}</p>
+              <p className="text-[13px] text-accent font-mono">{lastDictStatus}</p>
             ) : null}
           </div>
         </details>
@@ -217,7 +211,7 @@ export const TabSources: React.FC<TabSourcesProps> = ({
             <IconSpeaker className="w-4 h-4 text-accent" />
             Speech
           </h3>
-          <p className="text-[11.5px] text-content-muted">
+          <p className="text-[13.5px] text-content-muted">
             Voice and speed for pronunciation playback.
           </p>
         </div>
@@ -236,7 +230,7 @@ export const TabSources: React.FC<TabSourcesProps> = ({
         <div className="flex items-center justify-between gap-3 bg-muted/40 p-2.5 rounded-xl border border-border">
           <div>
             <span className="text-content font-semibold text-xs block">Speech rate</span>
-            <span className="text-[11px] text-content-muted">0.5× to 1.5×</span>
+            <span className="text-[13px] text-content-muted">0.5× to 1.5×</span>
           </div>
           <div className="flex items-center gap-2">
             <input

@@ -1,10 +1,14 @@
 import type { AiIntentId, AiResult, AppSettings, DictionaryEntry } from '../types';
 import {
   AI_LOOKUP,
+  CLEAR_DICTIONARY_CACHE,
   CANCEL_LOOKUP,
   LOOKUP_TEXT,
   LOOKUP_UPDATE,
   OPEN_OPTIONS,
+  PLAY_AUDIO,
+  SPEAK_TTS,
+  STOP_AUDIO,
   VALIDATE_PROVIDER,
   aiAbortScope,
   createRequestId,
@@ -15,10 +19,13 @@ import {
   type CancelLookupPayload,
   type LookupTextPayload,
   type LookupUpdatePayload,
+  type PlayAudioPayload,
   type ProviderValidationKind,
   type ProviderValidationResult,
   type RuntimeResponse,
+  type SpeakTtsPayload,
 } from './messages';
+import { browserRuntimePort } from '../infrastructure/browser/runtime-port';
 
 export { createRequestId } from './messages';
 
@@ -40,32 +47,8 @@ export async function openExtensionSettings(): Promise<void> {
   }
 }
 
-function runtimeUnavailable(): Error {
-  return new Error('Extension runtime is unavailable.');
-}
-
 function sendMessage<T>(message: unknown): Promise<RuntimeResponse<T>> {
-  if (typeof chrome === 'undefined' || typeof chrome.runtime?.sendMessage !== 'function' || isExtensionContextInvalidated()) {
-    return Promise.reject(runtimeUnavailable());
-  }
-  return new Promise((resolve, reject) => {
-    try {
-      chrome.runtime.sendMessage(message, (response: RuntimeResponse<T>) => {
-        const lastError = runtimeErrorMessage('');
-        if (lastError) {
-          reject(new Error(lastError));
-          return;
-        }
-        resolve(response || { ok: false, error: 'Empty runtime response.' });
-      });
-    } catch (error) {
-      if (isExtensionContextInvalidated(error)) {
-        reject(runtimeUnavailable());
-        return;
-      }
-      reject(error instanceof Error ? error : runtimeUnavailable());
-    }
-  });
+  return browserRuntimePort.send<T>(message);
 }
 
 function unwrap<T>(response: RuntimeResponse<T>, fallback = 'Request failed.'): T {
@@ -84,6 +67,14 @@ export async function requestDictionaryLookup(payload: LookupTextPayload): Promi
     payload: { ...payload, requestId },
   });
   return unwrap(response, `No dictionary definition found for "${payload.text}".`);
+}
+
+export async function clearDictionaryCacheRemote(): Promise<void> {
+  try {
+    await sendMessage<boolean>({ type: CLEAR_DICTIONARY_CACHE });
+  } catch {
+    // The service worker may be unavailable while the local context is closing.
+  }
 }
 
 export async function requestAiLookup(payload: AiLookupPayload): Promise<AiResult> {
@@ -130,6 +121,48 @@ export function cancelDictionaryLookup(requestId?: string) {
 
 export function cancelAiLookup(intent?: AiIntentId | string, requestId?: string) {
   cancelRuntimeLookup(aiAbortScope(intent), requestId);
+}
+
+function canUseRuntimeAudio(): boolean {
+  try {
+    return typeof chrome !== 'undefined'
+      && typeof chrome.runtime?.sendMessage === 'function'
+      && Boolean(chrome.runtime.id)
+      && !isExtensionContextInvalidated();
+  } catch {
+    return false;
+  }
+}
+
+export async function requestPlayAudio(payload: PlayAudioPayload): Promise<boolean> {
+  if (!canUseRuntimeAudio()) return false;
+  try {
+    const response = await sendMessage<boolean>({ type: PLAY_AUDIO, payload });
+    return Boolean(response?.ok && response.result !== false);
+  } catch {
+    return false;
+  }
+}
+
+export async function requestSpeakTts(payload: SpeakTtsPayload): Promise<boolean> {
+  if (!canUseRuntimeAudio()) return false;
+  try {
+    const response = await sendMessage<boolean>({ type: SPEAK_TTS, payload });
+    return Boolean(response?.ok && response.result !== false);
+  } catch {
+    return false;
+  }
+}
+
+export function requestStopAudio() {
+  if (!canUseRuntimeAudio()) return;
+  try {
+    chrome.runtime.sendMessage({ type: STOP_AUDIO, payload: {} }, () => {
+      void runtimeErrorMessage('');
+    });
+  } catch {
+    // Ignore closed or invalidated channels.
+  }
 }
 
 export function subscribeLookupUpdates(handler: (payload: LookupUpdatePayload) => void): () => void {

@@ -3,24 +3,21 @@ import type { TabId, AiIntentId } from './models';
 export type SelectionTriggerMode = 'off' | 'icon' | 'direct';
 export type PostSelectionModifier = 'shift' | 'alt' | 'ctrl';
 export type AppTheme = 'system' | 'light' | 'dark';
-export type AppFontFamily = 'editorial' | 'learner';
+export type TextSizePreference = 'small' | 'comfortable' | 'large';
 export type AiProviderId = 'gemini' | 'openai';
 export type TranslationProviderId = 'google' | 'libretranslate' | 'mymemory';
 export type DictionaryProviderId =
   | 'free_dictionary'
   | 'google_translate'
   | 'wiktionary'
-  | 'wiktionary_etymology'
   | 'wiktionary_bilingual'
   | 'datamuse'
-  | 'wikipedia'
   | 'rhymebrain'
-  | 'urban_dictionary'
-  | 'tatoeba';
+  | 'urban_dictionary';
 
 export interface AppSettings {
   theme: AppTheme;
-  fontFamily: AppFontFamily;
+  textSize: TextSizePreference;
   selectionTriggerMode: SelectionTriggerMode;
   postSelectionModifier: PostSelectionModifier;
   enableContextMenuTrigger: boolean;
@@ -38,6 +35,7 @@ export interface AppSettings {
   enableLexicalProfile: boolean;
   enableAI: boolean;
   enableAiPreload: boolean;
+  persistLookupCache: boolean;
   preloadedAiIntents: AiIntentId[];
   enablePhraseFallback: boolean;
   disablePageContextExtraction: boolean;

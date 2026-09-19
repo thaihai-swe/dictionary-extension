@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { TabId } from '../types';
-import { useStorage } from '../composables/composable.storage';
+import { useSetting } from '../composables/composable.storage';
 import { cx } from '../ui/cx';
 import {
   IconBook,
@@ -13,13 +13,63 @@ interface TabNavigationProps {
   onChangeTab?: (tab: TabId) => void;
 }
 
+interface TabItem {
+  id: TabId;
+  label: string;
+  icon: React.FC<{ className?: string }>;
+  badge?: string;
+  shortcut: string;
+}
+
 export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChangeTab }) => {
-  const { settings } = useStorage();
+  const enableAI = useSetting('enableAI');
   const currentActive = activeTab || 'dictionary';
-  const showAiTab = settings.enableAI !== false;
+  const showAiTab = enableAI !== false;
+  const navRef = useRef<HTMLElement | null>(null);
+
+  const tabs: TabItem[] = [
+    {
+      id: 'dictionary',
+      label: 'Dictionary',
+      icon: IconBook,
+      shortcut: '1',
+    },
+    ...(showAiTab
+      ? [
+          {
+            id: 'ai_assistant' as TabId,
+            label: 'AI Assistant',
+            icon: IconSparkles,
+            badge: 'AI',
+            shortcut: '2',
+          },
+          {
+            id: 'rewriter' as TabId,
+            label: 'Rewriter',
+            icon: IconEdit,
+            shortcut: '3',
+          },
+        ]
+      : []),
+  ];
 
   function selectTab(id: TabId) {
     onChangeTab?.(id);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    const currentIndex = tabs.findIndex((t) => t.id === currentActive);
+    if (currentIndex === -1) return;
+
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      const nextIndex = (currentIndex + 1) % tabs.length;
+      selectTab(tabs[nextIndex].id);
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+      selectTab(tabs[prevIndex].id);
+    }
   }
 
   useEffect(() => {
@@ -30,61 +80,53 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
 
   return (
     <nav
-      className="flex items-center gap-1.5 border-b border-border bg-surface px-2.5 py-1.5 transition-colors select-none overflow-x-auto"
+      ref={navRef}
+      className="px-3 py-2 bg-paper/95 border-b border-border/80 transition-colors select-none"
       role="tablist"
-      aria-label="Lookup mode"
+      aria-label="Navigation modes"
+      onKeyDown={handleKeyDown}
     >
-      <button
-        type="button"
-        role="tab"
-        aria-selected={currentActive === 'dictionary'}
-        onClick={() => selectTab('dictionary')}
+      <div
         className={cx(
-          'relative min-h-[28px] px-2.5 rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all duration-150 outline-none cursor-pointer whitespace-nowrap shadow-2xs',
-          currentActive === 'dictionary'
-            ? 'chip-active ring-1 ring-accent/30'
-            : 'text-content-secondary hover:text-content hover:bg-muted border border-transparent',
+          'grid gap-1.5 p-1 rounded-xl bg-muted/60 border border-border/70 text-[14px] shadow-inner-light',
+          tabs.length === 3 ? 'grid-cols-3' : tabs.length === 2 ? 'grid-cols-2' : 'grid-cols-1',
         )}
       >
-        <IconBook className="w-3.5 h-3.5" />
-        <span>Dictionary</span>
-      </button>
+        {tabs.map((tab) => {
+          const isActive = currentActive === tab.id;
+          const Icon = tab.icon;
 
-      {showAiTab ? (
-        <button
-          type="button"
-          role="tab"
-          aria-selected={currentActive === 'ai_assistant'}
-          onClick={() => selectTab('ai_assistant')}
-          className={cx(
-            'relative min-h-[28px] px-2.5 rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all duration-150 outline-none cursor-pointer whitespace-nowrap shadow-2xs',
-            currentActive === 'ai_assistant'
-              ? 'chip-active ring-1 ring-accent/30'
-              : 'text-content-secondary hover:text-content hover:bg-muted border border-transparent',
-          )}
-        >
-          <IconSparkles className="w-3.5 h-3.5" />
-          <span>AI Assistant</span>
-        </button>
-      ) : null}
-
-      {showAiTab ? (
-        <button
-          type="button"
-          role="tab"
-          aria-selected={currentActive === 'rewriter'}
-          onClick={() => selectTab('rewriter')}
-          className={cx(
-            'relative min-h-[28px] px-2.5 rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all duration-150 outline-none cursor-pointer whitespace-nowrap shadow-2xs',
-            currentActive === 'rewriter'
-              ? 'chip-active ring-1 ring-accent/30'
-              : 'text-content-secondary hover:text-content hover:bg-muted border border-transparent',
-          )}
-        >
-          <IconEdit className="w-3.5 h-3.5" />
-          <span>Rewriter</span>
-        </button>
-      ) : null}
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              tabIndex={isActive ? 0 : -1}
+              onClick={() => selectTab(tab.id)}
+              className={cx(
+                'min-w-0 py-1.5 px-1.5 sm:px-3 rounded-lg flex items-center justify-center gap-1 text-[14px] transition-colors duration-fast outline-none cursor-pointer whitespace-nowrap select-none relative group overflow-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-paper',
+                isActive
+                  ? 'bg-surface text-accent font-bold shadow-xs border border-accent/40'
+                  : 'text-content-secondary hover:text-content hover:bg-surface/60 border border-transparent font-medium',
+              )}
+            >
+              <Icon aria-hidden="true" className={cx('w-3.5 h-3.5 shrink-0', isActive ? 'text-accent' : 'text-content-muted')} />
+              <span className="tracking-tight truncate">{tab.label}</span>
+              {tab.badge ? (
+                <span className={cx(
+                  'px-1 py-0.2 rounded text-[9px] font-mono font-extrabold uppercase leading-tight tracking-wider',
+                  isActive
+                    ? 'bg-accent/15 text-accent'
+                    : 'bg-muted text-content-muted border border-border/50',
+                )}>
+                  {tab.badge}
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
     </nav>
   );
 };

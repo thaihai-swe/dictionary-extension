@@ -39,7 +39,8 @@
     "storage",
     "activeTab",
     "contextMenus",
-    "scripting"
+    "scripting",
+    "offscreen"
   ],
   "host_permissions": [
     "https://api.dictionaryapi.dev/*",
@@ -49,11 +50,13 @@
     "https://generativelanguage.googleapis.com/*",
     "https://libretranslate.com/*",
     "https://api.datamuse.com/*",
-    "https://en.wikipedia.org/*",
     "https://api.urbandictionary.com/*",
     "https://rhymebrain.com/*",
-    "https://tatoeba.org/*",
     "https://api.mymemory.translated.net/*"
+  ],
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
   ],
   "commands": {
     "lookup-selection": {

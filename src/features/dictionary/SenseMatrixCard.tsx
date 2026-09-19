@@ -1,14 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { Meaning } from '@/types';
 import { useDictionaryAudio } from '@/composables/composable.dictionary';
-import { mergeMeanings } from '@/shared/enrichment';
+import { useSetting } from '@/composables/composable.storage';
 import { cx } from '@/ui/cx';
-import { IconSpeaker } from '@/components/icons';
-import RelatedWords from '@/components/component.related-words';
+import ExampleSentence from '@/components/component.example-sentence';
 
 interface SenseMatrixCardProps {
   meanings: Meaning[];
-  onSelectWord?: (word: string) => void;
 }
 
 function getPosBadgeClass(pos: string): string {
@@ -20,9 +18,10 @@ function getPosBadgeClass(pos: string): string {
   return 'badge-pos-other';
 }
 
-export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSelectWord }) => {
-  const groupedMeanings = useMemo(() => mergeMeanings(meanings || [], []), [meanings]);
+export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings }) => {
+  const groupedMeanings = meanings || [];
   const { playPronunciation, playingKey } = useDictionaryAudio();
+  const targetLang = useSetting('translateTargetLanguage');
   const [selectedPos, setSelectedPos] = useState<string>('all');
 
   const distinctPosList = useMemo(() => {
@@ -54,19 +53,19 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSe
   return (
     <div className="space-y-4 pt-0.5">
       {distinctPosList.length > 1 ? (
-        <div className="sticky top-0 z-10 -mx-1 px-1 py-1.5 bg-surface/95 dark:bg-surface/90 backdrop-blur-md border-b border-border flex items-center gap-1.5 overflow-x-auto select-none">
+        <div className="sticky top-0 z-10 -mx-1 px-1 py-1.5 bg-surface border-b border-border flex items-center gap-1.5 overflow-x-auto select-none">
           <button
             type="button"
             onClick={() => setSelectedPos('all')}
             className={cx(
-              'h-6 px-2.5 rounded-full text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1',
+              'h-6 px-2.5 rounded-full text-[12px] font-semibold transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1',
               selectedPos === 'all'
-                ? 'bg-accent text-white dark:text-neutral-950 shadow-2xs'
+                ? 'bg-accent text-accent-foreground shadow-2xs font-bold'
                 : 'bg-muted hover:bg-elevated text-content-secondary hover:text-content border border-border',
             )}
           >
             <span>All</span>
-            <span className="font-mono text-[10px] opacity-75 font-normal">({totalDefinitions})</span>
+            <span className="font-mono text-[11px] opacity-75 font-normal">({totalDefinitions})</span>
           </button>
           {distinctPosList.map((item) => {
             const isActive = selectedPos.toLowerCase() === item.pos.toLowerCase();
@@ -76,14 +75,14 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSe
                 type="button"
                 onClick={() => setSelectedPos(item.pos)}
                 className={cx(
-                  'h-6 px-2.5 rounded-full text-[11px] font-semibold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap flex items-center gap-1',
+                  'h-6 px-2.5 rounded-full text-[12px] font-semibold uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1',
                   isActive
-                    ? 'bg-accent text-white dark:text-neutral-950 shadow-2xs'
+                    ? 'bg-accent text-accent-foreground shadow-2xs font-bold'
                     : 'bg-muted hover:bg-elevated text-content-secondary hover:text-content border border-border',
                 )}
               >
                 <span>{item.pos}</span>
-                <span className="font-mono text-[10px] opacity-75 font-normal">({item.count})</span>
+                <span className="font-mono text-[11px] opacity-75 font-normal">({item.count})</span>
               </button>
             );
           })}
@@ -93,12 +92,12 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSe
       {filteredMeanings.map((meaning, mIdx) => (
         <div
           key={meaning.partOfSpeech || mIdx}
-          className="space-y-3 border-b border-border pb-4 last:border-b-0 last:pb-0"
+          className="space-y-3 rounded-lg border border-border bg-surface p-3.5"
         >
           <div className="flex items-center justify-between">
             <span
               className={cx(
-                'inline-flex items-center px-2 py-0.5 rounded-md font-semibold text-[10.5px] uppercase tracking-wider',
+                'inline-flex items-center px-2 py-0.5 rounded-md font-semibold text-[11.5px] uppercase tracking-wider',
                 getPosBadgeClass(meaning.partOfSpeech),
               )}
             >
@@ -113,86 +112,39 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings, onSe
               return (
                 <li key={dIdx} className="space-y-1.5">
                   <div className="flex items-start gap-2">
-                    <span className="font-semibold text-accent text-[13px] mt-0.5 flex-shrink-0 font-mono select-none">
+                    <span className="font-semibold text-accent text-[14px] mt-0.5 flex-shrink-0 font-mono select-none">
                       {dIdx + 1}.
                     </span>
-                    <span className="text-[14.5px] text-content leading-relaxed">
+                    <span className="font-serif text-reading text-content tracking-[0.002em]">
                       {def.definition}
                     </span>
                   </div>
 
                   {def.example ? (
-                    <div className="ml-5 pl-3 py-1.5 pr-2 border-l-2 border-accent/50 bg-muted/40 rounded-r-md text-content-secondary text-[13.5px] leading-relaxed flex items-center justify-between gap-2">
-                      <span>"{def.example}"</span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          playPronunciation({
-                            text: def.example,
-                            language: 'en-US',
-                            key: listenKey,
-                          })
-                        }
-                        title="Listen to example sentence"
-                        className={cx(
-                          'h-[24px] px-2 rounded border text-[11px] flex-shrink-0 flex items-center gap-1 cursor-pointer',
-                          isPlaying
-                            ? 'bg-accent-subtle text-accent border-accent/40 audio-playing-indicator'
-                            : 'bg-surface text-content-secondary hover:text-content border-border',
-                        )}
-                        aria-pressed={isPlaying}
-                      >
-                        <IconSpeaker className="w-3 h-3 text-accent" />
-                        <span>Listen</span>
-                      </button>
-                    </div>
-                  ) : null}
-
-                  {def.synonyms && def.synonyms.length > 0 ? (
-                    <RelatedWords
-                      label="Synonyms"
-                      tone="synonym"
-                      words={def.synonyms}
-                      onSelectWord={onSelectWord}
+                    <ExampleSentence
                       className="ml-5"
+                      english={def.example}
+                      translation={def.exampleTranslation}
+                      targetLang={targetLang}
+                      isPlaying={isPlaying}
+                      onListen={() =>
+                        playPronunciation({
+                          text: def.example!,
+                          language: 'en-US',
+                          key: listenKey,
+                        })
+                      }
                     />
                   ) : null}
 
-                  {def.antonyms && def.antonyms.length > 0 ? (
-                    <RelatedWords
-                      label="Antonyms"
-                      tone="antonym"
-                      words={def.antonyms}
-                      onSelectWord={onSelectWord}
-                      className="ml-5"
-                    />
-                  ) : null}
                 </li>
               );
             })}
           </ol>
-
-          {meaning.synonyms && meaning.synonyms.length > 0 ? (
-            <RelatedWords
-              label="Synonyms"
-              tone="synonym"
-              words={meaning.synonyms}
-              onSelectWord={onSelectWord}
-            />
-          ) : null}
-
-          {meaning.antonyms && meaning.antonyms.length > 0 ? (
-            <RelatedWords
-              label="Antonyms"
-              tone="antonym"
-              words={meaning.antonyms}
-              onSelectWord={onSelectWord}
-            />
-          ) : null}
         </div>
       ))}
     </div>
   );
 };
 
-export default SenseMatrixCard;
+export default React.memo(SenseMatrixCard);

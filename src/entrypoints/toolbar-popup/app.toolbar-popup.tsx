@@ -1,46 +1,31 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { useStorage } from '../../composables/composable.storage';
+import { useActiveTab } from '../../composables/composable.storage';
 import { useLookupSession } from '../../composables/composable.lookup-session';
 import { useDictionaryQuery } from '../../composables/composable.dictionary';
 import { TabId } from '../../types';
 import { cx } from '../../ui/cx';
-import { useAppTheme } from '../../ui/theme';
 import AppHeader from '../../components/component.app-header';
-import TabNavigation from '../../components/component.tab-navigation';
-import WordLookupView from '@/features/dictionary/WordLookupView';
+import WorkbenchContent from '@/components/component.workbench-content';
+import { useWorkbenchPreferences } from '@/components/use-workbench-preferences';
 import ToastContainer from '@/components/component.toast';
 
-const AiAssistantView = lazy(() => import('@/features/ai-assistant/AiAssistantView'));
-const ContextualRewriter = lazy(() => import('@/features/rewriter/ContextualRewriter'));
 const ShortcutsModal = lazy(() => import('@/features/settings/ShortcutsModal'));
 
 export const ToolbarPopupApp: React.FC = () => {
-  const { activeTab, settings, saveSettings } = useStorage();
+  const activeTab = useActiveTab();
   const session = useLookupSession();
   const query = useDictionaryQuery();
-  const { isDarkMode, toggleTheme } = useAppTheme(settings.theme, {
-    syncDocument: true,
-    saveSettings,
-  });
+  const {
+    isDarkMode,
+    provider: currentProvider,
+    setProvider: setCurrentProvider,
+    targetLang,
+    setTargetLang,
+    toggleTheme,
+    textSizeStyle,
+  } = useWorkbenchPreferences({ syncDocumentTheme: true });
   const [showShortcuts, setShowShortcuts] = useState(false);
-  const [aiVisited, setAiVisited] = useState(activeTab === 'ai_assistant');
-  const [rewriterVisited, setRewriterVisited] = useState(activeTab === 'rewriter');
-  const [targetLang, setTargetLang] = useState(settings.translateTargetLanguage || 'Vietnamese');
-  const [currentProvider, setCurrentProvider] = useState(settings.dictionaryProvider || 'wiktionary');
   const [isFullTab, setIsFullTab] = useState(false);
-
-  useEffect(() => {
-    if (settings.dictionaryProvider) setCurrentProvider(settings.dictionaryProvider);
-  }, [settings.dictionaryProvider]);
-
-  useEffect(() => {
-    if (settings.translateTargetLanguage) setTargetLang(settings.translateTargetLanguage);
-  }, [settings.translateTargetLanguage]);
-
-  useEffect(() => {
-    if (activeTab === 'ai_assistant') setAiVisited(true);
-    if (activeTab === 'rewriter') setRewriterVisited(true);
-  }, [activeTab]);
 
   function updateResponsiveMode() {
     if (typeof chrome !== 'undefined' && chrome.windows?.getCurrent) {
@@ -58,13 +43,22 @@ export const ToolbarPopupApp: React.FC = () => {
   }
 
   useEffect(() => {
+    let resizeFrame = 0;
+    const handleResize = () => {
+      if (resizeFrame) return;
+      resizeFrame = requestAnimationFrame(() => {
+        resizeFrame = 0;
+        updateResponsiveMode();
+      });
+    };
     updateResponsiveMode();
     if (typeof window !== 'undefined') {
-      window.addEventListener('resize', updateResponsiveMode);
+      window.addEventListener('resize', handleResize, { passive: true });
     }
     return () => {
+      if (resizeFrame) cancelAnimationFrame(resizeFrame);
       if (typeof window !== 'undefined') {
-        window.removeEventListener('resize', updateResponsiveMode);
+        window.removeEventListener('resize', handleResize);
       }
     };
   }, []);
@@ -116,14 +110,14 @@ export const ToolbarPopupApp: React.FC = () => {
   return (
     <div
       className={cx(
-        'bg-paper text-content flex flex-col select-none overflow-hidden transition-colors duration-150',
+        'app-shell bg-paper text-content font-sans flex flex-col select-none overflow-hidden transition-colors duration-fast',
         isFullTab
           ? 'w-full max-w-5xl min-h-[calc(100vh-2rem)] mx-auto my-4 rounded-xl border border-border shadow-card-elevated'
           : 'w-full h-full',
         isDarkMode ? 'dark' : 'light-theme light',
-        settings.fontFamily === 'editorial' ? 'font-serif' : 'font-sans',
       )}
       data-theme={isDarkMode ? 'dark' : 'light'}
+      style={textSizeStyle}
       onKeyDown={handleKeydown}
       tabIndex={-1}
     >
@@ -132,6 +126,8 @@ export const ToolbarPopupApp: React.FC = () => {
         showShortcuts={showShortcuts}
         isDarkMode={isDarkMode}
         isMaximized={isFullTab}
+        provider={currentProvider}
+        targetLanguage={targetLang}
         onToggleShortcuts={() => setShowShortcuts((v) => !v)}
         onToggleMaximize={openFullTab}
         onToggleTheme={toggleTheme}
@@ -139,41 +135,15 @@ export const ToolbarPopupApp: React.FC = () => {
         onUpdateTargetLang={(v) => setTargetLang(v)}
       />
 
-      {/* Editorial 2-Tab Navigation */}
-      <TabNavigation activeTab={activeTab} onChangeTab={handleTabChange} />
-
-      {/* Main Content Surfaces */}
-      <main className="flex-1 overflow-y-auto">
-        <div style={{ display: activeTab === 'dictionary' ? undefined : 'none' }}>
-          <WordLookupView
-            autoFocus={activeTab === 'dictionary'}
-            targetLang={targetLang}
-            provider={currentProvider}
-          />
-        </div>
-        {aiVisited ? (
-          <div style={{ display: activeTab === 'ai_assistant' ? undefined : 'none' }}>
-            <Suspense fallback={<div className="p-4 text-[12.5px] text-content-muted">Loading AI assistant…</div>}>
-              <AiAssistantView
-                initialQuery={query}
-                targetLang={targetLang}
-                isVisible={activeTab === 'ai_assistant'}
-                onSwitchTab={handleTabChange}
-              />
-            </Suspense>
-          </div>
-        ) : null}
-        {rewriterVisited ? (
-          <div style={{ display: activeTab === 'rewriter' ? undefined : 'none' }}>
-            <Suspense fallback={<div className="p-4 text-[12.5px] text-content-muted">Loading rewriter…</div>}>
-              <ContextualRewriter
-                initialText={query}
-                targetLang={targetLang}
-              />
-            </Suspense>
-          </div>
-        ) : null}
-      </main>
+      <WorkbenchContent
+        activeTab={activeTab}
+        query={query}
+        targetLang={targetLang}
+        provider={currentProvider}
+        autoFocusDictionary
+        loadingSize="compact"
+        onChangeTab={handleTabChange}
+      />
 
       {/* Keyboard Shortcuts Guide */}
       <Suspense fallback={null}>

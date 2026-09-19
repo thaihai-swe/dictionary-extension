@@ -36,7 +36,7 @@ User selects word in browser (or types in toolbar popup)
 [3] DICTIONARY PIPELINE                                       [4] AI PRELOAD PIPELINE (DICTIONARY TAB)
     composable.dictionary.ts → searchWord()                   composable.dictionary.ts → maybePreloadAi()
            │                                                             │
-           ├─ Persistent LRU cache (dict, 200 / 48h)                     ├─ Persistent LRU cache (AI, 100 / 24h)
+           ├─ Persistent LRU cache (dict, 80 / 48h / 6 MiB)             ├─ Persistent LRU cache (AI, 50 / 24h / 8 MiB)
            │   HIT → paint in the same tick (0ms)                        │   HIT → ready with no network
            │                                                             │
            ├─ MISS → chrome.runtime.sendMessage                          ├─ MISS → chrome.runtime.sendMessage
@@ -49,7 +49,7 @@ User selects word in browser (or types in toolbar popup)
            │                                                             │
            ├─ fetchCombinedDictionaryResult()                            ├─ fetchAiAnalysis()
            │   FreeDict / Wiktionary / Datamuse / RhymeBrain /           │   gemini-3.5-flash-lite / OpenAI-compatible
-           │   Wikipedia / Urban Dictionary                              │
+           │   Urban Dictionary / Wiktionary enrichment                  │
            │                                                             │
            ├─ Phase A: Primary definitions + phonetics                   ├─ Stores Main AI intent in aiCache
            │   Resolves LOOKUP_TEXT → Dictionary tab paints              │   Ready if the user switches tabs
@@ -126,13 +126,13 @@ selection
 
 ### 2. Dictionary Pipeline (Immediate)
 1. `<WordLookupView />` calls `searchWord(text, provider, lang, context)` via `useLookupSession()`.
-2. **Cache:** in-memory LRU synced to `chrome.storage.local` (200 entries, 48h TTL, `dict_lookup_cache_v2`). Hit paints definitions and phonetics immediately with 0ms network latency.
+2. **Cache:** in-memory LRU synced to `chrome.storage.local` (80 entries, 48h TTL, 6 MiB cap, `dict_lookup_cache`) when `persistLookupCache` is enabled. Hit paints definitions and phonetics immediately with 0ms network latency.
 3. **Miss:** `LOOKUP_TEXT` message sent to `src/entrypoints/background/service-worker.ts` → `fetchCombinedDictionaryResult()`.
 4. **Phase A (Fast Primary Lookup):** Primary provider (default: Free Dictionary API) and neural translation run in parallel. First paint renders the serif headword, UK/US phonetic chips, audio playback buttons, and core definitions.
-5. **Phase B (Progressive Lazy Enrichment):** Background worker queries secondary keyless providers (`Datamuse`, `Wiktionary`, `Wikipedia`, `Urban Dictionary`, `RhymeBrain`) in concurrent batches of 2 (`ENRICHMENT_CONCURRENCY = 2`). `LOOKUP_UPDATE` messages are pushed with incrementing `revision` numbers. Extra cards (`CollocationsCard`, `WordFamilyCard`, `LearnerMistakesCard`, `WordFormationCard`) mount on subsequent animation frames without layout jump.
+5. **Phase B (Progressive Lazy Enrichment):** Background worker queries every remaining keyless dictionary provider (`Datamuse`, `Wiktionary`, `Urban Dictionary`, `RhymeBrain`, and Wiktionary Bilingual) through a two-worker bounded scheduler (`ENRICHMENT_CONCURRENCY = 2`). `LOOKUP_UPDATE` messages are pushed with incrementing `revision` numbers. Extra cards (`CollocationsCard`, `WordFamilyCard`, `LearnerMistakesCard`, `WordFormationCard`) mount on subsequent animation frames without layout jump.
 6. **Timeouts:** All dictionary, translation, and proxy fetch calls enforce a uniform **60,000ms (60s)** timeout limit (`DICTIONARY_FETCH_TIMEOUT_MS = 60000`, `TRANSLATION_FETCH_TIMEOUT_MS = 60000`).
 
-> **Inspecting Network Requests:** Because dictionary and translation requests run in the background service worker to bypass webpage CORS boundaries, their HTTP requests appear in the **Background Service Worker's DevTools Network tab** (`chrome://extensions` → "service worker"), not the in-page DevTools.
+> **Inspecting Network Requests:** Because dictionary and translation requests run in the background worker to bypass webpage CORS boundaries, their HTTP requests appear in the **background DevTools Network tab** (Chrome: `chrome://extensions` → "service worker"; Firefox: `about:debugging` → Inspect), not the in-page DevTools.
 
 ### 3. AI Pipeline (Speculative & Sequenced)
 1. The same `searchWord()` call schedules `maybePreloadAi()` with a **600ms debounce**. Rapid re-selection or text adjustment clears the timer (`cancelAiPreload()`), preventing wasted API tokens.
@@ -144,7 +144,7 @@ selection
    - **Emerald:** Cached and ready.
    - **Amber Pulse:** Currently fetching.
    - **Gray (Unrequested):** Not requested yet.
-7. **Cache:** Persistent LRU, 100 entries, 24h TTL (`ai_lookup_cache_v2` in `chrome.storage.local`).
+7. **Cache:** Persistent LRU, 50 entries, 24h TTL, 8 MiB cap (`ai_lookup_cache` in `chrome.storage.local`) when `persistLookupCache` is enabled.
 8. AI HTTP runs in the background service worker (`handleAiLookup` → `fetchAiAnalysis`) using `gemini-3.5-flash-lite` or custom endpoints with a **60,000ms (60s)** timeout.
 
 Preload is skipped when AI is disabled, preload is off, or no API key is configured (`shouldPreloadAi()`).
@@ -153,13 +153,13 @@ Preload is skipped when AI is disabled, preload is off, or no API key is configu
 
 ## 5. Opening the AI Tab: Behavior Matrix
 
-The AI view is loaded lazily on first visit (`aiVisited`), then stays mounted with `display: none`, so tab switches do not remount or refetch.
+The AI view is loaded lazily when its tab becomes active and unmounted when inactive. Shared lookup/cache state prevents repeat network work when it is reopened.
 
 | When the user opens AI | What they see | Why | Follow-up intent behavior |
 |---|---|---|---|
 | After ~1s on Dictionary | Instant (0ms) | Default intent already in `aiCache` | Remaining 6 intents begin sequential background preload via `requestIdleCallback` |
 | Immediately (<600ms) | Skeleton loader | In-flight `AI_LOOKUP` is reused via `aiPendingMap`; no second request | Remaining 6 intents begin background preload once active query is established |
-| Dictionary → AI → Dictionary → AI | Instant (0ms) | View stayed mounted; state is warm in memory | Already cached; 0 network calls |
+| Dictionary → AI → Dictionary → AI | Instant (0ms) | Shared cache is warm; inactive trees are released | Already cached; 0 network calls |
 
 ---
 
@@ -172,6 +172,6 @@ The AI view is loaded lazily on first visit (`aiVisited`), then stays mounted wi
 | **Timeout limit** | **60,000ms (60s)** | **60,000ms (60s)** |
 | **Background handler** | `handleDictionaryLookup` | `handleAiLookup` |
 | **Abort scope** | Dictionary `AbortController` | Per-intent AI `AbortController` |
-| **Cache** | LRU 200 entries, 48h, `chrome.storage.local` (`dict_lookup_cache_v2`) | LRU 100 entries, 24h, `chrome.storage.local` (`ai_lookup_cache_v2`) |
-| **UI lifecycle** | Always mounted while overlay is open | Lazy until first visit, then keep-alive |
+| **Cache** | LRU 80 entries, 48h, 6 MiB cap, optional `chrome.storage.local` (`dict_lookup_cache`) | LRU 50 entries, 24h, 8 MiB cap, optional `chrome.storage.local` (`ai_lookup_cache`) |
+| **UI lifecycle** | Mounted only while active | Lazy until first visit, then unmounted when inactive |
 | **Data dependency** | None (purely decoupled) | None (purely decoupled) |

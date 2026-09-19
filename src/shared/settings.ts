@@ -43,18 +43,15 @@ const DICTIONARY_PROVIDERS = new Set<string>([
   'free_dictionary',
   'google_translate',
   'wiktionary',
-  'wiktionary_etymology',
   'wiktionary_bilingual',
   'datamuse',
-  'wikipedia',
   'rhymebrain',
   'urban_dictionary',
-  'tatoeba',
 ]);
 
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'dark',
-  fontFamily: 'learner',
+  textSize: 'comfortable',
   selectionTriggerMode: 'icon',
   postSelectionModifier: 'shift',
   enableContextMenuTrigger: true,
@@ -72,6 +69,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   enableLexicalProfile: true,
   enableAI: true,
   enableAiPreload: false,
+  persistLookupCache: true,
   preloadedAiIntents: [],
   enablePhraseFallback: true,
   disablePageContextExtraction: false,
@@ -133,6 +131,11 @@ export function normalizeSettings(input?: Partial<AppSettings> | Record<string, 
     ? mode
     : DEFAULT_SETTINGS.selectionTriggerMode;
 
+  const textSize = String(merged.textSize || '').trim().toLowerCase();
+  merged.textSize = textSize === 'small' || textSize === 'large' || textSize === 'comfortable'
+    ? textSize
+    : DEFAULT_SETTINGS.textSize;
+
   const modifier = String(merged.postSelectionModifier || '').trim().toLowerCase();
   merged.postSelectionModifier = modifier === 'alt' || modifier === 'ctrl' || modifier === 'shift'
     ? modifier
@@ -143,6 +146,7 @@ export function normalizeSettings(input?: Partial<AppSettings> | Record<string, 
   merged.enableDictionary = Boolean(merged.enableDictionary);
   merged.enableLexicalProfile = merged.enableLexicalProfile !== false;
   merged.enableAI = Boolean(merged.enableAI);
+  merged.persistLookupCache = merged.persistLookupCache !== false;
   const sourceSettings = (source || {}) as Partial<AppSettings> & Record<string, unknown>;
   merged.preloadedAiIntents = resolvePreloadedAiIntents(sourceSettings);
   merged.enableAiPreload = merged.preloadedAiIntents.length > 0;

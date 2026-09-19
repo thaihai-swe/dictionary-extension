@@ -2,7 +2,7 @@ import type { AppSettings, ProviderValidationResult } from '../types';
 import { NotFoundError } from './errors';
 import { lookupSingleProvider, lookupTranslationResult } from './pipeline';
 
-export { clearEnrichmentCache } from './cache';
+export { clearEnrichmentCache, setDictionaryCachePersistenceEnabled } from './cache';
 export {
   fetchCombinedDictionaryResult,
   fetchDictionaryResult,
@@ -10,9 +10,12 @@ export {
   lookupSingleProvider,
   lookupTranslationResult,
   resolvePrimaryProviderId,
+  getSecondaryDictionaryProviderIds,
   normalizeDictionaryResult,
 } from './pipeline';
 export { providerRegistry } from './registry';
+export { dictionaryProviderCatalog } from '../infrastructure/providers/catalog';
+export { collectProviderOutcomes } from '../application/dictionary/provider-aggregator';
 
 export async function validateDictionaryProvider(
   providerId: string,

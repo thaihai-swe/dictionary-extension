@@ -12,7 +12,8 @@ import {
 import { hasConfiguredAiApiKey } from '../shared/settings-export';
 import { isOpenAiStandard } from '../shared/settings';
 import { cancelAiLookup, createRequestId, requestAiLookup } from '../shared/runtime-client';
-import { createPersistedLruCache } from '../shared/lookup-cache';
+import { GenerationGate } from '../shared/generation-gate';
+import { aiCache, aiCacheKeyFor, getAiCacheKey, normalizeAiLookupInput } from './ai-cache';
 
 export { PRELOAD_ALL_INTENTS, PRELOAD_FOLLOW_UPS };
 
@@ -40,33 +41,12 @@ const aiErrorRef = signal<string | null>(null);
 const intentStatusEpochRef = signal(0);
 
 const activeAiRequestIds = new Map<AiIntentId, string>();
-let preloadToken = 0;
+const preloadToken = new GenerationGate();
 let activePreloadKey = '';
 let activeLookupKey = '';
-let aiGeneration = 0;
-
-const AI_STORAGE_KEY = 'ai_lookup_cache_v2';
-const MAX_AI_CACHE_SIZE = 100;
-const AI_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
-
-const aiCache = createPersistedLruCache<AiResult>({
-  maxSize: MAX_AI_CACHE_SIZE,
-  ttlMs: AI_CACHE_TTL_MS,
-  storageKey: AI_STORAGE_KEY,
-  persistDelayMs: 300,
-});
+const aiGeneration = new GenerationGate();
 
 const aiPendingMap = new Map<string, Promise<AiResult>>();
-
-function getAiCacheKey(
-  intentId: AiIntentId,
-  text: string,
-  lang: string,
-  context: string | undefined,
-  settings: AppSettings,
-): string {
-  return `${canonicalAiIntent(intentId)}|${String(text || '').toLowerCase().trim()}|${String(lang || '').toLowerCase()}|${String(context || '').toLowerCase().trim()}|${settings.aiModel || ''}|${settings.aiBaseUrl || ''}|${settings.enableLexicalProfile !== false}`;
-}
 
 let intentStatusRaf = 0;
 function bumpIntentStatus() {
@@ -81,32 +61,13 @@ function bumpIntentStatus() {
   });
 }
 
-function normalizeLookupInput(text: string, context?: string, targetLang?: string) {
-  const settings = settingsStore.value;
-  const cleanText = String(text || '').trim();
-  const rawContext = String(context || '').replace(/\s+/g, ' ').trim();
-  const cleanContext = rawContext && rawContext.toLowerCase() !== cleanText.toLowerCase() ? rawContext : '';
-  const lang = targetLang || settings.translateTargetLanguage || 'Vietnamese';
-  return { cleanText, cleanContext, lang, settings };
-}
-
-function cacheKeyFor(
-  intentId: AiIntentId,
-  text: string,
-  context?: string,
-  targetLang?: string,
-) {
-  const { cleanText, cleanContext, lang, settings } = normalizeLookupInput(text, context, targetLang);
-  return getAiCacheKey(canonicalAiIntent(intentId), cleanText, lang, cleanContext, settings);
-}
-
 export function isAiIntentReady(
   intentId: AiIntentId,
   text: string,
   context?: string,
   targetLang?: string,
 ): boolean {
-  return Boolean(aiCache.read(cacheKeyFor(intentId, text, context, targetLang)));
+  return Boolean(aiCache.read(aiCacheKeyFor(intentId, text, context, targetLang)));
 }
 
 export function isAiIntentPending(
@@ -115,7 +76,7 @@ export function isAiIntentPending(
   context?: string,
   targetLang?: string,
 ): boolean {
-  return aiPendingMap.has(cacheKeyFor(intentId, text, context, targetLang));
+  return aiPendingMap.has(aiCacheKeyFor(intentId, text, context, targetLang));
 }
 
 export type AiIntentStatus = 'ready' | 'loading' | 'unrequested';
@@ -127,7 +88,7 @@ export function getAiIntentStatus(
   targetLang?: string,
 ): AiIntentStatus {
   const nextIntent = canonicalAiIntent(intentId);
-  const { cleanText, cleanContext } = normalizeLookupInput(text, context, targetLang);
+  const { cleanText, cleanContext } = normalizeAiLookupInput(text, context, targetLang);
   if (nextIntent === 'explain_in_context' && !cleanContext) return 'unrequested';
   if (!cleanText) return 'unrequested';
   if (isAiIntentReady(nextIntent, cleanText, cleanContext, targetLang)) return 'ready';
@@ -142,13 +103,14 @@ export function isAiIntentDisabled(
   targetLang?: string,
 ): boolean {
   const nextIntent = canonicalAiIntent(intentId);
-  const { cleanText, cleanContext } = normalizeLookupInput(text, context, targetLang);
+  const { cleanText, cleanContext } = normalizeAiLookupInput(text, context, targetLang);
   if (nextIntent === 'explain_in_context' && !cleanContext) return true;
   if (!cleanText) return true;
   return false;
 }
 
 export function clearAiCache() {
+  abortAllAiRequests();
   aiCache.clear();
   aiPendingMap.clear();
   bumpIntentStatus();
@@ -158,7 +120,7 @@ registerCacheInvalidator(clearAiCache);
 
 function abortAllAiRequests() {
   stopAllAudio();
-  aiGeneration += 1;
+  aiGeneration.invalidate();
   for (const [intentId, reqId] of activeAiRequestIds.entries()) {
     cancelAiLookup(intentId, reqId);
   }
@@ -175,7 +137,7 @@ export function abortActiveAiRequest() {
 }
 
 export function cancelAiPreload() {
-  preloadToken += 1;
+  preloadToken.invalidate();
   activePreloadKey = '';
 }
 
@@ -273,7 +235,7 @@ async function runIntent(intentId: AiIntentId, text: string, targetLang?: string
     return;
   }
 
-  const generation = aiGeneration;
+  const generation = aiGeneration.current();
   if (aiResultRef.value?.query?.trim().toLowerCase() !== cleanText.toLowerCase()) {
     aiResultRef.value = null;
   }
@@ -281,23 +243,23 @@ async function runIntent(intentId: AiIntentId, text: string, targetLang?: string
 
   try {
     const result = await requestAnalysis(nextIntent, cleanText, lang, cleanContext);
-    if (generation !== aiGeneration || activeIntentRef.value !== nextIntent) return;
+    if (!aiGeneration.isCurrent(generation) || activeIntentRef.value !== nextIntent) return;
     aiResultRef.value = result;
   } catch (err: unknown) {
     if (err instanceof Error && (/abort/i.test(err.message) || err.name === 'AbortError')) return;
-    if (generation !== aiGeneration || activeIntentRef.value !== nextIntent) return;
+    if (!aiGeneration.isCurrent(generation) || activeIntentRef.value !== nextIntent) return;
     const message = err instanceof Error ? err.message : 'Dịch vụ AI phản hồi không hợp lệ.';
     aiErrorRef.value = /Extension context invalidated|runtime is unavailable/i.test(message)
       ? 'Extension was reloaded. Refresh this page and try again.'
       : message;
     aiResultRef.value = null;
   } finally {
-    if (generation === aiGeneration && activeIntentRef.value === nextIntent) {
+    if (aiGeneration.isCurrent(generation) && activeIntentRef.value === nextIntent) {
       isAiLoadingRef.value = false;
     }
   }
 
-  if (shouldPreloadAi(settings) && generation === aiGeneration) {
+  if (shouldPreloadAi(settings) && aiGeneration.isCurrent(generation)) {
     const chunks = PRELOAD_FOLLOW_UPS.filter((intent) => shouldPreloadIntent(settings, intent));
     if (chunks.length) void preloadIntentChunks(chunks);
   }
@@ -326,7 +288,7 @@ export async function preloadFollowUpIntentsOnTabVisit(
   const rawContext = String(context || activeContextRef.value || '').replace(/\s+/g, ' ').trim();
   const cleanContext = rawContext && rawContext.toLowerCase() !== cleanText.toLowerCase() ? rawContext : '';
 
-  const token = preloadToken;
+  const token = preloadToken.current();
   const queryKey = makePreloadKey(cleanText, cleanContext, lang);
 
   const queue = PRELOAD_FOLLOW_UPS.filter(
@@ -336,7 +298,7 @@ export async function preloadFollowUpIntentsOnTabVisit(
   if (!queue.length) return;
 
   const runNext = (index: number) => {
-    if (token !== preloadToken) return;
+    if (!preloadToken.isCurrent(token)) return;
     if (activeLookupKey && activeLookupKey !== queryKey && activePreloadKey !== queryKey) return;
     const intent = queue[index];
     if (!intent) return;
@@ -351,7 +313,7 @@ export async function preloadFollowUpIntentsOnTabVisit(
     void requestAnalysis(intent, cleanText, lang, cleanContext)
       .catch(() => undefined)
       .finally(() => {
-        if (token !== preloadToken) return;
+        if (!preloadToken.isCurrent(token)) return;
         const idle = (globalThis as typeof globalThis & {
           requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
         }).requestIdleCallback;
@@ -404,7 +366,7 @@ async function preloadIntents(text: string, context?: string, targetLang?: strin
 
   const key = makePreloadKey(cleanText, cleanContext, lang);
   if (activePreloadKey === key) return;
-  const token = ++preloadToken;
+  const token = preloadToken.next();
   activePreloadKey = key;
 
   void preloadIntentChunks(['default']);
@@ -414,7 +376,7 @@ async function preloadIntents(text: string, context?: string, targetLang?: strin
   } catch {
     // Main AI preload can fail silently; Dictionary tab stays usable.
   }
-  if (token !== preloadToken) return;
+  if (!preloadToken.isCurrent(token)) return;
 }
 
 export function getAiAssistantStore() {

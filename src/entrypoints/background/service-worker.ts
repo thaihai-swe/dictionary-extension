@@ -1,139 +1,140 @@
-import type { AiIntentId, AiResult, AppSettings, DictionaryEntry } from '../../types';
+import type { AiResult, AppSettings, DictionaryEntry } from '../../types';
 import {
   ABORT_FETCH_PROXY,
   AI_LOOKUP,
+  CLEAR_DICTIONARY_CACHE,
   CANCEL_LOOKUP,
   FETCH_PROXY,
   LOOKUP_TEXT,
   LOOKUP_UPDATE,
   OPEN_LOOKUP_POPUP,
   OPEN_OPTIONS,
+  PLAY_AUDIO,
+  SPEAK_TTS,
+  STOP_AUDIO,
+  OFFSCREEN_AUDIO,
   VALIDATE_PROVIDER,
-  aiAbortScope,
-  createRequestId,
-  dictionaryAbortScope,
   isMissingReceiverError,
   type AiLookupPayload,
   type CancelLookupPayload,
   type LookupTextPayload,
   type OpenLookupPopupPayload,
-  type ProviderValidationResult,
+  type RuntimeSender,
   type ValidateProviderPayload,
 } from '../../shared/messages';
-import { fetchAiAnalysis, validateAiProvider } from '../../providers/provider.gemini-ai';
+import { createDictionaryEntryPatch } from '../../shared/lookup-updates';
+import { recordLookupMetric } from '../../shared/performance/lookup-metrics.ts';
 import {
   clearEnrichmentCache,
-  fetchCombinedDictionaryResult,
+  setDictionaryCachePersistenceEnabled,
   validateDictionaryProvider,
   validateTranslationProvider,
 } from '../../providers/provider.index';
-import { loadFullSettings, normalizeSettings } from '../../shared/settings';
-import { canonicalAiIntent } from '../../shared/ai-prompts';
+import { clearHttpCache } from '../../providers/provider.http';
+import { settingsRepository } from '../../infrastructure/storage/settings-repository';
+import '../../infrastructure/providers/register-adapters';
+import { canInjectIntoUrl } from '../../shared/ext';
+import { RequestCoordinator } from '../../application/runtime/request-coordinator';
+import { createLookupHandlers } from '../../application/runtime/lookup-handlers';
+import { fetchCombinedDictionaryResult } from '../../application/dictionary';
+import { fetchAiAnalysis, validateAiProvider } from '../../infrastructure/providers/ai';
+import { createTtlCache } from './ttl-cache';
+import { abortAllFetchProxies, abortFetchProxy, handleFetchProxy } from './fetch-proxy';
+import { handleAudioMessage, releaseOffscreenAudio } from './offscreen-audio';
 
 const CONTENT_SCRIPT_JS = ['content-script.js'];
 const SETTINGS_TTL_MS = 15_000;
-const RESTRICTED_URL_RE = /^(chrome|chrome-extension|edge|about|devtools|https:\/\/chromewebstore\.google\.com)/i;
 
-const activeProxyRequests = new Map<string, AbortController>();
-const lookupControllers = new Map<string, AbortController>();
-const inflightDictionaryLookups = new Map<string, Promise<DictionaryEntry & { requestId: string }>>();
+const requestCoordinator = new RequestCoordinator<DictionaryEntry & { requestId: string }>();
+const inflightDictionaryLookups = requestCoordinator.dictionaryRequests;
 
-let cachedSettings: AppSettings | null = null;
-let cachedSettingsAt = 0;
-let cachedSettingsPromise: Promise<AppSettings> | null = null;
-
-function getRequestKey(tabId: number | undefined, scope: string, requestId: string): string {
-  return `${Number.isInteger(tabId) ? tabId : 'popup'}:${scope}:${requestId}`;
-}
+const settingsCache = createTtlCache(() => settingsRepository.load({ includeSecrets: true }), SETTINGS_TTL_MS);
 
 function registerController(tabId: number | undefined, scope: string, requestId: string): AbortController {
-  const key = getRequestKey(tabId, scope, requestId);
-  const existing = lookupControllers.get(key);
-  if (existing) return existing;
-  cancelRequestsForScope(tabId, scope, requestId);
-  const controller = new AbortController();
-  lookupControllers.set(key, controller);
-  return controller;
+  return requestCoordinator.register(tabId, scope, requestId);
 }
 
 function unregisterController(tabId: number | undefined, scope: string, requestId: string) {
-  lookupControllers.delete(getRequestKey(tabId, scope, requestId));
+  requestCoordinator.unregister(tabId, scope, requestId);
+}
+
+const LOOKUP_UPDATE_COALESCE_MS = 50;
+
+interface LookupUpdateState {
+  lastPublished: DictionaryEntry;
+  pending?: DictionaryEntry;
+  timer?: ReturnType<typeof setTimeout>;
+  sender?: RuntimeSender;
+  sendPromise: Promise<void>;
+}
+
+const lookupUpdateStates = new Map<string, LookupUpdateState>();
+
+function lookupUpdateKey(requestId: string, source: string): string {
+  return `${source}:${requestId}`;
+}
+
+function clearLookupUpdateState(requestId?: string) {
+  for (const [key, state] of lookupUpdateStates.entries()) {
+    if (requestId && !key.endsWith(`:${requestId}`)) continue;
+    if (state.timer) clearTimeout(state.timer);
+    lookupUpdateStates.delete(key);
+  }
+}
+
+function releaseIdleState() {
+  clearLookupUpdateState();
+  requestCoordinator.clear();
+  abortAllFetchProxies();
+  clearHttpCache();
+  settingsCache.clear();
+  releaseOffscreenAudio();
 }
 
 function cancelRequestsForScope(tabId: number | undefined, scope: string, exceptRequestId?: string) {
-  const prefix = `${Number.isInteger(tabId) ? tabId : 'popup'}:${scope}:`;
-  const exceptKey = exceptRequestId ? getRequestKey(tabId, scope, exceptRequestId) : '';
-  for (const [key, controller] of lookupControllers.entries()) {
-    if (!key.startsWith(prefix) || key === exceptKey) continue;
-    controller.abort();
-    lookupControllers.delete(key);
-  }
-  if (scope === dictionaryAbortScope()) {
-    for (const key of inflightDictionaryLookups.keys()) {
-      if (!key.startsWith(prefix) || key === exceptKey) continue;
-      inflightDictionaryLookups.delete(key);
-    }
-  }
+  requestCoordinator.cancelScope(tabId, scope, exceptRequestId);
 }
 
 function cancelRequestsForTab(tabId: number | undefined) {
-  const prefix = `${Number.isInteger(tabId) ? tabId : 'popup'}:`;
-  for (const [key, controller] of lookupControllers.entries()) {
-    if (key.startsWith(prefix)) {
-      controller.abort();
-      lookupControllers.delete(key);
-    }
-  }
-  for (const key of inflightDictionaryLookups.keys()) {
-    if (key.startsWith(prefix)) inflightDictionaryLookups.delete(key);
-  }
+  requestCoordinator.cancelTab(tabId);
 }
 
 async function getCachedSettings(): Promise<AppSettings> {
-  if (cachedSettings && Date.now() - cachedSettingsAt < SETTINGS_TTL_MS) return cachedSettings;
-  if (!cachedSettingsPromise) {
-    cachedSettingsPromise = loadFullSettings()
-      .then((settings) => {
-        cachedSettings = settings;
-        cachedSettingsAt = Date.now();
-        return settings;
-      })
-      .finally(() => {
-        cachedSettingsPromise = null;
-      });
-  }
-  return cachedSettingsPromise;
+  const settings = await settingsCache.get();
+  setDictionaryCachePersistenceEnabled(settings.persistLookupCache !== false);
+  return settings;
 }
 
 function invalidateSettingsCache() {
-  cachedSettings = null;
-  cachedSettingsAt = 0;
+  settingsCache.invalidate();
 }
 
-function canInjectIntoUrl(url?: string): boolean {
-  const value = String(url || '');
-  if (!value) return false;
-  return !RESTRICTED_URL_RE.test(value);
-}
+async function sendLookupUpdateMessage(
+  options: {
+    requestId: string;
+    source: 'dictionary' | 'ai';
+    text: string;
+    revision: number;
+    result: DictionaryEntry | AiResult;
+    sender?: RuntimeSender;
+  },
+  payload: Record<string, unknown>,
+) {
+  const message = { type: LOOKUP_UPDATE, payload };
+  let serializedBytes = 0;
+  try {
+    serializedBytes = new TextEncoder().encode(JSON.stringify(payload)).byteLength;
+  } catch {
+    // Metrics are best effort and never affect delivery.
+  }
+  recordLookupMetric('lookup.update.sent', {
+    requestId: options.requestId,
+    source: options.source,
+    revision: options.revision,
+    bytes: serializedBytes,
+    kind: String(payload.kind || 'snapshot'),
+  });
 
-async function publishLookupUpdate(options: {
-  requestId: string;
-  source: 'dictionary' | 'ai';
-  text: string;
-  revision: number;
-  result: DictionaryEntry | AiResult;
-  sender?: chrome.runtime.MessageSender;
-}) {
-  const message = {
-    type: LOOKUP_UPDATE,
-    payload: {
-      requestId: options.requestId,
-      source: options.source,
-      text: options.text,
-      revision: options.revision,
-      result: options.result,
-    },
-  };
   const tabId = options.sender?.tab?.id;
   if (Number.isInteger(tabId)) {
     try {
@@ -149,113 +150,124 @@ async function publishLookupUpdate(options: {
   }
 }
 
-async function handleDictionaryLookup(payload: LookupTextPayload, sender: chrome.runtime.MessageSender) {
-  const text = String(payload?.text || '').trim();
-  if (!text) throw new Error('No text selected.');
+async function flushLookupUpdate(requestId: string, source: 'dictionary' | 'ai') {
+  const key = lookupUpdateKey(requestId, source);
+  const state = lookupUpdateStates.get(key);
+  if (!state?.pending) return;
+  state.timer = undefined;
+  const next = state.pending;
+  state.pending = undefined;
+  const patch = createDictionaryEntryPatch(state.lastPublished, next);
+  if (!Object.keys(patch.changed).length && !patch.removed.length) return;
 
-  const requestId = payload.requestId || createRequestId('dict');
-  const tabId = sender?.tab?.id;
-  const scope = dictionaryAbortScope();
-  const requestKey = getRequestKey(tabId, scope, requestId);
-  const existing = inflightDictionaryLookups.get(requestKey);
-  if (existing) return existing;
+  const baseRevision = state.lastPublished.revision || 0;
+  state.lastPublished = next;
+  state.sendPromise = state.sendPromise.catch(() => undefined).then(() => sendLookupUpdateMessage(
+    {
+      requestId,
+      source,
+      text: next.originalText || next.word,
+      revision: next.revision || 0,
+      result: next,
+      sender: state.sender,
+    },
+    {
+      requestId,
+      source,
+      revision: next.revision || 0,
+      baseRevision,
+      patch,
+      kind: 'patch',
+    },
+  ));
+  await state.sendPromise;
+}
 
-  const work = (async () => {
-    const settings = await getCachedSettings();
-    const lookupSettings = normalizeSettings({
-      ...settings,
-      dictionaryProvider: (payload.provider || settings.dictionaryProvider) as AppSettings['dictionaryProvider'],
-      translateTargetLanguage: payload.targetLang || settings.translateTargetLanguage,
+async function publishLookupUpdate(options: {
+  requestId: string;
+  source: 'dictionary' | 'ai';
+  text: string;
+  revision: number;
+  result: DictionaryEntry | AiResult;
+  sender?: RuntimeSender;
+}) {
+  if (options.source !== 'dictionary') {
+    await sendLookupUpdateMessage(options, {
+      requestId: options.requestId,
+      source: options.source,
+      text: options.text,
+      revision: options.revision,
+      result: options.result,
+      kind: 'snapshot',
     });
-    const controller = registerController(tabId, scope, requestId);
+    return;
+  }
 
-    try {
-      const result = await fetchCombinedDictionaryResult(
-        text,
-        lookupSettings,
-        controller.signal,
-        (enriched) => {
-          void publishLookupUpdate({
-            requestId,
-            source: 'dictionary',
-            text,
-            revision: enriched.revision || 0,
-            result: enriched,
-            sender,
-          });
-          if (enriched.enriched) {
-            unregisterController(tabId, scope, requestId);
-          }
-        },
-        controller.signal,
-      );
-      return { ...result, requestId };
-    } catch (error) {
-      unregisterController(tabId, scope, requestId);
-      throw error;
-    } finally {
-      inflightDictionaryLookups.delete(requestKey);
-    }
-  })();
+  const result = options.result as DictionaryEntry;
+  const key = lookupUpdateKey(options.requestId, options.source);
+  const state = lookupUpdateStates.get(key);
+  if (!state) {
+    const initialState: LookupUpdateState = {
+      lastPublished: result,
+      sender: options.sender,
+      sendPromise: Promise.resolve(),
+    };
+    lookupUpdateStates.set(key, initialState);
+    initialState.sendPromise = initialState.sendPromise.then(() => sendLookupUpdateMessage(options, {
+      requestId: options.requestId,
+      source: options.source,
+      text: options.text,
+      revision: options.revision,
+      result,
+      kind: 'snapshot',
+    }));
+    await initialState.sendPromise;
+    if (result.enriched) lookupUpdateStates.delete(key);
+    return;
+  }
 
-  inflightDictionaryLookups.set(requestKey, work);
-  return work;
-}
-
-async function handleAiLookup(payload: AiLookupPayload, sender: chrome.runtime.MessageSender) {
-  const text = String(payload?.text || '').trim();
-  if (!text) throw new Error('No text selected.');
-
-  const settings = await getCachedSettings();
-  if (!settings.enableAI) throw new Error('AI provider is disabled in settings.');
-
-  const intent = canonicalAiIntent(payload.intent);
-  const requestId = payload.requestId || createRequestId('ai');
-  const tabId = sender?.tab?.id;
-  const scope = aiAbortScope(intent);
-  const controller = registerController(tabId, scope, requestId);
-
-  try {
-    const result = await fetchAiAnalysis(
-      intent as AiIntentId,
-      text,
-      payload.targetLang || settings.translateTargetLanguage || 'Vietnamese',
-      settings.aiApiKey,
-      settings.aiModel,
-      controller.signal,
-      payload.context,
-      settings,
-    );
-    return { ...result, requestId };
-  } finally {
-    unregisterController(tabId, scope, requestId);
+  state.sender = options.sender || state.sender;
+  state.pending = result;
+  if (result.enriched) {
+    if (state.timer) clearTimeout(state.timer);
+    state.timer = undefined;
+    state.pending = undefined;
+    state.lastPublished = result;
+    state.sendPromise = state.sendPromise.catch(() => undefined).then(() => sendLookupUpdateMessage(options, {
+      requestId: options.requestId,
+      source: options.source,
+      text: options.text,
+      revision: options.revision,
+      result,
+      kind: 'snapshot',
+    }));
+    await state.sendPromise;
+    lookupUpdateStates.delete(key);
+    return;
+  }
+  if (!state.timer) {
+    state.timer = setTimeout(() => {
+      void flushLookupUpdate(options.requestId, options.source);
+    }, LOOKUP_UPDATE_COALESCE_MS);
   }
 }
 
-function mergeValidationSettings(stored: AppSettings, incoming?: Partial<AppSettings>): AppSettings {
-  const sanitized: Record<string, unknown> = { ...(incoming || {}) };
-  for (const key of ['aiApiKey', 'libreTranslateApiKey']) {
-    if (!String(sanitized[key] || '').trim()) delete sanitized[key];
-  }
-  return normalizeSettings({ ...stored, ...sanitized });
-}
-
-async function handleValidateProvider(payload: ValidateProviderPayload = { kind: 'dictionary' }): Promise<ProviderValidationResult> {
-  const stored = await getCachedSettings();
-  const settings = mergeValidationSettings(stored, payload.settings);
-  const kind = payload.kind || 'dictionary';
-
-  if (kind === 'dictionary') {
-    return validateDictionaryProvider(payload.providerId || settings.dictionaryProvider, settings);
-  }
-  if (kind === 'translation') {
-    return validateTranslationProvider(settings);
-  }
-  if (kind === 'ai') {
-    return validateAiProvider(settings);
-  }
-  return { ok: false, error: `Unknown validation kind: ${kind}` };
-}
+const {
+  handleDictionaryLookup,
+  handleAiLookup,
+  handleValidateProvider,
+} = createLookupHandlers({
+  getSettings: getCachedSettings,
+  registerController,
+  unregisterController,
+  publishLookupUpdate,
+  dictionaryRequests: inflightDictionaryLookups,
+  lookupDictionary: fetchCombinedDictionaryResult,
+  analyzeAi: fetchAiAnalysis,
+  validateDictionary: validateDictionaryProvider,
+  validateTranslation: validateTranslationProvider,
+  validateAi: validateAiProvider,
+});
 
 async function injectContentScript(tabId: number) {
   await chrome.scripting.executeScript({
@@ -348,16 +360,19 @@ function initializeContextMenu() {
 
 chrome.runtime.onInstalled.addListener(() => {
   initializeContextMenu();
-  void loadFullSettings().catch(() => undefined);
+  void settingsRepository.load({ includeSecrets: true }).catch(() => undefined);
 });
 
 chrome.runtime.onStartup?.addListener(() => {
-  void loadFullSettings().catch(() => undefined);
+  void settingsRepository.load({ includeSecrets: true }).catch(() => undefined);
+});
+
+chrome.runtime.onSuspend?.addListener(() => {
+  releaseIdleState();
 });
 
 chrome.storage?.onChanged?.addListener((changes, area) => {
   if (area !== 'sync' && area !== 'local') return;
-  invalidateSettingsCache();
   const cacheKeys = [
     'dictionaryProvider',
     'enableDictionary',
@@ -372,9 +387,13 @@ chrome.storage?.onChanged?.addListener((changes, area) => {
     'hasAiApiKey',
     'aiModel',
     'aiBaseUrl',
+    'persistLookupCache',
   ];
+  const sizeChanged = Boolean(changes.popupWidth || changes.popupHeight);
+  if (!cacheKeys.some((key) => key in changes) && !sizeChanged) return;
+  invalidateSettingsCache();
   if (cacheKeys.some((key) => key in changes)) clearEnrichmentCache();
-  if (area === 'sync' && toolbarWindowId && (changes.popupWidth || changes.popupHeight)) {
+  if (area === 'sync' && toolbarWindowId && sizeChanged) {
     void applyToolbarWindowSize(toolbarWindowId);
   }
 });
@@ -384,6 +403,10 @@ chrome.windows?.onRemoved?.addListener((removedId) => {
     toolbarWindowId = null;
     void chrome.storage.session?.remove(TOOLBAR_WINDOW_ID_KEY).catch(() => undefined);
   }
+});
+
+chrome.tabs?.onRemoved?.addListener((tabId) => {
+  cancelRequestsForTab(tabId);
 });
 
 chrome.action?.onClicked?.addListener(() => {
@@ -413,32 +436,12 @@ chrome.commands?.onCommand.addListener(async (command) => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === FETCH_PROXY && message.url) {
-    const requestId = String(message.requestId || createRequestId('proxy'));
-    const controller = new AbortController();
-    activeProxyRequests.set(requestId, controller);
-    const timeoutMs = Math.max(1000, Math.min(Number(message.timeoutMs) || 60000, 60000));
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-    fetch(message.url, { ...(message.options || {}), signal: controller.signal })
-      .then(async (res) => {
-        const text = await res.text();
-        let data: unknown = text;
-        try { data = JSON.parse(text); } catch { /* keep text */ }
-        sendResponse({ ok: res.ok, status: res.status, data });
-      })
-      .catch((err: Error) => {
-        sendResponse({ ok: false, status: 0, error: err.message });
-      })
-      .finally(() => {
-        clearTimeout(timeoutId);
-        activeProxyRequests.delete(requestId);
-      });
+    void handleFetchProxy(message, sendResponse);
     return true;
   }
 
   if (message?.type === ABORT_FETCH_PROXY && message.requestId) {
-    const controller = activeProxyRequests.get(String(message.requestId));
-    controller?.abort();
-    activeProxyRequests.delete(String(message.requestId));
+    abortFetchProxy(String(message.requestId));
     sendResponse({ ok: true });
     return false;
   }
@@ -457,7 +460,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const payload = (message.payload || {}) as CancelLookupPayload;
     if (payload.scope) cancelRequestsForScope(sender?.tab?.id, payload.scope);
     else cancelRequestsForTab(sender?.tab?.id);
+    clearLookupUpdateState(payload.requestId);
     sendResponse({ ok: true });
+    return false;
+  }
+
+  if (message?.type === CLEAR_DICTIONARY_CACHE) {
+    clearEnrichmentCache();
+    sendResponse({ ok: true, result: true });
     return false;
   }
 
@@ -487,6 +497,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       .catch((error) => sendResponse({
         ok: false,
         error: error instanceof Error ? error.message : 'AI lookup failed.',
+      }));
+    return true;
+  }
+
+  if (message?.type === PLAY_AUDIO || message?.type === SPEAK_TTS || message?.type === STOP_AUDIO) {
+    handleAudioMessage(message.type, message.payload)
+      .then(sendResponse)
+      .catch((error) => sendResponse({
+        ok: false,
+        error: error instanceof Error ? error.message : 'Audio playback failed.',
       }));
     return true;
   }

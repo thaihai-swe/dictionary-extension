@@ -1,7 +1,7 @@
 import { defineConfig, build as viteBuild, Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
-import { copyFileSync, existsSync, readdirSync, readFileSync, writeFileSync } from 'fs';
+import { copyFileSync, cpSync, existsSync, rmSync } from 'fs';
 
 function buildExtensionScriptsPlugin(): Plugin {
   return {
@@ -20,6 +20,7 @@ function buildExtensionScriptsPlugin(): Plugin {
           write: true,
           outDir: 'dist',
           emptyOutDir: false,
+          minify: 'esbuild',
           lib: {
             entry: resolve(__dirname, 'src/entrypoints/background/service-worker.ts'),
             name: 'DictionaryServiceWorker',
@@ -47,11 +48,34 @@ function buildExtensionScriptsPlugin(): Plugin {
           write: true,
           outDir: 'dist',
           emptyOutDir: false,
+          minify: 'esbuild',
           lib: {
             entry: resolve(__dirname, 'src/entrypoints/content-script/bootstrap.ts'),
             name: 'ContentScriptBootstrap',
             formats: ['iife'],
             fileName: () => 'content-script.js',
+          },
+        },
+      });
+
+      await viteBuild({
+        configFile: false,
+        define: {
+          'process.env.NODE_ENV': JSON.stringify('production'),
+        },
+        resolve: {
+          alias: { '@': resolve(__dirname, 'src') },
+        },
+        build: {
+          write: true,
+          outDir: 'dist',
+          emptyOutDir: false,
+          minify: 'esbuild',
+          lib: {
+            entry: resolve(__dirname, 'src/entrypoints/offscreen/main.ts'),
+            name: 'DictionaryOffscreen',
+            formats: ['iife'],
+            fileName: () => 'offscreen.js',
           },
         },
       });
@@ -69,6 +93,7 @@ function buildExtensionScriptsPlugin(): Plugin {
           write: true,
           outDir: 'dist',
           emptyOutDir: false,
+          minify: 'esbuild',
           cssCodeSplit: true,
           lib: {
             entry: resolve(__dirname, 'src/entrypoints/content-script/overlay-app.tsx'),
@@ -96,24 +121,19 @@ function buildExtensionScriptsPlugin(): Plugin {
         },
       });
 
-      const overlayCssParts: string[] = [];
-      const assetsDir = resolve(__dirname, 'dist/assets');
-      if (existsSync(assetsDir)) {
-        const mainCss = readdirSync(assetsDir).find((name) => /^main-.*\.css$/.test(name));
-        if (mainCss) overlayCssParts.push(readFileSync(resolve(assetsDir, mainCss), 'utf8'));
-      }
-      const distDir = resolve(__dirname, 'dist');
-      for (const name of readdirSync(distDir)) {
-        if ((name === 'overlay.css' || (name.startsWith('overlay-') && name.endsWith('.css'))) && existsSync(resolve(distDir, name))) {
-          overlayCssParts.push(readFileSync(resolve(distDir, name), 'utf8'));
-        }
-      }
-      if (overlayCssParts.length) {
-        writeFileSync(resolve(distDir, 'overlay.css'), overlayCssParts.join('\n'));
-      }
-
       if (existsSync('manifest.json')) {
         copyFileSync('manifest.json', 'dist/manifest.json');
+      }
+      if (existsSync('offscreen.html')) {
+        copyFileSync('offscreen.html', 'dist/offscreen.html');
+      }
+
+      const distDir = resolve(__dirname, 'dist');
+      const firefoxDir = resolve(__dirname, 'dist-firefox');
+      if (existsSync(firefoxDir)) rmSync(firefoxDir, { recursive: true, force: true });
+      cpSync(distDir, firefoxDir, { recursive: true });
+      if (existsSync('manifest.firefox.json')) {
+        copyFileSync('manifest.firefox.json', resolve(firefoxDir, 'manifest.json'));
       }
     },
   };

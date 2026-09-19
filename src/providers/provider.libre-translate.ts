@@ -48,6 +48,7 @@ export async function lookupLibreTranslation(
     }),
     signal,
     timeoutMs: TRANSLATION_FETCH_TIMEOUT_MS,
+    requestClass: 'translation',
   });
 
   const data = await res.json();

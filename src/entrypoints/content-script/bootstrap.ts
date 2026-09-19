@@ -1,17 +1,9 @@
 import { extractSelectionContext } from '../../shared/page-context';
 import { isExtensionContextInvalidated } from '../../shared/messages';
-import { createRequestId, startDictionaryLookup } from '../../shared/dictionary-lookup-client';
-
-type BootSettings = {
-  theme: string;
-  dockPosition: 'none' | 'left' | 'right';
-  selectionTriggerMode: 'off' | 'icon' | 'direct';
-  postSelectionModifier: 'shift' | 'alt' | 'ctrl';
-  pausedHostnames: string[];
-  popupWidth: number;
-  popupHeight: number;
-  disablePageContextExtraction: boolean;
-};
+import { cancelDictionaryLookup, createRequestId, startDictionaryLookup } from '../../shared/dictionary-lookup-client';
+import { BOOT_DEFAULTS, loadBootSettings, normalizeHostnames, type BootSettings } from './boot-settings';
+import { calculateDraggedPopupPosition, calculatePopupPosition, calculateTriggerPosition } from './popup-geometry';
+import { TRIGGER_CSS } from './trigger-style';
 
 type OverlayApi = {
   update: (props: Record<string, unknown>) => void;
@@ -33,114 +25,31 @@ type OverlayModule = {
   ) => OverlayApi;
 };
 
-const BOOT_DEFAULTS: BootSettings = {
-  theme: 'dark',
-  dockPosition: 'none',
-  selectionTriggerMode: 'icon',
-  postSelectionModifier: 'shift',
-  pausedHostnames: [],
-  popupWidth: 620,
-  popupHeight: 720,
-  disablePageContextExtraction: false,
+type BootUi = {
+  host: HTMLDivElement;
+  shadow: ShadowRoot;
+  triggerBtn: HTMLButtonElement;
+  backdrop: HTMLDivElement;
+  popupLayer: HTMLDivElement;
+  overlayMount: HTMLDivElement;
 };
 
-const TRIGGER_CSS = `
-.dictionary-trigger-icon-btn {
-  position: fixed;
-  z-index: 2147483646;
-  width: 36px;
-  height: 36px;
-  border-radius: 9999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.28);
-  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 220ms ease;
-  animation: dictionary-trigger-enter 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.dictionary-trigger-icon-btn:hover { transform: scale(1.08); }
-.dictionary-trigger-icon-btn:active { transform: scale(0.95); }
-.dictionary-trigger-icon-btn.dark {
-  background: #2aa198;
-  color: #002b36;
-  border: 2px solid #073642;
-  box-shadow: 0 10px 24px rgba(42, 161, 152, 0.4);
-}
-.dictionary-trigger-icon-btn.light {
-  background: #0d9488;
-  color: #fff;
-  border: 2px solid #ffffff;
-  box-shadow: 0 10px 24px rgba(13, 148, 136, 0.28);
-}
-.dictionary-popup-layer {
-  position: fixed;
-  z-index: 2147483647;
-  pointer-events: auto;
-}
-.dictionary-popup-layer > div {
-  width: 100%;
-  height: 100%;
-}
-.dictionary-popup-layer.maximized {
-  inset: 1.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.dictionary-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 2147483646;
-  background: rgba(0, 0, 0, 0.6);
-}
-@keyframes dictionary-trigger-enter {
-  0% { opacity: 0; transform: scale(0.65); }
-  70% { transform: scale(1.08); }
-  100% { opacity: 1; transform: scale(1); }
-}
-`;
+const BOOT_FLAG = '__dictionaryAssistantBoot';
 
-if (document.getElementById('dictionary-extension-root')) {
+const bootWindow = window as Window & { [BOOT_FLAG]?: boolean };
+if (bootWindow[BOOT_FLAG] || document.getElementById('dictionary-extension-root')) {
   // Already injected in this frame.
 } else {
+  bootWindow[BOOT_FLAG] = true;
   void startBootstrap();
 }
 
 function startBootstrap() {
-  const host = document.createElement('div');
-  host.id = 'dictionary-extension-root';
-  (document.body || document.documentElement).appendChild(host);
-  const shadow = host.attachShadow({ mode: 'open' });
-
-  const bootStyle = document.createElement('style');
-  bootStyle.textContent = TRIGGER_CSS;
-  shadow.appendChild(bootStyle);
-
-  const triggerBtn = document.createElement('button');
-  triggerBtn.type = 'button';
-  triggerBtn.title = 'Look up selection in Dictionary';
-  triggerBtn.className = 'dictionary-trigger-icon-btn dark';
-  triggerBtn.style.display = 'none';
-  triggerBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M9 3.5a5.5 5.5 0 1 0 3.5 9.7l3.15 3.15a1 1 0 0 0 1.4-1.4l-3.15-3.15A5.5 5.5 0 0 0 9 3.5Zm-3.5 5.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z"></path></svg>';
-  shadow.appendChild(triggerBtn);
-
-  const backdrop = document.createElement('div');
-  backdrop.className = 'dictionary-backdrop';
-  backdrop.style.display = 'none';
-  shadow.appendChild(backdrop);
-
-  const popupLayer = document.createElement('div');
-  popupLayer.className = 'dictionary-popup-layer';
-  popupLayer.style.display = 'none';
-  const overlayMount = document.createElement('div');
-  overlayMount.setAttribute('role', 'presentation');
-  popupLayer.appendChild(overlayMount);
-  shadow.appendChild(popupLayer);
-
+  let bootUi: BootUi | null = null;
   let settings: BootSettings = { ...BOOT_DEFAULTS };
   let overlayApi: OverlayApi | null = null;
   let overlayModulePromise: Promise<OverlayModule> | null = null;
+  let overlayOpenGeneration = 0;
   let showPopup = false;
   let isMaximized = false;
   let dockPosition: 'none' | 'left' | 'right' = 'none';
@@ -172,16 +81,63 @@ function startBootstrap() {
   let pendingPointerX = 0;
   let pendingPointerY = 0;
 
-  applyTheme();
-  void loadBootSettings().then(() => applyTheme());
+  void hydrateBootSettings();
 
-  if (typeof window !== 'undefined' && window.matchMedia) {
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-    media.addEventListener?.('change', () => {
-      if (settings.theme === 'system') {
-        applyTheme();
-      }
+  function onWindowClick(event: MouseEvent) {
+    if (isDragging || isResizing || !showPopup || !bootUi) return;
+    const target = event.target as Node;
+    if (!bootUi.host.contains(target) && !bootUi.shadow.contains(target)) closePopup();
+  }
+
+  function ensureUi(): BootUi {
+    if (bootUi) return bootUi;
+
+    const host = document.createElement('div');
+    host.id = 'dictionary-extension-root';
+    (document.body || document.documentElement).appendChild(host);
+    const shadow = host.attachShadow({ mode: 'open' });
+
+    const bootStyle = document.createElement('style');
+    bootStyle.textContent = TRIGGER_CSS;
+    shadow.appendChild(bootStyle);
+
+    const triggerBtn = document.createElement('button');
+    triggerBtn.type = 'button';
+    triggerBtn.title = 'Look up selection in Dictionary';
+    triggerBtn.className = 'dictionary-trigger-icon-btn dark';
+    triggerBtn.style.display = 'none';
+    triggerBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M9 3.5a5.5 5.5 0 1 0 3.5 9.7l3.15 3.15a1 1 0 0 0 1.4-1.4l-3.15-3.15A5.5 5.5 0 0 0 9 3.5Zm-3.5 5.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z"></path></svg>';
+    shadow.appendChild(triggerBtn);
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'dictionary-backdrop';
+    backdrop.style.display = 'none';
+    shadow.appendChild(backdrop);
+
+    const popupLayer = document.createElement('div');
+    popupLayer.className = 'dictionary-popup-layer';
+    popupLayer.style.display = 'none';
+    const overlayMount = document.createElement('div');
+    overlayMount.setAttribute('role', 'presentation');
+    popupLayer.appendChild(overlayMount);
+    shadow.appendChild(popupLayer);
+
+    triggerBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (selectedText) void openPopup(triggerX, triggerY, selectedText);
     });
+    backdrop.addEventListener('click', () => {
+      if (isMaximized) toggleMaximize();
+    });
+
+    bootUi = { host, shadow, triggerBtn, backdrop, popupLayer, overlayMount };
+    applyTheme();
+    return bootUi;
+  }
+
+  function hideTrigger() {
+    if (bootUi) bootUi.triggerBtn.style.display = 'none';
   }
 
   function isDarkMode() {
@@ -192,7 +148,9 @@ function startBootstrap() {
   }
 
   function applyTheme() {
+    if (!bootUi) return;
     const dark = isDarkMode();
+    const { host, triggerBtn, popupLayer, overlayMount } = bootUi;
     triggerBtn.classList.toggle('dark', dark);
     triggerBtn.classList.toggle('light', !dark);
     host.setAttribute('data-theme', dark ? 'dark' : 'light');
@@ -219,25 +177,24 @@ function startBootstrap() {
   }
 
   function applyPopupSize(width: number, height: number) {
+    if (!bootUi) return;
     customWidth = width;
     customHeight = height;
-    popupLayer.style.width = `${width}px`;
-    popupLayer.style.height = `${height}px`;
+    bootUi.popupLayer.style.width = `${width}px`;
+    bootUi.popupLayer.style.height = `${height}px`;
   }
 
   function positionPopup(x: number, y: number) {
+    const { popupLayer } = ensureUi();
     const { width, height } = popupSize();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    let left = x;
-    let top = y + 14;
-    if (top + height > vh - 24) top = y - height - 14;
-    left = Math.max(24, Math.min(left, vw - width - 24));
-    top = Math.max(24, Math.min(top, vh - height - 24));
-    popupX = left;
-    popupY = top;
-    popupLayer.style.left = `${left}px`;
-    popupLayer.style.top = `${top}px`;
+    const position = calculatePopupPosition({ x, y }, { width, height }, {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    });
+    popupX = position.left;
+    popupY = position.top;
+    popupLayer.style.left = `${position.left}px`;
+    popupLayer.style.top = `${position.top}px`;
     popupLayer.style.width = `${width}px`;
     popupLayer.style.height = `${height}px`;
   }
@@ -271,6 +228,7 @@ function startBootstrap() {
     if (isExtensionContextInvalidated()) {
       return Promise.reject(new Error('Extension was reloaded. Refresh this page to continue.'));
     }
+    const { shadow } = ensureUi();
     if (!overlayModulePromise) {
       try {
         if (!shadow.querySelector('[data-dict-overlay-css]')) {
@@ -310,6 +268,8 @@ function startBootstrap() {
     if (isHostnamePaused()) return;
     const cleanText = String(text || '').trim();
     if (!cleanText) return;
+    const { shadow, triggerBtn, popupLayer, overlayMount, backdrop } = ensureUi();
+    const generation = ++overlayOpenGeneration;
     applyTheme();
     triggerBtn.style.display = 'none';
     selectedText = cleanText;
@@ -318,6 +278,7 @@ function startBootstrap() {
     lookupRequestId = createRequestId('dict');
     positionPopup(x, y);
     showPopup = true;
+    window.addEventListener('click', onWindowClick, true);
     isMaximized = false;
     popupLayer.classList.remove('maximized');
     popupLayer.style.display = 'block';
@@ -339,7 +300,7 @@ function startBootstrap() {
       }
       throw error;
     }
-    if (!showPopup) return;
+    if (!showPopup || generation !== overlayOpenGeneration) return;
     if (!overlayApi) {
       overlayApi = mod.mountOverlay(shadow, overlayMount, overlayProps(), {
         onClose: closePopup,
@@ -354,18 +315,27 @@ function startBootstrap() {
   }
 
   function closePopup() {
+    window.removeEventListener('click', onWindowClick, true);
+    overlayOpenGeneration += 1;
+    const closingRequestId = lookupRequestId;
     showPopup = false;
     isMaximized = false;
     dockPosition = 'none';
-    popupLayer.classList.remove('docked-left', 'docked-right');
     lookupRequestId = '';
-    triggerBtn.style.display = 'none';
-    popupLayer.style.display = 'none';
-    backdrop.style.display = 'none';
-    popupLayer.classList.remove('maximized');
+    if (bootUi) {
+      bootUi.popupLayer.classList.remove('docked-left', 'docked-right');
+      bootUi.triggerBtn.style.display = 'none';
+      bootUi.popupLayer.style.display = 'none';
+      bootUi.backdrop.style.display = 'none';
+      bootUi.popupLayer.classList.remove('maximized');
+    }
+    destroyOverlay();
+    if (closingRequestId) cancelDictionaryLookup(closingRequestId);
   }
 
   function toggleDock() {
+    if (!bootUi) return;
+    const { popupLayer } = bootUi;
     if (dockPosition === 'none') {
       dockPosition = 'right';
       popupLayer.classList.add('docked-right');
@@ -384,6 +354,8 @@ function startBootstrap() {
   }
 
   function toggleMaximize() {
+    if (!bootUi) return;
+    const { popupLayer, backdrop } = bootUi;
     isMaximized = !isMaximized;
     if (isMaximized) {
       dockPosition = 'none';
@@ -397,34 +369,36 @@ function startBootstrap() {
   }
 
   function handleStartDrag(e: MouseEvent) {
-    if (isMaximized) return;
+    if (isMaximized || !bootUi) return;
     isDragging = true;
     dragStartX = e.clientX;
     dragStartY = e.clientY;
     popupStartX = popupX;
     popupStartY = popupY;
-    popupLayer.style.willChange = 'left, top';
+    bootUi.popupLayer.style.willChange = 'left, top';
     window.addEventListener('mousemove', handleDragMove, { passive: true });
     window.addEventListener('mouseup', handleDragEnd);
   }
 
   function handleDragMove(e: MouseEvent) {
-    if (!isDragging) return;
+    if (!isDragging || !bootUi) return;
     pendingPointerX = e.clientX;
     pendingPointerY = e.clientY;
     if (dragRaf) return;
     dragRaf = requestAnimationFrame(() => {
       dragRaf = 0;
-      if (!isDragging) return;
+      if (!isDragging || !bootUi) return;
       const { width, height } = popupSize();
-      let newX = popupStartX + (pendingPointerX - dragStartX);
-      let newY = popupStartY + (pendingPointerY - dragStartY);
-      newX = Math.max(8, Math.min(newX, window.innerWidth - width - 8));
-      newY = Math.max(8, Math.min(newY, window.innerHeight - height - 8));
-      popupX = newX;
-      popupY = newY;
-      popupLayer.style.left = `${newX}px`;
-      popupLayer.style.top = `${newY}px`;
+      const position = calculateDraggedPopupPosition(
+        { x: popupStartX, y: popupStartY },
+        { x: pendingPointerX - dragStartX, y: pendingPointerY - dragStartY },
+        { width, height },
+        { width: window.innerWidth, height: window.innerHeight },
+      );
+      popupX = position.left;
+      popupY = position.top;
+      bootUi.popupLayer.style.left = `${position.left}px`;
+      bootUi.popupLayer.style.top = `${position.top}px`;
     });
   }
 
@@ -434,20 +408,20 @@ function startBootstrap() {
       cancelAnimationFrame(dragRaf);
       dragRaf = 0;
     }
-    popupLayer.style.willChange = 'auto';
+    if (bootUi) bootUi.popupLayer.style.willChange = 'auto';
     window.removeEventListener('mousemove', handleDragMove);
     window.removeEventListener('mouseup', handleDragEnd);
   }
 
   function handleStartResize(e: MouseEvent) {
-    if (isMaximized) return;
+    if (isMaximized || !bootUi) return;
     isResizing = true;
     resizeStartX = e.clientX;
     resizeStartY = e.clientY;
     const size = popupSize();
     initialWidth = size.width;
     initialHeight = size.height;
-    popupLayer.style.willChange = 'width, height';
+    bootUi.popupLayer.style.willChange = 'width, height';
     window.addEventListener('mousemove', handleResizeMove, { passive: true });
     window.addEventListener('mouseup', handleResizeEnd);
   }
@@ -477,20 +451,20 @@ function startBootstrap() {
       void chrome.storage?.sync?.set({ popupWidth: customWidth, popupHeight: customHeight });
     }
     isResizing = false;
-    popupLayer.style.willChange = 'auto';
+    if (bootUi) bootUi.popupLayer.style.willChange = 'auto';
     window.removeEventListener('mousemove', handleResizeMove);
     window.removeEventListener('mouseup', handleResizeEnd);
   }
 
   function updateSelectionTrigger(event?: MouseEvent) {
     if (isHostnamePaused()) {
-      triggerBtn.style.display = 'none';
+      hideTrigger();
       return;
     }
     const selection = window.getSelection();
     const text = selection?.toString().trim();
     if (!text || isSkippableSelection(text)) {
-      triggerBtn.style.display = 'none';
+      hideTrigger();
       return;
     }
     const mode = settings.selectionTriggerMode || 'icon';
@@ -498,31 +472,16 @@ function startBootstrap() {
 
     snapshotSelection(selection);
     selectedText = text;
-    void loadOverlayModule().catch(() => undefined);
 
-    const iconSize = 38;
-    const margin = 10;
-    let x = window.innerWidth / 2;
-    let y = window.innerHeight / 2;
-    if (event && typeof event.clientX === 'number') {
-      x = event.clientX + 12;
-      y = event.clientY + 8;
-      if (x + iconSize > window.innerWidth - margin) x = event.clientX - iconSize - 12;
-      if (y + iconSize > window.innerHeight - margin) y = event.clientY - iconSize - 8;
-    } else if (selection && selection.rangeCount > 0) {
-      const rect = selection.getRangeAt(0).getBoundingClientRect();
-      if (rect && (rect.width || rect.height)) {
-        x = rect.right + margin;
-        y = rect.top + Math.max(0, (rect.height - iconSize) / 2);
-        if (x + iconSize > window.innerWidth - margin) x = rect.left - iconSize - margin;
-        if (x < margin) {
-          x = Math.max(margin, Math.min(rect.left, window.innerWidth - iconSize - margin));
-          y = rect.bottom + margin;
-        }
-      }
-    }
-    triggerX = Math.max(margin, Math.min(x, window.innerWidth - iconSize - margin));
-    triggerY = Math.max(margin, Math.min(y, window.innerHeight - iconSize - margin));
+    const { triggerBtn } = ensureUi();
+    const rect = selection && selection.rangeCount > 0 ? selection.getRangeAt(0).getBoundingClientRect() : undefined;
+    const triggerPosition = calculateTriggerPosition({
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+      event: event && typeof event.clientX === 'number' ? event : undefined,
+      selectionRect: rect,
+    });
+    triggerX = triggerPosition.x;
+    triggerY = triggerPosition.y;
 
     if (mode === 'direct') {
       if (text.length > 80) {
@@ -541,52 +500,51 @@ function startBootstrap() {
     triggerBtn.style.display = showPopup ? 'none' : 'flex';
   }
 
-  triggerBtn.addEventListener('click', (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    if (selectedText) void openPopup(triggerX, triggerY, selectedText);
-  });
-  backdrop.addEventListener('click', () => {
-    if (isMaximized) toggleMaximize();
-  });
-
   window.addEventListener('mouseup', (event) => {
-    if (host.contains(event.target as Node) || shadow.contains(event.target as Node)) return;
-    snapshotSelection(window.getSelection());
+    if (isHostnamePaused()) return;
+    if ((settings.selectionTriggerMode || 'icon') === 'off') return;
+    if (bootUi && (bootUi.host.contains(event.target as Node) || bootUi.shadow.contains(event.target as Node))) return;
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed) {
+      hideTrigger();
+      return;
+    }
+    const text = selection.toString().trim();
+    if (!text || isSkippableSelection(text)) {
+      hideTrigger();
+      return;
+    }
+    snapshotSelection(selection);
     if (selectionRaf) cancelAnimationFrame(selectionRaf);
     selectionRaf = requestAnimationFrame(() => {
       selectionRaf = 0;
       updateSelectionTrigger(event);
     });
-  });
+  }, { passive: true });
 
   window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      if (showPopup) {
+        event.preventDefault();
+        closePopup();
+      }
+      return;
+    }
+    if (event.key !== 'q' && event.key !== 'Q') return;
     const target = event.target as HTMLElement;
     if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target.isContentEditable) return;
-    const currentSelection = window.getSelection()?.toString().trim();
     const modifier = settings.postSelectionModifier || 'shift';
+    const matches =
+      (modifier === 'shift' && event.shiftKey)
+      || (modifier === 'alt' && event.altKey)
+      || (modifier === 'ctrl' && (event.ctrlKey || event.metaKey));
+    if (!matches) return;
+    const currentSelection = window.getSelection()?.toString().trim();
     if (currentSelection) {
-      const matches =
-        (modifier === 'shift' && event.shiftKey)
-        || (modifier === 'alt' && event.altKey)
-        || (modifier === 'ctrl' && (event.ctrlKey || event.metaKey));
-      if (matches && (event.key === 'Q' || event.key === 'q')) {
-        updateSelectionTrigger();
-        event.preventDefault();
-        return;
-      }
-    }
-    if (event.key === 'Escape' && showPopup) {
+      updateSelectionTrigger();
       event.preventDefault();
-      closePopup();
     }
   });
-
-  window.addEventListener('click', (event) => {
-    if (isDragging || isResizing || !showPopup) return;
-    const target = event.target as Node;
-    if (!host.contains(target) && !shadow.contains(target)) closePopup();
-  }, true);
 
   chrome.runtime?.onMessage?.addListener((message: { type?: string; text?: string; payload?: { text?: string; context?: string; fromSelection?: boolean } }) => {
     const payload = message.payload || {};
@@ -618,49 +576,15 @@ function startBootstrap() {
         customWidth = null;
         customHeight = null;
       }
-      if (showPopup && !isMaximized) {
+      if (showPopup && !isMaximized && bootUi) {
         const { width, height } = popupSize();
         applyPopupSize(width, height);
       }
     }
   });
 
-  async function loadBootSettings() {
-    if (typeof chrome === 'undefined' || !chrome.storage?.sync) return;
-    try {
-      const stored = await chrome.storage.sync.get({
-        theme: BOOT_DEFAULTS.theme,
-        dockPosition: BOOT_DEFAULTS.dockPosition,
-        selectionTriggerMode: BOOT_DEFAULTS.selectionTriggerMode,
-        postSelectionModifier: BOOT_DEFAULTS.postSelectionModifier,
-        pausedHostnames: BOOT_DEFAULTS.pausedHostnames,
-        popupWidth: BOOT_DEFAULTS.popupWidth,
-        popupHeight: BOOT_DEFAULTS.popupHeight,
-        disablePageContextExtraction: BOOT_DEFAULTS.disablePageContextExtraction,
-      });
-      const mode = stored.selectionTriggerMode;
-      const modifier = stored.postSelectionModifier;
-      const dock = stored.dockPosition;
-      settings = {
-        theme: String(stored.theme || BOOT_DEFAULTS.theme),
-        dockPosition: dock === 'left' || dock === 'right' ? dock : 'none',
-        selectionTriggerMode: mode === 'off' || mode === 'direct' || mode === 'icon' ? mode : BOOT_DEFAULTS.selectionTriggerMode,
-        postSelectionModifier: modifier === 'alt' || modifier === 'ctrl' || modifier === 'shift' ? modifier : BOOT_DEFAULTS.postSelectionModifier,
-        pausedHostnames: normalizeHostnames(stored.pausedHostnames),
-        popupWidth: Number(stored.popupWidth) || BOOT_DEFAULTS.popupWidth,
-        popupHeight: Number(stored.popupHeight) || BOOT_DEFAULTS.popupHeight,
-        disablePageContextExtraction: Boolean(stored.disablePageContextExtraction),
-      };
-    } catch {
-      settings = { ...BOOT_DEFAULTS };
-    }
+  async function hydrateBootSettings() {
+    settings = await loadBootSettings();
+    applyTheme();
   }
-}
-
-function normalizeHostnames(value: unknown): string[] {
-  if (Array.isArray(value)) return value.map((item) => String(item).trim().toLowerCase()).filter(Boolean);
-  if (typeof value === 'string' && value.trim()) {
-    return value.split('\n').map((item) => item.trim().toLowerCase()).filter(Boolean);
-  }
-  return [];
 }

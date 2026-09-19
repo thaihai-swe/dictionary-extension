@@ -1,6 +1,6 @@
 # Sales & Product Guide
 
-**Dictionary** is a Chrome Manifest V3 reading companion for learners, students, and professionals who need definitions, translations, pronunciation, and contextual AI without leaving the page they are reading.
+**Dictionary** is a Chrome and Firefox Manifest V3 reading companion for learners, students, and professionals who need definitions, translations, pronunciation, and contextual AI without leaving the page they are reading.
 
 This document is a product narrative. Runtime contracts live in [Architecture](architecture.md), [Providers](providers.md), and [Settings](settings.md).
 
@@ -18,7 +18,7 @@ This document is a product narrative. Runtime contracts live in [Architecture](a
 
 Look up a word or phrase in place. Hear it. Practice saying it. Translate it. Ask AI what it means *in this sentence*. Keep credentials off the webpage.
 
-The UI is the **Calm Learning Studio**: editorial or Atkinson Hyperlegible typography, system/light/dark themes, a resizable in-page card, and a global **Stop Voice** control when audio is playing.
+The UI is the **Calm Learning Studio**: system-ui typography, system/light/dark themes, a resizable in-page card, and a global **Stop Voice** control when audio is playing.
 
 ---
 
@@ -60,12 +60,12 @@ API keys live in `chrome.storage.local`. The content script and public sync payl
 
 | Area | What ships today |
 |---|---|
-| Dictionary | Keyless: Free Dictionary, Wiktionary, Datamuse, Wikipedia, Urban Dictionary, RhymeBrain enrichment |
+| Dictionary | Keyless: Free Dictionary, Wiktionary, Datamuse, Urban Dictionary, RhymeBrain, and Wiktionary enrichment |
 | Translation | Google Translate (default), LibreTranslate, MyMemory fallback |
 | AI | `gemini-3.5-flash-lite` or custom OpenAI-compatible URL; 7 UI intents + phrase fallback |
 | Audio | MP3 / Google TTS / SpeechSynthesis; Stop Voice; speech practice |
 | Triggers | Floating icon, direct popup, post-selection modifier, context menu, toolbar, paused hostnames |
-| Appearance | Dark default, system/light/dark, editorial or learner font, 360–1000 × 380–900 resizable card |
+| Appearance | Dark default, system/light/dark, system-ui font, 360–1000 × 380–900 resizable card |
 | Privacy | Local secrets, 800-char context cap, opt-out page extraction, sanitized settings export (schema v12) |
 
 ---
@@ -91,7 +91,7 @@ Where it is not (yet):
 2. AI keys never leave `chrome.storage.local` into content-script memory.
 3. Surrounding sentences are extracted only for AI actions, clamped to 800 characters, and can be disabled entirely.
 4. Settings export omits `SECRET_KEYS`.
-5. Restricted Chrome pages (`chrome://`, Web Store) are not injected; the toolbar popup still works for typed queries.
+5. Restricted browser pages (`chrome://`, `about:`, Web Store, AMO) are not injected; the toolbar popup still works for typed queries.
 
 ---
 

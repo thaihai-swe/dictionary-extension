@@ -1,6 +1,12 @@
 import { normalizeDictionaryTerm } from './lemma.ts';
+import {
+  DICTIONARY_FALLBACK_ORDER,
+  getSecondaryDictionaryProviderIds,
+  isConfiguredDictionaryProvider,
+} from '../domain/dictionary/policies.ts';
 
 export { normalizeDictionaryTerm };
+export { DICTIONARY_FALLBACK_ORDER, getSecondaryDictionaryProviderIds, isConfiguredDictionaryProvider };
 
 export type LookupAttemptKind = 'exact';
 
@@ -9,18 +15,6 @@ export interface DictionaryLookupAttempt {
   query: string;
   kind: LookupAttemptKind;
 }
-
-export const DICTIONARY_FALLBACK_ORDER = [
-  'wiktionary',
-  'free_dictionary',
-  'datamuse',
-  'rhymebrain',
-  'wikipedia',
-  'urban_dictionary',
-  'wiktionary_etymology',
-  'wiktionary_bilingual',
-  'tatoeba',
-];
 
 export function isPhraseLike(text: string): boolean {
   const normalized = String(text || '').replace(/\s+/g, ' ').trim();

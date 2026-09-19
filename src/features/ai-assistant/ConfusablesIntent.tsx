@@ -21,12 +21,12 @@ export const ConfusablesIntent: React.FC<ConfusablesIntentProps> = ({ result, ta
   return (
     <div className="space-y-4">
       {comparison?.coreDistinction ? (
-        <div className="rounded-xl border border-accent/30 bg-accent-subtle p-3.5 space-y-1.5 shadow-xs">
-          <div className="flex items-center gap-1.5 text-[11px] font-bold text-accent uppercase tracking-wider">
+        <div className="rounded-lg border border-border bg-surface p-3.5 space-y-1.5">
+          <div className="flex items-center gap-1.5 text-[12px] font-bold text-accent uppercase tracking-wider">
             <IconScale className="w-3.5 h-3.5 text-accent" />
             <span>Core Distinction</span>
           </div>
-          <p className="text-[13.5px] leading-relaxed text-content font-medium">
+          <p className="text-[14.5px] leading-relaxed text-content font-medium">
             {comparison.coreDistinction}
           </p>
         </div>
@@ -34,11 +34,11 @@ export const ConfusablesIntent: React.FC<ConfusablesIntentProps> = ({ result, ta
 
       {comparison?.rows?.length ? (
         <div className="space-y-1.5">
-          <div className="text-[11px] font-bold text-content-muted uppercase tracking-wider">
+          <div className="text-[12px] font-bold text-content-muted uppercase tracking-wider">
             Comparison Matrix
           </div>
-          <div className="overflow-x-auto rounded-xl border border-border shadow-xs">
-            <table className="w-full text-[13px] text-left">
+          <div className="overflow-x-auto rounded-lg border border-border">
+            <table className="w-full text-[14px] text-left">
               <thead className="bg-muted text-content font-bold">
                 <tr>
                   <th className="px-3 py-2.5 font-bold">Feature</th>
@@ -66,7 +66,7 @@ export const ConfusablesIntent: React.FC<ConfusablesIntentProps> = ({ result, ta
 
       {comparison?.minimalPairs?.length ? (
         <div className="space-y-2">
-          <div className="text-[11px] font-bold text-content-muted uppercase tracking-wider">
+          <div className="text-[12px] font-bold text-content-muted uppercase tracking-wider">
             Minimal-Pair Contrast
           </div>
           <div className="space-y-2.5">
@@ -76,7 +76,7 @@ export const ConfusablesIntent: React.FC<ConfusablesIntentProps> = ({ result, ta
               return (
                 <div
                   key={idx}
-                  className="rounded-xl border border-border bg-surface p-3 space-y-2 text-[13px] shadow-xs"
+                  className="rounded-lg border border-border bg-surface p-3.5 space-y-2 text-[14px]"
                 >
                   <div className="space-y-1.5">
                     <div className="flex items-start justify-between gap-2 pl-2.5 py-1 border-l-2 border-accent bg-accent-subtle rounded-r">
@@ -103,7 +103,7 @@ export const ConfusablesIntent: React.FC<ConfusablesIntentProps> = ({ result, ta
                     </div>
                   </div>
                   {pair.explanation ? (
-                    <p className="text-[12px] text-content-secondary italic pt-0.5">
+                    <p className="text-[13px] text-content-secondary italic pt-0.5">
                       {pair.explanation}
                     </p>
                   ) : null}
@@ -115,9 +115,9 @@ export const ConfusablesIntent: React.FC<ConfusablesIntentProps> = ({ result, ta
       ) : null}
 
       {result.summary && !comparison?.coreDistinction && !comparison?.rows?.length && !comparison?.minimalPairs?.length ? (
-        <div className="pt-2 border-t border-border/50 space-y-3">
+        <section className="p-3.5 rounded-lg border border-border bg-surface space-y-3">
           <MarkdownRenderer content={result.summary} targetLang={targetLang} />
-        </div>
+        </section>
       ) : null}
     </div>
   );

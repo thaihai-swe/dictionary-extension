@@ -137,6 +137,7 @@ async function requestGeminiText(prompt: string, apiKey: string, model: string, 
     }),
     signal,
     timeoutMs: AI_FETCH_TIMEOUT_MS,
+    requestClass: 'ai',
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -208,6 +209,7 @@ async function requestOpenAiCompatible(prompt: string, settings: AppSettings, si
     body: JSON.stringify(body),
     signal,
     timeoutMs: AI_FETCH_TIMEOUT_MS,
+    requestClass: 'ai',
   });
   const rawText = await res.text();
   if (!res.ok) {

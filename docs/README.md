@@ -1,6 +1,6 @@
 # Dictionary Documentation
 
-Welcome to the comprehensive documentation for **Dictionary**, a lightweight, high-performance Chrome Manifest V3 extension built with **React 18**, **TypeScript 5**, **Vite 5**, and **Tailwind CSS**. It is engineered for deep reading comprehension, multi-source dictionary lookup, neural translation, pronunciation practice, and contextual AI language learning.
+Welcome to the comprehensive documentation for **Dictionary**, a lightweight, high-performance Chrome and Firefox Manifest V3 extension built with **React 18**, **TypeScript 5**, **Vite 5**, and **Tailwind CSS**. It is engineered for deep reading comprehension, multi-source dictionary lookup, neural translation, pronunciation practice, and contextual AI language learning.
 
 ---
 
@@ -78,7 +78,7 @@ Welcome to the comprehensive documentation for **Dictionary**, a lightweight, hi
 
 | Feature Domain | Capabilities & Specifications | Documentation Guide |
 |---|---|---|
-| **Multi-Source Dictionary** | Keyless backends (`free_dictionary`, `wiktionary`, `datamuse`, `wikipedia`, `urban_dictionary`, plus RhymeBrain enrichment) with progressive fallback. Lookups use the selected text as-is. | [Providers](providers.md), [User Guide](user-guide.md) |
+| **Multi-Source Dictionary** | Keyless backends (`free_dictionary`, `wiktionary`, `datamuse`, `urban_dictionary`, plus RhymeBrain and Wiktionary enrichment) with progressive fallback. Lookups use the selected text as-is. | [Providers](providers.md), [User Guide](user-guide.md) |
 | **Lazy Enrichment** | Non-blocking secondary query batches (`concurrency: 2`), cumulative definition merging, IPA phonetic backfilling, and 2-level caching (Memory + Session storage). | [Architecture](architecture.md), [Providers](providers.md) |
 | **Neural Translation** | Parallel translation with Google Translate, LibreTranslate, or MyMemory; dynamic dropdown with custom language definitions. | [Settings](settings.md), [Providers](providers.md) |
 | **Pronunciation & Voice Control** | High-quality dictionary MP3s + Google TTS + Web Speech fallback, adjustable speed (0.5x–1.5x), global red **Stop Voice** button in header, and microphone Speech Practice Evaluator with Levenshtein scoring. | [User Guide](user-guide.md), [Providers](providers.md) |

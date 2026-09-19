@@ -1,0 +1,302 @@
+{
+  "en": [
+    {
+      "partOfSpeech": "Noun",
+      "language": "English",
+      "definitions": [
+        {
+          "definition": "A <a rel=\"mw:WikiLink\" href=\"/wiki/disembodied\" title=\"disembodied\">disembodied</a> <a rel=\"mw:WikiLink\" href=\"/wiki/soul\" title=\"soul\">soul</a>; a soul or <a rel=\"mw:WikiLink\" href=\"/wiki/spirit\" title=\"spirit\">spirit</a> of a <a rel=\"mw:WikiLink\" href=\"/wiki/deceased\" title=\"deceased\">deceased</a> <a rel=\"mw:WikiLink\" href=\"/wiki/person\" title=\"person\">person</a>; a spirit <a rel=\"mw:WikiLink\" href=\"/wiki/appear\" title=\"appear\">appearing</a> <a rel=\"mw:WikiLink\" href=\"/wiki/after\" title=\"after\">after</a> <a rel=\"mw:WikiLink\" href=\"/wiki/death\" title=\"death\">death</a>.",
+          "parsedExamples": [
+            {
+              "example": "Everyone believed that the <b>ghost</b> of an old lady haunted the crypt."
+            },
+            {
+              "example": "He believes in <b>ghosts</b>."
+            }
+          ],
+          "examples": [
+            "Everyone believed that the <b>ghost</b> of an old lady haunted the crypt.",
+            "He believes in <b>ghosts</b>."
+          ]
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt68\" typeof=\"mw:Transclusion\"></span> A <a rel=\"mw:WikiLink\" href=\"/wiki/spirit\" title=\"spirit\">spirit</a>; a human <a rel=\"mw:WikiLink\" href=\"/wiki/soul\" title=\"soul\">soul</a>."
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt74\" typeof=\"mw:Transclusion\"></span> Any faint shadowy semblance; an unsubstantial image.",
+          "parsedExamples": [
+            {
+              "example": "not a <b>ghost</b> of a chance"
+            },
+            {
+              "example": "the <b>ghost</b> of an idea"
+            }
+          ],
+          "examples": [
+            "not a <b>ghost</b> of a chance",
+            "the <b>ghost</b> of an idea"
+          ]
+        },
+        {
+          "definition": "A false image, such as in a photographic print or negative, on a television screen, radar display, or telescope, caused by poor or double reception or reflection (from a lens or screen)<!--, or a defect in the receiver?-->."
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt84\" typeof=\"mw:Transclusion\"></span> A faint image that remains after an attempt to remove <a rel=\"mw:WikiLink\" href=\"/wiki/graffiti\" title=\"graffiti\">graffiti</a>."
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt87\" typeof=\"mw:Transclusion\"></span> <span class=\"form-of-definition use-with-mention\" about=\"#mwt88\" typeof=\"mw:Transclusion\"><a rel=\"mw:WikiLink\" href=\"/wiki/Appendix:Glossary#ellipsis\" title=\"Appendix:Glossary\">Ellipsis</a> of <span class=\"form-of-definition-link\"><i class=\"Latn mention\" lang=\"en\"><a rel=\"mw:WikiLink\" href=\"/wiki/ghostwriter#English\" title=\"ghostwriter\">ghostwriter</a></i></span></span><link rel=\"mw:PageProp/Category\" href=\"./Category:English_ellipses#GHOST\" about=\"#mwt88\">.",
+          "parsedExamples": [
+            {
+              "example": "I’ve written both as a <b>ghost</b> for experts and under my name."
+            }
+          ],
+          "examples": [
+            "I’ve written both as a <b>ghost</b> for experts and under my name."
+          ]
+        },
+        {
+          "definition": "A <a rel=\"mw:WikiLink\" href=\"/wiki/nonexistent\" title=\"nonexistent\">nonexistent</a> person invented to obtain some (typically <a rel=\"mw:WikiLink\" href=\"/wiki/fraudulent\" title=\"fraudulent\">fraudulent</a>) <a rel=\"mw:WikiLink\" href=\"/wiki/benefit\" title=\"benefit\">benefit</a>."
+        },
+        {
+          "definition": "A <a rel=\"mw:WikiLink\" href=\"/wiki/dead\" title=\"dead\">dead</a> person whose <a rel=\"mw:WikiLink\" href=\"/wiki/identity\" title=\"identity\">identity</a> is stolen by another <span class=\"mention-gloss-paren\" about=\"#mwt96\" typeof=\"mw:Transclusion\">(</span><span class=\"mention-gloss\" about=\"#mwt96\">see <i class=\"Latn mention\" lang=\"en\"><a rel=\"mw:WikiLink\" href=\"/wiki/ghosting#English\" title=\"ghosting\">ghosting</a></i></span><span class=\"mention-gloss-paren\" about=\"#mwt96\">)</span>. <span class=\"maintenance-line\" about=\"#mwt97\" typeof=\"mw:Transclusion\">(<span id=\"rfv-sense-notice-en-\"></span>Can we <a rel=\"mw:WikiLink\" href=\"/wiki/Wiktionary:Requests_for_verification/English#ghost\" title=\"Wiktionary:Requests for verification/English\">verify</a> this sense?)</span><link rel=\"mw:PageProp/Category\" href=\"./Category:Requests_for_verification_in_English_entries#GHOST\" about=\"#mwt97\">"
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt98\" typeof=\"mw:Transclusion\"></span> An unresponsive user on <a rel=\"mw:WikiLink\" href=\"/wiki/IRC\" title=\"IRC\">IRC</a>, resulting from the user's <a rel=\"mw:WikiLink\" href=\"/wiki/client\" title=\"client\">client</a> disconnecting without notifying the <a rel=\"mw:WikiLink\" href=\"/wiki/server\" title=\"server\">server</a>."
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt100\" typeof=\"mw:Transclusion\"></span> A <a rel=\"mw:WikiLink\" href=\"/wiki/copy\" title=\"copy\">copy</a> of a <a rel=\"mw:WikiLink\" href=\"/wiki/file\" title=\"file\">file</a> or <a rel=\"mw:WikiLink\" href=\"/wiki/record\" title=\"record\">record</a>."
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt102\" typeof=\"mw:Transclusion\"></span> An <a rel=\"mw:WikiLink\" href=\"/wiki/understudy\" title=\"understudy\">understudy</a>. <span class=\"maintenance-line\" about=\"#mwt103\" typeof=\"mw:Transclusion\">(<span id=\"rfv-sense-notice-en-\"></span>Can we <a rel=\"mw:WikiLink\" href=\"/wiki/Wiktionary:Requests_for_verification/English#ghost\" title=\"Wiktionary:Requests for verification/English\">verify</a> this sense?)</span><link rel=\"mw:PageProp/Category\" href=\"./Category:Requests_for_verification_in_English_entries#GHOST\" about=\"#mwt103\">"
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt104\" typeof=\"mw:Transclusion\"></span> A <a rel=\"mw:WikiLink\" href=\"/wiki/covert\" title=\"covert\">covert</a> (and <a rel=\"mw:WikiLink\" href=\"/wiki/deniable\" title=\"deniable\">deniable</a>) agent."
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt106\" typeof=\"mw:Transclusion\"></span> An <a rel=\"mw:WikiLink\" href=\"/wiki/opponent\" title=\"opponent\">opponent</a> in a <a rel=\"mw:WikiLink\" href=\"/wiki/race\" title=\"race\">racing</a> <a rel=\"mw:WikiLink\" href=\"/wiki/game\" title=\"game\">game</a> that follows a previously <a rel=\"mw:WikiLink\" href=\"/wiki/record\" title=\"record\">recorded</a> <a rel=\"mw:WikiLink\" href=\"/wiki/route\" title=\"route\">route</a>, allowing players to compete against previous best times."
+        },
+        {
+          "definition": "Someone whose <a rel=\"mw:WikiLink\" href=\"/wiki/identity\" title=\"identity\">identity</a> cannot be established because there are no records of such a  person."
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt110\" typeof=\"mw:Transclusion\"></span> An <a rel=\"mw:WikiLink\" href=\"/wiki/unphysical\" title=\"unphysical\">unphysical</a> <a rel=\"mw:WikiLink\" href=\"/wiki/state\" title=\"state\">state</a> in a <a rel=\"mw:WikiLink\" href=\"/wiki/gauge_theory\" title=\"gauge theory\">gauge theory</a>."
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt113\" typeof=\"mw:Transclusion\"></span> A formerly <a rel=\"mw:WikiLink\" href=\"/wiki/nonexistent\" title=\"nonexistent\">nonexistent</a> <a rel=\"mw:WikiLink\" href=\"/wiki/character\" title=\"character\">character</a> that was at some point <a rel=\"mw:WikiLink\" href=\"/wiki/mistaken\" title=\"mistaken\">mistakenly</a> <a rel=\"mw:WikiLink\" href=\"/wiki/encoded\" title=\"encoded\">encoded</a> into a <a rel=\"mw:WikiLink\" href=\"/wiki/character_set\" title=\"character set\">character set</a> <a rel=\"mw:WikiLink\" href=\"/wiki/standard\" title=\"standard\">standard</a>, which might have since become used <a rel=\"mw:WikiLink\" href=\"/wiki/opportunistic\" title=\"opportunistic\">opportunistically</a> for some <a rel=\"mw:WikiLink\" href=\"/wiki/genuine\" title=\"genuine\">genuine</a> purpose.",
+          "parsedExamples": [
+            {
+              "example": "<i class=\"Jpan mention\" lang=\"ja\"><a rel=\"mw:WikiLink\" href=\"/wiki/彁#Japanese\" title=\"彁\">彁</a></i> is a <b>ghost</b> character from the Japanese JIS X 0208 character set."
+            }
+          ],
+          "examples": [
+            "<i class=\"Jpan mention\" lang=\"ja\"><a rel=\"mw:WikiLink\" href=\"/wiki/彁#Japanese\" title=\"彁\">彁</a></i> is a <b>ghost</b> character from the Japanese JIS X 0208 character set."
+          ]
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt115\" typeof=\"mw:Transclusion\"></span> <span class=\"form-of-definition use-with-mention\" about=\"#mwt116\" typeof=\"mw:Transclusion\"><a rel=\"mw:WikiLink\" href=\"/wiki/Appendix:Glossary#ellipsis\" title=\"Appendix:Glossary\">Ellipsis</a> of <span class=\"form-of-definition-link\"><i class=\"Latn mention\" lang=\"en\"><a rel=\"mw:WikiLink\" href=\"/wiki/ghost_pepper#English\" title=\"ghost pepper\">ghost pepper</a></i></span></span><link rel=\"mw:PageProp/Category\" href=\"./Category:English_ellipses#GHOST\" about=\"#mwt116\">."
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt119\" typeof=\"mw:Transclusion\"></span> A game in which players take turns to add a <a rel=\"mw:WikiLink\" href=\"/wiki/letter\" title=\"letter\">letter</a> to a possible word, trying not to complete a word."
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt125\" typeof=\"mw:Transclusion\"></span> <a rel=\"mw:WikiLink\" href=\"/wiki/white\" title=\"white\">White</a> or <span class=\"Latn\" lang=\"en\" about=\"#mwt126\" typeof=\"mw:Transclusion\"><a rel=\"mw:WikiLink\" href=\"/wiki/pale#English\" title=\"pale\">pale</a></span>.",
+          "parsedExamples": [
+            {
+              "example": "<a rel=\"mw:WikiLink\" href=\"/wiki/ghost_slug#English\" title=\"ghost slug\"><b>ghost</b> slug</a>"
+            },
+            {
+              "example": "<span class=\"new\"><b>ghost</b> flower</span>"
+            }
+          ],
+          "examples": [
+            "<a rel=\"mw:WikiLink\" href=\"/wiki/ghost_slug#English\" title=\"ghost slug\"><b>ghost</b> slug</a>",
+            "<span class=\"new\"><b>ghost</b> flower</span>"
+          ]
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt129\" typeof=\"mw:Transclusion\"></span> <a rel=\"mw:WikiLink\" href=\"/wiki/transparent\" title=\"transparent\">Transparent</a> or <span class=\"Latn\" lang=\"en\" about=\"#mwt130\" typeof=\"mw:Transclusion\"><a rel=\"mw:WikiLink\" href=\"/wiki/translucent#English\" title=\"translucent\">translucent</a></span>.",
+          "parsedExamples": [
+            {
+              "example": "<a rel=\"mw:WikiLink\" href=\"/wiki/ghost_ant#English\" title=\"ghost ant\"><b>ghost</b> ant</a>"
+            },
+            {
+              "example": "<a rel=\"mw:WikiLink\" href=\"/wiki/ghost_catfish#English\" title=\"ghost catfish\"><b>ghost</b> catfish</a>"
+            }
+          ],
+          "examples": [
+            "<a rel=\"mw:WikiLink\" href=\"/wiki/ghost_ant#English\" title=\"ghost ant\"><b>ghost</b> ant</a>",
+            "<a rel=\"mw:WikiLink\" href=\"/wiki/ghost_catfish#English\" title=\"ghost catfish\"><b>ghost</b> catfish</a>"
+          ]
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt133\" typeof=\"mw:Transclusion\"></span> <a rel=\"mw:WikiLink\" href=\"/wiki/abandoned\" title=\"abandoned\">Abandoned</a>.",
+          "parsedExamples": [
+            {
+              "example": "<a rel=\"mw:WikiLink\" href=\"/wiki/ghost_town#English\" title=\"ghost town\"><b>ghost</b> town</a>"
+            },
+            {
+              "example": "<a rel=\"mw:WikiLink\" href=\"/wiki/ghost_ship#English\" title=\"ghost ship\"><b>ghost</b> ship</a>"
+            }
+          ],
+          "examples": [
+            "<a rel=\"mw:WikiLink\" href=\"/wiki/ghost_town#English\" title=\"ghost town\"><b>ghost</b> town</a>",
+            "<a rel=\"mw:WikiLink\" href=\"/wiki/ghost_ship#English\" title=\"ghost ship\"><b>ghost</b> ship</a>"
+          ]
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt136\" typeof=\"mw:Transclusion\"></span> Remnant; <a rel=\"mw:WikiLink\" href=\"/wiki/remain#Noun\" title=\"remain\">remains</a>.",
+          "parsedExamples": [
+            {
+              "example": "<b>ghost</b> apples (a thin layer of ice in the shape of an apple, which forms around it and is left behind when the apple rots and falls out)"
+            },
+            {
+              "example": "<b>ghost</b> fossils (impressions of things like shells that remain in the rock after the shell etc dissolves)"
+            },
+            {
+              "example": "<b>ghost</b> cell"
+            },
+            {
+              "example": "<b>ghost</b> craters (craters that have been filled, e.g. with volcanic deposits)"
+            },
+            {
+              "example": "<a rel=\"mw:WikiLink\" href=\"/wiki/ghost_image#English\" title=\"ghost image\"><b>ghost</b> image</a>"
+            }
+          ],
+          "examples": [
+            "<b>ghost</b> apples (a thin layer of ice in the shape of an apple, which forms around it and is left behind when the apple rots and falls out)",
+            "<b>ghost</b> fossils (impressions of things like shells that remain in the rock after the shell etc dissolves)",
+            "<b>ghost</b> cell",
+            "<b>ghost</b> craters (craters that have been filled, e.g. with volcanic deposits)",
+            "<a rel=\"mw:WikiLink\" href=\"/wiki/ghost_image#English\" title=\"ghost image\"><b>ghost</b> image</a>"
+          ]
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt142\" typeof=\"mw:Transclusion\"></span> Perceived or listed but not <span class=\"Latn\" lang=\"en\" about=\"#mwt143\" typeof=\"mw:Transclusion\"><a rel=\"mw:WikiLink\" href=\"/wiki/real#English\" title=\"real\">real</a></span>.",
+          "parsedExamples": [
+            {
+              "example": "<b>ghost</b> cellphone vibration"
+            },
+            {
+              "example": "<b>ghost</b> pain"
+            },
+            {
+              "example": "<a rel=\"mw:WikiLink\" href=\"/wiki/ghost_island#English\" title=\"ghost island\"><b>ghost</b> island</a>"
+            },
+            {
+              "example": "<a rel=\"mw:WikiLink\" href=\"/wiki/ghost_voter#English\" title=\"ghost voter\"><b>ghost</b> voter</a>"
+            },
+            {
+              "example": "<b>ghost</b> job"
+            }
+          ],
+          "examples": [
+            "<b>ghost</b> cellphone vibration",
+            "<b>ghost</b> pain",
+            "<a rel=\"mw:WikiLink\" href=\"/wiki/ghost_island#English\" title=\"ghost island\"><b>ghost</b> island</a>",
+            "<a rel=\"mw:WikiLink\" href=\"/wiki/ghost_voter#English\" title=\"ghost voter\"><b>ghost</b> voter</a>",
+            "<b>ghost</b> job"
+          ]
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt149\" typeof=\"mw:Transclusion\"></span> Of a <a rel=\"mw:WikiLink\" href=\"/wiki/cryptid\" title=\"cryptid\">cryptid</a>, <a rel=\"mw:WikiLink\" href=\"/wiki/supernatural\" title=\"supernatural\">supernatural</a> or <a rel=\"mw:WikiLink\" href=\"/wiki/extraterrestrial\" title=\"extraterrestrial\">extraterrestrial</a> nature.",
+          "parsedExamples": [
+            {
+              "example": "<a rel=\"mw:WikiLink\" href=\"/wiki/ghost_rocket#English\" title=\"ghost rocket\"><b>ghost</b> rocket</a>"
+            },
+            {
+              "example": "<a rel=\"mw:WikiLink\" href=\"/wiki/ghost_deer#English\" title=\"ghost deer\"><b>ghost</b> deer</a>"
+            }
+          ],
+          "examples": [
+            "<a rel=\"mw:WikiLink\" href=\"/wiki/ghost_rocket#English\" title=\"ghost rocket\"><b>ghost</b> rocket</a>",
+            "<a rel=\"mw:WikiLink\" href=\"/wiki/ghost_deer#English\" title=\"ghost deer\"><b>ghost</b> deer</a>"
+          ]
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt152\" typeof=\"mw:Transclusion\"></span> <a rel=\"mw:WikiLink\" href=\"/wiki/substitute\" title=\"substitute\">Substitute</a>.",
+          "parsedExamples": [
+            {
+              "example": "<a rel=\"mw:WikiLink\" href=\"/wiki/ghost_writer#English\" title=\"ghost writer\"><b>ghost</b> writer</a>"
+            },
+            {
+              "example": "<b>ghost</b> singer"
+            }
+          ],
+          "examples": [
+            "<a rel=\"mw:WikiLink\" href=\"/wiki/ghost_writer#English\" title=\"ghost writer\"><b>ghost</b> writer</a>",
+            "<b>ghost</b> singer"
+          ]
+        }
+      ]
+    },
+    {
+      "partOfSpeech": "Adjective",
+      "language": "English",
+      "definitions": [
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt309\" typeof=\"mw:Transclusion\"></span> <i>In the form</i> <b>be ghost</b>: not <a rel=\"mw:WikiLink\" href=\"/wiki/present#Adjective\" title=\"present\">present</a> or <a rel=\"mw:WikiLink\" href=\"/wiki/involved#Adjective\" title=\"involved\">involved</a>; <a rel=\"mw:WikiLink\" href=\"/wiki/absent#Adjective\" title=\"absent\">absent</a>, <a rel=\"mw:WikiLink\" href=\"/wiki/gone#Adjective\" title=\"gone\">gone</a>."
+        }
+      ]
+    },
+    {
+      "partOfSpeech": "Verb",
+      "language": "English",
+      "definitions": [
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt314\" typeof=\"mw:Transclusion\"></span>\n<ol><li><span class=\"usage-label-sense\" about=\"#mwt315\" typeof=\"mw:Transclusion\"></span>\n<ol><li>Of a <a rel=\"mw:WikiLink\" href=\"/wiki/disembodied#Adjective\" title=\"disembodied\">disembodied</a> <a rel=\"mw:WikiLink\" href=\"/wiki/soul#Noun\" title=\"soul\">soul</a>: to appear (somewhere or to someone) in the <a rel=\"mw:WikiLink\" href=\"/wiki/form#Noun\" title=\"form\">form</a> of an <a rel=\"mw:WikiLink\" href=\"/wiki/apparition\" title=\"apparition\">apparition</a>; to <a rel=\"mw:WikiLink\" href=\"/wiki/haunt#Verb\" title=\"haunt\">haunt</a>.\n</li>\n<li>To <a rel=\"mw:WikiLink\" href=\"/wiki/imbue\" title=\"imbue\">imbue</a> (something) with a <a rel=\"mw:WikiLink\" href=\"/wiki/ghostlike\" title=\"ghostlike\">ghost-like</a> <a rel=\"mw:WikiLink\" href=\"/wiki/effect#Noun\" title=\"effect\">effect</a> or <a rel=\"mw:WikiLink\" href=\"/wiki/hue\" title=\"hue\">hue</a>.\n</li></ol></li>\n<li><span class=\"usage-label-sense\" about=\"#mwt318\" typeof=\"mw:Transclusion\"></span>\n<ol><li>To <a rel=\"mw:WikiLink\" href=\"/wiki/continuously\" title=\"continuously\">continuously</a> <a rel=\"mw:WikiLink\" href=\"/wiki/cause#Verb\" title=\"cause\">cause</a> (someone or something) <a rel=\"mw:WikiLink\" href=\"/wiki/trouble#Verb\" title=\"trouble\">trouble</a>; specifically, to continuously be in the <a rel=\"mw:WikiLink\" href=\"/wiki/thought#Noun\" title=\"thought\">thoughts</a> of (someone) in a <a rel=\"mw:WikiLink\" href=\"/wiki/disturbing#Adjective\" title=\"disturbing\">disturbing</a> <a rel=\"mw:WikiLink\" href=\"/wiki/manner#Noun\" title=\"manner\">manner</a>; to <a rel=\"mw:WikiLink\" href=\"/wiki/perturb\" title=\"perturb\">perturb</a>, to <a rel=\"mw:WikiLink\" href=\"/wiki/trouble#Verb\" title=\"trouble\">trouble</a>.</li>\n<li><span class=\"usage-label-sense\" about=\"#mwt319\" typeof=\"mw:Transclusion\"></span> To <a rel=\"mw:WikiLink\" href=\"/wiki/kill#Verb\" title=\"kill\">kill</a> (someone).\n</li>\n<li><span class=\"usage-label-sense\" about=\"#mwt324\" typeof=\"mw:Transclusion\"></span>\n<ol><li><span class=\"usage-label-sense\" about=\"#mwt325\" typeof=\"mw:Transclusion\"></span> To <a rel=\"mw:WikiLink\" href=\"/wiki/gray_out\" title=\"gray out\">gray out</a> (a <a rel=\"mw:WikiLink\" href=\"/wiki/visual#Adjective\" title=\"visual\">visual</a> <a rel=\"mw:WikiLink\" href=\"/wiki/element#Noun\" title=\"element\">element</a>) to <a rel=\"mw:WikiLink\" href=\"/wiki/indicate\" title=\"indicate\">indicate</a> that it is <a rel=\"mw:WikiLink\" href=\"/wiki/unavailable#Adjective\" title=\"unavailable\">unavailable</a>.\n</li>\n<li><span class=\"usage-label-sense\" about=\"#mwt327\" typeof=\"mw:Transclusion\"></span> To <a rel=\"mw:WikiLink\" href=\"/wiki/forcibly\" title=\"forcibly\">forcibly</a> <a rel=\"mw:WikiLink\" href=\"/wiki/disconnect#Verb\" title=\"disconnect\">disconnect</a> (an <a rel=\"mw:WikiLink\" href=\"/wiki/IRC\" title=\"IRC\">IRC</a> <a rel=\"mw:WikiLink\" href=\"/wiki/user\" title=\"user\">user</a>) who is <a rel=\"mw:WikiLink\" href=\"/wiki/use#Verb\" title=\"use\">using</a> one's <a rel=\"mw:WikiLink\" href=\"/wiki/reserved#Adjective\" title=\"reserved\">reserved</a> <a rel=\"mw:WikiLink\" href=\"/wiki/nickname#Noun\" title=\"nickname\">nickname</a>.\n</li></ol></li>\n<li><span class=\"usage-label-sense\" about=\"#mwt329\" typeof=\"mw:Transclusion\"></span> To <a rel=\"mw:WikiLink\" href=\"/wiki/stop#Verb\" title=\"stop\">stop</a> <a rel=\"mw:WikiLink\" href=\"/wiki/communicate#Verb\" title=\"communicate\">communicating</a> with (someone) on <a rel=\"mw:WikiLink\" href=\"/wiki/social_media\" title=\"social media\">social media</a>, through <a rel=\"mw:WikiLink\" href=\"/wiki/text_message\" title=\"text message\">text messages</a>, etc., without <a rel=\"mw:WikiLink\" href=\"/wiki/explanation\" title=\"explanation\">explanation</a>, especially as a <a rel=\"mw:WikiLink\" href=\"/wiki/way#Noun\" title=\"way\">way</a> of <a rel=\"mw:WikiLink\" href=\"/wiki/end#Verb\" title=\"end\">ending</a> a <a rel=\"mw:WikiLink\" href=\"/wiki/relationship\" title=\"relationship\">relationship</a>; hence, to end a relationship with (someone) by stopping all <a rel=\"mw:WikiLink\" href=\"/wiki/communication\" title=\"communication\">communication</a> without explanation.\n</li>\n<li><span class=\"usage-label-sense\" about=\"#mwt334\" typeof=\"mw:Transclusion\"></span> To <a rel=\"mw:WikiLink\" href=\"/wiki/transfer#Verb\" title=\"transfer\">transfer</a> (a <a rel=\"mw:WikiLink\" href=\"/wiki/prisoner\" title=\"prisoner\">prisoner</a>) to another <a rel=\"mw:WikiLink\" href=\"/wiki/prison#Noun\" title=\"prison\">prison</a>, usually without <a rel=\"mw:WikiLink\" href=\"/wiki/first#Adverb\" title=\"first\">first</a> <a rel=\"mw:WikiLink\" href=\"/wiki/inform#Verb\" title=\"inform\">informing</a> the prisoner.\n</li></ol></li>\n<li><span class=\"form-of-definition use-with-mention\" about=\"#mwt336\" typeof=\"mw:Transclusion\">Synonym of <span class=\"form-of-definition-link\"><i class=\"Latn mention\" lang=\"en\"><a rel=\"mw:WikiLink\" href=\"/wiki/ghostwrite#English\" title=\"ghostwrite\">ghostwrite</a></i> <span class=\"mention-gloss-paren annotation-paren\">(</span><span class=\"mention-gloss-double-quote\">“</span><span class=\"mention-gloss\">to <a rel=\"mw:WikiLink\" href=\"/wiki/write#Verb\" title=\"write\">write</a> (a <a rel=\"mw:WikiLink\" href=\"/wiki/literary\" title=\"literary\">literary</a> <a rel=\"mw:WikiLink\" href=\"/wiki/work#Noun\" title=\"work\">work</a> or <a rel=\"mw:WikiLink\" href=\"/wiki/speech#Noun\" title=\"speech\">speech</a>), or <a rel=\"mw:WikiLink\" href=\"/wiki/produce#Verb\" title=\"produce\">produce</a> (an <a rel=\"mw:WikiLink\" href=\"/wiki/artistic#Adjective\" title=\"artistic\">artistic</a> work)), in the <a rel=\"mw:WikiLink\" href=\"/wiki/place#Noun\" title=\"place\">place</a> of someone</span><span class=\"mention-gloss-double-quote\">”</span><span class=\"mention-gloss-paren annotation-paren\">)</span></span></span>; also, to <a rel=\"mw:WikiLink\" href=\"/wiki/carry_out\" title=\"carry out\">carry out</a> (an artistic <a rel=\"mw:WikiLink\" href=\"/wiki/performance\" title=\"performance\">performance</a>) in the place of someone.\n</li></ol>"
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt315\" typeof=\"mw:Transclusion\"></span>\n<ol><li>Of a <a rel=\"mw:WikiLink\" href=\"/wiki/disembodied#Adjective\" title=\"disembodied\">disembodied</a> <a rel=\"mw:WikiLink\" href=\"/wiki/soul#Noun\" title=\"soul\">soul</a>: to appear (somewhere or to someone) in the <a rel=\"mw:WikiLink\" href=\"/wiki/form#Noun\" title=\"form\">form</a> of an <a rel=\"mw:WikiLink\" href=\"/wiki/apparition\" title=\"apparition\">apparition</a>; to <a rel=\"mw:WikiLink\" href=\"/wiki/haunt#Verb\" title=\"haunt\">haunt</a>.\n</li>\n<li>To <a rel=\"mw:WikiLink\" href=\"/wiki/imbue\" title=\"imbue\">imbue</a> (something) with a <a rel=\"mw:WikiLink\" href=\"/wiki/ghostlike\" title=\"ghostlike\">ghost-like</a> <a rel=\"mw:WikiLink\" href=\"/wiki/effect#Noun\" title=\"effect\">effect</a> or <a rel=\"mw:WikiLink\" href=\"/wiki/hue\" title=\"hue\">hue</a>.\n</li></ol>"
+        },
+        {
+          "definition": "Of a <a rel=\"mw:WikiLink\" href=\"/wiki/disembodied#Adjective\" title=\"disembodied\">disembodied</a> <a rel=\"mw:WikiLink\" href=\"/wiki/soul#Noun\" title=\"soul\">soul</a>: to appear (somewhere or to someone) in the <a rel=\"mw:WikiLink\" href=\"/wiki/form#Noun\" title=\"form\">form</a> of an <a rel=\"mw:WikiLink\" href=\"/wiki/apparition\" title=\"apparition\">apparition</a>; to <a rel=\"mw:WikiLink\" href=\"/wiki/haunt#Verb\" title=\"haunt\">haunt</a>."
+        },
+        {
+          "definition": "To <a rel=\"mw:WikiLink\" href=\"/wiki/imbue\" title=\"imbue\">imbue</a> (something) with a <a rel=\"mw:WikiLink\" href=\"/wiki/ghostlike\" title=\"ghostlike\">ghost-like</a> <a rel=\"mw:WikiLink\" href=\"/wiki/effect#Noun\" title=\"effect\">effect</a> or <a rel=\"mw:WikiLink\" href=\"/wiki/hue\" title=\"hue\">hue</a>."
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt318\" typeof=\"mw:Transclusion\"></span>\n<ol><li>To <a rel=\"mw:WikiLink\" href=\"/wiki/continuously\" title=\"continuously\">continuously</a> <a rel=\"mw:WikiLink\" href=\"/wiki/cause#Verb\" title=\"cause\">cause</a> (someone or something) <a rel=\"mw:WikiLink\" href=\"/wiki/trouble#Verb\" title=\"trouble\">trouble</a>; specifically, to continuously be in the <a rel=\"mw:WikiLink\" href=\"/wiki/thought#Noun\" title=\"thought\">thoughts</a> of (someone) in a <a rel=\"mw:WikiLink\" href=\"/wiki/disturbing#Adjective\" title=\"disturbing\">disturbing</a> <a rel=\"mw:WikiLink\" href=\"/wiki/manner#Noun\" title=\"manner\">manner</a>; to <a rel=\"mw:WikiLink\" href=\"/wiki/perturb\" title=\"perturb\">perturb</a>, to <a rel=\"mw:WikiLink\" href=\"/wiki/trouble#Verb\" title=\"trouble\">trouble</a>.</li>\n<li><span class=\"usage-label-sense\" about=\"#mwt319\" typeof=\"mw:Transclusion\"></span> To <a rel=\"mw:WikiLink\" href=\"/wiki/kill#Verb\" title=\"kill\">kill</a> (someone).\n</li>\n<li><span class=\"usage-label-sense\" about=\"#mwt324\" typeof=\"mw:Transclusion\"></span>\n<ol><li><span class=\"usage-label-sense\" about=\"#mwt325\" typeof=\"mw:Transclusion\"></span> To <a rel=\"mw:WikiLink\" href=\"/wiki/gray_out\" title=\"gray out\">gray out</a> (a <a rel=\"mw:WikiLink\" href=\"/wiki/visual#Adjective\" title=\"visual\">visual</a> <a rel=\"mw:WikiLink\" href=\"/wiki/element#Noun\" title=\"element\">element</a>) to <a rel=\"mw:WikiLink\" href=\"/wiki/indicate\" title=\"indicate\">indicate</a> that it is <a rel=\"mw:WikiLink\" href=\"/wiki/unavailable#Adjective\" title=\"unavailable\">unavailable</a>.\n</li>\n<li><span class=\"usage-label-sense\" about=\"#mwt327\" typeof=\"mw:Transclusion\"></span> To <a rel=\"mw:WikiLink\" href=\"/wiki/forcibly\" title=\"forcibly\">forcibly</a> <a rel=\"mw:WikiLink\" href=\"/wiki/disconnect#Verb\" title=\"disconnect\">disconnect</a> (an <a rel=\"mw:WikiLink\" href=\"/wiki/IRC\" title=\"IRC\">IRC</a> <a rel=\"mw:WikiLink\" href=\"/wiki/user\" title=\"user\">user</a>) who is <a rel=\"mw:WikiLink\" href=\"/wiki/use#Verb\" title=\"use\">using</a> one's <a rel=\"mw:WikiLink\" href=\"/wiki/reserved#Adjective\" title=\"reserved\">reserved</a> <a rel=\"mw:WikiLink\" href=\"/wiki/nickname#Noun\" title=\"nickname\">nickname</a>.\n</li></ol></li>\n<li><span class=\"usage-label-sense\" about=\"#mwt329\" typeof=\"mw:Transclusion\"></span> To <a rel=\"mw:WikiLink\" href=\"/wiki/stop#Verb\" title=\"stop\">stop</a> <a rel=\"mw:WikiLink\" href=\"/wiki/communicate#Verb\" title=\"communicate\">communicating</a> with (someone) on <a rel=\"mw:WikiLink\" href=\"/wiki/social_media\" title=\"social media\">social media</a>, through <a rel=\"mw:WikiLink\" href=\"/wiki/text_message\" title=\"text message\">text messages</a>, etc., without <a rel=\"mw:WikiLink\" href=\"/wiki/explanation\" title=\"explanation\">explanation</a>, especially as a <a rel=\"mw:WikiLink\" href=\"/wiki/way#Noun\" title=\"way\">way</a> of <a rel=\"mw:WikiLink\" href=\"/wiki/end#Verb\" title=\"end\">ending</a> a <a rel=\"mw:WikiLink\" href=\"/wiki/relationship\" title=\"relationship\">relationship</a>; hence, to end a relationship with (someone) by stopping all <a rel=\"mw:WikiLink\" href=\"/wiki/communication\" title=\"communication\">communication</a> without explanation.\n</li>\n<li><span class=\"usage-label-sense\" about=\"#mwt334\" typeof=\"mw:Transclusion\"></span> To <a rel=\"mw:WikiLink\" href=\"/wiki/transfer#Verb\" title=\"transfer\">transfer</a> (a <a rel=\"mw:WikiLink\" href=\"/wiki/prisoner\" title=\"prisoner\">prisoner</a>) to another <a rel=\"mw:WikiLink\" href=\"/wiki/prison#Noun\" title=\"prison\">prison</a>, usually without <a rel=\"mw:WikiLink\" href=\"/wiki/first#Adverb\" title=\"first\">first</a> <a rel=\"mw:WikiLink\" href=\"/wiki/inform#Verb\" title=\"inform\">informing</a> the prisoner.\n</li></ol>"
+        },
+        {
+          "definition": "To <a rel=\"mw:WikiLink\" href=\"/wiki/continuously\" title=\"continuously\">continuously</a> <a rel=\"mw:WikiLink\" href=\"/wiki/cause#Verb\" title=\"cause\">cause</a> (someone or something) <a rel=\"mw:WikiLink\" href=\"/wiki/trouble#Verb\" title=\"trouble\">trouble</a>; specifically, to continuously be in the <a rel=\"mw:WikiLink\" href=\"/wiki/thought#Noun\" title=\"thought\">thoughts</a> of (someone) in a <a rel=\"mw:WikiLink\" href=\"/wiki/disturbing#Adjective\" title=\"disturbing\">disturbing</a> <a rel=\"mw:WikiLink\" href=\"/wiki/manner#Noun\" title=\"manner\">manner</a>; to <a rel=\"mw:WikiLink\" href=\"/wiki/perturb\" title=\"perturb\">perturb</a>, to <a rel=\"mw:WikiLink\" href=\"/wiki/trouble#Verb\" title=\"trouble\">trouble</a>."
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt319\" typeof=\"mw:Transclusion\"></span> To <a rel=\"mw:WikiLink\" href=\"/wiki/kill#Verb\" title=\"kill\">kill</a> (someone)."
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt324\" typeof=\"mw:Transclusion\"></span>\n<ol><li><span class=\"usage-label-sense\" about=\"#mwt325\" typeof=\"mw:Transclusion\"></span> To <a rel=\"mw:WikiLink\" href=\"/wiki/gray_out\" title=\"gray out\">gray out</a> (a <a rel=\"mw:WikiLink\" href=\"/wiki/visual#Adjective\" title=\"visual\">visual</a> <a rel=\"mw:WikiLink\" href=\"/wiki/element#Noun\" title=\"element\">element</a>) to <a rel=\"mw:WikiLink\" href=\"/wiki/indicate\" title=\"indicate\">indicate</a> that it is <a rel=\"mw:WikiLink\" href=\"/wiki/unavailable#Adjective\" title=\"unavailable\">unavailable</a>.\n</li>\n<li><span class=\"usage-label-sense\" about=\"#mwt327\" typeof=\"mw:Transclusion\"></span> To <a rel=\"mw:WikiLink\" href=\"/wiki/forcibly\" title=\"forcibly\">forcibly</a> <a rel=\"mw:WikiLink\" href=\"/wiki/disconnect#Verb\" title=\"disconnect\">disconnect</a> (an <a rel=\"mw:WikiLink\" href=\"/wiki/IRC\" title=\"IRC\">IRC</a> <a rel=\"mw:WikiLink\" href=\"/wiki/user\" title=\"user\">user</a>) who is <a rel=\"mw:WikiLink\" href=\"/wiki/use#Verb\" title=\"use\">using</a> one's <a rel=\"mw:WikiLink\" href=\"/wiki/reserved#Adjective\" title=\"reserved\">reserved</a> <a rel=\"mw:WikiLink\" href=\"/wiki/nickname#Noun\" title=\"nickname\">nickname</a>.\n</li></ol>"
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt325\" typeof=\"mw:Transclusion\"></span> To <a rel=\"mw:WikiLink\" href=\"/wiki/gray_out\" title=\"gray out\">gray out</a> (a <a rel=\"mw:WikiLink\" href=\"/wiki/visual#Adjective\" title=\"visual\">visual</a> <a rel=\"mw:WikiLink\" href=\"/wiki/element#Noun\" title=\"element\">element</a>) to <a rel=\"mw:WikiLink\" href=\"/wiki/indicate\" title=\"indicate\">indicate</a> that it is <a rel=\"mw:WikiLink\" href=\"/wiki/unavailable#Adjective\" title=\"unavailable\">unavailable</a>."
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt327\" typeof=\"mw:Transclusion\"></span> To <a rel=\"mw:WikiLink\" href=\"/wiki/forcibly\" title=\"forcibly\">forcibly</a> <a rel=\"mw:WikiLink\" href=\"/wiki/disconnect#Verb\" title=\"disconnect\">disconnect</a> (an <a rel=\"mw:WikiLink\" href=\"/wiki/IRC\" title=\"IRC\">IRC</a> <a rel=\"mw:WikiLink\" href=\"/wiki/user\" title=\"user\">user</a>) who is <a rel=\"mw:WikiLink\" href=\"/wiki/use#Verb\" title=\"use\">using</a> one's <a rel=\"mw:WikiLink\" href=\"/wiki/reserved#Adjective\" title=\"reserved\">reserved</a> <a rel=\"mw:WikiLink\" href=\"/wiki/nickname#Noun\" title=\"nickname\">nickname</a>."
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt329\" typeof=\"mw:Transclusion\"></span> To <a rel=\"mw:WikiLink\" href=\"/wiki/stop#Verb\" title=\"stop\">stop</a> <a rel=\"mw:WikiLink\" href=\"/wiki/communicate#Verb\" title=\"communicate\">communicating</a> with (someone) on <a rel=\"mw:WikiLink\" href=\"/wiki/social_media\" title=\"social media\">social media</a>, through <a rel=\"mw:WikiLink\" href=\"/wiki/text_message\" title=\"text message\">text messages</a>, etc., without <a rel=\"mw:WikiLink\" href=\"/wiki/explanation\" title=\"explanation\">explanation</a>, especially as a <a rel=\"mw:WikiLink\" href=\"/wiki/way#Noun\" title=\"way\">way</a> of <a rel=\"mw:WikiLink\" href=\"/wiki/end#Verb\" title=\"end\">ending</a> a <a rel=\"mw:WikiLink\" href=\"/wiki/relationship\" title=\"relationship\">relationship</a>; hence, to end a relationship with (someone) by stopping all <a rel=\"mw:WikiLink\" href=\"/wiki/communication\" title=\"communication\">communication</a> without explanation."
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt334\" typeof=\"mw:Transclusion\"></span> To <a rel=\"mw:WikiLink\" href=\"/wiki/transfer#Verb\" title=\"transfer\">transfer</a> (a <a rel=\"mw:WikiLink\" href=\"/wiki/prisoner\" title=\"prisoner\">prisoner</a>) to another <a rel=\"mw:WikiLink\" href=\"/wiki/prison#Noun\" title=\"prison\">prison</a>, usually without <a rel=\"mw:WikiLink\" href=\"/wiki/first#Adverb\" title=\"first\">first</a> <a rel=\"mw:WikiLink\" href=\"/wiki/inform#Verb\" title=\"inform\">informing</a> the prisoner."
+        },
+        {
+          "definition": "<span class=\"form-of-definition use-with-mention\" about=\"#mwt336\" typeof=\"mw:Transclusion\">Synonym of <span class=\"form-of-definition-link\"><i class=\"Latn mention\" lang=\"en\"><a rel=\"mw:WikiLink\" href=\"/wiki/ghostwrite#English\" title=\"ghostwrite\">ghostwrite</a></i> <span class=\"mention-gloss-paren annotation-paren\">(</span><span class=\"mention-gloss-double-quote\">“</span><span class=\"mention-gloss\">to <a rel=\"mw:WikiLink\" href=\"/wiki/write#Verb\" title=\"write\">write</a> (a <a rel=\"mw:WikiLink\" href=\"/wiki/literary\" title=\"literary\">literary</a> <a rel=\"mw:WikiLink\" href=\"/wiki/work#Noun\" title=\"work\">work</a> or <a rel=\"mw:WikiLink\" href=\"/wiki/speech#Noun\" title=\"speech\">speech</a>), or <a rel=\"mw:WikiLink\" href=\"/wiki/produce#Verb\" title=\"produce\">produce</a> (an <a rel=\"mw:WikiLink\" href=\"/wiki/artistic#Adjective\" title=\"artistic\">artistic</a> work)), in the <a rel=\"mw:WikiLink\" href=\"/wiki/place#Noun\" title=\"place\">place</a> of someone</span><span class=\"mention-gloss-double-quote\">”</span><span class=\"mention-gloss-paren annotation-paren\">)</span></span></span>; also, to <a rel=\"mw:WikiLink\" href=\"/wiki/carry_out\" title=\"carry out\">carry out</a> (an artistic <a rel=\"mw:WikiLink\" href=\"/wiki/performance\" title=\"performance\">performance</a>) in the place of someone."
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt340\" typeof=\"mw:Transclusion\"></span>\n<ol><li>To <a rel=\"mw:WikiLink\" href=\"/wiki/appear\" title=\"appear\">appear</a> <a rel=\"mw:WikiLink\" href=\"/wiki/suddenly\" title=\"suddenly\">suddenly</a> or <a rel=\"mw:WikiLink\" href=\"/wiki/move#Verb\" title=\"move\">move</a> like a disembodied soul; specifically <span class=\"usage-label-sense\" about=\"#mwt341\" typeof=\"mw:Transclusion\"></span>; <i>also</i> <span class=\"usage-label-sense\" about=\"#mwt342\" typeof=\"mw:Transclusion\"></span> <i>followed by the <a rel=\"mw:WikiLink\" href=\"/wiki/dummy_subject\" title=\"dummy subject\">dummy subject</a></i> <b><a rel=\"mw:WikiLink\" href=\"/wiki/it#Pronoun\" title=\"it\">it</a></b>: to move <a rel=\"mw:WikiLink\" href=\"/wiki/easily\" title=\"easily\">easily</a> and <a rel=\"mw:WikiLink\" href=\"/wiki/quietly\" title=\"quietly\">quietly</a> without anyone <a rel=\"mw:WikiLink\" href=\"/wiki/notice#Verb\" title=\"notice\">noticing</a>; to <a rel=\"mw:WikiLink\" href=\"/wiki/slip#Verb\" title=\"slip\">slip</a>.\n</li>\n<li><i>Followed by</i> <b><a rel=\"mw:WikiLink\" href=\"/wiki/for\" title=\"for\">for</a></b>: <span class=\"form-of-definition use-with-mention\" about=\"#mwt346\" typeof=\"mw:Transclusion\">synonym of <span class=\"form-of-definition-link\"><i class=\"Latn mention\" lang=\"en\"><a rel=\"mw:WikiLink\" href=\"/wiki/ghostwrite#English\" title=\"ghostwrite\">ghostwrite</a></i> <span class=\"mention-gloss-paren annotation-paren\">(</span><span class=\"mention-gloss-double-quote\">“</span><span class=\"mention-gloss\">to write a literary work or speech, or produce an artistic work, in the place of someone</span><span class=\"mention-gloss-double-quote\">”</span><span class=\"mention-gloss-paren annotation-paren\">)</span></span></span>; also, to carry out an artistic performance in the place of someone.</li>\n<li><span class=\"usage-label-sense\" about=\"#mwt347\" typeof=\"mw:Transclusion\"></span> Of a <a rel=\"mw:WikiLink\" href=\"/wiki/sailing_vessel\" title=\"sailing vessel\">sailing vessel</a>: to <a rel=\"mw:WikiLink\" href=\"/wiki/sail#Verb\" title=\"sail\">sail</a> <a rel=\"mw:WikiLink\" href=\"/wiki/seemingly\" title=\"seemingly\">seemingly</a> with very little or no <a rel=\"mw:WikiLink\" href=\"/wiki/wind#Noun\" title=\"wind\">wind</a>.\n</li>\n<li><span class=\"usage-label-sense\" about=\"#mwt349\" typeof=\"mw:Transclusion\"></span> <i about=\"#mwt351\" typeof=\"mw:Transclusion\">Apparently only in the <a rel=\"mw:WikiLink\" href=\"/wiki/writing#Noun\" title=\"writing\">writings</a> of the <a rel=\"mw:WikiLink\" href=\"/wiki/Dutch#Adjective\" title=\"Dutch\">Dutch</a>-<a rel=\"mw:WikiLink\" href=\"/wiki/English#Adjective\" title=\"English\">English</a> <a rel=\"mw:WikiLink\" href=\"/wiki/physician\" title=\"physician\">physician</a> <a rel=\"mw:WikiLink/Interwiki\" href=\"https://en.wikipedia.org/wiki/Gideon%20Harvey\" title=\"w:Gideon Harvey\" class=\"extiw\">Gideon Harvey</a> (</i><a rel=\"mw:WikiLink\" href=\"/wiki/Appendix:Glossary#c.\" title=\"Appendix:Glossary\" about=\"#mwt351\"><abbr title=\"circa\">c.</abbr></a><i about=\"#mwt351\"><span typeof=\"mw:Entity\">&nbsp;</span>1636–1640<span typeof=\"mw:Entity\">&nbsp;</span>– </i>c.<i> 1700–1702)</i>: to <a rel=\"mw:WikiLink\" href=\"/wiki/die#Verb\" title=\"die\">die</a>, to <a rel=\"mw:WikiLink\" href=\"/wiki/expire\" title=\"expire\">expire</a>.</li></ol>"
+        },
+        {
+          "definition": "To <a rel=\"mw:WikiLink\" href=\"/wiki/appear\" title=\"appear\">appear</a> <a rel=\"mw:WikiLink\" href=\"/wiki/suddenly\" title=\"suddenly\">suddenly</a> or <a rel=\"mw:WikiLink\" href=\"/wiki/move#Verb\" title=\"move\">move</a> like a disembodied soul; specifically <span class=\"usage-label-sense\" about=\"#mwt341\" typeof=\"mw:Transclusion\"></span>; <i>also</i> <span class=\"usage-label-sense\" about=\"#mwt342\" typeof=\"mw:Transclusion\"></span> <i>followed by the <a rel=\"mw:WikiLink\" href=\"/wiki/dummy_subject\" title=\"dummy subject\">dummy subject</a></i> <b><a rel=\"mw:WikiLink\" href=\"/wiki/it#Pronoun\" title=\"it\">it</a></b>: to move <a rel=\"mw:WikiLink\" href=\"/wiki/easily\" title=\"easily\">easily</a> and <a rel=\"mw:WikiLink\" href=\"/wiki/quietly\" title=\"quietly\">quietly</a> without anyone <a rel=\"mw:WikiLink\" href=\"/wiki/notice#Verb\" title=\"notice\">noticing</a>; to <a rel=\"mw:WikiLink\" href=\"/wiki/slip#Verb\" title=\"slip\">slip</a>."
+        },
+        {
+          "definition": "<i>Followed by</i> <b><a rel=\"mw:WikiLink\" href=\"/wiki/for\" title=\"for\">for</a></b>: <span class=\"form-of-definition use-with-mention\" about=\"#mwt346\" typeof=\"mw:Transclusion\">synonym of <span class=\"form-of-definition-link\"><i class=\"Latn mention\" lang=\"en\"><a rel=\"mw:WikiLink\" href=\"/wiki/ghostwrite#English\" title=\"ghostwrite\">ghostwrite</a></i> <span class=\"mention-gloss-paren annotation-paren\">(</span><span class=\"mention-gloss-double-quote\">“</span><span class=\"mention-gloss\">to write a literary work or speech, or produce an artistic work, in the place of someone</span><span class=\"mention-gloss-double-quote\">”</span><span class=\"mention-gloss-paren annotation-paren\">)</span></span></span>; also, to carry out an artistic performance in the place of someone."
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt347\" typeof=\"mw:Transclusion\"></span> Of a <a rel=\"mw:WikiLink\" href=\"/wiki/sailing_vessel\" title=\"sailing vessel\">sailing vessel</a>: to <a rel=\"mw:WikiLink\" href=\"/wiki/sail#Verb\" title=\"sail\">sail</a> <a rel=\"mw:WikiLink\" href=\"/wiki/seemingly\" title=\"seemingly\">seemingly</a> with very little or no <a rel=\"mw:WikiLink\" href=\"/wiki/wind#Noun\" title=\"wind\">wind</a>."
+        },
+        {
+          "definition": "<span class=\"usage-label-sense\" about=\"#mwt349\" typeof=\"mw:Transclusion\"></span> <i about=\"#mwt351\" typeof=\"mw:Transclusion\">Apparently only in the <a rel=\"mw:WikiLink\" href=\"/wiki/writing#Noun\" title=\"writing\">writings</a> of the <a rel=\"mw:WikiLink\" href=\"/wiki/Dutch#Adjective\" title=\"Dutch\">Dutch</a>-<a rel=\"mw:WikiLink\" href=\"/wiki/English#Adjective\" title=\"English\">English</a> <a rel=\"mw:WikiLink\" href=\"/wiki/physician\" title=\"physician\">physician</a> <a rel=\"mw:WikiLink/Interwiki\" href=\"https://en.wikipedia.org/wiki/Gideon%20Harvey\" title=\"w:Gideon Harvey\" class=\"extiw\">Gideon Harvey</a> (</i><a rel=\"mw:WikiLink\" href=\"/wiki/Appendix:Glossary#c.\" title=\"Appendix:Glossary\" about=\"#mwt351\"><abbr title=\"circa\">c.</abbr></a><i about=\"#mwt351\"><span typeof=\"mw:Entity\">&nbsp;</span>1636–1640<span typeof=\"mw:Entity\">&nbsp;</span>– </i>c.<i> 1700–1702)</i>: to <a rel=\"mw:WikiLink\" href=\"/wiki/die#Verb\" title=\"die\">die</a>, to <a rel=\"mw:WikiLink\" href=\"/wiki/expire\" title=\"expire\">expire</a>."
+        }
+      ]
+    }
+  ]
+}

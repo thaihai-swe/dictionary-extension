@@ -35,9 +35,12 @@
                     ["resistance", "Resistance means opposing something; resilience emphasizes recovering or adapting after difficulty."]
                 ],
                 sources: [
-                    ["Free Dictionary API", false],
-                    ["Google Translate", false],
-                    ["Wiktionary · enriched", true]
+                    { label: "Wiktionary", status: "contributed" },
+                    { label: "Free Dictionary API", status: "contributed" },
+                    { label: "Datamuse", status: "contributed" },
+                    { label: "RhymeBrain", status: "contributed" },
+                    { label: "Urban Dictionary", status: "no_match" },
+                    { label: "Wiktionary Bilingual", status: "contributed" }
                 ]
             },
             senses: [
@@ -162,8 +165,12 @@
                     ["let the cat out of the bag", "A close informal alternative; both mean to reveal a secret, usually by accident or too early."]
                 ],
                 sources: [
-                    ["Google Translate", false],
-                    ["AI · phrase fallback", true]
+                    { label: "Wiktionary", status: "no_match" },
+                    { label: "Free Dictionary API", status: "no_match" },
+                    { label: "Datamuse", status: "contributed" },
+                    { label: "RhymeBrain", status: "contributed" },
+                    { label: "Urban Dictionary", status: "contributed" },
+                    { label: "Wiktionary Bilingual", status: "no_match" }
                 ]
             },
             ai: {
@@ -282,8 +289,12 @@
                     ["adopt", "Adopt means begin to use something; adapt means change to suit a new condition."]
                 ],
                 sources: [
-                    ["Google Translate", false],
-                    ["AI · sentence breakdown", true]
+                    { label: "Wiktionary", status: "no_match" },
+                    { label: "Free Dictionary API", status: "contributed" },
+                    { label: "Datamuse", status: "contributed" },
+                    { label: "RhymeBrain", status: "no_match" },
+                    { label: "Urban Dictionary", status: "no_match" },
+                    { label: "Wiktionary Bilingual", status: "no_match" }
                 ]
             },
             senses: [
@@ -409,8 +420,12 @@
                     ["impact", "Impact can be a noun or verb and is often used in business writing; affect/effect remain more precise in careful prose."]
                 ],
                 sources: [
-                    ["Free Dictionary API", false],
-                    ["AI · Compare Confusables", true]
+                    { label: "Wiktionary", status: "contributed" },
+                    { label: "Free Dictionary API", status: "contributed" },
+                    { label: "Datamuse", status: "contributed" },
+                    { label: "RhymeBrain", status: "no_match" },
+                    { label: "Urban Dictionary", status: "no_match" },
+                    { label: "Wiktionary Bilingual", status: "contributed" }
                 ]
             },
             ai: {
@@ -506,11 +521,53 @@
         }
     };
 
+    const rewriteStyles = [
+        { id: "formal", label: "Polished & Formal", desc: "Refined, professional tone" },
+        { id: "natural", label: "Clear & Natural", desc: "Idiomatic and fluent native phrasing" },
+        { id: "concise", label: "Concise & Direct", desc: "Eliminates fluff and wordiness" },
+        { id: "casual", label: "Casual & Friendly", desc: "Relaxed conversational tone" }
+    ];
+
+    const rewriteSamples = {
+        formal: {
+            polished: "The engineering team’s capacity to recover under pressure enabled on-time delivery.",
+            issues: [
+                { kind: "clarity", text: "“allowed … to ship” is informal for a status update; prefer “enabled delivery.”" },
+                { kind: "tone", text: "Abstract nouns (“capacity”) raise register without changing meaning." }
+            ]
+        },
+        natural: {
+            polished: "The team bounced back under pressure and still shipped on time.",
+            issues: [
+                { kind: "clarity", text: "“Their resilience under pressure” is dense; “bounced back” carries the same idea." },
+                { kind: "tone", text: "Spoken idiom keeps the original energy without sounding stiff." }
+            ]
+        },
+        concise: {
+            polished: "Under pressure, the team still shipped on time.",
+            issues: [
+                { kind: "clarity", text: "“Their resilience … allowed” can collapse to the outcome." },
+                { kind: "tone", text: "Cuts the abstract noun; keeps the fact." }
+            ]
+        },
+        casual: {
+            polished: "They held it together under pressure and still shipped on time.",
+            issues: [
+                { kind: "tone", text: "Friendly phrasing without losing the professional fact." },
+                { kind: "clarity", text: "“Held it together” is more conversational than “resilience.”" }
+            ]
+        }
+    };
+
     const state = {
         query: "resilience",
         tab: "dictionary",
         intent: "default",
-        practiceLabel: ""
+        practiceLabel: "",
+        rewriteStyle: "natural",
+        rewriteText: null,
+        rewriteShown: false,
+        rewriteLoading: false
     };
 
     const $ = (selector, root = document) => root.querySelector(selector);
@@ -527,10 +584,31 @@
         return demoData[state.query] || demoData.resilience;
     }
 
+    function normalizeSource(source) {
+        if (Array.isArray(source)) {
+            return { label: source[0], status: source[1] ? "contributed" : "no_match" };
+        }
+        return source || { label: "Unknown source", status: "failed" };
+    }
+
+    function sourceStatusLabel(status) {
+        if (status === "contributed") return "contributed";
+        if (status === "failed") return "failed";
+        return "no usable match";
+    }
+
     function renderSources(sources, className = "source-chip") {
-        return sources.map(([label, enriched]) =>
-            `<span class="${className}${enriched ? " enriched" : ""}">${escapeHtml(label)}</span>`
-        ).join("");
+        return sources.map((source) => {
+            const item = normalizeSource(source);
+            const status = item.status || "no_match";
+            const statusClass = status === "contributed" ? " enriched" : status === "failed" ? " failed" : " no-match";
+            const statusText = sourceStatusLabel(status);
+            return `<span class="${className}${statusClass}" title="${escapeHtml(`${item.label}: ${statusText}`)}">${escapeHtml(item.label)}<small>${escapeHtml(statusText)}</small></span>`;
+        }).join("");
+    }
+
+    function sourceLabel(source) {
+        return normalizeSource(source).label;
     }
 
     function renderSenseMatrix(senses) {
@@ -633,7 +711,7 @@
             <section class="demo-definition-card">
                 <div class="demo-card-heading">
                     <p class="demo-section-label">${escapeHtml(result.partOfSpeech || "Meaning")}</p>
-                    <span class="demo-card-source">${escapeHtml(result.sources[0][0])}</span>
+                    <span class="demo-card-source">${escapeHtml(sourceLabel(result.sources[0]))}</span>
                 </div>
                 <ol class="demo-meaning-list">${meanings}</ol>
             </section>
@@ -918,6 +996,59 @@
             });
         });
 
+        const rewriteInput = $("#demo-rewrite-input");
+        rewriteInput?.addEventListener("input", () => {
+            state.rewriteText = rewriteInput.value;
+        });
+
+        $$("#demo-tab-panel [data-rewrite-style]").forEach((button) => {
+            button.addEventListener("click", () => {
+                state.rewriteStyle = button.dataset.rewriteStyle || "natural";
+                if (state.rewriteShown) renderDemo();
+                else {
+                    $$("#demo-tab-panel [data-rewrite-style]").forEach((el) => {
+                        el.classList.toggle("active", el === button);
+                    });
+                }
+            });
+        });
+
+        $("#demo-tab-panel [data-rewrite-run]")?.addEventListener("click", () => {
+            state.rewriteLoading = true;
+            state.rewriteShown = false;
+            renderDemo();
+            window.setTimeout(() => {
+                state.rewriteLoading = false;
+                state.rewriteShown = true;
+                renderDemo();
+            }, 520);
+        });
+
+        $("#demo-tab-panel [data-rewrite-clear]")?.addEventListener("click", () => {
+            state.rewriteText = "";
+            state.rewriteShown = false;
+            state.rewriteLoading = false;
+            renderDemo();
+        });
+
+        $$("#demo-tab-panel [data-demo-copy]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const sample = rewriteSamples[state.rewriteStyle] || rewriteSamples.natural;
+                const text = sample.polished || "";
+                const finish = () => {
+                    button.textContent = "Copied";
+                    window.setTimeout(() => {
+                        button.textContent = "Copy";
+                    }, 1400);
+                };
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(finish).catch(finish);
+                } else {
+                    finish();
+                }
+            });
+        });
+
         $$("#demo-tab-panel [data-demo-lookup]").forEach((button) => {
             button.addEventListener("click", () => {
                 const lookup = button.dataset.demoLookup;
@@ -930,25 +1061,106 @@
         });
     }
 
+    function defaultRewriteText(entry) {
+        return (entry && entry.context) || "Their resilience under pressure allowed the engineering team to ship on time.";
+    }
+
+    function renderRewriter(entry) {
+        const draft = state.rewriteText == null ? defaultRewriteText(entry) : state.rewriteText;
+        const sample = rewriteSamples[state.rewriteStyle] || rewriteSamples.natural;
+        const styleButtons = rewriteStyles.map((style) => `
+            <button type="button" class="demo-rewriter-style-btn${state.rewriteStyle === style.id ? " active" : ""}" data-rewrite-style="${style.id}">
+                <div class="demo-rewriter-style-title">${escapeHtml(style.label)}</div>
+                <div class="demo-rewriter-style-desc">${escapeHtml(style.desc)}</div>
+            </button>
+        `).join("");
+
+        const resultHtml = state.rewriteLoading
+            ? `<div class="demo-rewriter-coaching-box">Rewriting… curated sample, no API call.</div>`
+            : state.rewriteShown
+                ? `
+                    <div class="demo-rewriter-deck">
+                        <article class="demo-rewriter-polished-card">
+                            <div class="demo-rewriter-polished-header">
+                                <span class="demo-rewriter-tag">Polished rewrite</span>
+                                <div class="demo-rewriter-actions">
+                                    <button type="button" class="demo-rewriter-btn" data-demo-listen>Listen</button>
+                                    <button type="button" class="demo-rewriter-btn" data-demo-copy>Copy</button>
+                                </div>
+                            </div>
+                            <p class="demo-rewriter-polished-text">${escapeHtml(sample.polished)}</p>
+                        </article>
+                        <aside class="demo-rewriter-coaching-box">
+                            <h4 class="demo-rewriter-coaching-heading">Coaching notes</h4>
+                            ${sample.issues.map((issue) => `
+                                <p class="demo-rewriter-issue">
+                                    <span class="demo-rewriter-issue-badge ${escapeHtml(issue.kind)}">${escapeHtml(issue.kind)}</span>
+                                    <span>${escapeHtml(issue.text)}</span>
+                                </p>
+                            `).join("")}
+                        </aside>
+                    </div>
+                `
+                : `<div class="demo-rewriter-coaching-box">Choose a tone, then click Rewrite. Nothing is sent until you ask. This preview uses curated samples.</div>`;
+
+        return `
+            <div class="demo-rewriter-shell">
+                <div>
+                    <div class="demo-rewriter-label-row">
+                        <span class="demo-rewriter-label">Text to polish</span>
+                        <button type="button" class="demo-rewriter-clear-btn" data-rewrite-clear>Clear</button>
+                    </div>
+                    <label class="sr-only" for="demo-rewrite-input">Text to polish</label>
+                    <textarea class="demo-rewriter-textarea" id="demo-rewrite-input" rows="4">${escapeHtml(draft)}</textarea>
+                </div>
+                <div>
+                    <span class="demo-rewriter-styles-label">Select desired tone &amp; style</span>
+                    <div class="demo-rewriter-styles-grid">${styleButtons}</div>
+                    <button type="button" class="demo-rewriter-action-btn${state.rewriteLoading ? " is-loading" : ""}" data-rewrite-run>
+                        ${state.rewriteLoading ? "Rewriting…" : "Rewrite"}
+                    </button>
+                </div>
+                ${resultHtml}
+            </div>
+        `;
+    }
+
     function renderDemo() {
         const panel = $("#demo-tab-panel");
         const contextBar = $("#demo-context-bar");
+        const searchBar = $(".popup-search-bar");
         const entry = getCurrentEntry();
         if (!panel || !contextBar) return;
 
-        panel.setAttribute("aria-labelledby", state.tab === "dictionary" ? "tab-btn-dict" : "tab-btn-ai");
-        panel.innerHTML = state.tab === "dictionary" ? renderDictionary(entry) : renderAi(entry);
+        const labelledBy = state.tab === "dictionary"
+            ? "tab-btn-dict"
+            : state.tab === "rewriter"
+                ? "tab-btn-rewriter"
+                : "tab-btn-ai";
+        panel.setAttribute("aria-labelledby", labelledBy);
+        panel.innerHTML = state.tab === "dictionary"
+            ? renderDictionary(entry)
+            : state.tab === "rewriter"
+                ? renderRewriter(entry)
+                : renderAi(entry);
         contextBar.hidden = state.tab !== "ai";
+        if (searchBar) searchBar.hidden = state.tab === "rewriter";
         bindDemoPanelEvents();
     }
 
     function setTab(tab) {
-        state.tab = tab === "ai" ? "ai" : "dictionary";
+        state.tab = tab === "ai" ? "ai" : tab === "rewriter" ? "rewriter" : "dictionary";
         const isAi = state.tab === "ai";
-        $("#tab-btn-dict")?.classList.toggle("is-active", !isAi);
+        const isRewriter = state.tab === "rewriter";
+        $("#tab-btn-dict")?.classList.toggle("is-active", !isAi && !isRewriter);
         $("#tab-btn-ai")?.classList.toggle("is-active", isAi);
-        $("#tab-btn-dict")?.setAttribute("aria-selected", String(!isAi));
+        $("#tab-btn-rewriter")?.classList.toggle("is-active", isRewriter);
+        $("#tab-btn-dict")?.setAttribute("aria-selected", String(!isAi && !isRewriter));
         $("#tab-btn-ai")?.setAttribute("aria-selected", String(isAi));
+        $("#tab-btn-rewriter")?.setAttribute("aria-selected", String(isRewriter));
+        if (isRewriter && state.rewriteText == null) {
+            state.rewriteText = defaultRewriteText(getCurrentEntry());
+        }
         renderDemo();
     }
 
@@ -972,16 +1184,24 @@
         if (!entry) return;
         state.query = query;
         state.practiceLabel = "";
+        const nextTab = tab || entry.tab || "dictionary";
+        if (nextTab === "rewriter") {
+            state.rewriteText = entry.context;
+            state.rewriteShown = true;
+            state.rewriteLoading = false;
+        }
         $("#demo-search-input").value = entry.query;
         $("#demo-context-input").value = entry.context;
         $$(".preset-btn").forEach((button) => {
             const sameQuery = button.dataset.query === query;
-            const sameTab = (button.dataset.tab || "dictionary") === (tab || entry.tab || "dictionary");
-            const sameIntent = (button.dataset.intent || "") === (intent || entry.intent || "");
+            const sameTab = (button.dataset.tab || "dictionary") === nextTab;
+            const sameIntent = (button.dataset.intent || "") === (intent || (nextTab === "rewriter" ? "" : entry.intent) || "");
             button.classList.toggle("active", sameQuery && sameTab && sameIntent);
         });
-        setIntent(intent || entry.intent || "default");
-        setTab(tab || entry.tab || "dictionary");
+        if (nextTab !== "rewriter") {
+            setIntent(intent || entry.intent || "default");
+        }
+        setTab(nextTab);
     }
 
     function setupDemo() {
@@ -996,6 +1216,7 @@
 
         $("#tab-btn-dict")?.addEventListener("click", () => setTab("dictionary"));
         $("#tab-btn-ai")?.addEventListener("click", () => setTab("ai"));
+        $("#tab-btn-rewriter")?.addEventListener("click", () => setTab("rewriter"));
 
         $$(".context-action-btn").forEach((button) => {
             button.addEventListener("click", () => {

@@ -35,7 +35,7 @@ export function stripUrbanMarkup(value: string): string {
 
 export function filterUrbanItems(list: UrbanListItem[], cleanQuery: string): FilteredUrbanEntry[] {
   const query = cleanQuery.toLowerCase();
-  const ranked = list
+  const candidates = list
     .map((item) => {
       const up = Math.max(0, Number(item.thumbs_up) || 0);
       const down = Math.max(0, Number(item.thumbs_down) || 0);
@@ -53,18 +53,25 @@ export function filterUrbanItems(list: UrbanListItem[], cleanQuery: string): Fil
     })
     .filter((item) => {
       if (!item.definition || item.definition.length < 5) return false;
-      // Exact term match only — discard loose associative queries
-      if (item.word.toLowerCase() !== query) return false;
-      // Strict quality gates: popular and strongly approved
-      if (item.thumbsUp < MIN_THUMBS_UP) return false;
-      if (item.score < MIN_NET_SCORE) return false;
-      if (item.ratio < MIN_APPROVAL_RATIO) return false;
-      return true;
-    })
+      // Exact term match only — discard loose associative queries.
+      return item.word.toLowerCase() === query;
+    });
+  const rank = (items: typeof candidates) => items
     .sort((a, b) => b.score - a.score || b.thumbsUp - a.thumbsUp);
+  const ranked = rank(candidates.filter((item) => (
+    item.thumbsUp >= MIN_THUMBS_UP
+    && item.score >= MIN_NET_SCORE
+    && item.ratio >= MIN_APPROVAL_RATIO
+  )));
+  // Some Urban Dictionary records have no vote metadata despite containing an
+  // exact, substantive definition. Keep those only when every high-quality
+  // candidate was filtered, while still excluding short/noisy records.
+  const fallback = ranked.length
+    ? ranked
+    : rank(candidates.filter((item) => item.definition.length >= 20));
 
   const unique: FilteredUrbanEntry[] = [];
-  for (const item of ranked) {
+  for (const item of fallback) {
     if (unique.some((row) => row.definition.toLowerCase() === item.definition.toLowerCase())) continue;
     unique.push({
       word: item.word,
@@ -88,7 +95,12 @@ export async function fetchUrbanDictionary(
   if (!clean) throw new NotFoundError('Urban Dictionary: empty query');
 
   const url = `https://api.urbandictionary.com/v0/define?term=${encodeURIComponent(clean)}`;
-  const res = await safeFetch(url, { signal, timeoutMs: DICTIONARY_FETCH_TIMEOUT_MS });
+  const res = await safeFetch(url, {
+    signal,
+    timeoutMs: DICTIONARY_FETCH_TIMEOUT_MS,
+    requestClass: 'dictionary',
+    retries: 0,
+  });
   if (!res.ok) {
     throwForHttpStatus(
       res.status,
