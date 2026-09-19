@@ -76,3 +76,4 @@ test('bounded relation scheduling limits concurrent work', async () => {
   assert.equal(maxActive, 2);
   assert.deepEqual(completed.sort(), [1, 2, 3, 4]);
 });
+

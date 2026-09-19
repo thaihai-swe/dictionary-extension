@@ -71,14 +71,14 @@ export const SettingsModal: React.FC = () => {
   return (
     <div
       className={cx(
-        'app-shell settings-shell min-h-screen bg-paper text-content font-sans transition-colors selection:bg-accent/20',
+        'app-shell glass-shell settings-shell min-h-screen bg-paper text-content font-sans transition-colors selection:bg-accent/20',
         isDarkMode ? 'dark' : 'light-theme light',
       )}
       data-theme={isDarkMode ? 'dark' : 'light'}
       style={getTextSizeStyle(localSettings.textSize)}
     >
       {/* Top App Bar */}
-      <header className="sticky top-0 z-30 bg-surface/90 backdrop-blur-md border-b border-border">
+      <header className="glass-toolbar sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-[4.75rem] flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-11 h-11 rounded-2xl bg-accent-subtle border border-accent/30 flex items-center justify-center text-accent shadow-xs shrink-0">
@@ -255,7 +255,7 @@ export const SettingsModal: React.FC = () => {
       </div>
 
       {/* Floating Sticky Save Bar on scroll */}
-      <div className="fixed bottom-0 inset-x-0 z-20 bg-surface/92 backdrop-blur-md border-t border-border py-3.5 px-4 sm:px-6 shadow-elevated">
+      <div className="glass-panel fixed bottom-0 inset-x-0 z-20 border-t border-border py-3.5 px-4 sm:px-6 shadow-elevated">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-xs text-content-muted min-w-0">
             <button

@@ -81,14 +81,14 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
   return (
     <nav
       ref={navRef}
-      className="px-3 py-2 bg-paper/95 border-b border-border/80 transition-colors select-none"
+      className="glass-toolbar px-3 py-2 transition-colors select-none"
       role="tablist"
       aria-label="Navigation modes"
       onKeyDown={handleKeyDown}
     >
       <div
         className={cx(
-          'grid gap-1.5 p-1 rounded-xl bg-muted/60 border border-border/70 text-[14px] shadow-inner-light',
+          'glass-tabs grid gap-1.5 p-1 rounded-2xl text-[14px] shadow-inner-light',
           tabs.length === 3 ? 'grid-cols-3' : tabs.length === 2 ? 'grid-cols-2' : 'grid-cols-1',
         )}
       >
