@@ -1,9 +1,9 @@
 export const RESTRICTED_URL_RE =
-  /^(chrome|chrome-extension|moz-extension|edge|about|devtools|https:\/\/chromewebstore\.google\.com|https:\/\/addons\.mozilla\.org)/i;
+  /^(chrome|chrome-extension|edge|about|devtools|https:\/\/chromewebstore\.google\.com)/i;
 
 export function isExtensionProtocol(protocol?: string | null): boolean {
   if (!protocol) return false;
-  return protocol === 'chrome-extension:' || protocol === 'moz-extension:';
+  return protocol === 'chrome-extension:';
 }
 
 export function isExtensionPage(): boolean {

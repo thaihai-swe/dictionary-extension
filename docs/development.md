@@ -3,7 +3,7 @@
 ## 1. Architectural Philosophy & Environment
 
 **Dictionary** is engineered with a modern, high-performance web extension stack:
-- **Runtime Stack:** React 18, TypeScript 5, Vite 5, Tailwind CSS, Chrome and Firefox Manifest V3.
+- **Runtime Stack:** React 18, TypeScript 5, Vite 5, Tailwind CSS, Chrome Manifest V3.
 - **Module Architecture:** Organized under `src/entrypoints/` (`background/`, `content-script/`, `toolbar-popup/`).
 - **Layering:** Browser-independent policies live under `src/domain/`, use-case coordination under `src/application/`, and Chrome/provider/storage adapters under `src/infrastructure/`.
 - **Isolation:** Content script overlay is mounted inside Shadow DOM (`#dictionary-extension-root`) with encapsulated Tailwind CSS, preventing style leaks into or out of host pages.
@@ -27,7 +27,7 @@ npm run typecheck
 # 4. Unit tests
 npm test
 
-# 5. Production Build (Chrome `dist/` + Firefox `dist-firefox/`)
+# 5. Production Build (Chrome `dist/`)
 npm run build
 ```
 
@@ -39,13 +39,7 @@ npm run build
 5. **Important:** Refresh open webpage tabs where you are testing so content scripts re-inject.
 6. For local HTML/PDF testing, open extension **Details** and enable **Allow access to file URLs**.
 
-**Firefox (115+)**
-1. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`.
-2. Click **Load Temporary Add-on…** and select `dist-firefox/manifest.json`.
-3. After rebuilding, click **Reload** on the add-on card, then refresh webpage tabs so content scripts re-inject.
-4. For local HTML/PDF testing, open `about:addons` → Dictionary → **Allow access to file URLs**.
-
-Speech practice uses `SpeechRecognition` / `webkitSpeechRecognition`. Firefox does not expose that API, so the Practice control stays unavailable there. Dictionary lookup, translation, AI, toolbar window, overlay, context menu, and `Alt+L` work on both browsers.
+Speech practice uses `SpeechRecognition` / `webkitSpeechRecognition` in Chrome.
 
 ---
 
@@ -214,7 +208,7 @@ Run this comprehensive verification protocol before submitting code changes:
     - Open an online PDF (e.g. PDF.js viewer); test exact sentence extraction on text layer selections.
     - Open a local `file://` PDF or HTML document after enabling **Allow access to file URLs**; confirm lookups work seamlessly.
 26. Browser-restricted pages:
-    - Open `chrome://extensions` or the Chrome Web Store (in Chrome), or `about:debugging` / AMO (in Firefox).
+    - Open a browser-restricted page such as `chrome://extensions` or the Chrome Web Store.
     - Confirm the toolbar popup displays restriction-specific help without throwing unhandled exceptions.
 
 ---

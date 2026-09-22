@@ -1,7 +1,7 @@
 import { defineConfig, build as viteBuild, Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
-import { copyFileSync, cpSync, existsSync, rmSync } from 'fs';
+import { copyFileSync, existsSync } from 'fs';
 
 function buildExtensionScriptsPlugin(): Plugin {
   return {
@@ -128,13 +128,6 @@ function buildExtensionScriptsPlugin(): Plugin {
         copyFileSync('offscreen.html', 'dist/offscreen.html');
       }
 
-      const distDir = resolve(__dirname, 'dist');
-      const firefoxDir = resolve(__dirname, 'dist-firefox');
-      if (existsSync(firefoxDir)) rmSync(firefoxDir, { recursive: true, force: true });
-      cpSync(distDir, firefoxDir, { recursive: true });
-      if (existsSync('manifest.firefox.json')) {
-        copyFileSync('manifest.firefox.json', resolve(firefoxDir, 'manifest.json'));
-      }
     },
   };
 }

@@ -2,8 +2,6 @@
 .hallmark/
 .zcode/
 node_modules
-dist/
-dist-firefox/
 
 .qwen/
 # Logs
