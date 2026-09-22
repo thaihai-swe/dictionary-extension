@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Dictionary** is a modern Chrome and Firefox Manifest V3 extension engineered with **Vite 5**, **React 18**, **TypeScript 5**, and **Tailwind CSS**. One source tree builds two packages: Chrome `dist/` uses `background.service_worker`; Firefox `dist-firefox/` uses the same IIFE bundle as a background event page (`background.scripts`).
+**Dictionary** is a modern Chrome Manifest V3 extension engineered with **Vite 5**, **React 18**, **TypeScript 5**, and **Tailwind CSS**. The source tree builds one Chrome package in `dist/` using `background.service_worker`.
 
 The runtime architecture is organized into clean, decoupled layers following modern Chrome Extension entrypoint standards:
 

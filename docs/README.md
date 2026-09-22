@@ -1,6 +1,6 @@
 # Dictionary Documentation
 
-Welcome to the comprehensive documentation for **Dictionary**, a lightweight, high-performance Chrome and Firefox Manifest V3 extension built with **React 18**, **TypeScript 5**, **Vite 5**, and **Tailwind CSS**. It is engineered for deep reading comprehension, multi-source dictionary lookup, neural translation, pronunciation practice, and contextual AI language learning.
+Welcome to the comprehensive documentation for **Dictionary**, a lightweight, high-performance Chrome Manifest V3 extension built with **React 18**, **TypeScript 5**, **Vite 5**, and **Tailwind CSS**. It is engineered for deep reading comprehension, multi-source dictionary lookup, neural translation, pronunciation practice, and contextual AI language learning.
 
 ---
 
@@ -20,7 +20,6 @@ Welcome to the comprehensive documentation for **Dictionary**, a lightweight, hi
 
 ### 3. Engineering & Contribution
 - [**Development Guide**](development.md) — Local unpacked installation, design tokens, coding conventions, adding providers, and a 28-step manual quality verification matrix.
-- [**Firefox AMO Listing Details**](firefox-amo-listing.md) — Ready-to-paste listing copy, privacy-policy draft, support details, and submission checklist.
 - [**Project Roadmap**](roadmap.md) — Track shipped milestones, short-term enhancements, mid-term feature targets (AnkiConnect, spaced repetition), and long-term research directions.
 
 ---

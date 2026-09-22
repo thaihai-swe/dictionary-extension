@@ -7,7 +7,7 @@ This guide provides actionable solutions for common issues across extension relo
 ## 1. Extension Reload & Context Invalidation
 
 ### Symptom: `Extension context invalidated` or clicking triggers does nothing after updating code.
-- **Cause:** When you reload an unpacked extension in Chrome (`chrome://extensions`) or Firefox (`about:debugging`), the background worker is replaced, but existing webpage tabs still hold references to the old, disconnected content script instance.
+- **Cause:** When you reload an unpacked extension in Chrome (`chrome://extensions`), the background worker is replaced, but existing webpage tabs still hold references to the old, disconnected content script instance.
 - **Solution:**
   1. Refresh all open webpage tabs where you want to test the extension.
   2. The content script automatically catches disconnection errors and displays an inline top banner: **"Extension reloaded — Refresh this tab."**
@@ -24,7 +24,7 @@ This guide provides actionable solutions for common issues across extension relo
 - **Check 4 — Viewport Positioning & Screen Edges:** If text is at the extreme edge of the screen, the positioning engine flips the card. Ensure browser zoom or high-DPI scaling is not hiding the card off-screen.
 - **Check 5 — Paused site:** The toolbar **Pause site** button or Settings → paused hostnames turns off in-page icons on that host. Toolbar search and the context menu still work.
 - **Check 6 — Iframes:** Content scripts load in the top frame. A same-origin iframe injects on first selection. Cross-origin iframes cannot be read; use the toolbar or context menu.
-- **Check 7 — Keyboard command:** Highlight text and press your configured shortcut (`chrome://extensions/shortcuts` in Chrome, or `about:addons` → Dictionary → Manage Extension Shortcuts in Firefox).
+- **Check 7 — Keyboard command:** Highlight text and press your configured shortcut in `chrome://extensions/shortcuts`.
 
 ---
 
@@ -93,10 +93,10 @@ This guide provides actionable solutions for common issues across extension relo
 ## 7. PDFs, Web Readers, and Local Files
 
 ### Symptom: Selection triggers do not appear on PDF files or local documents.
-- **Local `file://` Documents:** In Chrome, open `chrome://extensions`, locate **Dictionary**, click **Details**, and toggle on **Allow access to file URLs**. In Firefox, use `about:addons` → Dictionary. Reload the file tab.
+- **Local `file://` Documents:** In Chrome, open `chrome://extensions`, locate **Dictionary**, click **Details**, and toggle on **Allow access to file URLs**. Reload the file tab.
 - **Online HTML5 PDFs:** Ensure the PDF reader exposes a selectable DOM text layer (e.g. PDF.js viewer). If selectable, exact sentence Range extraction operates automatically.
 - **Chrome Built-in PDF Viewer Frame:** Chrome strictly isolates its proprietary internal PDF viewer frame from extension content scripts. Right-click the highlighted word and select **Look up in Dictionary** from the context menu, or type the word in the toolbar popup.
-- **Browser-Owned Pages:** Pages starting with `chrome://`, `about:`, `chrome-extension://`, `moz-extension://`, the Chrome Web Store, or addons.mozilla.org cannot be injected with content scripts by browser security policy. Use the toolbar popup for vocabulary queries while on these pages.
+- **Browser-Owned Pages:** Pages starting with `chrome://` or `chrome-extension://`, the Chrome Web Store, or the internal PDF viewer cannot be injected with content scripts by browser security policy. Use the toolbar popup for vocabulary queries while on these pages.
 
 ---
 

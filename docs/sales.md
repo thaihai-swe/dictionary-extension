@@ -1,6 +1,6 @@
 # Sales & Product Guide
 
-**Dictionary** is a Chrome and Firefox Manifest V3 reading companion for learners, students, and professionals who need definitions, translations, pronunciation, and contextual AI without leaving the page they are reading.
+**Dictionary** is a Chrome Manifest V3 reading companion for learners, students, and professionals who need definitions, translations, pronunciation, and contextual AI without leaving the page they are reading.
 
 This document is a product narrative. Runtime contracts live in [Architecture](architecture.md), [Providers](providers.md), and [Settings](settings.md).
 
@@ -91,7 +91,7 @@ Where it is not (yet):
 2. AI keys never leave `chrome.storage.local` into content-script memory.
 3. Surrounding sentences are extracted only for AI actions, clamped to 800 characters, and can be disabled entirely.
 4. Settings export omits `SECRET_KEYS`.
-5. Restricted browser pages (`chrome://`, `about:`, Web Store, AMO) are not injected; the toolbar popup still works for typed queries.
+5. Restricted Chrome pages (`chrome://`, the Chrome Web Store, and the internal PDF viewer) are not injected; the toolbar popup still works for typed queries.
 
 ---
 

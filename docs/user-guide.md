@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Dictionary** is a modern Chrome and Firefox Manifest V3 extension built for readers, students, and language learners. It brings fast definitions, neural translations, natural pronunciation, speech practice, and deep contextual AI explanations directly to the text you are reading—without breaking your reading flow or requiring external tabs.
+**Dictionary** is a modern Chrome Manifest V3 extension built for readers, students, and language learners. It brings fast definitions, neural translations, natural pronunciation, speech practice, and deep contextual AI explanations directly to the text you are reading—without breaking your reading flow or requiring external tabs.
 
 The user interface is powered by the **Editorial Ink** design system:
 - **System Typography:** UI text uses the operating system font stack (`system-ui`) with native support for System, Light (warm paper), and Dark (obsidian velvet + champagne gold) themes.
@@ -11,11 +11,11 @@ The user interface is powered by the **Editorial Ink** design system:
 
 ---
 
-## 1. Build & Install (Chrome and Firefox)
+## 1. Build & Install (Chrome)
 
-The extension is not listed on the Chrome Web Store or addons.mozilla.org. Load it unpacked from a local production build. Requires **Node.js 22+** and **npm 10+**. Firefox requires **115+**.
+The extension is not listed on the Chrome Web Store. Load it unpacked from a local production build. Requires **Node.js 22+** and **npm 10+**.
 
-### Build both packages
+### Build the Chrome package
 
 From the repository root:
 
@@ -24,14 +24,7 @@ npm install
 npm run build
 ```
 
-`npm run build` writes two folders:
-
-| Browser | Load this | Do not load |
-|---|---|---|
-| **Chrome / Chromium / Edge** | `dist/` | `dist-firefox/` |
-| **Firefox** | `dist-firefox/` | `dist/` |
-
-Chrome `dist/` uses a Manifest V3 service worker. Firefox `dist-firefox/` uses the same scripts with a gecko id and a background event page. Mixing the two packages will fail to load.
+`npm run build` writes the Chrome Manifest V3 package to `dist/`, using a service worker background.
 
 Developer typecheck, tests, and HMR live in the [Development Guide](development.md).
 
@@ -44,18 +37,7 @@ Developer typecheck, tests, and HMR live in the [Development Guide](development.
 5. After you change code, run `npm run build` again, click **Reload** (↻) on the extension card, then **refresh every webpage tab** you test so the content script re-injects.
 6. For lookups on local HTML or PDF (`file://`), open the extension **Details** and enable **Allow access to file URLs**.
 
-### Install in Firefox
-
-1. Open Firefox 115+ and go to `about:debugging#/runtime/this-firefox`.
-2. Click **Load Temporary Add-on…**.
-3. Select **`dist-firefox/manifest.json`** (the manifest file, not the folder).
-4. Pin the toolbar icon if you want one-click lookup.
-5. After you change code, run `npm run build`, click **Reload** on the add-on card, then refresh webpage tabs.
-6. For local HTML or PDF (`file://`), open `about:addons` → Dictionary → enable **Allow access to file URLs**.
-
-Firefox temporary add-ons **unload when Firefox quits**. Load `dist-firefox/manifest.json` again after a restart. This is unsigned local sideload, not an AMO listing.
-
-Speech **Practice** needs the browser Speech Recognition API. It works in Chrome and is unavailable in Firefox. Dictionary lookup, translation, AI, toolbar window, in-page overlay, context menu, and `Alt+L` work in both browsers.
+Speech **Practice** uses Chrome's Speech Recognition API.
 
 ---
 
@@ -63,7 +45,7 @@ Speech **Practice** needs the browser Speech Recognition API. It works in Chrome
 
 ### Manual Lookup (Toolbar Popup)
 
-1. Click the **Dictionary** icon in the Chrome or Firefox toolbar (or pin it for one-click access).
+1. Click the **Dictionary** icon in the Chrome toolbar (or pin it for one-click access).
 2. Type any word, idiom, phrasal verb, or complete sentence into the search input.
 3. Press `Enter` or click **Search**.
 4. Use the **Dictionary** tab for structured definitions and translations, or switch to the **AI** tab for contextual explanations, grammatical breakdowns, or comparisons.
@@ -157,7 +139,7 @@ Pronunciation tools are integrated directly into the result header:
 ### Speech Practice Evaluator
 Click the **Practice** button (`🎙️ Practice`) next to pronunciation controls to test and refine your spoken English:
 1. Speak the target word into your microphone when the glowing recording ring activates (`Listening…`).
-2. The extension captures your speech via the browser Speech Recognition API (Chrome only; unavailable in Firefox), normalizes the input, and calculates pronunciation similarity using Levenshtein distance metrics.
+2. The extension captures your speech via Chrome's Speech Recognition API, normalizes the input, and calculates pronunciation similarity using Levenshtein distance metrics.
 3. You receive an instant color-coded grade badge:
    - `90%–100%`: **Excellent** (Emerald badge)
    - `70%–89%`: **Good** (Teal badge)
@@ -254,9 +236,9 @@ Contextual AI actions rely on exact sentence extraction rather than sending broa
 ## 8. PDFs, Web Readers, and Restricted Pages
 
 - **Scriptable HTML5 PDFs:** Online and local PDFs rendered with HTML5 text layers (e.g. PDF.js, Chrome PDF text layer) support exact sentence extraction and floating selection triggers.
-- **Local Files (`file://`):** To enable lookups on local HTML or PDF files, open Chrome `chrome://extensions` or Firefox `about:addons`, open Dictionary details, and enable **Allow access to file URLs**.
+- **Local Files (`file://`):** To enable lookups on local HTML or PDF files, open Chrome `chrome://extensions`, open Dictionary details, and enable **Allow access to file URLs**.
 - **Reader Mode & Iframes:** Full multi-frame coordination ensures lookups inside reader containers or nested iframes extract sentences accurately without duplicate popups.
-- **Browser-Restricted Pages:** Browser security policy blocks extension injection on `chrome://` / `about:` URLs, the Chrome Web Store, addons.mozilla.org, and internal PDF reader chrome. On these pages, use the toolbar popup for manual lookups and paste your context sentence directly.
+- **Browser-Restricted Pages:** Browser security policy blocks extension injection on `chrome://` URLs, the Chrome Web Store, and the internal PDF reader. On these pages, use the toolbar popup for manual lookups and paste your context sentence directly.
 
 ---
 
