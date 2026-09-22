@@ -42,7 +42,8 @@ import { createTtlCache } from './ttl-cache';
 import { abortAllFetchProxies, abortFetchProxy, handleFetchProxy } from './fetch-proxy';
 import { handleAudioMessage, releaseOffscreenAudio } from './offscreen-audio';
 
-const CONTENT_SCRIPT_JS = ['content-script.js'];
+export function startServiceWorker() {
+const CONTENT_SCRIPT_JS = ['content-scripts/content.js'];
 const SETTINGS_TTL_MS = 15_000;
 
 const requestCoordinator = new RequestCoordinator<DictionaryEntry & { requestId: string }>();
@@ -513,3 +514,4 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   return false;
 });
+}

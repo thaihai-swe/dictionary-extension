@@ -1,6 +1,6 @@
 # Dictionary
 
-A modern Chrome extension (Manifest V3) for translation, multi-source dictionary lookup, pronunciation, and AI explanations built with **Vite 5**, **React 18**, **TypeScript 5**, and **Tailwind CSS**.
+A Chrome and Firefox Manifest V3 extension for translation, multi-source dictionary lookup, pronunciation, and AI explanations built with **WXT**, **Vite 6**, **React 18**, **TypeScript 5**, and **Tailwind CSS**.
 
 Features include interactive dictionary cards, Lexical Profile, global Stop Voice audio controls, editable contextual explanations, Grammar Nuance analysis, and phrase/idiom fallback.
 
@@ -26,8 +26,11 @@ Then open `http://127.0.0.1:4173`.
 # Install dependencies
 npm install
 
-# Run dev server
+# Run Chrome development mode
 npm run dev
+
+# Run Firefox development mode
+npm run dev:firefox
 
 # Run TypeScript typecheck
 npm run typecheck
@@ -35,23 +38,39 @@ npm run typecheck
 # Run unit tests
 npm test
 
-# Build production distribution (/dist)
+# Build Chrome and Firefox production packages
 npm run build
+
+# Create distributable browser archives
+npm run zip:chrome
+npm run zip:firefox
+
+# Validate both generated manifests and packages
+npm run verify:build
 ```
 
-## Load Locally in Chrome
+Build output is written to `.output/chrome-mv3/` and `.output/firefox-mv3/`.
 
-1. Open `chrome://extensions`.
-2. Enable **Developer mode** (top-right).
-3. Click **Load unpacked** and select the built `dist/` directory.
-4. Reload the extension after build changes.
-5. Refresh open webpage tabs after reload so content scripts update.
+## Load Locally
+
+Chrome:
+
+1. Open `chrome://extensions` and enable **Developer mode**.
+2. Click **Load unpacked** and select `.output/chrome-mv3/`.
+3. Reload the extension after build changes, then refresh open webpage tabs.
+
+Firefox 115+:
+
+1. Open `about:debugging#/runtime/this-firefox`.
+2. Click **Load Temporary Add-on…** and select `.output/firefox-mv3/manifest.json`.
+3. Reload the add-on after build changes, then refresh open webpage tabs.
 
 ## Project Structure
 
-- `src/entrypoints/` — Chrome Extension entry points:
+- `src/wxt-entrypoints/` — WXT-discovered browser entrypoints and generated manifest inputs.
+- `src/entrypoints/` — Runtime entrypoint implementations:
   - `background/` — Background Service Worker (`service-worker.ts`)
-  - `content-script/` — In-page selection listener & floating overlay UI (`bootstrap.ts`, `overlay-app.tsx`, `overlay.in-page.tsx`)
+  - `content-script/` — In-page selection listener & lazy-loaded floating overlay UI (`bootstrap.ts`, `overlay-entry.ts`, `overlay-app.tsx`, `overlay.in-page.tsx`)
   - `toolbar-popup/` — Extension action toolbar popup (`app.toolbar-popup.tsx`, `main.tsx`)
   - `options/` — Extension full options tab entry point (`main.tsx`)
 - `src/features/` — Domain-driven feature slices:

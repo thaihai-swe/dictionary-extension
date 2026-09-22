@@ -13,7 +13,7 @@ export {
   getSecondaryDictionaryProviderIds,
   normalizeDictionaryResult,
 } from './pipeline';
-export { providerRegistry } from './registry';
+export { providerRegistry } from '../infrastructure/providers/registry';
 export { dictionaryProviderCatalog } from '../infrastructure/providers/catalog';
 export { collectProviderOutcomes } from '../application/dictionary/provider-aggregator';
 

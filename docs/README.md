@@ -1,6 +1,6 @@
 # Dictionary Documentation
 
-Welcome to the comprehensive documentation for **Dictionary**, a lightweight, high-performance Chrome Manifest V3 extension built with **React 18**, **TypeScript 5**, **Vite 5**, and **Tailwind CSS**. It is engineered for deep reading comprehension, multi-source dictionary lookup, neural translation, pronunciation practice, and contextual AI language learning.
+Welcome to the comprehensive documentation for **Dictionary**, a lightweight, high-performance Chrome and Firefox Manifest V3 extension built with **React 18**, **TypeScript 5**, **WXT**, **Vite 6**, and **Tailwind CSS**. It is engineered for deep reading comprehension, multi-source dictionary lookup, neural translation, pronunciation practice, and contextual AI language learning.
 
 ---
 

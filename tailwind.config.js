@@ -13,8 +13,7 @@ function withOpacity(cssVar, rgbVar) {
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
-    "./index.html",
-    "./options.html",
+    "./src/wxt-entrypoints/**/*.{html,ts,tsx}",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   darkMode: 'class',

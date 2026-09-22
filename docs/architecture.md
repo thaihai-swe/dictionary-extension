@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Dictionary** is a modern Chrome Manifest V3 extension engineered with **Vite 5**, **React 18**, **TypeScript 5**, and **Tailwind CSS**. The source tree builds one Chrome package in `dist/` using `background.service_worker`.
+**Dictionary** is a modern Chrome and Firefox Manifest V3 extension engineered with **WXT**, **Vite 6**, **React 18**, **TypeScript 5**, and **Tailwind CSS**. WXT builds `.output/chrome-mv3/` and `.output/firefox-mv3/` from one source tree and emits browser-specific manifests.
 
 The runtime architecture is organized into clean, decoupled layers following modern Chrome Extension entrypoint standards:
 
@@ -18,9 +18,9 @@ The source tree follows a dependency direction of `UI → application → domain
 
 Domain code must not import React, Chrome APIs, or concrete network adapters. Provider aggregation records every provider outcome (`contributed`, `no_match`, `failed`, or `cancelled`) while merging only usable payloads.
 
-1. **Toolbar Popup Entrypoint** (`src/entrypoints/toolbar-popup/`) — Standalone browser action UI (`app.toolbar-popup.tsx`, `main.tsx`) for manual search, mode switching, editable context, 7 contextual AI intents, global audio controls, and settings.
-2. **Content Script & In-Page Overlay** (`src/entrypoints/content-script/`) — Injected Shadow DOM overlay system (`bootstrap.ts`, `overlay-app.tsx`, `overlay.in-page.tsx`) handling text selection, floating trigger icon, exact context extraction, collision-safe viewport positioning (`popup-geometry.ts`), dragging & resizing, and result rendering.
-3. **Background Service Worker Entrypoint** (`src/entrypoints/background/service-worker.ts`) — Browser lifecycle and message wiring. Lookup/AI/provider-validation handlers live in `src/application/runtime/lookup-handlers.ts`, and cancellation is coordinated by `RequestCoordinator`.
+1. **Toolbar Workbench Entrypoint** (`src/entrypoints/toolbar-popup/` + `src/wxt-entrypoints/index.html`) — Standalone browser action UI (`app.toolbar-popup.tsx`, `main.tsx`) for manual search, mode switching, editable context, 7 contextual AI intents, global audio controls, and settings.
+2. **Content Script & In-Page Overlay** (`src/entrypoints/content-script/`) — Injected Shadow DOM overlay system (`bootstrap.ts`, `overlay-entry.ts`, `overlay-app.tsx`, `overlay.in-page.tsx`) handling text selection, floating trigger icon, exact context extraction, collision-safe viewport positioning (`popup-geometry.ts`), dragging & resizing, and result rendering. WXT emits the overlay as a lazy ESM chunk so the always-loaded content script stays small.
+3. **Background Entrypoint** (`src/wxt-entrypoints/background.ts` + `src/entrypoints/background/service-worker.ts`) — WXT lifecycle wiring delegates to browser lifecycle and message handling. Lookup/AI/provider-validation handlers live in `src/application/runtime/lookup-handlers.ts`, and cancellation is coordinated by `RequestCoordinator`.
 4. **React Stores & Hooks** (`src/composables/`) — External-store state engines subscribed via `useSyncExternalStore` using lightweight reactive signals (`src/ui/signal.ts`). Application session policy lives in `src/application/lookup-session/`; shared request and cache policy lives in `src/shared/abort-registry.ts` and `src/shared/bounded-cache.ts`:
    - `composable.lookup-session.ts`: Session facade for tab switching and `abortAllLookups()` (stops audio and in-flight dictionary/AI requests). Overlay close/unmount calls `abortAllLookups()`.
     - `composable.dictionary.ts`: Lookup facade; audio playback and speech-practice controls live in `dictionary-audio.ts`, while cache policy and speech-practice scoring live in `dictionary-cache.ts` and `dictionary-practice.ts`.
@@ -303,6 +303,7 @@ The in-page subsystem (`src/entrypoints/content-script/`) is organized into spec
 ```text
 src/entrypoints/content-script/
 ├── bootstrap.ts        # Entrypoint script; listens for selection & sets up Shadow DOM
+├── overlay-entry.ts    # Lazy overlay bundle bridge for the WXT ESM entrypoint
 ├── overlay-app.tsx     # Shadow DOM host wrapper & root CSS injection
 ├── overlay.in-page.tsx # In-page popup container, positioning, drag/resize handlers
 └── ...

@@ -3,9 +3,9 @@
 ## 1. Architectural Philosophy & Environment
 
 **Dictionary** is engineered with a modern, high-performance web extension stack:
-- **Runtime Stack:** React 18, TypeScript 5, Vite 5, Tailwind CSS, Chrome Manifest V3.
-- **Module Architecture:** Organized under `src/entrypoints/` (`background/`, `content-script/`, `toolbar-popup/`).
-- **Layering:** Browser-independent policies live under `src/domain/`, use-case coordination under `src/application/`, and Chrome/provider/storage adapters under `src/infrastructure/`.
+- **Runtime Stack:** React 18, TypeScript 5, WXT, Vite 6, Tailwind CSS, Chrome and Firefox Manifest V3.
+- **Module Architecture:** WXT entrypoint definitions live under `src/wxt-entrypoints/`; runtime implementations remain under `src/entrypoints/`.
+- **Layering:** Browser-independent policies live under `src/domain/`, use-case coordination under `src/application/`, and browser/provider/storage adapters under `src/infrastructure/`.
 - **Isolation:** Content script overlay is mounted inside Shadow DOM (`#dictionary-extension-root`) with encapsulated Tailwind CSS, preventing style leaks into or out of host pages.
 - **Type Safety:** Full TypeScript interfaces defined in `src/types/index.ts` checked with `npm run typecheck` (`tsc --noEmit`).
 - **Node Requirement:** Node.js `>= 22` and npm `>= 10` (`package.json` engines).
@@ -18,8 +18,11 @@
 # 1. Install dependencies
 npm install
 
-# 2. Development mode with HMR / fast re-bundling
+# 2. Chrome development mode with HMR
 npm run dev
+
+# Firefox development mode
+npm run dev:firefox
 
 # 3. Typechecking
 npm run typecheck
@@ -27,19 +30,27 @@ npm run typecheck
 # 4. Unit tests
 npm test
 
-# 5. Production Build (Chrome `dist/`)
+# 5. Production Build (Chrome and Firefox)
 npm run build
+npm run zip:chrome
+npm run zip:firefox
+npm run verify:build
 ```
 
 **Chrome**
 1. Open Chrome and navigate to `chrome://extensions`.
 2. Toggle on **Developer mode** in the top-right corner.
-3. Click **Load unpacked** and select the built `dist/` directory.
+3. Click **Load unpacked** and select `.output/chrome-mv3/`.
 4. Click the **Reload icon** (↻) on the extension card after rebuilding code changes.
 5. **Important:** Refresh open webpage tabs where you are testing so content scripts re-inject.
 6. For local HTML/PDF testing, open extension **Details** and enable **Allow access to file URLs**.
 
-Speech practice uses `SpeechRecognition` / `webkitSpeechRecognition` in Chrome.
+**Firefox 115+**
+1. Open `about:debugging#/runtime/this-firefox`.
+2. Click **Load Temporary Add-on…** and select `.output/firefox-mv3/manifest.json`.
+3. Reload the add-on after rebuilding, then refresh webpage tabs.
+
+Speech practice uses `SpeechRecognition` / `webkitSpeechRecognition` in Chrome. Firefox uses the audio and speech-synthesis fallback; speech recognition practice remains unavailable there.
 
 ---
 
@@ -67,7 +78,7 @@ When introducing a new configuration option:
    - If the requested term has no definitions, throw `new NotFoundError()`.
    - If the provider encounters an auth/network/rate-limit error, allow the error to throw.
    - Return a `ProviderLookupDto` (word + providerId + any of: meanings, examples, synonyms, antonyms, phonetics, lexical metadata). The facade converts it with `toDictionaryEntry()` before merge.
-2. **Register in Registry (`src/providers/register-adapters.ts`):**
+2. **Register in Registry (`src/infrastructure/providers/register-adapters.ts`):**
    - Call `providerRegistry.registerDictionary({ id, name, lookup })`. Do not add a `switch` case.
    - Add the provider ID to `DICTIONARY_FALLBACK_ORDER` in `src/shared/text-utils.ts` if it should participate in Phase 2 enrichment.
 3. **Update Settings Interface (`src/features/settings/tabs/TabSources.tsx`):**
@@ -81,7 +92,7 @@ When introducing a new configuration option:
 
 1. **Implement Translation Adapter (`src/providers/provider.<name>.ts`):**
    - Export a lookup function returning `TranslationResult`.
-2. **Register in Registry (`src/providers/register-adapters.ts`):**
+2. **Register in Registry (`src/infrastructure/providers/register-adapters.ts`):**
    - Call `providerRegistry.registerTranslation({ id, name, lookup })`.
 3. **Update Settings Interface (`src/features/settings/tabs/TabSources.tsx`):**
    - Add an `<option>` to the translation provider select.

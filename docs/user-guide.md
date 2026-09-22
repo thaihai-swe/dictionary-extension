@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Dictionary** is a modern Chrome Manifest V3 extension built for readers, students, and language learners. It brings fast definitions, neural translations, natural pronunciation, speech practice, and deep contextual AI explanations directly to the text you are reading—without breaking your reading flow or requiring external tabs.
+**Dictionary** is a modern Chrome and Firefox Manifest V3 extension built for readers, students, and language learners. It brings fast definitions, neural translations, natural pronunciation, speech practice, and deep contextual AI explanations directly to the text you are reading—without breaking your reading flow or requiring external tabs.
 
 The user interface is powered by the **Editorial Ink** design system:
 - **System Typography:** UI text uses the operating system font stack (`system-ui`) with native support for System, Light (warm paper), and Dark (obsidian velvet + champagne gold) themes.
@@ -11,9 +11,9 @@ The user interface is powered by the **Editorial Ink** design system:
 
 ---
 
-## 1. Build & Install (Chrome)
+## 1. Build & Install (Chrome and Firefox)
 
-The extension is not listed on the Chrome Web Store. Load it unpacked from a local production build. Requires **Node.js 22+** and **npm 10+**.
+The extension is not listed in either store. Load it from a local production build. Requires **Node.js 22+** and **npm 10+**.
 
 ### Build the Chrome package
 
@@ -24,7 +24,7 @@ npm install
 npm run build
 ```
 
-`npm run build` writes the Chrome Manifest V3 package to `dist/`, using a service worker background.
+`npm run build` writes Chrome to `.output/chrome-mv3/` and Firefox to `.output/firefox-mv3/`, using Manifest V3 background entrypoints.
 
 Developer typecheck, tests, and HMR live in the [Development Guide](development.md).
 
@@ -32,12 +32,20 @@ Developer typecheck, tests, and HMR live in the [Development Guide](development.
 
 1. Open Chrome (or Chromium / Edge) and go to `chrome://extensions`.
 2. Turn on **Developer mode** (top right).
-3. Click **Load unpacked** and select the **`dist/`** folder (the folder itself, not a file inside it).
+3. Click **Load unpacked** and select the **`.output/chrome-mv3/`** folder.
 4. Pin the **Dictionary Assistant** icon on the toolbar for one-click lookup.
 5. After you change code, run `npm run build` again, click **Reload** (↻) on the extension card, then **refresh every webpage tab** you test so the content script re-injects.
 6. For lookups on local HTML or PDF (`file://`), open the extension **Details** and enable **Allow access to file URLs**.
 
 Speech **Practice** uses Chrome's Speech Recognition API.
+
+### Install in Firefox
+
+1. Open Firefox 115+ and navigate to `about:debugging#/runtime/this-firefox`.
+2. Click **Load Temporary Add-on…** and select `.output/firefox-mv3/manifest.json`.
+3. Reload the add-on after rebuilding, then refresh webpage tabs so content scripts re-inject.
+
+Firefox supports lookup, translation, AI, the toolbar workbench, overlay, context menu, and `Alt+L`. Speech Recognition practice remains Chrome-only.
 
 ---
 

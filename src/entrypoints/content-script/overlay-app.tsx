@@ -1,6 +1,5 @@
 import { createRoot, Root } from 'react-dom/client';
 import Overlay from './overlay.in-page';
-import '@/assets/main.css';
 
 interface OverlayProps {
   selectedText?: string;
@@ -25,7 +24,7 @@ function ensureOverlayStyles(shadow: ShadowRoot) {
   const link = document.createElement('link');
   link.rel = 'stylesheet';
   link.dataset.dictOverlayCss = 'true';
-  link.href = chrome.runtime.getURL('overlay.css');
+  link.href = chrome.runtime.getURL('assets/overlay.css');
   shadow.appendChild(link);
 }
 

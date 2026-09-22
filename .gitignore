@@ -2,6 +2,10 @@
 .hallmark/
 .zcode/
 node_modules
+.wxt/
+.output/
+*.xpi
+*.zip
 
 .qwen/
 # Logs

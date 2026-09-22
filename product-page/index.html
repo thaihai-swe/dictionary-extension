@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Dictionary — Understand words without leaving the page</title>
     <meta name="description"
-        content="A free Chrome extension that combines six dictionary sources, translation, pronunciation practice, contextual AI, and an in-page Rewriter while you read.">
+        content="A free Chrome and Firefox extension that combines six dictionary sources, translation, pronunciation practice, contextual AI, and an in-page Rewriter while you read.">
     <meta name="theme-color" content="#fbfaf7">
     <link rel="canonical" href="https://thaihai-swe.github.io/dictionary-extension/">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -18,13 +18,13 @@
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Dictionary — Understand words without leaving the page">
     <meta name="twitter:description"
-        content="A free Chrome extension for multi-source dictionary lookup, translation, pronunciation practice, contextual AI, and in-page rewriting.">
+        content="A free Chrome and Firefox extension for multi-source dictionary lookup, translation, pronunciation practice, contextual AI, and in-page rewriting.">
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
       "name": "Dictionary",
-      "operatingSystem": "Chrome",
+      "operatingSystem": "Chrome, Firefox",
       "applicationCategory": "BrowserExtension",
       "applicationSubCategory": "Language Learning & Productivity",
       "offers": {
@@ -32,7 +32,7 @@
         "price": "0",
         "priceCurrency": "USD"
       },
-      "description": "A free Chrome extension for multi-source dictionary lookup, translation, pronunciation practice, contextual AI, and in-page rewriting without leaving the page.",
+      "description": "A free Chrome and Firefox extension for multi-source dictionary lookup, translation, pronunciation practice, contextual AI, and in-page rewriting without leaving the page.",
       "author": {
         "@type": "Person",
         "name": "thaihai-swe",
@@ -500,7 +500,7 @@
             <div class="container">
                 <div class="section-header">
                     <p class="section-kicker">Free and open source</p>
-                    <h2 class="section-title">Install it locally in Chrome.</h2>
+                    <h2 class="section-title">Install it locally in Chrome or Firefox.</h2>
                     <p class="section-lead">There is no account, subscription, or store listing yet. Clone the source,
                         build the browser package, and load the folder using your browser’s developer workflow.</p>
                 </div>
@@ -534,11 +534,19 @@ npm install &amp;&amp; npm run build</code></pre>
                         <div>
                             <h3>Chrome</h3>
                             <p>Open <code>chrome://extensions</code>, turn on <strong>Developer mode</strong>, click
-                                <strong>Load unpacked</strong>, and select the built <code>dist</code> folder.</p>
+                                <strong>Load unpacked</strong>, and select the built <code>.output/chrome-mv3</code> folder.</p>
                         </div>
                     </li>
                     <li class="install-step">
                         <span class="install-num">3</span>
+                        <div>
+                            <h3>Firefox</h3>
+                            <p>Open <code>about:debugging#/runtime/this-firefox</code>, click <strong>Load Temporary Add-on…</strong>,
+                                and select <code>.output/firefox-mv3/manifest.json</code>.</p>
+                        </div>
+                    </li>
+                    <li class="install-step">
+                        <span class="install-num">4</span>
                         <div>
                             <h3>Try it on any webpage</h3>
                             <p>Select any word, click the floating icon, or use the right-click menu. For local HTML
@@ -657,10 +665,11 @@ npm install &amp;&amp; npm run build</code></pre>
                             are not the same feature.</p>
                     </details>
                     <details class="faq-item">
-                        <summary>Is there a Chrome Web Store listing?</summary>
+                        <summary>Is there a Chrome Web Store or Firefox Add-ons listing?</summary>
                         <p>Not yet. Install from GitHub: clone the repository, run
                             <code>npm install &amp;&amp; npm run build</code>. In Chrome, enable Developer mode and
-                            <strong>Load unpacked</strong> on the built <code>dist</code> folder.</p>
+                            <strong>Load unpacked</strong> on the built <code>.output/chrome-mv3</code> folder. Firefox users can load
+                            <code>.output/firefox-mv3/manifest.json</code> from <code>about:debugging</code>.</p>
                     </details>
                 </div>
             </div>
@@ -689,7 +698,7 @@ npm install &amp;&amp; npm run build</code></pre>
     <footer class="site-footer">
         <div class="container footer-inner">
             <div class="footer-copy">
-                        <p>&copy; <span id="year">2026</span> Dictionary. A free Chrome extension by <a
+                        <p>&copy; <span id="year">2026</span> Dictionary. A free Chrome and Firefox extension by <a
                         href="https://github.com/thaihai-swe" target="_blank" rel="noopener noreferrer">thaihai-swe</a>.
                 </p>
             </div>

@@ -36,12 +36,14 @@ type BootUi = {
 
 const BOOT_FLAG = '__dictionaryAssistantBoot';
 
-const bootWindow = window as Window & { [BOOT_FLAG]?: boolean };
-if (bootWindow[BOOT_FLAG] || document.getElementById('dictionary-extension-root')) {
-  // Already injected in this frame.
-} else {
-  bootWindow[BOOT_FLAG] = true;
-  void startBootstrap();
+export function startContentScript() {
+  const bootWindow = window as Window & { [BOOT_FLAG]?: boolean };
+  if (bootWindow[BOOT_FLAG] || document.getElementById('dictionary-extension-root')) {
+    // Already injected in this frame.
+  } else {
+    bootWindow[BOOT_FLAG] = true;
+    void startBootstrap();
+  }
 }
 
 function startBootstrap() {
@@ -235,10 +237,17 @@ function startBootstrap() {
           const link = document.createElement('link');
           link.rel = 'stylesheet';
           link.dataset.dictOverlayCss = 'true';
-          link.href = chrome.runtime.getURL('overlay.css');
+          link.href = chrome.runtime.getURL('assets/overlay.css');
           shadow.appendChild(link);
         }
-        overlayModulePromise = import(/* @vite-ignore */ chrome.runtime.getURL('overlay.js')) as Promise<OverlayModule>;
+        const overlayUrl = chrome.runtime.getURL('assets/overlay-app.js');
+        overlayModulePromise = import(/* @vite-ignore */ overlayUrl).then(() => {
+          const runtime = globalThis as typeof globalThis & { __dictionaryAssistantOverlay?: OverlayModule };
+          if (!runtime.__dictionaryAssistantOverlay) {
+            throw new Error('Overlay runtime failed to initialize.');
+          }
+          return runtime.__dictionaryAssistantOverlay;
+        });
       } catch (error) {
         if (isExtensionContextInvalidated(error)) {
           return Promise.reject(new Error('Extension was reloaded. Refresh this page to continue.'));

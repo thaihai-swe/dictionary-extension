@@ -7,7 +7,7 @@ This document outlines completed milestones and future enhancements for **Dictio
 ## 1. Shipped Milestones
 
 ### Phase 1: Modern MV3 & React 18 Migration
-- [x] Migrated runtime to React 18, TypeScript 5, and Vite 5 with encapsulated Shadow DOM styling.
+- [x] Migrated runtime to React 18, TypeScript 5, WXT, and Vite 6 with encapsulated Shadow DOM styling.
 - [x] Implemented unified state management via `useSyncExternalStore` and UI signals (`src/ui/signal.ts`).
 - [x] Restructured entrypoints under `src/entrypoints/` (`background/`, `content-script/`, `toolbar-popup/`).
 

@@ -1,6 +1,6 @@
 # Sales & Product Guide
 
-**Dictionary** is a Chrome Manifest V3 reading companion for learners, students, and professionals who need definitions, translations, pronunciation, and contextual AI without leaving the page they are reading.
+**Dictionary** is a Chrome and Firefox Manifest V3 reading companion for learners, students, and professionals who need definitions, translations, pronunciation, and contextual AI without leaving the page they are reading.
 
 This document is a product narrative. Runtime contracts live in [Architecture](architecture.md), [Providers](providers.md), and [Settings](settings.md).
 
