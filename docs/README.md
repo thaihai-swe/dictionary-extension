@@ -20,6 +20,7 @@ Welcome to the comprehensive documentation for **Dictionary**, a lightweight, hi
 
 ### 3. Engineering & Contribution
 - [**Development Guide**](development.md) — Local unpacked installation, design tokens, coding conventions, adding providers, and a 28-step manual quality verification matrix.
+- [**Firefox AMO Listing Details**](firefox-amo-listing.md) — Ready-to-paste listing copy, privacy-policy draft, support details, and submission checklist.
 - [**Project Roadmap**](roadmap.md) — Track shipped milestones, short-term enhancements, mid-term feature targets (AnkiConnect, spaced repetition), and long-term research directions.
 
 ---
