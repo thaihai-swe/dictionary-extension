@@ -45,7 +45,7 @@ npm run verify:build
 5. **Important:** Refresh open webpage tabs where you are testing so content scripts re-inject.
 6. For local HTML/PDF testing, open extension **Details** and enable **Allow access to file URLs**.
 
-**Firefox 115+**
+**Firefox 140+ on desktop and Firefox for Android 142+**
 1. Open `about:debugging#/runtime/this-firefox`.
 2. Click **Load Temporary Add-on…** and select `.output/firefox-mv3/manifest.json`.
 3. Reload the add-on after rebuilding, then refresh webpage tabs.

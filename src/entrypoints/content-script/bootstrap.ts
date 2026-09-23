@@ -108,7 +108,19 @@ function startBootstrap() {
     triggerBtn.title = 'Look up selection in Dictionary';
     triggerBtn.className = 'dictionary-trigger-icon-btn dark';
     triggerBtn.style.display = 'none';
-    triggerBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M9 3.5a5.5 5.5 0 1 0 3.5 9.7l3.15 3.15a1 1 0 0 0 1.4-1.4l-3.15-3.15A5.5 5.5 0 0 0 9 3.5Zm-3.5 5.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z"></path></svg>';
+    const searchIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    searchIcon.setAttribute('width', '18');
+    searchIcon.setAttribute('height', '18');
+    searchIcon.setAttribute('viewBox', '0 0 20 20');
+    searchIcon.setAttribute('fill', 'currentColor');
+    searchIcon.setAttribute('aria-hidden', 'true');
+    const searchPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    searchPath.setAttribute(
+      'd',
+      'M9 3.5a5.5 5.5 0 1 0 3.5 9.7l3.15 3.15a1 1 0 0 0 1.4-1.4l-3.15-3.15A5.5 5.5 0 0 0 9 3.5Zm-3.5 5.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z',
+    );
+    searchIcon.appendChild(searchPath);
+    triggerBtn.appendChild(searchIcon);
     shadow.appendChild(triggerBtn);
 
     const backdrop = document.createElement('div');

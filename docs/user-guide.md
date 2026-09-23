@@ -41,7 +41,7 @@ Speech **Practice** uses Chrome's Speech Recognition API.
 
 ### Install in Firefox
 
-1. Open Firefox 115+ and navigate to `about:debugging#/runtime/this-firefox`.
+1. Open Firefox 140+ on desktop and navigate to `about:debugging#/runtime/this-firefox`. Firefox for Android 142+ is also supported.
 2. Click **Load Temporary Add-on…** and select `.output/firefox-mv3/manifest.json`.
 3. Reload the add-on after rebuilding, then refresh webpage tabs so content scripts re-inject.
 

@@ -27,7 +27,7 @@ export default defineConfig({
   },
   manifest: ({ browser }) => ({
     name: 'Dictionary & AI Learning Assistant',
-    version: '2.0.0',
+    version: '0.1.0',
     description: 'Modern dictionary and AI language learning workbench.',
     icons: {
       '16': 'icons/icon-16.png',
@@ -70,10 +70,13 @@ export default defineConfig({
           browser_specific_settings: {
             gecko: {
               id: 'dictionary-ai-assistant@web-ext',
-              strict_min_version: '115.0',
+              strict_min_version: '140.0',
               data_collection_permissions: {
                 required: ['websiteContent'],
               },
+            },
+            gecko_android: {
+              strict_min_version: '142.0',
             },
           },
         }

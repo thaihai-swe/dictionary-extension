@@ -61,6 +61,12 @@ if (firefox.permissions.includes('offscreen')) fail('Firefox must not request of
 if (chrome.browser_specific_settings || !firefox.browser_specific_settings?.gecko?.id) {
   fail('browser-specific Gecko settings are incorrect');
 }
+if (firefox.browser_specific_settings.gecko.strict_min_version !== '140.0') {
+  fail('Firefox desktop minimum version must be 140.0');
+}
+if (firefox.browser_specific_settings.gecko_android?.strict_min_version !== '142.0') {
+  fail('Firefox for Android minimum version must be 142.0');
+}
 if (!firefox.browser_specific_settings.gecko.data_collection_permissions?.required?.includes('websiteContent')) {
   fail('Firefox website-content collection declaration is missing');
 }

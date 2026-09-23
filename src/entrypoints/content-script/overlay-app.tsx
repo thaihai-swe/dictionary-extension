@@ -67,7 +67,7 @@ export function mountOverlay(
         root.unmount();
         root = null;
       }
-      container.innerHTML = '';
+      container.replaceChildren();
     },
   };
 }

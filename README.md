@@ -59,7 +59,7 @@ Chrome:
 2. Click **Load unpacked** and select `.output/chrome-mv3/`.
 3. Reload the extension after build changes, then refresh open webpage tabs.
 
-Firefox 115+:
+Firefox 140+ on desktop and Firefox for Android 142+:
 
 1. Open `about:debugging#/runtime/this-firefox`.
 2. Click **Load Temporary Add-on…** and select `.output/firefox-mv3/manifest.json`.
