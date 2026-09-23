@@ -62,8 +62,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   libreTranslateBaseUrl: 'https://libretranslate.com',
   libreTranslateApiKey: '',
   dictionaryProvider: 'wiktionary',
-  popupWidth: 620,
-  popupHeight: 720,
+  popupWidth: 1000,
+  popupHeight: 900,
   enableTranslate: true,
   enableDictionary: true,
   enableLexicalProfile: true,
@@ -119,8 +119,8 @@ export function normalizeSettings(input?: Partial<AppSettings> | Record<string, 
 
   merged.pausedHostnames = normalizePausedHostnames(merged.pausedHostnames);
   merged.pronunciationRate = clampFloat(merged.pronunciationRate, 0.5, 1.5, 0.95);
-  merged.popupWidth = Math.round(clampFloat(merged.popupWidth, 360, 1000, 620));
-  merged.popupHeight = Math.round(clampFloat(merged.popupHeight, 380, 900, 720));
+  merged.popupWidth = Math.round(clampFloat(merged.popupWidth, 360, 1000, DEFAULT_SETTINGS.popupWidth));
+  merged.popupHeight = Math.round(clampFloat(merged.popupHeight, 380, 900, DEFAULT_SETTINGS.popupHeight));
   merged.libreTranslateBaseUrl = String(merged.libreTranslateBaseUrl || DEFAULT_SETTINGS.libreTranslateBaseUrl)
     .trim()
     .replace(/\/+$/, '') || DEFAULT_SETTINGS.libreTranslateBaseUrl;

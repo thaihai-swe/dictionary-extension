@@ -185,8 +185,8 @@ function startBootstrap() {
 
   function popupSize() {
     return {
-      width: customWidth || settings.popupWidth || 480,
-      height: customHeight || settings.popupHeight || 580,
+      width: customWidth || settings.popupWidth || BOOT_DEFAULTS.popupWidth,
+      height: customHeight || settings.popupHeight || BOOT_DEFAULTS.popupHeight,
     };
   }
 

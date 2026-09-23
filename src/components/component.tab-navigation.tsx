@@ -17,7 +17,6 @@ interface TabItem {
   id: TabId;
   label: string;
   icon: React.FC<{ className?: string }>;
-  badge?: string;
   shortcut: string;
 }
 
@@ -40,7 +39,6 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
             id: 'ai_assistant' as TabId,
             label: 'AI Assistant',
             icon: IconSparkles,
-            badge: 'AI',
             shortcut: '2',
           },
           {
@@ -81,14 +79,14 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
   return (
     <nav
       ref={navRef}
-      className="glass-toolbar px-3 py-2 transition-colors select-none"
+      className="workbench-navigation px-4 pt-2 pb-3 transition-colors select-none"
       role="tablist"
       aria-label="Navigation modes"
       onKeyDown={handleKeyDown}
     >
       <div
         className={cx(
-          'glass-tabs grid gap-1.5 p-1 rounded-2xl text-[14px] shadow-inner-light',
+          'workbench-tab-list grid gap-1 p-1 rounded-xl text-[13px]',
           tabs.length === 3 ? 'grid-cols-3' : tabs.length === 2 ? 'grid-cols-2' : 'grid-cols-1',
         )}
       >
@@ -105,24 +103,13 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
               tabIndex={isActive ? 0 : -1}
               onClick={() => selectTab(tab.id)}
               className={cx(
-                'min-w-0 py-1.5 px-1.5 sm:px-3 rounded-lg flex items-center justify-center gap-1 text-[14px] transition-colors duration-fast outline-none cursor-pointer whitespace-nowrap select-none relative group overflow-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-paper',
-                isActive
-                  ? 'bg-surface text-accent font-bold shadow-xs border border-accent/40'
-                  : 'text-content-secondary hover:text-content hover:bg-surface/60 border border-transparent font-medium',
+                'workbench-tab min-w-0 py-2 px-1 sm:px-3 rounded-lg flex items-center justify-center gap-1.5 text-[13px] transition-colors duration-fast cursor-pointer whitespace-nowrap select-none relative overflow-hidden focus-visible:ring-2 focus-visible:ring-accent',
+                isActive ? 'is-active font-bold' : 'font-medium',
               )}
             >
               <Icon aria-hidden="true" className={cx('w-3.5 h-3.5 shrink-0', isActive ? 'text-accent' : 'text-content-muted')} />
               <span className="tracking-tight truncate">{tab.label}</span>
-              {tab.badge ? (
-                <span className={cx(
-                  'px-1 py-0.2 rounded text-[9px] font-mono font-extrabold uppercase leading-tight tracking-wider',
-                  isActive
-                    ? 'bg-accent/15 text-accent'
-                    : 'bg-muted text-content-muted border border-border/50',
-                )}>
-                  {tab.badge}
-                </span>
-              ) : null}
+
             </button>
           );
         })}

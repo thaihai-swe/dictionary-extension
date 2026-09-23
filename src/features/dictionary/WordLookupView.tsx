@@ -86,12 +86,13 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
 
   return (
     <div className="font-sans">
-      {/* Modern Command-Palette Search Bar */}
-      <div className="px-3.5 py-3 bg-surface border-b border-border/80 sticky top-0 z-20 shadow-2xs">
+      <div className="workbench-search px-4 py-4 sticky top-0 z-20">
+        <label htmlFor="dictionary-search" className="workbench-search-label">LOOK SOMETHING UP</label>
         <div className="flex items-center gap-2 min-w-0">
           <div className="relative flex-1 min-w-0 flex items-center group">
             <IconSearch className="w-4 h-4 text-content-muted absolute left-3.5 pointer-events-none group-focus-within:text-accent transition-colors" />
             <input
+              id="dictionary-search"
               ref={searchInputElement}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
@@ -101,7 +102,7 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
               type="text"
               placeholder="Type a word, phrase, or sentence…"
               aria-label="Look up a word, phrase, or sentence"
-              className="ui-control w-full h-10 pl-10 pr-20 text-[16px] placeholder:text-content-muted shadow-inner-light"
+              className="ui-control workbench-search-input w-full h-11 pl-10 pr-20 text-[15px] placeholder:text-content-muted"
             />
 
             {searchInput ? (
@@ -125,7 +126,7 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
             type="button"
             onClick={() => handleSearch()}
             disabled={!searchInput.trim() || isLoading}
-            className="ui-button-primary h-10 px-2.5 sm:px-4 text-[14.5px] font-bold cursor-pointer shadow-xs flex items-center gap-1.5 shrink-0 disabled:pointer-events-none"
+            className="ui-button-primary h-11 px-3 sm:px-4 text-[13px] font-bold cursor-pointer flex items-center gap-1.5 shrink-0 disabled:pointer-events-none"
           >
             {isLoading ? (
               <IconSpinner className="w-4 h-4" />
@@ -137,7 +138,7 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
       </div>
 
       {/* Main Content Area */}
-      <div className="p-4 space-y-4">
+      <div className="workbench-results p-4 space-y-4">
         {error ? (
           <div role="alert" className="p-4 rounded-2xl bg-rose-500/8 border border-rose-500/25 text-[15px] text-rose-700 dark:text-rose-400 space-y-2">
             <div className="flex items-center gap-2 font-semibold">

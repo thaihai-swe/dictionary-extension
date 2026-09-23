@@ -11,7 +11,7 @@ export type BootSettings = {
 
 export const BOOT_DEFAULTS: BootSettings = {
   theme: 'dark', dockPosition: 'none', selectionTriggerMode: 'icon', postSelectionModifier: 'shift',
-  pausedHostnames: [], popupWidth: 620, popupHeight: 720, disablePageContextExtraction: false,
+  pausedHostnames: [], popupWidth: 1000, popupHeight: 900, disablePageContextExtraction: false,
 };
 
 export function normalizeHostnames(value: unknown): string[] {

@@ -302,8 +302,8 @@ let toolbarWindowId: number | null = null;
 async function getSharedPopupSize() {
   const settings = await getCachedSettings();
   return {
-    width: Math.max(360, Math.min(1000, Number(settings.popupWidth) || 620)),
-    height: Math.max(380, Math.min(900, Number(settings.popupHeight) || 720)),
+    width: Math.max(360, Math.min(1000, Number(settings.popupWidth) || 1000)),
+    height: Math.max(380, Math.min(900, Number(settings.popupHeight) || 900)),
   };
 }
 

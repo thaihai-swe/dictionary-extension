@@ -5,7 +5,6 @@ import {
   IconBook,
   IconCheck,
   IconSearch,
-  IconSettings,
   IconSparkles,
   IconSun,
 } from '@/components/icons';
@@ -29,10 +28,10 @@ const promptEditors: Array<{ key: keyof AppSettings; label: string; intent: AppS
 ];
 
 const TABS: Array<{ id: SettingsTab; label: string; icon: React.FC<{ className?: string }> }> = [
-  { id: 'general', label: 'Triggers & Shortcuts', icon: IconSearch },
+  { id: 'general', label: 'General', icon: IconSearch },
   { id: 'appearance', label: 'Appearance', icon: IconSun },
-  { id: 'sources', label: 'Dictionaries & Translation', icon: IconBook },
-  { id: 'ai', label: 'AI Intelligence', icon: IconSparkles },
+  { id: 'sources', label: 'Sources', icon: IconBook },
+  { id: 'ai', label: 'AI assistant', icon: IconSparkles },
 ];
 
 export const SettingsModal: React.FC = () => {
@@ -68,6 +67,14 @@ export const SettingsModal: React.FC = () => {
     isDarkMode,
   } = useSettingsForm();
 
+  const activeTabInfo = TABS.find((tab) => tab.id === activeTab) ?? TABS[0];
+  const tabDescriptions: Record<SettingsTab, string> = {
+    general: 'Decide how lookups begin and where the extension appears.',
+    appearance: 'Make your reading space feel right for you.',
+    sources: 'Choose where definitions, translations, and speech come from.',
+    ai: 'Connect your assistant and tailor its responses.',
+  };
+
   return (
     <div
       className={cx(
@@ -77,32 +84,18 @@ export const SettingsModal: React.FC = () => {
       data-theme={isDarkMode ? 'dark' : 'light'}
       style={getTextSizeStyle(localSettings.textSize)}
     >
-      {/* Top App Bar */}
-      <header className="glass-toolbar sticky top-0 z-30">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-[4.75rem] flex items-center justify-between gap-4">
+      <header className="settings-topbar sticky top-0 z-30">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 h-[4.5rem] flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-2xl bg-accent-subtle border border-accent/30 flex items-center justify-center text-accent shadow-xs shrink-0">
-              <IconSettings className="w-5 h-5" />
-            </div>
+            <div className="settings-brand-mark shrink-0" aria-hidden="true"><IconBook className="w-5 h-5" /></div>
             <div className="min-w-0">
-              <h1 className="font-bold text-[18px] sm:text-lg text-content font-heading truncate tracking-tight">
-                Preferences
-              </h1>
-              <p className="text-[13.5px] text-content-muted truncate hidden sm:block">
-                Triggers, dictionaries, AI, and appearance
-              </p>
+              <p className="settings-eyebrow">DICTIONARY ASSISTANT</p>
+              <h1 className="font-heading font-bold text-[17px] text-content tracking-tight leading-tight">Settings</h1>
             </div>
           </div>
-
-          <div
-            role="status"
-            aria-live="polite"
-            className={cx(
-              'text-[13px] font-semibold whitespace-nowrap',
-              isDirty ? 'text-amber-700 dark:text-amber-300' : 'text-content-muted',
-            )}
-          >
-            {isSaving ? 'Saving…' : isDirty ? 'Unsaved changes' : isSavedNotice ? 'Saved' : 'All changes saved'}
+          <div role="status" aria-live="polite" className={cx('settings-save-status', isDirty && 'is-dirty')}>
+            <span className="settings-status-dot" aria-hidden="true" />
+            {isSaving ? 'Saving…' : isDirty ? 'Unsaved changes' : isSavedNotice ? 'Saved' : 'Up to date'}
           </div>
         </div>
       </header>
@@ -115,33 +108,31 @@ export const SettingsModal: React.FC = () => {
         </div>
       ) : null}
 
-      {/* Main Container */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-24">
-        {/* Mobile Horizontal Tab Scroller (< md) */}
-        <div className="md:hidden flex items-center gap-1.5 overflow-x-auto pb-3 mb-4">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8 py-8 sm:py-10 pb-28">
+        <div className="settings-intro mb-8">
+          <p className="settings-eyebrow mb-2">MAKE IT YOURS / 01—04</p>
+          <h2 className="settings-intro-title">A better way to <em>understand.</em></h2>
+          <p className="text-content-secondary text-sm sm:text-base mt-2 max-w-xl leading-relaxed">Fine-tune the little details that shape every lookup, from the first highlight to the final answer.</p>
+        </div>
+        <nav aria-label="Settings sections" className="md:hidden flex items-center gap-2 overflow-x-auto pb-3 mb-5">
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               type="button"
               onClick={() => switchTab(id)}
-              className={cx(
-                'px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0',
-                activeTab === id
-                  ? 'chip-active font-extrabold'
-                  : 'bg-surface border border-border text-content-secondary hover:text-content',
-              )}
+              aria-current={activeTab === id ? 'page' : undefined}
+              className={cx('settings-mobile-tab', activeTab === id && 'is-active')}
             >
               <Icon className="w-3.5 h-3.5" />
               <span>{label}</span>
             </button>
           ))}
-        </div>
+        </nav>
 
-        {/* 2-Column Layout on Desktop */}
-        <div className="grid grid-cols-1 md:grid-cols-[240px_minmax(0,1fr)] gap-8 items-start">
-          {/* Desktop Left Rail (Sticky) */}
-          <aside className="hidden md:block sticky top-24 space-y-4">
-            <nav className="space-y-1.5 bg-surface border border-border rounded-2xl p-2.5 shadow-card">
+        <div className="grid grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)] gap-8 lg:gap-12 items-start">
+          <aside className="hidden md:block sticky top-28 space-y-8">
+            <nav aria-label="Settings sections" className="settings-side-nav space-y-1">
+              <p className="settings-eyebrow px-3 mb-4">PREFERENCES</p>
               {TABS.map(({ id, label, icon: Icon }) => {
                 const isActive = activeTab === id;
                 return (
@@ -149,25 +140,19 @@ export const SettingsModal: React.FC = () => {
                     key={id}
                     type="button"
                     onClick={() => switchTab(id)}
-                    className={cx(
-                      'w-full px-3.5 py-2.5 rounded-xl text-left text-xs font-semibold transition-all cursor-pointer flex items-center gap-2.5',
-                      isActive
-                        ? 'chip-active font-bold shadow-2xs'
-                        : 'text-content-secondary hover:text-content hover:bg-muted/70',
-                    )}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={cx('settings-side-link', isActive && 'is-active')}
                   >
-                    <Icon className={cx('w-4 h-4 shrink-0', isActive ? 'text-accent' : 'text-content-muted')} />
+                    <Icon className="w-4 h-4 shrink-0" />
                     <span>{label}</span>
                   </button>
                 );
               })}
             </nav>
 
-            {/* Backup & Tools Card */}
-            <div className="bg-surface border border-border rounded-2xl p-4 space-y-3 shadow-card">
-              <span className="text-[12.5px] font-bold text-content-muted uppercase tracking-wider block font-mono">
-                Data &amp; Backup
-              </span>
+            <div className="settings-backup-card p-4 space-y-3">
+              <span className="settings-eyebrow block">YOUR DATA</span>
+              <p className="text-sm font-semibold text-content leading-snug">Keep your setup close.</p>
               <div className="space-y-1.5">
                 <button
                   type="button"
@@ -200,8 +185,12 @@ export const SettingsModal: React.FC = () => {
             </div>
           </aside>
 
-          {/* Right Main Content Area */}
-          <main className="min-w-0 space-y-6">
+          <main className="min-w-0 space-y-6 settings-content">
+            <div className="settings-section-heading">
+              <p className="settings-eyebrow mb-2">SECTION {String(TABS.findIndex((tab) => tab.id === activeTab) + 1).padStart(2, '0')} / 04</p>
+              <h2 className="font-heading text-3xl sm:text-4xl font-semibold tracking-tight text-content">{activeTabInfo.label}</h2>
+              <p className="text-content-secondary text-sm mt-2">{tabDescriptions[activeTab]}</p>
+            </div>
             {activeTab === 'general' && (
               <Suspense fallback={<div className="p-8 text-xs text-content-muted">Loading settings…</div>}>
                 <TabGeneral
@@ -254,8 +243,7 @@ export const SettingsModal: React.FC = () => {
         </div>
       </div>
 
-      {/* Floating Sticky Save Bar on scroll */}
-      <div className="glass-panel fixed bottom-0 inset-x-0 z-20 border-t border-border py-3.5 px-4 sm:px-6 shadow-elevated">
+      <div className="settings-save-bar fixed bottom-0 inset-x-0 z-20 py-3 px-5 sm:px-8">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-xs text-content-muted min-w-0">
             <button

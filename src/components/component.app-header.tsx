@@ -98,19 +98,15 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   );
 
   return (
-    <header className="glass-toolbar flex items-center justify-between gap-2 px-3 py-2 select-none relative z-30 transition-colors min-w-0">
+    <header className="workbench-header flex items-center justify-between gap-2 px-4 py-3 select-none relative z-30 transition-colors min-w-0">
       {/* Brand Identity */}
       <div className="flex items-center gap-2 min-w-0 shrink-0">
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/30 flex items-center justify-center text-accent shadow-xs flex-shrink-0">
-          <IconBook className="w-4 h-4 text-accent" />
+        <div className="workbench-brand-mark flex-shrink-0" aria-hidden="true">
+          <IconBook className="w-4 h-4" />
         </div>
-        <div className="flex items-baseline gap-1.5 hidden min-[400px]:flex">
-          <span className="text-[15px] font-bold text-content tracking-tight font-heading">
-            AI Dictionary Assistant
-          </span>
-          <span className="text-[11px] font-medium font-mono text-content-muted/80 uppercase px-1 py-0.2 rounded bg-muted/60 border border-border/50">
-            NTH
-          </span>
+        <div className="min-w-0">
+          <span className="block text-[15px] font-bold text-content tracking-tight font-heading leading-tight truncate">Dictionary</span>
+          <span className="block text-[10px] font-semibold tracking-[0.16em] uppercase text-content-muted leading-tight">Read more deeply</span>
         </div>
       </div>
 

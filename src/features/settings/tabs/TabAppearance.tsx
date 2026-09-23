@@ -147,10 +147,10 @@ export const TabAppearance: React.FC<TabAppearanceProps> = ({ localSettings, onC
             </label>
             <input
               type="number"
-              value={localSettings.popupWidth ?? 480}
+              value={localSettings.popupWidth ?? 1000}
               min={360}
               max={1000}
-              onChange={(e) => onChange({ popupWidth: Number(e.target.value) || 480 })}
+              onChange={(e) => onChange({ popupWidth: Number(e.target.value) || 1000 })}
               className="w-full bg-muted border border-border rounded-xl px-3 py-2 text-xs text-content outline-none focus:border-accent font-mono shadow-xs"
             />
           </div>
@@ -160,10 +160,10 @@ export const TabAppearance: React.FC<TabAppearanceProps> = ({ localSettings, onC
             </label>
             <input
               type="number"
-              value={localSettings.popupHeight ?? 580}
+              value={localSettings.popupHeight ?? 900}
               min={380}
               max={900}
-              onChange={(e) => onChange({ popupHeight: Number(e.target.value) || 580 })}
+              onChange={(e) => onChange({ popupHeight: Number(e.target.value) || 900 })}
               className="w-full bg-muted border border-border rounded-xl px-3 py-2 text-xs text-content outline-none focus:border-accent font-mono shadow-xs"
             />
           </div>
