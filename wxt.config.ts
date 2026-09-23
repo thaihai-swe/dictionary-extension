@@ -69,7 +69,7 @@ export default defineConfig({
       ? {
           browser_specific_settings: {
             gecko: {
-              id: 'dictionary-ai-assistant@web-ext',
+              id: 'dictionary-ai-assistant@thaihai-swe.github.io',
               strict_min_version: '140.0',
               data_collection_permissions: {
                 required: ['websiteContent'],

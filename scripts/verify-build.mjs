@@ -58,7 +58,10 @@ for (const [browser, manifest] of Object.entries({ chrome, firefox })) {
 
 if (!chrome.permissions.includes('offscreen')) fail('Chrome must retain offscreen permission');
 if (firefox.permissions.includes('offscreen')) fail('Firefox must not request offscreen permission');
-if (chrome.browser_specific_settings || !firefox.browser_specific_settings?.gecko?.id) {
+if (
+  chrome.browser_specific_settings ||
+  firefox.browser_specific_settings?.gecko?.id !== 'dictionary-ai-assistant@thaihai-swe.github.io'
+) {
   fail('browser-specific Gecko settings are incorrect');
 }
 if (firefox.browser_specific_settings.gecko.strict_min_version !== '140.0') {
