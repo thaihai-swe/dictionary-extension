@@ -23,7 +23,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   return (
     <header className="workbench-header">
       <div className="workbench-brand">
-        <div className="workbench-brand-mark" aria-hidden="true"><IconBook className="w-5 h-5" /></div>
+        <div className="workbench-brand-mark" aria-hidden="true"><IconBook className="w-3.5 h-3.5" /></div>
         <div>
           <span className="workbench-brand-name">Dictionary</span>
         </div>
@@ -36,18 +36,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           </button>
         ) : null}
         <button type="button" onClick={onToggleShortcuts} className="btn-control-icon" title="Keyboard Shortcuts (? or Shift+Q)" aria-label="Keyboard Shortcuts" aria-pressed={showShortcuts}>
-          <IconKeyboard className="w-4 h-4" />
+          <IconKeyboard className="w-3.5 h-3.5" />
         </button>
         <button type="button" onClick={onToggleTheme} className="btn-control-icon" title={isDarkMode ? 'Switch to Light Theme' : 'Switch to Dark Theme'} aria-label={isDarkMode ? 'Switch to Light Theme' : 'Switch to Dark Theme'}>
-          {isDarkMode ? <IconMoon className="w-4 h-4" /> : <IconSun className="w-4 h-4" />}
+          {isDarkMode ? <IconMoon className="w-3.5 h-3.5" /> : <IconSun className="w-3.5 h-3.5" />}
         </button>
-        <button type="button" onClick={() => openExtensionSettings()} className="btn-control-icon" title="Preferences & Options" aria-label="Preferences & Options"><IconSettings className="w-4 h-4" /></button>
+        <button type="button" onClick={() => openExtensionSettings()} className="btn-control-icon" title="Preferences & Options" aria-label="Preferences & Options"><IconSettings className="w-3.5 h-3.5" /></button>
         {onToggleMaximize ? (
           <button type="button" onClick={onToggleMaximize} className="btn-control-icon" title={expandLabel} aria-label={expandLabel}>
-            {isMaximized ? <IconMinimize className="w-4 h-4" /> : <IconMaximize className="w-4 h-4" />}
+            {isMaximized ? <IconMinimize className="w-3.5 h-3.5" /> : <IconMaximize className="w-3.5 h-3.5" />}
           </button>
         ) : null}
-        {onClose ? <button type="button" onClick={onClose} className="btn-control-icon" title="Close window (Esc)" aria-label="Close window"><IconClose className="w-4 h-4" /></button> : null}
+        {onClose ? <button type="button" onClick={onClose} className="btn-control-icon" title="Close window (Esc)" aria-label="Close window"><IconClose className="w-3.5 h-3.5" /></button> : null}
       </div>
     </header>
   );

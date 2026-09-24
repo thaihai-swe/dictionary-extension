@@ -1,0 +1,134 @@
+{
+  "searchinfo": {
+    "search": "serendipity"
+  },
+  "search": [
+    {
+      "id": "Q166039",
+      "title": "Q166039",
+      "pageid": 166626,
+      "concepturi": "http://www.wikidata.org/entity/Q166039",
+      "repository": "wikidata",
+      "url": "//www.wikidata.org/wiki/Q166039",
+      "display": {
+        "label": {
+          "value": "serendipity",
+          "language": "en"
+        },
+        "description": {
+          "value": "a \"fortunate happenstance\" or \"pleasant surprise\" without searching for it",
+          "language": "en"
+        }
+      },
+      "label": "serendipity",
+      "description": "a \"fortunate happenstance\" or \"pleasant surprise\" without searching for it",
+      "match": {
+        "type": "label",
+        "language": "en",
+        "text": "serendipity"
+      }
+    },
+    {
+      "id": "Q971468",
+      "title": "Q971468",
+      "pageid": 921162,
+      "concepturi": "http://www.wikidata.org/entity/Q971468",
+      "repository": "wikidata",
+      "url": "//www.wikidata.org/wiki/Q971468",
+      "display": {
+        "label": {
+          "value": "Serendipity",
+          "language": "en"
+        },
+        "description": {
+          "value": "2001 film by Peter Chelsom",
+          "language": "en"
+        }
+      },
+      "label": "Serendipity",
+      "description": "2001 film by Peter Chelsom",
+      "match": {
+        "type": "label",
+        "language": "en",
+        "text": "Serendipity"
+      }
+    },
+    {
+      "id": "Q3955886",
+      "title": "Q3955886",
+      "pageid": 3772332,
+      "concepturi": "http://www.wikidata.org/entity/Q3955886",
+      "repository": "wikidata",
+      "url": "//www.wikidata.org/wiki/Q3955886",
+      "display": {
+        "label": {
+          "value": "Serendipity",
+          "language": "en"
+        },
+        "description": {
+          "value": "2000 studio album by Premiata Forneria Marconi",
+          "language": "en"
+        }
+      },
+      "label": "Serendipity",
+      "description": "2000 studio album by Premiata Forneria Marconi",
+      "match": {
+        "type": "label",
+        "language": "en",
+        "text": "Serendipity"
+      }
+    },
+    {
+      "id": "Q58868068",
+      "title": "Q58868068",
+      "pageid": 58779780,
+      "concepturi": "http://www.wikidata.org/entity/Q58868068",
+      "repository": "wikidata",
+      "url": "//www.wikidata.org/wiki/Q58868068",
+      "display": {
+        "label": {
+          "value": "Serendipity",
+          "language": "en"
+        },
+        "description": {
+          "value": "vocal track by BTS",
+          "language": "en"
+        }
+      },
+      "label": "Serendipity",
+      "description": "vocal track by BTS",
+      "match": {
+        "type": "label",
+        "language": "en",
+        "text": "Serendipity"
+      }
+    },
+    {
+      "id": "Q7453189",
+      "title": "Q7453189",
+      "pageid": 7365587,
+      "concepturi": "http://www.wikidata.org/entity/Q7453189",
+      "repository": "wikidata",
+      "url": "//www.wikidata.org/wiki/Q7453189",
+      "display": {
+        "label": {
+          "value": "Serendipity",
+          "language": "en"
+        },
+        "description": {
+          "value": "album by Mike Garson",
+          "language": "en"
+        }
+      },
+      "label": "Serendipity",
+      "description": "album by Mike Garson",
+      "match": {
+        "type": "label",
+        "language": "en",
+        "text": "Serendipity"
+      }
+    }
+  ],
+  "search-continue": 5,
+  "success": 1
+}

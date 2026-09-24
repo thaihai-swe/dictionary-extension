@@ -1,0 +1,49 @@
+{
+  "type": "standard",
+  "title": "Ghost",
+  "displaytitle": "<span lang=\"en\" dir=\"ltr\"><span class=\"mw-page-title-main\">Ghost</span></span>",
+  "namespace": {
+    "id": 0,
+    "text": ""
+  },
+  "wikibase_item": "Q45529",
+  "titles": {
+    "canonical": "Ghost",
+    "normalized": "Ghost",
+    "display": "<span lang=\"en\" dir=\"ltr\"><span class=\"mw-page-title-main\">Ghost</span></span>"
+  },
+  "pageid": 12514,
+  "thumbnail": {
+    "source": "https://thumb.wikimedia.org/wikipedia/en/thumb/0/02/Hammersmith_Ghost.PNG/330px-Hammersmith_Ghost.PNG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "width": 330,
+    "height": 551
+  },
+  "originalimage": {
+    "source": "https://upload.wikimedia.org/wikipedia/en/0/02/Hammersmith_Ghost.PNG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "width": 1278,
+    "height": 2132
+  },
+  "lang": "en",
+  "dir": "ltr",
+  "revision": "1374720691",
+  "tid": "50c9597c-afa6-11f1-8de3-e37eb29e1225",
+  "timestamp": "2026-09-13T19:07:08Z",
+  "description": "Supernatural being originating in folklore",
+  "description_source": "local",
+  "content_urls": {
+    "desktop": {
+      "page": "https://en.wikipedia.org/wiki/Ghost",
+      "revisions": "https://en.wikipedia.org/wiki/Ghost?action=history",
+      "edit": "https://en.wikipedia.org/wiki/Ghost?action=edit",
+      "talk": "https://en.wikipedia.org/wiki/Talk:Ghost"
+    },
+    "mobile": {
+      "page": "https://en.wikipedia.org/wiki/Ghost",
+      "revisions": "https://en.wikipedia.org/wiki/Special:History/Ghost",
+      "edit": "https://en.wikipedia.org/wiki/Ghost?action=edit",
+      "talk": "https://en.wikipedia.org/wiki/Talk:Ghost"
+    }
+  },
+  "extract": "In folklore, a ghost is the soul or spirit of a dead person or non-human animal that is believed by some people to be able to appear to the living. In ghostlore, descriptions of ghosts vary widely, from an invisible presence to translucent or barely visible wispy shapes to realistic, lifelike forms, whether they resemble humans or animals. The deliberate attempt to contact the spirit of a deceased person is known as necromancy, or in spiritism as a séance. Other terms associated with it are apparition, haunt, haint, phantom, poltergeist, shade, specter, spirit, spook, wraith, demon, and ghoul.",
+  "extract_html": "<p>In folklore, a <b>ghost</b> is the soul or spirit of a dead person or non-human animal that is believed by some people to be able to appear to the living. In ghostlore, descriptions of ghosts vary widely, from an invisible presence to translucent or barely visible wispy shapes to realistic, lifelike forms, whether they resemble humans or animals. The deliberate attempt to contact the spirit of a deceased person is known as necromancy, or in spiritism as a <i>séance</i>. Other terms associated with it are apparition, haunt, haint, phantom, poltergeist, shade, specter, spirit, spook, wraith, demon, and ghoul.</p>"
+}

@@ -20,6 +20,8 @@ const DICTIONARY_TESTS = [
   ['urban_dictionary', 'Urban Dictionary'],
   ['rhymebrain', 'RhymeBrain'],
   ['wiktionary_bilingual', 'Bilingual'],
+  ['wikipedia', 'Wikipedia'],
+  ['tatoeba', 'Tatoeba'],
 ] as const;
 
 export const TabSources: React.FC<TabSourcesProps> = ({
@@ -173,6 +175,8 @@ export const TabSources: React.FC<TabSourcesProps> = ({
           <option value="datamuse" className="bg-surface text-content">Datamuse</option>
           <option value="urban_dictionary" className="bg-surface text-content">Urban Dictionary</option>
           <option value="wiktionary_bilingual" className="bg-surface text-content">Wiktionary Bilingual</option>
+          <option value="wikipedia" className="bg-surface text-content">Wikipedia</option>
+          <option value="tatoeba" className="bg-surface text-content">Tatoeba</option>
           <option value="google_translate" className="bg-surface text-content">Google Translate API</option>
         </select>
         <details className="rounded-lg border border-border bg-muted/30">

@@ -20,6 +20,9 @@ provider. The fixtures preserve the provider fields consumed by the adapters.
 | `rhymebrain.json` | RhymeBrain word-info object (`ipa`, `pron`) |
 | `urban_dictionary.json` | Urban Dictionary `{ list: [...] }` response |
 | `wiktionary_bilingual.json` | Vietnamese Wiktionary MediaWiki extract response |
+| `wikipedia.json` | English Wikipedia REST summary response (`/page/summary`) |
+| `wikidata.json` | Wikidata entity search response (`wbsearchentities`) |
+| `tatoeba.json` | Tatoeba sentence example and translation response (`/api_v0/search`) |
 
 The extension reports `contributed` only when the adapter turns a response into
 usable dictionary data. A provider can return HTTP 200 and still be marked

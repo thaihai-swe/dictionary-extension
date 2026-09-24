@@ -1,0 +1,39 @@
+{
+  "type": "standard",
+  "title": "Intensive word form",
+  "displaytitle": "<span lang=\"en\" dir=\"ltr\"><span class=\"mw-page-title-main\">Intensive word form</span></span>",
+  "namespace": {
+    "id": 0,
+    "text": ""
+  },
+  "wikibase_item": "Q10965321",
+  "titles": {
+    "canonical": "Intensive_word_form",
+    "normalized": "Intensive word form",
+    "display": "<span lang=\"en\" dir=\"ltr\"><span class=\"mw-page-title-main\">Intensive word form</span></span>"
+  },
+  "pageid": 2352721,
+  "lang": "en",
+  "dir": "ltr",
+  "revision": "1373823781",
+  "tid": "9ca87739-ab38-11f1-a130-babc5afb03c1",
+  "timestamp": "2026-09-08T03:51:46Z",
+  "description": "",
+  "description_source": "local",
+  "content_urls": {
+    "desktop": {
+      "page": "https://en.wikipedia.org/wiki/Intensive_word_form",
+      "revisions": "https://en.wikipedia.org/wiki/Intensive_word_form?action=history",
+      "edit": "https://en.wikipedia.org/wiki/Intensive_word_form?action=edit",
+      "talk": "https://en.wikipedia.org/wiki/Talk:Intensive_word_form"
+    },
+    "mobile": {
+      "page": "https://en.wikipedia.org/wiki/Intensive_word_form",
+      "revisions": "https://en.wikipedia.org/wiki/Special:History/Intensive_word_form",
+      "edit": "https://en.wikipedia.org/wiki/Intensive_word_form?action=edit",
+      "talk": "https://en.wikipedia.org/wiki/Talk:Intensive_word_form"
+    }
+  },
+  "extract": "In grammar, an intensive word form is one which denotes stronger, more forceful, or more concentrated action relative to the root on which the intensive is built. Intensives are usually lexical formations, but there may be a regular process for forming intensives from a root. Intensive formations, for example, existed in Proto-Indo-European, and in many of the Semitic languages.",
+  "extract_html": "<p>In grammar, an <b>intensive word form</b> is one which denotes stronger, more forceful, or more concentrated action relative to the root on which the intensive is built. Intensives are usually lexical formations, but there may be a regular process for forming intensives from a root. Intensive formations, for example, existed in Proto-Indo-European, and in many of the Semitic languages.</p>"
+}

@@ -5,6 +5,8 @@ export const DICTIONARY_PROVIDER_IDS = [
   'rhymebrain',
   'urban_dictionary',
   'wiktionary_bilingual',
+  'wikipedia',
+  'tatoeba',
 ] as const;
 
 export const DICTIONARY_FALLBACK_ORDER: string[] = [...DICTIONARY_PROVIDER_IDS];

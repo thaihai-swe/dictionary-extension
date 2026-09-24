@@ -1,0 +1,461 @@
+{
+  "paging": {
+    "Sentences": {
+      "count": 9,
+      "current": 9,
+      "perPage": 10,
+      "page": 1,
+      "requestedPage": 1,
+      "pageCount": 1,
+      "start": 1,
+      "end": 9,
+      "prevPage": false,
+      "nextPage": false,
+      "sort": null,
+      "direction": null,
+      "sortDefault": false,
+      "directionDefault": false,
+      "completeSort": [],
+      "limit": null,
+      "scope": null,
+      "finder": "all"
+    }
+  },
+  "results": [
+    {
+      "id": 5420071,
+      "text": "Are ghosts real?",
+      "lang": "eng",
+      "correctness": 0,
+      "script": null,
+      "license": "CC BY 2.0 FR",
+      "translations": [
+        [
+          {
+            "id": 13340926,
+            "text": "Ma có thật không?",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "isDirect": true,
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ],
+        []
+      ],
+      "transcriptions": [],
+      "audios": [
+        {
+          "id": 327849,
+          "source": "tatoeba",
+          "author": "CK",
+          "attribution_url": null,
+          "license": null,
+          "download_url": "/en/audio/download/327849"
+        }
+      ],
+      "user": {
+        "username": "Hybrid"
+      },
+      "lang_name": "English",
+      "dir": "ltr",
+      "lang_tag": "en",
+      "is_favorite": null,
+      "is_owned_by_current_user": false,
+      "permissions": null,
+      "max_visible_translations": 5,
+      "current_user_review": null
+    },
+    {
+      "id": 9432240,
+      "text": "I think ghosts exist.",
+      "lang": "eng",
+      "correctness": 0,
+      "script": null,
+      "license": "CC BY 2.0 FR",
+      "translations": [
+        [
+          {
+            "id": 13600508,
+            "text": "Tôi nghĩ là ma có thật.",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "isDirect": true,
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ],
+        []
+      ],
+      "transcriptions": [],
+      "audios": [
+        {
+          "id": 801112,
+          "source": "tatoeba",
+          "author": "CK",
+          "attribution_url": null,
+          "license": null,
+          "download_url": "/en/audio/download/801112"
+        }
+      ],
+      "user": {
+        "username": "CK"
+      },
+      "lang_name": "English",
+      "dir": "ltr",
+      "lang_tag": "en",
+      "is_favorite": null,
+      "is_owned_by_current_user": false,
+      "permissions": null,
+      "max_visible_translations": 5,
+      "current_user_review": null
+    },
+    {
+      "id": 324443,
+      "text": "I think that ghosts exist.",
+      "lang": "eng",
+      "correctness": 0,
+      "script": null,
+      "license": "CC BY 2.0 FR",
+      "translations": [
+        [],
+        [
+          {
+            "id": 13600508,
+            "text": "Tôi nghĩ là ma có thật.",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ]
+      ],
+      "transcriptions": [],
+      "audios": [
+        {
+          "id": 800724,
+          "source": "tatoeba",
+          "author": "CK",
+          "attribution_url": null,
+          "license": null,
+          "download_url": "/en/audio/download/800724"
+        }
+      ],
+      "user": {
+        "username": "CK"
+      },
+      "lang_name": "English",
+      "dir": "ltr",
+      "lang_tag": "en",
+      "is_favorite": null,
+      "is_owned_by_current_user": false,
+      "permissions": null,
+      "max_visible_translations": 5,
+      "current_user_review": null
+    },
+    {
+      "id": 3200763,
+      "text": "Please tell me a ghost story.",
+      "lang": "eng",
+      "correctness": 0,
+      "script": null,
+      "license": "CC BY 2.0 FR",
+      "translations": [
+        [
+          {
+            "id": 9066055,
+            "text": "Hãy kể cho tôi nghe một câu chuyện ma.",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "isDirect": true,
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          },
+          {
+            "id": 9066056,
+            "text": "Hãy kể cho tôi một câu chuyện ma.",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "isDirect": true,
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ],
+        []
+      ],
+      "transcriptions": [],
+      "audios": [
+        {
+          "id": 192438,
+          "source": "tatoeba",
+          "author": "CK",
+          "attribution_url": null,
+          "license": null,
+          "download_url": "/en/audio/download/192438"
+        }
+      ],
+      "user": {
+        "username": "CK"
+      },
+      "lang_name": "English",
+      "dir": "ltr",
+      "lang_tag": "en",
+      "is_favorite": null,
+      "is_owned_by_current_user": false,
+      "permissions": null,
+      "max_visible_translations": 5,
+      "current_user_review": null
+    },
+    {
+      "id": 2644125,
+      "text": "Have you ever seen a ghost?",
+      "lang": "eng",
+      "correctness": 0,
+      "script": null,
+      "license": "CC BY 2.0 FR",
+      "translations": [
+        [],
+        [
+          {
+            "id": 8834794,
+            "text": "Bạn đã nhìn thấy ma chưa?",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          },
+          {
+            "id": 8834797,
+            "text": "Bạn đã từng nhìn thấy ma bao giờ chưa?",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ]
+      ],
+      "transcriptions": [],
+      "audios": [
+        {
+          "id": 156391,
+          "source": "tatoeba",
+          "author": "CK",
+          "attribution_url": null,
+          "license": null,
+          "download_url": "/en/audio/download/156391"
+        }
+      ],
+      "user": {
+        "username": "CK"
+      },
+      "lang_name": "English",
+      "dir": "ltr",
+      "lang_tag": "en",
+      "is_favorite": null,
+      "is_owned_by_current_user": false,
+      "permissions": null,
+      "max_visible_translations": 5,
+      "current_user_review": null
+    },
+    {
+      "id": 2275961,
+      "text": "I don't believe in ghosts.",
+      "lang": "eng",
+      "correctness": 0,
+      "script": null,
+      "license": "CC BY 2.0 FR",
+      "translations": [
+        [],
+        [
+          {
+            "id": 581119,
+            "text": "Tôi không tin là có ma.",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ]
+      ],
+      "transcriptions": [],
+      "audios": [
+        {
+          "id": 121547,
+          "source": "tatoeba",
+          "author": "CK",
+          "attribution_url": null,
+          "license": null,
+          "download_url": "/en/audio/download/121547"
+        }
+      ],
+      "user": {
+        "username": "CK"
+      },
+      "lang_name": "English",
+      "dir": "ltr",
+      "lang_tag": "en",
+      "is_favorite": null,
+      "is_owned_by_current_user": false,
+      "permissions": null,
+      "max_visible_translations": 5,
+      "current_user_review": null
+    },
+    {
+      "id": 384016,
+      "text": "No, I'm not afraid of ghosts.",
+      "lang": "eng",
+      "correctness": 0,
+      "script": null,
+      "license": "CC0 1.0",
+      "translations": [
+        [
+          {
+            "id": 13173468,
+            "text": "Không, tôi không sợ ma.",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "isDirect": true,
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ],
+        []
+      ],
+      "transcriptions": [],
+      "audios": [],
+      "user": {
+        "username": "TRANG"
+      },
+      "lang_name": "English",
+      "dir": "ltr",
+      "lang_tag": "en",
+      "is_favorite": null,
+      "is_owned_by_current_user": false,
+      "permissions": null,
+      "max_visible_translations": 5,
+      "current_user_review": null
+    },
+    {
+      "id": 324437,
+      "text": "I don't believe that ghosts exist.",
+      "lang": "eng",
+      "correctness": 0,
+      "script": null,
+      "license": "CC BY 2.0 FR",
+      "translations": [
+        [
+          {
+            "id": 581119,
+            "text": "Tôi không tin là có ma.",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "isDirect": true,
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ],
+        []
+      ],
+      "transcriptions": [],
+      "audios": [
+        {
+          "id": 24580,
+          "source": "tatoeba",
+          "author": "CK",
+          "attribution_url": null,
+          "license": null,
+          "download_url": "/en/audio/download/24580"
+        }
+      ],
+      "user": {
+        "username": "CK"
+      },
+      "lang_name": "English",
+      "dir": "ltr",
+      "lang_tag": "en",
+      "is_favorite": null,
+      "is_owned_by_current_user": false,
+      "permissions": null,
+      "max_visible_translations": 5,
+      "current_user_review": null
+    },
+    {
+      "id": 52852,
+      "text": "Jody looks as if she had seen a ghost.",
+      "lang": "eng",
+      "correctness": 0,
+      "script": null,
+      "license": "CC BY 2.0 FR",
+      "translations": [
+        [],
+        [
+          {
+            "id": 8969939,
+            "text": "Trông Jody cứ như thể nhìn thấy ma vậy.",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ]
+      ],
+      "transcriptions": [],
+      "audios": [],
+      "user": {
+        "username": "CN"
+      },
+      "lang_name": "English",
+      "dir": "ltr",
+      "lang_tag": "en",
+      "is_favorite": null,
+      "is_owned_by_current_user": false,
+      "permissions": null,
+      "max_visible_translations": 5,
+      "current_user_review": null
+    }
+  ]
+}

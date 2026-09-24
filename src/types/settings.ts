@@ -13,7 +13,9 @@ export type DictionaryProviderId =
   | 'wiktionary_bilingual'
   | 'datamuse'
   | 'rhymebrain'
-  | 'urban_dictionary';
+  | 'urban_dictionary'
+  | 'wikipedia'
+  | 'tatoeba';
 
 export interface AppSettings {
   theme: AppTheme;

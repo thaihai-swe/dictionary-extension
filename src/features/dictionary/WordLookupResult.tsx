@@ -107,6 +107,21 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
     return typeof formation === 'object' ? formation?.suffixes || [] : [];
   }, [result]);
 
+  const standardMeanings = useMemo(
+    () => result?.meanings?.filter((m) => (m.partOfSpeech || '').toLowerCase() !== 'slang') || [],
+    [result?.meanings],
+  );
+
+  const slangMeanings = useMemo(
+    () => result?.meanings?.filter((m) => (m.partOfSpeech || '').toLowerCase() === 'slang') || [],
+    [result?.meanings],
+  );
+
+  const slangCount = useMemo(
+    () => slangMeanings.reduce((acc, m) => acc + (m.definitions?.length || 0), 0),
+    [slangMeanings],
+  );
+
   function handleSearch(wordToSearch: string) {
     onSelectWord?.(wordToSearch);
   }
@@ -341,8 +356,8 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
       ) : null}
 
       {/* Main Definitions (Sense Matrix Card) */}
-      {result.meanings?.length ? (
-        <SenseMatrixCard meanings={result.meanings} />
+      {standardMeanings.length ? (
+        <SenseMatrixCard meanings={standardMeanings} />
       ) : null}
 
       {/* Phrase Explanation Fallback */}
@@ -415,6 +430,16 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
             words={filteredAntonyms.map((a) => a.text)}
             onSelectWord={handleSearch}
           />
+        </LexicalDisclosure>
+      ) : null}
+
+      {slangMeanings.length ? (
+        <LexicalDisclosure
+          label="Slang"
+          count={slangCount}
+          defaultOpen={!standardMeanings.length}
+        >
+          <SenseMatrixCard meanings={slangMeanings} />
         </LexicalDisclosure>
       ) : null}
 

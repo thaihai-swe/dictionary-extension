@@ -1,0 +1,511 @@
+{
+  "paging": {
+    "Sentences": {
+      "count": 97,
+      "current": 10,
+      "perPage": 10,
+      "page": 1,
+      "requestedPage": 1,
+      "pageCount": 10,
+      "start": 1,
+      "end": 10,
+      "prevPage": false,
+      "nextPage": true,
+      "sort": null,
+      "direction": null,
+      "sortDefault": false,
+      "directionDefault": false,
+      "completeSort": [],
+      "limit": null,
+      "scope": null,
+      "finder": "all"
+    }
+  },
+  "results": [
+    {
+      "id": 4008918,
+      "text": "Run.",
+      "lang": "eng",
+      "correctness": 0,
+      "script": null,
+      "license": "CC BY 2.0 FR",
+      "translations": [
+        [],
+        [
+          {
+            "id": 1541945,
+            "text": "Chạy!",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          },
+          {
+            "id": 10257565,
+            "text": "Chạy đi!",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ]
+      ],
+      "transcriptions": [],
+      "audios": [
+        {
+          "id": 486248,
+          "source": "tatoeba",
+          "author": "CK",
+          "attribution_url": null,
+          "license": null,
+          "download_url": "/en/audio/download/486248"
+        }
+      ],
+      "user": {
+        "username": "JSakuragi"
+      },
+      "lang_name": "English",
+      "dir": "ltr",
+      "lang_tag": "en",
+      "is_favorite": null,
+      "is_owned_by_current_user": false,
+      "permissions": null,
+      "max_visible_translations": 5,
+      "current_user_review": null
+    },
+    {
+      "id": 906328,
+      "text": "Run!",
+      "lang": "eng",
+      "correctness": 0,
+      "script": null,
+      "license": "CC BY 2.0 FR",
+      "translations": [
+        [
+          {
+            "id": 1541945,
+            "text": "Chạy!",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "isDirect": true,
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          },
+          {
+            "id": 10257565,
+            "text": "Chạy đi!",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "isDirect": true,
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ],
+        []
+      ],
+      "transcriptions": [],
+      "audios": [
+        {
+          "id": 872957,
+          "source": "tatoeba",
+          "author": "CK",
+          "attribution_url": null,
+          "license": null,
+          "download_url": "/en/audio/download/872957"
+        }
+      ],
+      "user": {
+        "username": "papabear"
+      },
+      "lang_name": "English",
+      "dir": "ltr",
+      "lang_tag": "en",
+      "is_favorite": null,
+      "is_owned_by_current_user": false,
+      "permissions": null,
+      "max_visible_translations": 5,
+      "current_user_review": null
+    },
+    {
+      "id": 13723883,
+      "text": "Ready, run!",
+      "lang": "eng",
+      "correctness": 0,
+      "script": null,
+      "license": "CC BY 2.0 FR",
+      "translations": [
+        [
+          {
+            "id": 4064810,
+            "text": "Sẵn sàng, chạy!",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "isDirect": true,
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ],
+        []
+      ],
+      "transcriptions": [],
+      "audios": [],
+      "user": {
+        "username": "an_hien"
+      },
+      "lang_name": "English",
+      "dir": "ltr",
+      "lang_tag": "en",
+      "is_favorite": null,
+      "is_owned_by_current_user": false,
+      "permissions": null,
+      "max_visible_translations": 5,
+      "current_user_review": null
+    },
+    {
+      "id": 5672008,
+      "text": "Stop running!",
+      "lang": "eng",
+      "correctness": 0,
+      "script": null,
+      "license": "CC BY 2.0 FR",
+      "translations": [
+        [
+          {
+            "id": 13333925,
+            "text": "Đừng chạy nữa!",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "isDirect": true,
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ],
+        []
+      ],
+      "transcriptions": [],
+      "audios": [],
+      "user": {
+        "username": "Catriona"
+      },
+      "lang_name": "English",
+      "dir": "ltr",
+      "lang_tag": "en",
+      "is_favorite": null,
+      "is_owned_by_current_user": false,
+      "permissions": null,
+      "max_visible_translations": 5,
+      "current_user_review": null
+    },
+    {
+      "id": 5300540,
+      "text": "Run away!",
+      "lang": "eng",
+      "correctness": 0,
+      "script": null,
+      "license": "CC BY 2.0 FR",
+      "translations": [
+        [
+          {
+            "id": 13333931,
+            "text": "Chạy ngay đi!",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "isDirect": true,
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ],
+        []
+      ],
+      "transcriptions": [],
+      "audios": [],
+      "user": {
+        "username": "mailohilohi"
+      },
+      "lang_name": "English",
+      "dir": "ltr",
+      "lang_tag": "en",
+      "is_favorite": null,
+      "is_owned_by_current_user": false,
+      "permissions": null,
+      "max_visible_translations": 5,
+      "current_user_review": null
+    },
+    {
+      "id": 2425900,
+      "text": "Run fast!",
+      "lang": "eng",
+      "correctness": 0,
+      "script": null,
+      "license": "CC BY 2.0 FR",
+      "translations": [
+        [
+          {
+            "id": 13333999,
+            "text": "Chạy nhanh lên!",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "isDirect": true,
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ],
+        []
+      ],
+      "transcriptions": [],
+      "audios": [],
+      "user": {
+        "username": "bionicboy"
+      },
+      "lang_name": "English",
+      "dir": "ltr",
+      "lang_tag": "en",
+      "is_favorite": null,
+      "is_owned_by_current_user": false,
+      "permissions": null,
+      "max_visible_translations": 5,
+      "current_user_review": null
+    },
+    {
+      "id": 2111640,
+      "text": "Keep running.",
+      "lang": "eng",
+      "correctness": 0,
+      "script": null,
+      "license": "CC BY 2.0 FR",
+      "translations": [
+        [
+          {
+            "id": 13338365,
+            "text": "Chạy tiếp đi.",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "isDirect": true,
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ],
+        []
+      ],
+      "transcriptions": [],
+      "audios": [
+        {
+          "id": 102821,
+          "source": "tatoeba",
+          "author": "CK",
+          "attribution_url": null,
+          "license": null,
+          "download_url": "/en/audio/download/102821"
+        }
+      ],
+      "user": {
+        "username": "CK"
+      },
+      "lang_name": "English",
+      "dir": "ltr",
+      "lang_tag": "en",
+      "is_favorite": null,
+      "is_owned_by_current_user": false,
+      "permissions": null,
+      "max_visible_translations": 5,
+      "current_user_review": null
+    },
+    {
+      "id": 2111521,
+      "text": "Start running.",
+      "lang": "eng",
+      "correctness": 0,
+      "script": null,
+      "license": "CC BY 2.0 FR",
+      "translations": [
+        [
+          {
+            "id": 13338390,
+            "text": "Bắt đầu chạy đi.",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "isDirect": true,
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ],
+        []
+      ],
+      "transcriptions": [],
+      "audios": [
+        {
+          "id": 102703,
+          "source": "tatoeba",
+          "author": "CK",
+          "attribution_url": null,
+          "license": null,
+          "download_url": "/en/audio/download/102703"
+        }
+      ],
+      "user": {
+        "username": "CK"
+      },
+      "lang_name": "English",
+      "dir": "ltr",
+      "lang_tag": "en",
+      "is_favorite": null,
+      "is_owned_by_current_user": false,
+      "permissions": null,
+      "max_visible_translations": 5,
+      "current_user_review": null
+    },
+    {
+      "id": 672252,
+      "text": "You run.",
+      "lang": "eng",
+      "correctness": 0,
+      "script": null,
+      "license": "CC BY 2.0 FR",
+      "translations": [
+        [
+          {
+            "id": 3681115,
+            "text": "Bạn chạy.",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "isDirect": true,
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ],
+        [
+          {
+            "id": 11235520,
+            "text": "Bạn đang chạy.",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ]
+      ],
+      "transcriptions": [],
+      "audios": [
+        {
+          "id": 42502,
+          "source": "tatoeba",
+          "author": "CK",
+          "attribution_url": null,
+          "license": null,
+          "download_url": "/en/audio/download/42502"
+        }
+      ],
+      "user": {
+        "username": "CK"
+      },
+      "lang_name": "English",
+      "dir": "ltr",
+      "lang_tag": "en",
+      "is_favorite": null,
+      "is_owned_by_current_user": false,
+      "permissions": null,
+      "max_visible_translations": 5,
+      "current_user_review": null
+    },
+    {
+      "id": 23837,
+      "text": "Fire! Run!",
+      "lang": "eng",
+      "correctness": 0,
+      "script": null,
+      "license": "CC BY 2.0 FR",
+      "translations": [
+        [
+          {
+            "id": 1510564,
+            "text": "Cháy! Chạy mau!",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "isDirect": true,
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ],
+        [
+          {
+            "id": 8953638,
+            "text": "Cháy! Mau chạy đi!",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ]
+      ],
+      "transcriptions": [],
+      "audios": [],
+      "user": {
+        "username": "trieuho"
+      },
+      "lang_name": "English",
+      "dir": "ltr",
+      "lang_tag": "en",
+      "is_favorite": null,
+      "is_owned_by_current_user": false,
+      "permissions": null,
+      "max_visible_translations": 5,
+      "current_user_review": null
+    }
+  ]
+}

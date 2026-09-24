@@ -47,6 +47,8 @@ const DICTIONARY_PROVIDERS = new Set<string>([
   'datamuse',
   'rhymebrain',
   'urban_dictionary',
+  'wikipedia',
+  'tatoeba',
 ]);
 
 export const DEFAULT_SETTINGS: AppSettings = {

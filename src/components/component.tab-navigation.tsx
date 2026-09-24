@@ -77,14 +77,14 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
 
   return (
     <nav
-      className="workbench-navigation px-4 pt-2 pb-3 transition-colors select-none"
+      className="workbench-navigation px-3 pt-1 pb-1.5 transition-colors select-none"
       role="tablist"
       aria-label="Navigation modes"
       onKeyDown={handleKeyDown}
     >
       <div
         className={cx(
-          'workbench-tab-list grid gap-1 p-1 rounded-xl text-[13px]',
+          'workbench-tab-list grid gap-1 p-0.5 rounded-lg text-[12.5px]',
           tabs.length === 3 ? 'grid-cols-3' : tabs.length === 2 ? 'grid-cols-2' : 'grid-cols-1',
         )}
       >
@@ -101,7 +101,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
               tabIndex={isActive ? 0 : -1}
               onClick={() => selectTab(tab.id)}
               className={cx(
-                'workbench-tab min-w-0 py-2 px-1 sm:px-3 rounded-lg flex items-center justify-center gap-1.5 text-[13px] transition-colors duration-fast cursor-pointer whitespace-nowrap select-none relative overflow-hidden focus-visible:ring-2 focus-visible:ring-accent',
+                'workbench-tab min-w-0 py-1.5 px-1 sm:px-2.5 rounded-md flex items-center justify-center gap-1.5 text-[12.5px] transition-colors duration-fast cursor-pointer whitespace-nowrap select-none relative overflow-hidden focus-visible:ring-2 focus-visible:ring-accent',
                 isActive ? 'is-active font-bold' : 'font-medium',
               )}
             >

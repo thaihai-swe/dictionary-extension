@@ -207,43 +207,41 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
 
       </div>
       {/* Results Deck */}
-      <div className="rewrite-results space-y-3">
-        {isRewriting ? (
-          <div className="p-4 rounded-2xl border border-border/80 bg-surface/90 shadow-xs space-y-3.5">
-            <div className="flex items-center justify-between pb-1.5 border-b border-border/60">
-              <div className="h-3.5 skeleton-shimmer rounded w-1/3"></div>
-              <div className="h-3 skeleton-shimmer rounded w-16"></div>
+      {isRewriting || rewriteError || rewriteResult ? (
+        <div className="rewrite-results space-y-3">
+          {isRewriting ? (
+            <div className="p-4 rounded-2xl border border-border/80 bg-surface/90 shadow-xs space-y-3.5">
+              <div className="flex items-center justify-between pb-1.5 border-b border-border/60">
+                <div className="h-3.5 skeleton-shimmer rounded w-1/3"></div>
+                <div className="h-3 skeleton-shimmer rounded w-16"></div>
+              </div>
+              <div className="space-y-2">
+                <div className="h-3.5 skeleton-shimmer rounded w-full"></div>
+                <div className="h-3.5 skeleton-shimmer rounded w-4/5"></div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <div className="h-3.5 skeleton-shimmer rounded w-full"></div>
-              <div className="h-3.5 skeleton-shimmer rounded w-4/5"></div>
+          ) : rewriteError ? (
+            <div role="alert" className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/25 text-[13.5px] text-rose-600 dark:text-rose-400 shadow-xs">
+              {rewriteError}
             </div>
-          </div>
-        ) : rewriteError ? (
-          <div role="alert" className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/25 text-[13.5px] text-rose-600 dark:text-rose-400 shadow-xs">
-            {rewriteError}
-          </div>
-        ) : !rewriteResult ? (
-          <div className="p-4 rounded-2xl border border-dashed border-border/80 bg-muted/20 text-[13.5px] text-content-muted leading-relaxed text-center">
-            Choose a tone, then click Rewrite. Nothing is sent until you ask.
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <span className="text-[12px] font-bold uppercase tracking-wider text-accent font-mono block">
-              Rewritten Suggestions
-            </span>
+          ) : rewriteResult ? (
+            <div className="space-y-3">
+              <span className="text-[12px] font-bold uppercase tracking-wider text-accent font-mono block">
+                Rewritten Suggestions
+              </span>
 
-            {rewriteResult.summary ? (
-              <RewriteResultDeck
-                markdown={rewriteResult.summary}
-                copiedId={copiedId}
-                onCopy={handleCopy}
-                onSpeak={handleSpeak}
-              />
-            ) : null}
-          </div>
-        )}
-      </div>
+              {rewriteResult.summary ? (
+                <RewriteResultDeck
+                  markdown={rewriteResult.summary}
+                  copiedId={copiedId}
+                  onCopy={handleCopy}
+                  onSpeak={handleSpeak}
+                />
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 };

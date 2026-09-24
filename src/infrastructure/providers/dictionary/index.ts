@@ -6,3 +6,5 @@ export { fetchWiktionary } from '../../../providers/provider.wiktionary';
 export { fetchWiktionaryBilingual } from '../../../providers/provider.wiktionary-bilingual';
 export { fetchGoogleTranslate } from '../../../providers/provider.google-translate';
 export { fetchLibreTranslate } from '../../../providers/provider.libre-translate';
+export { fetchWikipedia } from '../../../providers/provider.wikipedia';
+export { fetchTatoeba } from '../../../providers/provider.tatoeba';

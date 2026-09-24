@@ -1,0 +1,134 @@
+{
+  "searchinfo": {
+    "search": "intensive"
+  },
+  "search": [
+    {
+      "id": "Q5094647",
+      "title": "Q5094647",
+      "pageid": 4869165,
+      "concepturi": "http://www.wikidata.org/entity/Q5094647",
+      "repository": "wikidata",
+      "url": "//www.wikidata.org/wiki/Q5094647",
+      "display": {
+        "label": {
+          "value": "intensive care unit",
+          "language": "en"
+        },
+        "description": {
+          "value": "hospital ward that provides intensive care medicine",
+          "language": "en"
+        }
+      },
+      "label": "intensive care unit",
+      "description": "hospital ward that provides intensive care medicine",
+      "match": {
+        "type": "label",
+        "language": "en",
+        "text": "intensive care unit"
+      }
+    },
+    {
+      "id": "Q15749164",
+      "title": "Q15749164",
+      "pageid": 17382393,
+      "concepturi": "http://www.wikidata.org/entity/Q15749164",
+      "repository": "wikidata",
+      "url": "//www.wikidata.org/wiki/Q15749164",
+      "display": {
+        "label": {
+          "value": "Intensive Care Medicine",
+          "language": "en"
+        },
+        "description": {
+          "value": "journal",
+          "language": "en"
+        }
+      },
+      "label": "Intensive Care Medicine",
+      "description": "journal",
+      "match": {
+        "type": "label",
+        "language": "en",
+        "text": "Intensive Care Medicine"
+      }
+    },
+    {
+      "id": "Q679690",
+      "title": "Q679690",
+      "pageid": 640309,
+      "concepturi": "http://www.wikidata.org/entity/Q679690",
+      "repository": "wikidata",
+      "url": "//www.wikidata.org/wiki/Q679690",
+      "display": {
+        "label": {
+          "value": "intensive care medicine",
+          "language": "en"
+        },
+        "description": {
+          "value": "medical care subspecialty, treating critically ill",
+          "language": "en"
+        }
+      },
+      "label": "intensive care medicine",
+      "description": "medical care subspecialty, treating critically ill",
+      "match": {
+        "type": "label",
+        "language": "en",
+        "text": "intensive care medicine"
+      }
+    },
+    {
+      "id": "Q15753844",
+      "title": "Q15753844",
+      "pageid": 17387075,
+      "concepturi": "http://www.wikidata.org/entity/Q15753844",
+      "repository": "wikidata",
+      "url": "//www.wikidata.org/wiki/Q15753844",
+      "display": {
+        "label": {
+          "value": "Intensive and Critical Care Nursing",
+          "language": "en"
+        },
+        "description": {
+          "value": "journal",
+          "language": "en"
+        }
+      },
+      "label": "Intensive and Critical Care Nursing",
+      "description": "journal",
+      "match": {
+        "type": "label",
+        "language": "en",
+        "text": "Intensive and Critical Care Nursing"
+      }
+    },
+    {
+      "id": "Q27726128",
+      "title": "Q27726128",
+      "pageid": 29442391,
+      "concepturi": "http://www.wikidata.org/entity/Q27726128",
+      "repository": "wikidata",
+      "url": "//www.wikidata.org/wiki/Q27726128",
+      "display": {
+        "label": {
+          "value": "Intensive care medicine experimental",
+          "language": "en"
+        },
+        "description": {
+          "value": "medical journal",
+          "language": "en"
+        }
+      },
+      "label": "Intensive care medicine experimental",
+      "description": "medical journal",
+      "match": {
+        "type": "label",
+        "language": "en",
+        "text": "Intensive care medicine experimental"
+      }
+    }
+  ],
+  "search-continue": 5,
+  "success": 1
+}

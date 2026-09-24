@@ -10,7 +10,9 @@ import {
   fetchGoogleTranslate,
   fetchLibreTranslate,
   fetchRhymeBrain,
+  fetchTatoeba,
   fetchUrbanDictionary,
+  fetchWikipedia,
   fetchWiktionary,
   fetchWiktionaryBilingual,
 } from './dictionary';
@@ -66,6 +68,18 @@ providerRegistry.registerDictionary({
   id: 'libre_translate',
   name: 'LibreTranslate',
   lookup: (word, opts) => fetchLibreTranslate(word, opts.targetLang, opts.signal),
+});
+
+providerRegistry.registerDictionary({
+  id: 'wikipedia',
+  name: 'Wikipedia',
+  lookup: (word, opts) => fetchWikipedia(word, opts.targetLang, opts.signal),
+});
+
+providerRegistry.registerDictionary({
+  id: 'tatoeba',
+  name: 'Tatoeba',
+  lookup: (word, opts) => fetchTatoeba(word, opts.targetLang, opts.signal),
 });
 
 providerRegistry.registerTranslation({

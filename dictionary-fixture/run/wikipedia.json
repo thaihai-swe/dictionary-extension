@@ -1,0 +1,39 @@
+{
+  "type": "disambiguation",
+  "title": "Run",
+  "displaytitle": "<span lang=\"en\" dir=\"ltr\"><span class=\"mw-page-title-main\">Run</span></span>",
+  "namespace": {
+    "id": 0,
+    "text": ""
+  },
+  "wikibase_item": "Q234328",
+  "titles": {
+    "canonical": "Run",
+    "normalized": "Run",
+    "display": "<span lang=\"en\" dir=\"ltr\"><span class=\"mw-page-title-main\">Run</span></span>"
+  },
+  "pageid": 355367,
+  "lang": "en",
+  "dir": "ltr",
+  "revision": "1374338239",
+  "tid": "2627a4e5-add4-11f1-a706-60fa2f2b308d",
+  "timestamp": "2026-09-11T11:30:11Z",
+  "description": "Topics referred to by the same term",
+  "description_source": "local",
+  "content_urls": {
+    "desktop": {
+      "page": "https://en.wikipedia.org/wiki/Run",
+      "revisions": "https://en.wikipedia.org/wiki/Run?action=history",
+      "edit": "https://en.wikipedia.org/wiki/Run?action=edit",
+      "talk": "https://en.wikipedia.org/wiki/Talk:Run"
+    },
+    "mobile": {
+      "page": "https://en.wikipedia.org/wiki/Run",
+      "revisions": "https://en.wikipedia.org/wiki/Special:History/Run",
+      "edit": "https://en.wikipedia.org/wiki/Run?action=edit",
+      "talk": "https://en.wikipedia.org/wiki/Talk:Run"
+    }
+  },
+  "extract": "Run(s) or RUN may refer to:",
+  "extract_html": "<p><b>Run</b>(<b>s</b>) or <b>RUN</b> may refer to:</p>"
+}

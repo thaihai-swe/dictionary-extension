@@ -1,0 +1,134 @@
+{
+  "searchinfo": {
+    "search": "ghost"
+  },
+  "search": [
+    {
+      "id": "Q45529",
+      "title": "Q45529",
+      "pageid": 47693,
+      "concepturi": "http://www.wikidata.org/entity/Q45529",
+      "repository": "wikidata",
+      "url": "//www.wikidata.org/wiki/Q45529",
+      "display": {
+        "label": {
+          "value": "ghost",
+          "language": "en"
+        },
+        "description": {
+          "value": "soul or spirit of a dead person or animal that can appear to the living",
+          "language": "en"
+        }
+      },
+      "label": "ghost",
+      "description": "soul or spirit of a dead person or animal that can appear to the living",
+      "match": {
+        "type": "label",
+        "language": "en",
+        "text": "ghost"
+      }
+    },
+    {
+      "id": "Q2006428",
+      "title": "Q2006428",
+      "pageid": 1934752,
+      "concepturi": "http://www.wikidata.org/entity/Q2006428",
+      "repository": "wikidata",
+      "url": "//www.wikidata.org/wiki/Q2006428",
+      "display": {
+        "label": {
+          "value": "Ghost",
+          "language": "en"
+        },
+        "description": {
+          "value": "stage musical based on the 1990 movie",
+          "language": "en"
+        }
+      },
+      "label": "Ghost",
+      "description": "stage musical based on the 1990 movie",
+      "match": {
+        "type": "label",
+        "language": "en",
+        "text": "Ghost"
+      }
+    },
+    {
+      "id": "Q5557042",
+      "title": "Q5557042",
+      "pageid": 5317384,
+      "concepturi": "http://www.wikidata.org/entity/Q5557042",
+      "repository": "wikidata",
+      "url": "//www.wikidata.org/wiki/Q5557042",
+      "display": {
+        "label": {
+          "value": "Ghost",
+          "language": "en"
+        },
+        "description": {
+          "value": "Swedish record producing and songwriting team",
+          "language": "en"
+        }
+      },
+      "label": "Ghost",
+      "description": "Swedish record producing and songwriting team",
+      "match": {
+        "type": "label",
+        "language": "en",
+        "text": "Ghost"
+      }
+    },
+    {
+      "id": "Q16251204",
+      "title": "Q16251204",
+      "pageid": 17876238,
+      "concepturi": "http://www.wikidata.org/entity/Q16251204",
+      "repository": "wikidata",
+      "url": "//www.wikidata.org/wiki/Q16251204",
+      "display": {
+        "label": {
+          "value": "Ghost",
+          "language": "en"
+        },
+        "description": {
+          "value": "free and open-source blogging platform",
+          "language": "en"
+        }
+      },
+      "label": "Ghost",
+      "description": "free and open-source blogging platform",
+      "match": {
+        "type": "label",
+        "language": "en",
+        "text": "Ghost"
+      }
+    },
+    {
+      "id": "Q37205978",
+      "title": "Q37205978",
+      "pageid": 38583950,
+      "concepturi": "http://www.wikidata.org/entity/Q37205978",
+      "repository": "wikidata",
+      "url": "//www.wikidata.org/wiki/Q37205978",
+      "display": {
+        "label": {
+          "value": "Ghost",
+          "language": "en"
+        },
+        "description": {
+          "value": "family name",
+          "language": "en"
+        }
+      },
+      "label": "Ghost",
+      "description": "family name",
+      "match": {
+        "type": "label",
+        "language": "en",
+        "text": "Ghost"
+      }
+    }
+  ],
+  "search-continue": 5,
+  "success": 1
+}

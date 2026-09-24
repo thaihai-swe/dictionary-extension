@@ -4,12 +4,16 @@ import { IconChevronDown, IconSparkles } from '@/components/icons';
 interface LexicalDisclosureProps {
   label: string;
   count?: number;
+  defaultOpen?: boolean;
   children: React.ReactNode;
 }
 
-function LexicalDisclosure({ label, count, children }: LexicalDisclosureProps) {
+function LexicalDisclosure({ label, count, defaultOpen, children }: LexicalDisclosureProps) {
   return (
-    <details className="lexical-disclosure rounded-2xl border border-border/80 bg-surface shadow-xs overflow-hidden group">
+    <details
+      open={defaultOpen}
+      className="lexical-disclosure rounded-2xl border border-border/80 bg-surface shadow-xs overflow-hidden group"
+    >
       <summary className="px-4 py-3 text-[15px] font-bold text-content-secondary uppercase tracking-wider flex items-center justify-between gap-2 cursor-pointer select-none hover:bg-muted/40 transition-colors">
         <span className="flex items-center gap-2 min-w-0">
           <IconSparkles className="w-3.5 h-3.5 text-accent shrink-0" />

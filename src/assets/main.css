@@ -817,8 +817,7 @@ input[type="range"] {
   box-shadow: 0 -12px 30px -24px rgba(0, 0, 0, 0.3);
 }
 
-.settings-brand-mark,
-.workbench-brand-mark {
+.settings-brand-mark {
   display: grid;
   place-items: center;
   width: 2.5rem;
@@ -826,6 +825,17 @@ input[type="range"] {
   border-radius: 0.75rem;
   color: var(--color-on-primary);
   background: var(--color-primary);
+}
+
+.workbench-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.5rem;
+  color: var(--color-on-primary);
+  background: var(--color-primary);
+  flex-shrink: 0;
 }
 
 .settings-eyebrow,
@@ -953,27 +963,26 @@ input[type="range"] {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  padding: 1rem 1.25rem;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
   background: var(--bg-surface);
 }
-.workbench-brand { display: flex; align-items: center; gap: 0.75rem; }
-.workbench-brand-name { display: block; font-weight: 800; font-size: 1.2rem; letter-spacing: -0.04em; }
+.workbench-brand { display: flex; align-items: center; gap: 0.5rem; }
+.workbench-brand-name { display: block; font-weight: 750; font-size: 1.05rem; letter-spacing: -0.03em; }
 .workbench-brand-name > span { color: var(--color-primary); }
 .workbench-tagline { display: block; font-size: 0.75rem; color: var(--text-muted); }
-.workbench-window-actions { display: flex; align-items: center; gap: 0.25rem; margin-left: auto; }
-.workbench-window-actions .btn-control-icon { width: 2rem; height: 2rem; border-radius: 0.65rem; }
-.audio-stop { display: flex; align-items: center; gap: 0.4rem; padding: 0.4rem; color: var(--color-danger); font-size: 0.75rem; }
+.workbench-window-actions { display: flex; align-items: center; gap: 0.15rem; margin-left: auto; }
+.workbench-window-actions .btn-control-icon { width: 1.75rem; height: 1.75rem; border-radius: 0.5rem; }
+.audio-stop { display: flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.5rem; color: var(--color-danger); font-size: 0.75rem; }
 .workbench-navigation { background: var(--bg-surface); flex-shrink: 0; }
 .workbench-tab-list { background: var(--bg-muted); border: 1px solid var(--border-subtle); }
-.workbench-tab { color: var(--text-secondary); min-height: 2.6rem; }
+.workbench-tab { color: var(--text-secondary); min-height: 2rem; }
 .workbench-tab:hover { background: var(--bg-surface); }
 .workbench-tab.is-active { color: var(--color-primary); background: var(--bg-surface); box-shadow: var(--shadow-card); }
 .workbench-tab.is-active::after { content: ''; position: absolute; bottom: 0; width: 2rem; height: 3px; border-radius: 3px; background: var(--color-primary); }
-.lookup-preferences { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; padding: 0.6rem 1.25rem; border-bottom: 1px solid var(--border-color); background: var(--bg-surface); }
-.lookup-preferences label { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: var(--text-muted); min-width: 0; }
-.lookup-preferences select { max-width: 100%; padding: 0.35rem 0.25rem; border-radius: 0.4rem; background: var(--bg-surface); color: var(--text-primary); font-weight: 600; cursor: pointer; }
+.lookup-preferences { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.35rem 0.875rem; border-bottom: 1px solid var(--border-subtle); background: var(--bg-surface); }
+.lookup-preferences label { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.72rem; color: var(--text-muted); min-width: 0; }
+.lookup-preferences select { max-width: 100%; padding: 0.2rem 0.35rem; border-radius: 0.375rem; border: 1px solid var(--border-subtle); background: var(--bg-muted); color: var(--text-primary); font-size: 0.75rem; font-weight: 600; cursor: pointer; }
 .workbench-main { overscroll-behavior: contain; scrollbar-gutter: stable; }
 .workbench-search { background: var(--bg-paper); border-bottom: 1px solid var(--border-subtle); }
 .workbench-search-label { display: block; margin-bottom: 0.6rem; font-size: 0.875rem !important; text-transform: none; letter-spacing: 0; color: var(--text-secondary); }
@@ -993,30 +1002,25 @@ input[type="range"] {
 .feature-intro { padding: 0.5rem 0 1rem; }
 .feature-intro h2 { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.035em; margin: 0.25rem 0; }
 .feature-intro p { color: var(--text-secondary); font-size: 0.875rem; }
-.intent-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.intent-groups { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 .rewrite-workspace { display: grid; gap: 1.25rem; align-items: start; }
 .rewrite-intro { grid-column: 1 / -1; }
 .rewrite-composer, .rewrite-results { min-width: 0; }
 .rewrite-results { border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.25rem; background: var(--bg-surface); }
 @container workbench (min-width: 760px) {
   .discovery-examples { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .rewrite-workspace { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .intent-groups { grid-template-columns: 2fr 1.5fr 1fr 1fr; }
   .workbench-results, .ai-workspace, .rewrite-workspace { padding: 1.5rem; }
 }
 @container workbench (max-width: 519px) {
   .workbench-tab-list .workbench-tab { padding-inline: 0.25rem; gap: 0.25rem; font-size: 0.75rem; }
   .workbench-tagline { display: none; }
-  .workbench-header { padding: 0.75rem; gap: 0.5rem; }
-  .workbench-brand { gap: 0.4rem; }
-  .workbench-brand-mark { width: 2rem; height: 2rem; }
-  .workbench-brand-name { font-size: 1rem; }
+  .workbench-header { padding: 0.4rem 0.75rem; gap: 0.35rem; }
+  .workbench-brand { gap: 0.35rem; }
+  .workbench-brand-mark { width: 1.5rem; height: 1.5rem; }
+  .workbench-brand-name { font-size: 0.95rem; }
   .workbench-window-actions { gap: 0; }
-  .workbench-window-actions .btn-control-icon { width: 1.8rem; }
-  .lookup-preferences { padding-inline: 1rem; gap: 0.5rem; }
-  .lookup-preferences label { flex: 1; }
-  .lookup-preferences label > span { width: 100%; }
-  .intent-groups { grid-template-columns: 1fr; }
+  .workbench-window-actions .btn-control-icon { width: 1.6rem; height: 1.6rem; }
+  .lookup-preferences { padding: 0.3rem 0.75rem; gap: 0.4rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .app-shell *, .app-shell *::before, .app-shell *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }

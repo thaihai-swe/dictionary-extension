@@ -1,0 +1,199 @@
+{
+  "paging": {
+    "Sentences": {
+      "count": 3,
+      "current": 3,
+      "perPage": 10,
+      "page": 1,
+      "requestedPage": 1,
+      "pageCount": 1,
+      "start": 1,
+      "end": 3,
+      "prevPage": false,
+      "nextPage": false,
+      "sort": null,
+      "direction": null,
+      "sortDefault": false,
+      "directionDefault": false,
+      "completeSort": [],
+      "limit": null,
+      "scope": null,
+      "finder": "all"
+    }
+  },
+  "results": [
+    {
+      "id": 19176,
+      "text": "The heat is intense.",
+      "lang": "eng",
+      "correctness": 0,
+      "script": null,
+      "license": "CC BY 2.0 FR",
+      "translations": [
+        [],
+        [
+          {
+            "id": 12055069,
+            "text": "Sức nóng rất dữ dội.",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ]
+      ],
+      "transcriptions": [],
+      "audios": [
+        {
+          "id": 3479,
+          "source": "tatoeba",
+          "author": "CK",
+          "attribution_url": null,
+          "license": null,
+          "download_url": "/en/audio/download/3479"
+        }
+      ],
+      "user": {
+        "username": "Dejo"
+      },
+      "lang_name": "English",
+      "dir": "ltr",
+      "lang_tag": "en",
+      "is_favorite": null,
+      "is_owned_by_current_user": false,
+      "permissions": null,
+      "max_visible_translations": 5,
+      "current_user_review": null
+    },
+    {
+      "id": 19230,
+      "text": "Due to the intense sunlight, his back was sunburnt.",
+      "lang": "eng",
+      "correctness": 0,
+      "script": null,
+      "license": "CC BY 2.0 FR",
+      "translations": [
+        [
+          {
+            "id": 5758782,
+            "text": "Lưng anh ấy bị cháy nắng vì ánh nắng mặt trời gay gắt.",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "isDirect": true,
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ],
+        []
+      ],
+      "transcriptions": [],
+      "audios": [],
+      "user": {
+        "username": "shekitten"
+      },
+      "lang_name": "English",
+      "dir": "ltr",
+      "lang_tag": "en",
+      "is_favorite": null,
+      "is_owned_by_current_user": false,
+      "permissions": null,
+      "max_visible_translations": 5,
+      "current_user_review": null
+    },
+    {
+      "id": 262981,
+      "text": "We couldn't play outdoors because of the intense heat.",
+      "lang": "eng",
+      "correctness": 0,
+      "script": null,
+      "license": "CC BY 2.0 FR",
+      "translations": [
+        [
+          {
+            "id": 8943448,
+            "text": "Chúng tôi không thể chơi ở bên ngoài do nắng nóng gay gắt.",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "isDirect": true,
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          },
+          {
+            "id": 9712957,
+            "text": "Chúng tôi đã không thể chơi ở bên ngoài do nắng nóng gay gắt.",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "isDirect": true,
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          },
+          {
+            "id": 9712958,
+            "text": "Chúng tôi đã không thể chơi ở bên ngoài do trời nóng gay gắt.",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "isDirect": true,
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ],
+        [
+          {
+            "id": 8943449,
+            "text": "Vì trời nóng gay gắt, nên chúng tôi không thể chơi ở ngoài.",
+            "lang": "vie",
+            "correctness": 0,
+            "script": null,
+            "transcriptions": [],
+            "audios": [],
+            "lang_name": "Vietnamese",
+            "dir": "ltr",
+            "lang_tag": "vi"
+          }
+        ]
+      ],
+      "transcriptions": [],
+      "audios": [
+        {
+          "id": 943296,
+          "source": "tatoeba",
+          "author": "CK",
+          "attribution_url": null,
+          "license": null,
+          "download_url": "/en/audio/download/943296"
+        }
+      ],
+      "user": {
+        "username": "CK"
+      },
+      "lang_name": "English",
+      "dir": "ltr",
+      "lang_tag": "en",
+      "is_favorite": null,
+      "is_owned_by_current_user": false,
+      "permissions": null,
+      "max_visible_translations": 5,
+      "current_user_review": null
+    }
+  ]
+}
