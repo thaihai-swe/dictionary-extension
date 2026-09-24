@@ -698,7 +698,7 @@
                 <div class="demo-result-title">
                     <div>
                         <h3 class="demo-word">${escapeHtml(entry.query)}</h3>
-                        <div class="demo-source-row" aria-label="Demo response sources">${sources}</div>
+
                     </div>
                     <div class="demo-result-actions">
                         ${phonetic}
@@ -715,12 +715,6 @@
                 </div>
                 <ol class="demo-meaning-list">${meanings}</ol>
             </section>
-            <section class="demo-definition-card">
-                <div class="demo-card-heading">
-                    <p class="demo-section-label">Examples</p>
-                </div>
-                <ul class="demo-example-list">${examples}</ul>
-            </section>
             <section class="demo-definition-card demo-translation-card">
                 <div class="demo-card-heading">
                     <p class="demo-section-label">Vietnamese translation</p>
@@ -728,7 +722,14 @@
                 </div>
                 <p class="demo-translation">${escapeHtml(result.translation)}</p>
             </section>
+            <section class="demo-definition-card">
+                <div class="demo-card-heading">
+                    <p class="demo-section-label">Examples</p>
+                </div>
+                <ul class="demo-example-list">${examples}</ul>
+            </section>
             ${renderLexicalAccordion(entry)}
+            <div class="demo-source-row" aria-label="Demo response sources">${sources}</div>
         `;
     }
 

@@ -110,9 +110,9 @@ export const ToolbarPopupApp: React.FC = () => {
   return (
     <div
       className={cx(
-        'app-shell glass-shell workbench-shell bg-paper text-content font-sans flex flex-col select-none overflow-hidden transition-colors duration-fast',
+        'app-shell workbench-shell bg-paper text-content font-sans flex flex-col select-none overflow-hidden transition-colors duration-fast',
         isFullTab
-          ? 'w-full max-w-5xl min-h-[calc(100vh-2rem)] mx-auto my-4 rounded-xl border border-border shadow-card-elevated'
+          ? 'w-full max-w-6xl h-[calc(100dvh-2rem)] mx-auto my-4 rounded-3xl border border-border shadow-card-elevated'
           : 'w-full h-full',
         isDarkMode ? 'dark' : 'light-theme light',
       )}
@@ -126,13 +126,9 @@ export const ToolbarPopupApp: React.FC = () => {
         showShortcuts={showShortcuts}
         isDarkMode={isDarkMode}
         isMaximized={isFullTab}
-        provider={currentProvider}
-        targetLanguage={targetLang}
         onToggleShortcuts={() => setShowShortcuts((v) => !v)}
         onToggleMaximize={openFullTab}
         onToggleTheme={toggleTheme}
-        onUpdateProvider={(v) => setCurrentProvider(v as typeof currentProvider)}
-        onUpdateTargetLang={(v) => setTargetLang(v)}
       />
 
       <WorkbenchContent
@@ -142,6 +138,8 @@ export const ToolbarPopupApp: React.FC = () => {
         provider={currentProvider}
         autoFocusDictionary
         loadingSize="compact"
+        onUpdateProvider={(v) => setCurrentProvider(v as typeof currentProvider)}
+        onUpdateTargetLang={setTargetLang}
         onChangeTab={handleTabChange}
       />
 

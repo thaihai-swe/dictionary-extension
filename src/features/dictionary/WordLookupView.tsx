@@ -1,9 +1,9 @@
-import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
+import PresetChips from '@/components/component.preset-chips';
+import { IconClose, IconSearch, IconSpinner } from '@/components/icons';
 import { abortActiveDictRequest, searchWord, stopAllAudio, useDictionaryQuery, useDictionaryResult } from '@/composables/composable.dictionary';
 import { useSetting } from '@/composables/composable.storage';
-import { IconClose, IconSearch, IconSpinner } from '@/components/icons';
-import PresetChips from '@/components/component.preset-chips';
 import type { DemoPreset } from '@/shared/presets';
+import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 
 const WordLookupResult = lazy(() => import('./WordLookupResult'));
 
@@ -87,7 +87,6 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
   return (
     <div className="font-sans">
       <div className="workbench-search px-4 py-4 sticky top-0 z-20">
-        <label htmlFor="dictionary-search" className="workbench-search-label">LOOK SOMETHING UP</label>
         <div className="flex items-center gap-2 min-w-0">
           <div className="relative flex-1 min-w-0 flex items-center group">
             <IconSearch className="w-4 h-4 text-content-muted absolute left-3.5 pointer-events-none group-focus-within:text-accent transition-colors" />

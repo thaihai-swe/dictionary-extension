@@ -130,8 +130,8 @@ export const SettingsModal: React.FC = () => {
         </nav>
 
         <div className="grid grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)] gap-8 lg:gap-12 items-start">
-          <aside className="hidden md:block sticky top-28 space-y-8">
-            <nav aria-label="Settings sections" className="settings-side-nav space-y-1">
+          <aside className="settings-sidebar hidden md:block space-y-6">
+            <nav aria-label="Settings sections" className="settings-side-nav hidden md:block space-y-1">
               <p className="settings-eyebrow px-3 mb-4">PREFERENCES</p>
               {TABS.map(({ id, label, icon: Icon }) => {
                 const isActive = activeTab === id;
@@ -244,7 +244,7 @@ export const SettingsModal: React.FC = () => {
       </div>
 
       <div className="settings-save-bar fixed bottom-0 inset-x-0 z-20 py-3 px-5 sm:px-8">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs text-content-muted min-w-0">
             <button
               type="button"

@@ -155,9 +155,9 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
     pageContext && pageContext.toLowerCase() !== displayHeadword.toLowerCase(),
   );
   return (
-    <div className="space-y-3.5">
+    <div className="dictionary-result space-y-3.5">
       {/* Headword Hero Section */}
-      <div className="p-4 rounded-2xl border border-border/80 bg-surface shadow-xs space-y-3">
+      <div className="word-hero p-4 rounded-2xl border border-border/80 bg-surface shadow-xs space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1 min-w-0">
             <h2 className="text-2xl sm:text-3xl font-bold text-content font-heading tracking-tight leading-tight min-w-0 break-words">

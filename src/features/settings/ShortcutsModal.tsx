@@ -47,7 +47,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ show, onClose })
         aria-modal="true"
         aria-labelledby="shortcuts-title"
         tabIndex={-1}
-        className="w-full max-w-sm rounded-3xl border border-border/80 bg-surface p-5 space-y-4 shadow-card-elevated select-none outline-none"
+        className="w-full max-w-sm max-h-full overflow-y-auto rounded-3xl border border-border/80 bg-surface p-5 space-y-4 shadow-card-elevated select-none outline-none"
       >
         <div className="flex items-center justify-between border-b border-border/60 pb-3">
           <div className="flex items-center gap-2.5">

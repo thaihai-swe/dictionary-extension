@@ -124,8 +124,8 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
   }, []);
 
   return (
-    <div className="p-4 space-y-4 font-sans">
-      <div className="flex items-center gap-2">
+    <div className="rewrite-workspace p-4 font-sans">
+      <div className="feature-intro rewrite-intro flex items-center gap-3">
         <div className="w-8 h-8 rounded-xl bg-accent-subtle border border-accent/25 flex items-center justify-center shrink-0">
           <IconSparkles className="w-4 h-4 text-accent" />
         </div>
@@ -134,6 +134,7 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
           <p className="text-[12px] text-content-muted">Shape your words for the moment</p>
         </div>
       </div>
+      <div className="rewrite-composer space-y-4">
       {/* Input Composer */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -204,8 +205,9 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
         </button>
       </div>
 
+      </div>
       {/* Results Deck */}
-      <div className="pt-2 space-y-3">
+      <div className="rewrite-results space-y-3">
         {isRewriting ? (
           <div className="p-4 rounded-2xl border border-border/80 bg-surface/90 shadow-xs space-y-3.5">
             <div className="flex items-center justify-between pb-1.5 border-b border-border/60">

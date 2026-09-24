@@ -53,7 +53,7 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings }) =>
   return (
     <div className="space-y-4 pt-0.5">
       {distinctPosList.length > 1 ? (
-        <div className="sticky top-0 z-10 -mx-1 px-1 py-1.5 bg-surface border-b border-border flex items-center gap-1.5 overflow-x-auto select-none">
+        <div className="-mx-1 px-1 py-1.5 bg-surface border-b border-border flex items-center gap-1.5 overflow-x-auto select-none">
           <button
             type="button"
             onClick={() => setSelectedPos('all')}
@@ -92,7 +92,7 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings }) =>
       {filteredMeanings.map((meaning, mIdx) => (
         <div
           key={meaning.partOfSpeech || mIdx}
-          className="space-y-3 rounded-lg border border-border bg-surface p-3.5"
+          className="meaning-card space-y-3 rounded-lg border border-border bg-surface p-3.5"
         >
           <div className="flex items-center justify-between">
             <span

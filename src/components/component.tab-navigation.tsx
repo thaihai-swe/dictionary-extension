@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { TabId } from '../types';
 import { useSetting } from '../composables/composable.storage';
 import { cx } from '../ui/cx';
@@ -24,7 +24,6 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
   const enableAI = useSetting('enableAI');
   const currentActive = activeTab || 'dictionary';
   const showAiTab = enableAI !== false;
-  const navRef = useRef<HTMLElement | null>(null);
 
   const tabs: TabItem[] = [
     {
@@ -78,7 +77,6 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
 
   return (
     <nav
-      ref={navRef}
       className="workbench-navigation px-4 pt-2 pb-3 transition-colors select-none"
       role="tablist"
       aria-label="Navigation modes"

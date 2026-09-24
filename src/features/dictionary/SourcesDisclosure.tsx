@@ -14,7 +14,7 @@ function SourcesDisclosure({ sources }: SourcesDisclosureProps) {
 
   return (
     <details className="ui-disclosure group rounded-xl border border-border/70 bg-muted/25 px-3 py-2">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-[13px] font-semibold text-content-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent/40 rounded-lg">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-[14px] font-semibold text-content-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent/40 rounded-lg">
         <span className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
           <span>Sources</span>

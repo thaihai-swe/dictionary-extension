@@ -206,7 +206,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
   }
 
   return (
-    <div className="p-4 space-y-4 font-sans">
+    <div className="ai-workspace p-4 space-y-4 font-sans">
       <div className="relative flex items-center">
         <span className="absolute left-3 text-content-muted pointer-events-none">
           <IconSearch className="w-3.5 h-3.5" />
@@ -300,7 +300,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
       )}
 
       {/* Intent Action Chips with Status Indicators */}
-      <div className="flex flex-wrap gap-1.5 pt-0.5">
+      <div className="intent-groups flex flex-wrap gap-2">
         {intentChips.map((item) => (
           <button
             key={item.id}

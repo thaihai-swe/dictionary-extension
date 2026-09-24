@@ -1,5 +1,6 @@
 import React, { lazy, Suspense } from 'react';
 import type { TabId } from '@/types';
+import LookupPreferences from './component.lookup-preferences';
 import TabNavigation from './component.tab-navigation';
 import WordLookupView from '@/features/dictionary/WordLookupView';
 
@@ -16,6 +17,8 @@ interface WorkbenchContentProps {
   autoFocusDictionary?: boolean;
   loadingSize?: 'compact' | 'regular';
   onChangeTab: (tab: TabId) => void;
+  onUpdateProvider: (value: string) => void;
+  onUpdateTargetLang: (value: string) => void;
 }
 
 export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
@@ -28,12 +31,15 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
   autoFocusDictionary,
   loadingSize = 'compact',
   onChangeTab,
+  onUpdateProvider,
+  onUpdateTargetLang,
 }) => {
   const loadingTextClass = loadingSize === 'regular' ? 'text-[14px]' : 'text-[13.5px]';
   return (
     <>
       <TabNavigation activeTab={activeTab} onChangeTab={onChangeTab} />
-      <main className="workbench-main flex-1 overflow-y-auto">
+      <LookupPreferences provider={provider} targetLang={targetLang} onUpdateProvider={onUpdateProvider} onUpdateTargetLang={onUpdateTargetLang} />
+      <main className="workbench-main flex-1 min-h-0 overflow-y-auto">
         {activeTab === 'dictionary' ? (
           <WordLookupView
             initialQuery={query}

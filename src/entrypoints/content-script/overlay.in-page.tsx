@@ -217,7 +217,7 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
       aria-label="Dictionary lookup"
       tabIndex={-1}
       className={cx(
-        'app-shell glass-shell border border-border/80 rounded-3xl shadow-card-elevated overflow-hidden flex flex-col select-none text-content text-[16px] font-sans relative inpage-popup-card w-full h-full transition-colors outline-none',
+        'app-shell workbench-shell border border-border/80 rounded-3xl shadow-card-elevated overflow-hidden flex flex-col select-none text-content text-[16px] font-sans relative inpage-popup-card w-full h-full transition-colors outline-none',
         isDarkMode ? 'dark' : 'light-theme light',
         isMaximized ? 'max-w-5xl max-h-[90vh]' : '',
       )}
@@ -235,14 +235,10 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
           showShortcuts={showShortcuts}
           isMaximized={isMaximized}
           isDarkMode={isDarkMode}
-          provider={currentProvider}
-          targetLanguage={currentLang}
           onToggleShortcuts={() => setShowShortcuts((v) => !v)}
           onToggleMaximize={onToggleMaximize}
           onToggleTheme={toggleTheme}
           onClose={handleClose}
-          onUpdateProvider={(v) => setCurrentProvider(v as typeof currentProvider)}
-          onUpdateTargetLang={(v) => setCurrentLang(v)}
         />
       </div>
 
@@ -254,6 +250,8 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
         targetLang={currentLang}
         provider={currentProvider}
         loadingSize="regular"
+        onUpdateProvider={(v) => setCurrentProvider(v as typeof currentProvider)}
+        onUpdateTargetLang={setCurrentLang}
         onChangeTab={handleTabChange}
       />
 

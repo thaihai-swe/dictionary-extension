@@ -3,7 +3,7 @@
 .zcode/
 node_modules
 .wxt/
-
+output/
 
 .qwen/
 # Logs
