@@ -10,6 +10,7 @@ const shortcuts = [
   { label: 'Look up Selected Text', sub: 'In-page text selection trigger', keys: ['Alt', 'L'] },
   { label: 'Switch to Dictionary', sub: 'Direct view switch (when not typing)', keys: ['1', 'or', 'Alt+1'] },
   { label: 'Switch to AI Assistant', sub: 'Direct view switch (when not typing)', keys: ['2', 'or', 'Alt+2'] },
+  { label: 'Switch to Rewriter', sub: 'Direct view switch (when not typing)', keys: ['3', 'or', 'Alt+3'] },
   { label: 'Copy Markdown Flashcard', sub: 'Export formatted definition to clipboard', keys: ['Copy MD'] },
   { label: 'Show Shortcuts Modal', sub: 'Toggle this keyboard shortcut helper', keys: ['?'] },
   { label: 'Stop Audio / Close Modal', sub: 'Stops speech playback or dismisses modal', keys: ['Esc'] },

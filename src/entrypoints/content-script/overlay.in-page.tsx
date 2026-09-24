@@ -181,6 +181,11 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
         handleTabChange('ai_assistant');
         return;
       }
+      if (event.key === '3' || (event.altKey && event.key === '3')) {
+        event.preventDefault();
+        handleTabChange('rewriter');
+        return;
+      }
       if (event.key === '?' || (event.shiftKey && event.key === '/')) {
         event.preventDefault();
         setShowShortcuts((prev) => !prev);

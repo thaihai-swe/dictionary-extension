@@ -8,7 +8,7 @@ import {
 import ExampleSentence from '@/components/component.example-sentence';
 import MarkdownRenderer from '@/components/component.markdown-renderer';
 import RelatedWords from '@/components/component.related-words';
-import { IconCheck, IconCopy, IconMic, IconSpeaker } from '@/components/icons';
+import { IconCheck, IconCopy, IconGlobe, IconMic, IconQuote, IconSpeaker } from '@/components/icons';
 import {
   playPronunciation,
   startSpeechPractice,
@@ -22,10 +22,10 @@ import { showToast } from '@/composables/composable.toast';
 import { Phonetic, TranslationResult } from '@/types';
 import { cx } from '@/ui/cx';
 import React, { Suspense, useMemo } from 'react';
-import SenseMatrixCard from './SenseMatrixCard';
-import { collectSecondaryResultSections } from './result-sections';
 import LexicalDisclosure from './LexicalDisclosure';
+import SenseMatrixCard from './SenseMatrixCard';
 import SourcesDisclosure from './SourcesDisclosure';
+import { collectSecondaryResultSections } from './result-sections';
 
 interface WordLookupResultProps {
   onSelectWord?: (word: string) => void;
@@ -33,11 +33,14 @@ interface WordLookupResultProps {
 }
 
 const TranslationBanner = React.memo(({ translation }: { translation: TranslationResult }) => (
-  <section className="p-3.5 rounded-2xl border border-border/80 bg-gradient-to-r from-accent-subtle/50 to-transparent flex items-baseline justify-between gap-3 shadow-xs">
+  <section className="p-3.5 rounded-2xl border border-primary/20 bg-gradient-to-r from-accent/10 via-accent/5 to-transparent flex items-baseline justify-between gap-3 shadow-xs">
     <div className="space-y-1 min-w-0 flex-1">
-      <span className="text-[11px] font-bold text-accent uppercase tracking-wider font-mono">
-        Translation
-      </span>
+      <div className="flex items-center gap-1.5">
+        <IconGlobe className="w-3.5 h-3.5 text-accent" />
+        <span className="text-[11px] font-bold text-accent uppercase tracking-wider font-mono">
+          Translation
+        </span>
+      </div>
       <p className="font-serif text-reading text-content font-semibold break-words">
         {translation.translatedText}
       </p>
@@ -84,8 +87,8 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
 
   function phoneticLabel(item: Phonetic): string {
     if (item.label) return item.label;
-    if (item.region === 'uk' || item.language?.toLowerCase().includes('gb')) return 'UK';
-    if (item.region === 'us' || item.language?.toLowerCase().includes('us')) return 'US';
+    if (item.region === 'uk' || item.language?.toLowerCase().includes('gb')) return '🇬🇧 UK';
+    if (item.region === 'us' || item.language?.toLowerCase().includes('us')) return '🇺🇸 US';
     return item.region?.toUpperCase() || 'Audio';
   }
 
@@ -259,6 +262,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                     <span className="soundwave-bar" />
                     <span className="soundwave-bar" />
                     <span className="soundwave-bar" />
+                    <span className="soundwave-bar" />
                   </span>
                 ) : (
                   <IconSpeaker className="w-3.5 h-3.5 text-accent shrink-0 group-hover:scale-110 transition-transform" />
@@ -296,11 +300,11 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
 
       {/* Page Selection Context Banner */}
       {showContextBanner ? (
-        <section className="p-3.5 rounded-2xl border border-border/80 bg-surface/80 shadow-xs space-y-1">
-          <span className="text-[11px] font-bold uppercase tracking-wider font-mono text-content-muted">
-            Selection Context
-          </span>
-          <p className="font-serif text-reading text-content">
+        <section className="p-3.5 rounded-2xl border border-border/80 bg-surface/80 shadow-xs space-y-1.5">
+          <div className="flex items-center gap-1.5 text-content-muted">
+            <IconQuote className="w-3.5 h-3.5 text-accent opacity-75" />
+          </div>
+          <p className="font-serif text-reading text-content pl-5 border-l-2 border-accent/40">
             {pageContext}
           </p>
         </section>

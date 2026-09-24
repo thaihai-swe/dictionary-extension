@@ -77,14 +77,14 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
 
   return (
     <nav
-      className="workbench-navigation px-3 pt-1 pb-1.5 transition-colors select-none"
+      className="workbench-navigation px-3 pt-1 pb-2 transition-colors select-none"
       role="tablist"
       aria-label="Navigation modes"
       onKeyDown={handleKeyDown}
     >
       <div
         className={cx(
-          'workbench-tab-list grid gap-1 p-0.5 rounded-lg text-[12.5px]',
+          'workbench-tab-list grid gap-1 p-1 rounded-xl text-[12.5px]',
           tabs.length === 3 ? 'grid-cols-3' : tabs.length === 2 ? 'grid-cols-2' : 'grid-cols-1',
         )}
       >
@@ -101,13 +101,20 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
               tabIndex={isActive ? 0 : -1}
               onClick={() => selectTab(tab.id)}
               className={cx(
-                'workbench-tab min-w-0 py-1.5 px-1 sm:px-2.5 rounded-md flex items-center justify-center gap-1.5 text-[12.5px] transition-colors duration-fast cursor-pointer whitespace-nowrap select-none relative overflow-hidden focus-visible:ring-2 focus-visible:ring-accent',
-                isActive ? 'is-active font-bold' : 'font-medium',
+                'workbench-tab min-w-0 py-1.5 px-2 rounded-lg flex items-center justify-center gap-1.5 text-[12.5px] transition-all duration-150 cursor-pointer whitespace-nowrap select-none relative overflow-hidden focus-visible:ring-2 focus-visible:ring-accent',
+                isActive ? 'is-active font-semibold shadow-xs' : 'font-medium opacity-85 hover:opacity-100',
               )}
             >
-              <Icon aria-hidden="true" className={cx('w-3.5 h-3.5 shrink-0', isActive ? 'text-accent' : 'text-content-muted')} />
+              <Icon aria-hidden="true" className={cx('w-3.5 h-3.5 shrink-0 transition-transform duration-150', isActive ? 'text-accent scale-110' : 'text-content-muted')} />
               <span className="tracking-tight truncate">{tab.label}</span>
-
+              <kbd className={cx(
+                'hidden sm:inline-flex items-center justify-center text-[10px] font-mono px-1 py-0.2 rounded border leading-none',
+                isActive
+                  ? 'border-accent/30 bg-accent/10 text-accent'
+                  : 'border-border-subtle bg-surface text-content-muted opacity-60'
+              )}>
+                ⌥{tab.shortcut}
+              </kbd>
             </button>
           );
         })}

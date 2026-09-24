@@ -21,33 +21,86 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const isAudioPlaying = useSignal(isAudioPlayingRef);
   const expandLabel = isMaximized ? 'Restore Default Window' : 'Maximize Window';
   return (
-    <header className="workbench-header">
+    <header className="workbench-header select-none">
       <div className="workbench-brand">
-        <div className="workbench-brand-mark" aria-hidden="true"><IconBook className="w-3.5 h-3.5" /></div>
+        <div className="workbench-brand-mark" aria-hidden="true">
+          <IconBook className="w-4 h-4 text-white" />
+        </div>
         <div>
-          <span className="workbench-brand-name">Dictionary</span>
+          <span className="workbench-brand-name">
+            Dictionary<span>AI</span>
+          </span>
         </div>
       </div>
       <div className="workbench-window-actions">
         {isAudioPlaying ? (
-          <button type="button" onClick={() => stopAllAudio()} className="audio-stop" title="Cancel voice playback (Esc)" aria-label="Cancel voice playback" aria-pressed="true">
-            <span className="soundwave-bars" aria-hidden="true"><span className="soundwave-bar" /><span className="soundwave-bar" /><span className="soundwave-bar" /></span>
-            <span>Stop Audio</span>
+          <button
+            type="button"
+            onClick={() => stopAllAudio()}
+            className="audio-stop animate-pulse"
+            title="Cancel voice playback (Esc)"
+            aria-label="Cancel voice playback"
+            aria-pressed="true"
+          >
+            <span className="soundwave-bars" aria-hidden="true">
+              <span className="soundwave-bar" />
+              <span className="soundwave-bar" />
+              <span className="soundwave-bar" />
+              <span className="soundwave-bar" />
+            </span>
+            <span>Stop</span>
           </button>
         ) : null}
-        <button type="button" onClick={onToggleShortcuts} className="btn-control-icon" title="Keyboard Shortcuts (? or Shift+Q)" aria-label="Keyboard Shortcuts" aria-pressed={showShortcuts}>
-          <IconKeyboard className="w-3.5 h-3.5" />
+        <button
+          type="button"
+          onClick={onToggleShortcuts}
+          className={`btn-control-icon ${showShortcuts ? 'bg-primary/10 text-accent font-semibold' : ''}`}
+          title="Keyboard Shortcuts (? or Shift+Q)"
+          aria-label="Keyboard Shortcuts"
+          aria-pressed={showShortcuts}
+        >
+          <IconKeyboard className="w-4 h-4" />
         </button>
-        <button type="button" onClick={onToggleTheme} className="btn-control-icon" title={isDarkMode ? 'Switch to Light Theme' : 'Switch to Dark Theme'} aria-label={isDarkMode ? 'Switch to Light Theme' : 'Switch to Dark Theme'}>
-          {isDarkMode ? <IconMoon className="w-3.5 h-3.5" /> : <IconSun className="w-3.5 h-3.5" />}
+        <button
+          type="button"
+          onClick={onToggleTheme}
+          className="btn-control-icon"
+          title={isDarkMode ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+          aria-label={isDarkMode ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+        >
+          {isDarkMode ? <IconMoon className="w-4 h-4 text-amber-300" /> : <IconSun className="w-4 h-4 text-amber-500" />}
         </button>
-        <button type="button" onClick={() => openExtensionSettings()} className="btn-control-icon" title="Preferences & Options" aria-label="Preferences & Options"><IconSettings className="w-3.5 h-3.5" /></button>
+        <button
+          type="button"
+          onClick={() => openExtensionSettings()}
+          className="btn-control-icon"
+          title="Preferences & Settings"
+          aria-label="Preferences & Settings"
+        >
+          <IconSettings className="w-4 h-4" />
+        </button>
         {onToggleMaximize ? (
-          <button type="button" onClick={onToggleMaximize} className="btn-control-icon" title={expandLabel} aria-label={expandLabel}>
-            {isMaximized ? <IconMinimize className="w-3.5 h-3.5" /> : <IconMaximize className="w-3.5 h-3.5" />}
+          <button
+            type="button"
+            onClick={onToggleMaximize}
+            className="btn-control-icon"
+            title={expandLabel}
+            aria-label={expandLabel}
+          >
+            {isMaximized ? <IconMinimize className="w-4 h-4" /> : <IconMaximize className="w-4 h-4" />}
           </button>
         ) : null}
-        {onClose ? <button type="button" onClick={onClose} className="btn-control-icon" title="Close window (Esc)" aria-label="Close window"><IconClose className="w-3.5 h-3.5" /></button> : null}
+        {onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            className="btn-control-icon hover:bg-rose-500/15 hover:text-rose-500 transition-colors"
+            title="Close window (Esc)"
+            aria-label="Close window"
+          >
+            <IconClose className="w-4 h-4" />
+          </button>
+        ) : null}
       </div>
     </header>
   );

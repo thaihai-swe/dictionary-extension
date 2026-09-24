@@ -208,8 +208,8 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
   return (
     <div className="ai-workspace p-4 space-y-4 font-sans">
       <div className="relative flex items-center">
-        <span className="absolute left-3 text-content-muted pointer-events-none">
-          <IconSearch className="w-3.5 h-3.5" />
+        <span className="absolute left-3.5 text-content-muted pointer-events-none">
+          <IconSearch className="w-4 h-4" />
         </span>
         <input
           value={queryInput}
@@ -220,7 +220,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
           type="text"
           placeholder="Analyze a word or sentence…"
           aria-label="Analyze a word or sentence"
-          className="ui-control w-full h-11 pl-10 pr-24 text-[14.5px] placeholder:text-content-muted font-sans shadow-inner-light"
+          className="ui-control w-full h-12 pl-11 pr-28 text-[14.5px] placeholder:text-content-muted font-sans rounded-xl shadow-xs"
         />
 
         {queryInput ? (
@@ -232,9 +232,9 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
             }}
             title="Clear search text"
             aria-label="Clear search text"
-            className="absolute right-[4.75rem] text-content-muted hover:text-content p-1 cursor-pointer flex items-center justify-center"
+            className="absolute right-24 text-content-muted hover:text-content p-1 cursor-pointer flex items-center justify-center rounded-md hover:bg-muted transition-colors"
           >
-            <IconClose className="w-3.5 h-3.5" />
+            <IconClose className="w-4 h-4" />
           </button>
         ) : null}
 
@@ -242,7 +242,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
           type="button"
           onClick={() => handleIntentSelect(activeIntent)}
           disabled={!queryInput || isAiLoading}
-          className="ui-button-primary absolute right-1.5 !min-h-7 h-7 px-3 rounded-md text-[13px] font-semibold cursor-pointer"
+          className="ui-button-primary absolute right-1.5 h-9 px-3.5 rounded-lg text-[13px] font-semibold cursor-pointer shadow-sm active:scale-95 transition-all"
         >
           <span>{isAiLoading ? 'Analyzing…' : 'Analyze'}</span>
         </button>
@@ -253,30 +253,31 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
           <button
             type="button"
             onClick={() => setIsEditingContext(true)}
-            className="text-[12px] text-accent hover:underline font-medium cursor-pointer"
+            className="text-[12px] text-accent hover:text-accent/80 font-semibold cursor-pointer flex items-center gap-1 transition-colors"
           >
-            + Add context
+            <span>+</span> Add context sentence
           </button>
         </div>
       ) : !isEditingContext ? (
         <button
           type="button"
           onClick={() => setIsEditingContext(true)}
-          className="max-w-full inline-flex items-center gap-1.5 min-h-[28px] px-2.5 rounded-full border border-accent/25 bg-accent-subtle text-accent text-[12px] font-medium cursor-pointer whitespace-nowrap"
+          className="max-w-full inline-flex items-center gap-2 h-7 px-3 rounded-lg border border-accent/25 bg-accent/10 text-accent text-[12px] font-medium cursor-pointer whitespace-nowrap hover:bg-accent/15 transition-all"
           title="Edit context sentence"
         >
-          <span className="truncate max-w-[22rem]">{contextInput.trim()}</span>
+          <span className="font-semibold font-mono text-[11px] uppercase">Context:</span>
+          <span className="truncate max-w-[20rem]">{contextInput.trim()}</span>
         </button>
       ) : (
-        <div className="rounded-2xl border border-border/80 bg-surface/90 p-3 space-y-2.5 shadow-xs">
+        <div className="rounded-2xl border border-border/80 bg-surface/90 p-3.5 space-y-2.5 shadow-xs">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[12px] font-bold uppercase tracking-wider text-content-muted">
+            <span className="text-[12px] font-bold uppercase tracking-wider text-content-muted font-mono">
               Context Sentence
             </span>
             <button
               type="button"
               onClick={() => setIsEditingContext(false)}
-              className="text-[12px] font-medium text-content-secondary hover:text-content cursor-pointer"
+              className="text-[12px] font-semibold text-accent hover:underline cursor-pointer"
             >
               Done
             </button>
@@ -286,7 +287,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
             onChange={(e) => setContextInput(e.target.value)}
             rows={2}
             placeholder="Paste the sentence that contains this word..."
-            className="ui-control w-full px-2.5 py-1.5 text-[13.5px] placeholder:text-content-muted resize-y min-h-[44px]"
+            className="ui-control w-full px-3 py-2 text-[13.5px] placeholder:text-content-muted resize-y min-h-[48px] rounded-xl"
           />
           {contextInput.trim() ? (
             <TokenizedContext
@@ -295,12 +296,12 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
               onSelectToken={handleTokenSelect}
             />
           ) : null}
-          {contextError ? <p className="text-[12px] text-rose-600 dark:text-rose-400">{contextError}</p> : null}
+          {contextError ? <p className="text-[12px] text-rose-600 dark:text-rose-400 font-medium">{contextError}</p> : null}
         </div>
       )}
 
       {/* Intent Action Chips with Status Indicators */}
-      <div className="intent-groups flex flex-wrap gap-2">
+      <div className="intent-groups flex flex-wrap gap-1.5">
         {intentChips.map((item) => (
           <button
             key={item.id}
@@ -314,10 +315,10 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
             }}
             aria-pressed={item.isActive}
             className={cx(
-              'inline-flex items-center gap-1.5 min-h-[30px] px-3 rounded-xl border text-[12px] font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap focus-visible:ring-2 focus-visible:ring-accent',
+              'inline-flex items-center gap-1.5 h-8 px-3 rounded-xl border text-[12.5px] font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap focus-visible:ring-2 focus-visible:ring-accent active:scale-95',
               item.isActive
-                ? 'chip-active font-semibold'
-                : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border',
+                ? 'chip-active font-semibold shadow-xs'
+                : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border/80',
             )}
           >
             {renderStatusDot(item.status, item.isActive)}
@@ -347,8 +348,8 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
           </div>
         ) : aiResult ? (
           <div className="space-y-3">
-            <div className="flex items-center justify-between pb-1 border-b border-border">
-              <h3 className="text-[13px] font-semibold text-content uppercase tracking-wider font-mono">
+            <div className="flex items-center justify-between pb-1.5 border-b border-border/80">
+              <h3 className="text-[13px] font-bold text-content uppercase tracking-wider font-mono">
                 {intentTitleMap[aiResult.type as AiIntentId] || 'AI Explanation'}
               </h3>
 
@@ -356,9 +357,9 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
                 type="button"
                 onClick={() => copyResult(aiResult.summary)}
                 title="Copy response"
-                className="h-7 px-2 rounded bg-surface hover:bg-elevated text-content-secondary hover:text-content border border-border text-[12px] font-medium transition-colors cursor-pointer inline-flex items-center gap-1"
+                className="h-7 px-2.5 rounded-lg bg-surface hover:bg-elevated text-content-secondary hover:text-content border border-border/80 text-[12px] font-medium transition-all cursor-pointer inline-flex items-center gap-1.5 active:scale-95"
               >
-                {copied ? <IconCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> : <IconCopy className="w-3 h-3" />}
+                {copied ? <IconCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <IconCopy className="w-3.5 h-3.5" />}
                 <span>{copied ? 'Copied' : 'Copy'}</span>
               </button>
             </div>

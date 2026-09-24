@@ -90,6 +90,11 @@ export const ToolbarPopupApp: React.FC = () => {
         event.preventDefault();
         return;
       }
+      if (event.key === '3' || (event.altKey && event.key === '3')) {
+        handleTabChange('rewriter');
+        event.preventDefault();
+        return;
+      }
       if (event.key === '?' || (event.shiftKey && (event.key === 'Q' || event.key === 'q'))) {
         setShowShortcuts((v) => !v);
         return;
@@ -101,6 +106,9 @@ export const ToolbarPopupApp: React.FC = () => {
       event.preventDefault();
     } else if (event.altKey && event.key === '2') {
       handleTabChange('ai_assistant');
+      event.preventDefault();
+    } else if (event.altKey && event.key === '3') {
+      handleTabChange('rewriter');
       event.preventDefault();
     } else if (event.shiftKey && (event.key === 'Q' || event.key === 'q')) {
       setShowShortcuts((v) => !v);

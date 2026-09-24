@@ -31,26 +31,26 @@ export const CollocationsCard: React.FC<CollocationsCardProps> = ({
   if (!groups.length) return null;
 
   return (
-    <section className="p-3.5 rounded-lg border border-border bg-surface space-y-2.5 font-sans">
-      <div className="flex items-center gap-1.5 text-[12px] font-bold text-content-muted uppercase tracking-wider">
+    <section className="p-4 rounded-2xl border border-border/80 bg-surface space-y-3 font-sans shadow-xs">
+      <div className="flex items-center gap-2 text-[12px] font-bold text-content-muted uppercase tracking-wider font-mono">
         <IconLink className="w-3.5 h-3.5 text-accent" />
         <span>Collocations</span>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         {groups.map((group) => (
-          <div key={group.key} className="grid grid-cols-[118px_minmax(0,1fr)] gap-2 items-start">
-            <span className="text-[12.5px] font-bold text-content-secondary pt-0.5">
-              {group.label}:
+          <div key={group.key} className="grid grid-cols-[100px_minmax(0,1fr)] gap-2.5 items-start">
+            <span className="text-[12px] font-bold uppercase tracking-wider text-content-secondary pt-0.5 font-mono">
+              {group.label}
             </span>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1.5">
               {group.items.map((item) => (
                 <button
                   key={item}
                   type="button"
                   onClick={() => onSelectWord?.(item)}
                   title={word ? `Look up “${item}”` : `Look up ${item}`}
-                  className="h-[22px] px-2 rounded-full bg-accent-subtle hover:bg-accent/20 border border-accent/25 text-accent text-[12.5px] font-semibold whitespace-nowrap cursor-pointer transition-colors"
+                  className="h-6 px-2.5 rounded-lg bg-accent/10 hover:bg-accent/20 border border-accent/25 text-accent text-[12.5px] font-semibold whitespace-nowrap cursor-pointer transition-all hover:scale-[1.02] active:scale-95"
                 >
                   {item}
                 </button>

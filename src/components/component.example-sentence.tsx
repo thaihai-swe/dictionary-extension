@@ -52,6 +52,7 @@ export const ExampleSentence: React.FC<ExampleSentenceProps> = ({
               <span className="soundwave-bar" />
               <span className="soundwave-bar" />
               <span className="soundwave-bar" />
+              <span className="soundwave-bar" />
             </span>
           ) : (
             <IconSpeaker className="w-3.5 h-3.5 text-accent" />

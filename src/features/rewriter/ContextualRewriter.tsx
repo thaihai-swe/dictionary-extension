@@ -124,87 +124,87 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
   }, []);
 
   return (
-    <div className="rewrite-workspace p-4 font-sans">
+    <div className="rewrite-workspace p-4 font-sans space-y-4">
       <div className="feature-intro rewrite-intro flex items-center gap-3">
-        <div className="w-8 h-8 rounded-xl bg-accent-subtle border border-accent/25 flex items-center justify-center shrink-0">
+        <div className="w-9 h-9 rounded-xl bg-accent/15 border border-accent/25 flex items-center justify-center shrink-0 shadow-xs">
           <IconSparkles className="w-4 h-4 text-accent" />
         </div>
         <div>
-          <h2 className="text-sm font-bold text-content tracking-tight">Rewrite studio</h2>
-          <p className="text-[12px] text-content-muted">Shape your words for the moment</p>
+          <h2 className="text-sm font-bold text-content tracking-tight">Rewrite Studio</h2>
+          <p className="text-[12px] text-content-muted">Polish tone, fluency, and brevity in one click</p>
         </div>
       </div>
+
       <div className="rewrite-composer space-y-4">
-      {/* Input Composer */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <label className="text-[12px] font-bold uppercase tracking-wider text-content-muted">
-            Text to polish
-          </label>
-          {inputText ? (
-            <button
-              type="button"
-              onClick={() => {
-                setInputText('');
-                setRewriteResult(null);
-                setRewriteError(null);
-              }}
-              className="text-[12px] text-content-muted hover:text-content cursor-pointer"
-            >
-              Clear
-            </button>
-          ) : null}
-        </div>
-        <textarea
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          placeholder="Paste a sentence, email draft, or short paragraph. Selecting one word on a page seeds the full sentence when available."
-          className="ui-control w-full rounded-2xl p-3.5 text-[15px] placeholder:text-content-muted resize-y min-h-[112px] shadow-inner-light"
-          rows={5}
-        />
-      </div>
-
-      {/* Preset Style Buttons */}
-      <div className="space-y-1.5">
-        <span className="text-[11px] uppercase font-bold tracking-wider text-content-muted block">
-          Select Desired Tone & Style:
-        </span>
-        <div className="grid grid-cols-2 gap-2">
-          {REWRITE_STYLES.map((st) => {
-            const isSelected = activeStyle === st.id;
-            return (
+        {/* Input Composer */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-[12px] font-bold uppercase tracking-wider text-content-muted font-mono">
+              Text to polish
+            </label>
+            {inputText ? (
               <button
-                key={st.id}
                 type="button"
-                onClick={() => setActiveStyle(st.id)}
-                className={cx(
-                  'p-3 rounded-2xl border text-left cursor-pointer transition-colors shadow-xs focus-visible:ring-2 focus-visible:ring-accent',
-                  isSelected
-                    ? 'chip-active ring-1 ring-accent/30 font-bold'
-                    : 'bg-surface hover:bg-elevated text-content-secondary border-border',
-                )}
+                onClick={() => {
+                  setInputText('');
+                  setRewriteResult(null);
+                  setRewriteError(null);
+                }}
+                className="text-[12px] text-accent hover:underline font-semibold cursor-pointer"
               >
-                <div className="text-xs text-content font-semibold">{st.label}</div>
-                <div className="text-[11.5px] text-content-muted">{st.desc}</div>
+                Clear
               </button>
-            );
-          })}
+            ) : null}
+          </div>
+          <textarea
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            placeholder="Paste a sentence, email draft, or short paragraph. Selecting one word on a page seeds the full sentence when available."
+            className="ui-control w-full rounded-2xl p-3.5 text-[14.5px] placeholder:text-content-muted resize-y min-h-[112px] shadow-xs"
+            rows={4}
+          />
         </div>
-        <button
-          type="button"
-          onClick={() => handleRewrite(activeStyle)}
-          disabled={!inputText.trim() || isRewriting}
-          className="ui-button-primary w-full h-10 mt-1 text-[14px] font-bold disabled:pointer-events-none cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
-        >
-          {isRewriting ? (
-            <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <IconSparkles className="w-3.5 h-3.5" />
-          )}
-          <span>{isRewriting ? 'Rewriting…' : 'Rewrite'}</span>
-        </button>
-      </div>
 
+        {/* Preset Style Buttons */}
+        <div className="space-y-2">
+          <span className="text-[11.5px] uppercase font-bold tracking-wider text-content-muted font-mono block">
+            Select Desired Tone &amp; Style:
+          </span>
+          <div className="grid grid-cols-2 gap-2">
+            {REWRITE_STYLES.map((st) => {
+              const isSelected = activeStyle === st.id;
+              return (
+                <button
+                  key={st.id}
+                  type="button"
+                  onClick={() => setActiveStyle(st.id)}
+                  className={cx(
+                    'p-3 rounded-xl border text-left cursor-pointer transition-all shadow-xs focus-visible:ring-2 focus-visible:ring-accent active:scale-95',
+                    isSelected
+                      ? 'chip-active ring-1 ring-accent/30 font-bold scale-[1.01]'
+                      : 'bg-surface hover:bg-elevated text-content-secondary border-border/80',
+                  )}
+                >
+                  <div className="text-[13px] text-content font-bold">{st.label}</div>
+                  <div className="text-[11.5px] text-content-muted leading-tight mt-0.5">{st.desc}</div>
+                </button>
+              );
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={() => handleRewrite(activeStyle)}
+            disabled={!inputText.trim() || isRewriting}
+            className="ui-button-primary w-full h-11 rounded-xl text-[14px] font-bold disabled:pointer-events-none cursor-pointer shadow-sm flex items-center justify-center gap-2 active:scale-98 transition-all"
+          >
+            {isRewriting ? (
+              <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <IconSparkles className="w-4 h-4" />
+            )}
+            <span>{isRewriting ? 'Rewriting…' : 'Rewrite Text'}</span>
+          </button>
+        </div>
       </div>
       {/* Results Deck */}
       {isRewriting || rewriteError || rewriteResult ? (
