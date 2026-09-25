@@ -100,7 +100,7 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
             type="text"
             placeholder="Type a word, phrase, or sentence…"
             aria-label="Look up a word, phrase, or sentence"
-            className="ui-control workbench-search-input w-full h-10 pl-9 pr-14 text-[14.5px] placeholder:text-content-muted"
+            className="ui-control workbench-search-input w-full h-11 pl-9 pr-14 text-[14.5px] font-medium placeholder:text-content-muted"
           />
 
           {isLoading ? (
@@ -126,7 +126,7 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
       </div>
 
       {/* Main Content Area */}
-      <div className="workbench-results px-3.5 py-3 space-y-3.5">
+      <div className="workbench-results px-4 py-4 space-y-4">
         {error ? (
           <div role="alert" className="p-4 rounded-2xl bg-rose-500/8 border border-rose-500/25 text-[15px] text-rose-700 dark:text-rose-400 space-y-2">
             <div className="flex items-center gap-2 font-semibold">
@@ -149,7 +149,7 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
         ) : result ? (
           <div aria-busy={isLoading || undefined}>
             <Suspense fallback={
-              <div className="p-4 space-y-3.5 rounded-2xl border border-border/80 bg-surface shadow-xs" aria-busy="true">
+            <div className="p-4 space-y-3.5 rounded-2xl border border-border bg-surface shadow-card" aria-busy="true">
                 <div className="h-8 skeleton-shimmer rounded-lg w-2/5" />
                 <div className="h-5 skeleton-shimmer rounded-md w-3/5" />
                 <div className="h-20 skeleton-shimmer rounded-xl" />
@@ -160,8 +160,8 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
           </div>
         ) : isLoading ? (
           /* Realistic Loading Skeleton */
-          <div className="p-5 space-y-4 rounded-2xl border border-border/80 bg-surface shadow-xs" aria-busy="true" aria-live="polite">
-            <div className="flex items-center justify-between pb-3 border-b border-border/60">
+          <div className="p-5 space-y-4 rounded-2xl border border-border bg-surface shadow-card" aria-busy="true" aria-live="polite">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="h-8 skeleton-shimmer rounded-lg w-2/5"></div>
               <div className="h-6 skeleton-shimmer rounded-full w-24"></div>
             </div>

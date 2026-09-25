@@ -33,7 +33,7 @@ interface WordLookupResultProps {
 }
 
 const TranslationBanner = React.memo(({ translation }: { translation: TranslationResult }) => (
-  <section className="p-3.5 rounded-2xl border border-primary/20 bg-gradient-to-r from-accent/10 via-accent/5 to-transparent flex items-baseline justify-between gap-3 shadow-xs">
+  <section className="p-3.5 rounded-2xl border border-accent/25 bg-gradient-to-r from-accent/[0.08] via-accent/[0.04] to-transparent flex items-baseline justify-between gap-3 shadow-xs">
     <div className="space-y-1 min-w-0 flex-1">
       <div className="flex items-center gap-1.5">
         <IconGlobe className="w-3.5 h-3.5 text-accent" />
@@ -175,7 +175,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
   return (
     <div className="dictionary-result space-y-3.5">
       {/* Headword Hero Section */}
-      <div className="word-hero p-4 rounded-2xl border border-border/80 bg-surface shadow-xs space-y-3">
+      <div className="word-hero p-5 rounded-2xl space-y-3.5">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1 min-w-0">
             <h2 className="text-2xl sm:text-3xl font-bold text-content font-heading tracking-tight leading-tight min-w-0 break-words">
@@ -221,7 +221,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
         </div>
 
         {/* Phonetics & Voice Audio Chips */}
-        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-border/60">
+        <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-border">
           {phoneticsList.map((item, index) => {
             const listenKey = `phonetic-${index}-${item.region || item.language || 'audio'}`;
             const ipa = phoneticText(item);
@@ -241,10 +241,10 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
                   })
                 }
                 className={cx(
-                  'h-8 pl-2 pr-3 py-1 rounded-xl border font-medium transition-colors flex items-center gap-2 cursor-pointer shadow-2xs group active:scale-95',
+                  'h-8 pl-2 pr-3 py-1 rounded-xl border font-medium transition-all duration-150 flex items-center gap-2 cursor-pointer shadow-2xs group active:scale-95',
                   isPlaying
                     ? 'bg-accent text-accent-foreground border-accent font-bold audio-playing-indicator'
-                    : 'bg-muted/40 hover:bg-accent-subtle hover:border-accent/40 text-content-secondary hover:text-content border-border/80',
+                    : 'bg-muted hover:bg-accent/10 hover:border-accent/40 text-content-secondary hover:text-accent border-border',
                 )}
                 aria-pressed={isPlaying}
                 title={`Listen pronunciation (${phoneticLabel(item)})`}
@@ -300,7 +300,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
 
       {/* Page Selection Context Banner */}
       {showContextBanner ? (
-        <section className="p-3.5 rounded-2xl border border-border/80 bg-surface/80 shadow-xs space-y-1.5">
+        <section className="p-3.5 rounded-2xl border border-border bg-surface shadow-xs space-y-1.5">
           <div className="flex items-center gap-1.5 text-content-muted">
             <IconQuote className="w-3.5 h-3.5 text-accent opacity-75" />
           </div>
