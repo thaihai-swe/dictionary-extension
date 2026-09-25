@@ -2,47 +2,48 @@ export const TRIGGER_CSS = `
 .dictionary-trigger-icon-btn {
   position: fixed;
   z-index: 2147483646;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   -webkit-backdrop-filter: blur(20px) saturate(160%);
   backdrop-filter: blur(20px) saturate(160%);
-  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 180ms ease;
+  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 180ms ease, filter 180ms ease;
   outline: none;
   animation: dictionary-trigger-enter 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .dictionary-trigger-icon-btn:hover {
   transform: scale(1.08) translateY(-1px);
+  filter: brightness(1.05);
 }
 .dictionary-trigger-icon-btn:active {
-  transform: scale(0.95);
+  transform: scale(0.94);
 }
 .dictionary-trigger-icon-btn:focus-visible {
-  outline: 3px solid rgba(99, 102, 241, 0.85);
+  outline: 3px solid rgba(45, 212, 191, 0.85);
   outline-offset: 3px;
 }
 .dictionary-trigger-icon-btn.dark {
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
   color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 12px 28px -4px rgba(79, 70, 229, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 10px 25px -4px rgba(20, 184, 166, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
 }
 .dictionary-trigger-icon-btn.light {
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
   color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 12px 28px -4px rgba(79, 70, 229, 0.38), 0 1px 0 rgba(255, 255, 255, 0.4) inset;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 10px 25px -4px rgba(13, 148, 136, 0.35), 0 1px 0 rgba(255, 255, 255, 0.4) inset;
 }
 .dictionary-trigger-icon-btn svg {
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
   transition: transform 180ms ease;
 }
 .dictionary-trigger-icon-btn:hover svg {
-  transform: scale(1.06);
+  transform: scale(1.08);
 }
 .dictionary-popup-layer {
   position: fixed;

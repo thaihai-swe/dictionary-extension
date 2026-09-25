@@ -62,7 +62,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
     >
       <div
         className={cx(
-          'workbench-tab-list text-[12.5px]',
+          'workbench-tab-list text-[12px] p-1 bg-surface-muted/80 rounded-xl border border-border-subtle/80 backdrop-blur-md grid gap-1 shadow-xs',
           tabs.length === 3 ? 'grid-cols-3' : tabs.length === 2 ? 'grid-cols-2' : 'grid-cols-1',
         )}
       >
@@ -78,25 +78,29 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
               tabIndex={isActive ? 0 : -1}
               onClick={() => selectTab(tab.id)}
               className={cx(
-                'workbench-tab flex items-center justify-center gap-1.5 py-1.5 px-2 cursor-pointer whitespace-nowrap select-none',
-                isActive ? 'is-active' : 'font-medium',
+                'workbench-tab flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg cursor-pointer whitespace-nowrap select-none transition-all duration-150',
+                isActive
+                  ? 'is-active bg-surface text-content font-semibold shadow-xs border border-border/40'
+                  : 'text-content-muted hover:text-content hover:bg-surface/50 font-medium',
               )}
             >
               <Icon
                 aria-hidden="true"
                 className={cx(
                   'w-3.5 h-3.5 shrink-0 transition-transform duration-150',
-                  isActive ? 'scale-110' : 'opacity-60',
+                  isActive ? 'scale-105 text-accent' : 'opacity-70',
                 )}
               />
               <span className="tracking-tight truncate">{tab.label}</span>
-              <kbd className={cx(
-                'hidden sm:inline-flex items-center justify-center',
-                'text-[10px] font-mono px-1 rounded border leading-none py-px',
-                isActive
-                  ? 'border-accent/30 bg-accent/10 text-accent'
-                  : 'border-border-subtle bg-surface text-content-muted opacity-50',
-              )}>
+              <kbd
+                className={cx(
+                  'hidden sm:inline-flex items-center justify-center',
+                  'text-[9.5px] font-mono px-1 py-0.5 rounded border leading-none',
+                  isActive
+                    ? 'border-accent/25 bg-accent-subtle text-accent font-semibold'
+                    : 'border-border-subtle bg-surface/60 text-content-muted/70',
+                )}
+              >
                 ⌥{tab.shortcut}
               </kbd>
             </button>

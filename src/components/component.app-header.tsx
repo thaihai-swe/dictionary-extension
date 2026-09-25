@@ -24,25 +24,28 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   return (
     <header className="workbench-header select-none">
       {/* Brand */}
-      <div className="workbench-brand">
-        <div className="workbench-brand-mark" aria-hidden="true">
-          <IconBook className="w-4 h-4" style={{ color: 'var(--color-on-primary)' }} />
+      <div className="workbench-brand flex items-center gap-2">
+        <div className="workbench-brand-mark w-7 h-7 rounded-lg flex items-center justify-center shadow-xs" aria-hidden="true">
+          <IconBook className="w-3.5 h-3.5" style={{ color: 'var(--color-on-primary)' }} />
         </div>
-        <div>
-          <span className="workbench-brand-name">
-            Dictionary<span>AI</span>
+        <div className="flex items-center gap-1.5">
+          <span className="workbench-brand-name font-heading font-extrabold text-[15px] tracking-tight">
+            Dictionary
+          </span>
+          <span className="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-extrabold tracking-wider uppercase bg-accent-subtle text-accent border border-accent/25 leading-none">
+            AI
           </span>
         </div>
       </div>
 
       {/* Window Actions */}
-      <div className="workbench-window-actions">
+      <div className="workbench-window-actions flex items-center gap-1">
         {/* Audio stop pill */}
         {isAudioPlaying ? (
           <button
             type="button"
             onClick={() => stopAllAudio()}
-            className="audio-stop"
+            className="audio-stop mr-1"
             title="Cancel voice playback (Esc)"
             aria-label="Cancel voice playback"
             aria-pressed="true"
@@ -61,12 +64,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <button
           type="button"
           onClick={onToggleShortcuts}
-          className={`btn-control-icon${showShortcuts ? ' !bg-accent/10 !text-accent !border-accent/30' : ''}`}
+          className={`btn-control-icon${showShortcuts ? ' !bg-accent-subtle !text-accent !border-accent/40 shadow-glow-subtle' : ''}`}
           title="Keyboard Shortcuts (? or Shift+Q)"
           aria-label="Keyboard Shortcuts"
           aria-pressed={showShortcuts}
         >
-          <IconKeyboard className="w-4 h-4" />
+          <IconKeyboard className="w-3.5 h-3.5" />
         </button>
 
         {/* Theme toggle */}
@@ -78,8 +81,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           aria-label={isDarkMode ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
         >
           {isDarkMode
-            ? <IconMoon className="w-4 h-4 text-amber-300" />
-            : <IconSun className="w-4 h-4 text-amber-500" />}
+            ? <IconMoon className="w-3.5 h-3.5 text-amber-300" />
+            : <IconSun className="w-3.5 h-3.5 text-amber-500" />}
         </button>
 
         {/* Settings */}
@@ -90,7 +93,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           title="Preferences & Settings"
           aria-label="Preferences & Settings"
         >
-          <IconSettings className="w-4 h-4" />
+          <IconSettings className="w-3.5 h-3.5" />
         </button>
 
         {/* Maximize / Restore */}
@@ -103,8 +106,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             aria-label={expandLabel}
           >
             {isMaximized
-              ? <IconMinimize className="w-4 h-4" />
-              : <IconMaximize className="w-4 h-4" />}
+              ? <IconMinimize className="w-3.5 h-3.5" />
+              : <IconMaximize className="w-3.5 h-3.5" />}
           </button>
         ) : null}
 
@@ -113,11 +116,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="btn-control-icon hover:!bg-rose-500/15 hover:!text-rose-400 hover:!border-rose-500/30"
+            className="btn-control-icon hover:!bg-rose-500/15 hover:!text-rose-500 hover:!border-rose-500/30"
             title="Close window (Esc)"
             aria-label="Close window"
           >
-            <IconClose className="w-4 h-4" />
+            <IconClose className="w-3.5 h-3.5" />
           </button>
         ) : null}
       </div>
