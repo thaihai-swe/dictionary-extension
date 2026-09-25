@@ -1,0 +1,138 @@
+/* Design Tokens - Auto-generated */
+/* Do not edit directly - modify tokens.json instead */
+
+/* === PRIMITIVES === */
+:root {
+  --primitive-color-slate-50: #F8FAFC;
+  --primitive-color-slate-100: #F1F5F9;
+  --primitive-color-slate-200: #E2E8F0;
+  --primitive-color-slate-300: #CBD5E1;
+  --primitive-color-slate-400: #94A3B8;
+  --primitive-color-slate-500: #64748B;
+  --primitive-color-slate-600: #475569;
+  --primitive-color-slate-700: #334155;
+  --primitive-color-slate-800: #1E293B;
+  --primitive-color-slate-900: #0F172A;
+  --primitive-color-slate-950: #020617;
+  --primitive-color-obsidian-600: #1C2F3C;
+  --primitive-color-obsidian-700: #14222B;
+  --primitive-color-obsidian-800: #0D171E;
+  --primitive-color-obsidian-900: #070D12;
+  --primitive-color-teal-50: #F0FDFA;
+  --primitive-color-teal-100: #CCFBF1;
+  --primitive-color-teal-200: #99F6E4;
+  --primitive-color-teal-300: #5EEAD4;
+  --primitive-color-teal-400: #2DD4BF;
+  --primitive-color-teal-500: #14B8A6;
+  --primitive-color-teal-600: #0D9488;
+  --primitive-color-teal-700: #0F766E;
+  --primitive-color-teal-800: #115E59;
+  --primitive-color-teal-900: #134E4A;
+  --primitive-color-amber-400: #FBBF24;
+  --primitive-color-amber-500: #F59E0B;
+  --primitive-color-amber-600: #D97706;
+  --primitive-color-rose-400: #FB7185;
+  --primitive-color-rose-500: #F43F5E;
+  --primitive-color-rose-600: #E11D48;
+  --primitive-color-white: #FFFFFF;
+  --primitive-color-black: #000000;
+  --primitive-spacing-0: 0;
+  --primitive-spacing-1: 0.25rem;
+  --primitive-spacing-2: 0.5rem;
+  --primitive-spacing-3: 0.75rem;
+  --primitive-spacing-4: 1rem;
+  --primitive-spacing-5: 1.25rem;
+  --primitive-spacing-6: 1.5rem;
+  --primitive-spacing-8: 2rem;
+  --primitive-spacing-0-5: 0.125rem;
+  --primitive-spacing-1-5: 0.375rem;
+  --primitive-spacing-2-5: 0.625rem;
+  --primitive-fontSize-xs: 0.75rem;
+  --primitive-fontSize-sm: 0.875rem;
+  --primitive-fontSize-base: 1rem;
+  --primitive-fontSize-lg: 1.125rem;
+  --primitive-fontSize-xl: 1.25rem;
+  --primitive-fontSize-2xl: 1.5rem;
+  --primitive-radius-none: 0;
+  --primitive-radius-sm: 0.25rem;
+  --primitive-radius-md: 0.375rem;
+  --primitive-radius-lg: 0.5rem;
+  --primitive-radius-xl: 0.75rem;
+  --primitive-radius-2xl: 1rem;
+  --primitive-radius-full: 9999px;
+  --primitive-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --primitive-shadow-sm: 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --primitive-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+  --primitive-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --primitive-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+  --primitive-duration-fast: 150ms;
+  --primitive-duration-normal: 200ms;
+  --primitive-duration-slow: 300ms;
+}
+
+/* === SEMANTIC === */
+:root {
+  --color-background: #F8FAFC;
+  --color-foreground: #0F172A;
+  --color-primary: #0D9488;
+  --color-primary-hover: #0F766E;
+  --color-primary-foreground: #FFFFFF;
+  --color-secondary: #14B8A6;
+  --color-secondary-foreground: #FFFFFF;
+  --color-muted: #F1F5F9;
+  --color-muted-foreground: #64748B;
+  --color-card: #FFFFFF;
+  --color-card-foreground: #0F172A;
+  --color-border: #E2E8F0;
+  --color-ring: #0D9488;
+  --color-accent: #0D9488;
+  --color-accent-foreground: #FFFFFF;
+  --color-destructive: #F43F5E;
+  --color-destructive-foreground: #FFFFFF;
+  --color-warning: #F59E0B;
+  --spacing-component: 0.75rem;
+  --spacing-section: 1.25rem;
+  --dark-color-background: #070D12;
+  --dark-color-foreground: #F0FDFA;
+  --dark-color-primary: #2DD4BF;
+  --dark-color-primary-hover: #5EEAD4;
+  --dark-color-primary-foreground: #070D12;
+  --dark-color-secondary: #14B8A6;
+  --dark-color-secondary-foreground: #FFFFFF;
+  --dark-color-muted: #14222B;
+  --dark-color-muted-foreground: #94A3B8;
+  --dark-color-card: #0D171E;
+  --dark-color-card-foreground: #F0FDFA;
+  --dark-color-border: #1C2F3C;
+  --dark-color-ring: #2DD4BF;
+  --dark-color-accent: #2DD4BF;
+  --dark-color-accent-foreground: #070D12;
+}
+
+/* === COMPONENTS === */
+:root {
+  --button-primary-bg: #0D9488;
+  --button-primary-fg: #FFFFFF;
+  --button-primary-hover-bg: #0F766E;
+  --button-primary-radius: 0.5rem;
+  --button-primary-padding-x: 0.75rem;
+  --button-primary-padding-y: 0.375rem;
+  --button-control-icon-size: 1.75rem;
+  --button-control-icon-radius: 0.375rem;
+  --button-control-icon-border: #E2E8F0;
+  --input-bg: #FFFFFF;
+  --input-border: #E2E8F0;
+  --input-focus-ring: #0D9488;
+  --input-radius: 0.5rem;
+  --input-padding-x: 0.75rem;
+  --input-padding-y: 0.5rem;
+  --card-bg: #FFFFFF;
+  --card-border: #E2E8F0;
+  --card-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --card-radius: 0.75rem;
+  --card-padding: 1rem;
+  --tab-height: 2rem;
+  --tab-radius: 0.5rem;
+  --tab-active-bg: #FFFFFF;
+  --tab-active-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
