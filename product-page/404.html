@@ -69,7 +69,7 @@
         }
         .header-inner { display: flex; align-items: center; justify-content: space-between; height: 100%; }
         .brand { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 0.9rem; font-weight: 700; }
-        .brand-icon { display: grid; width: 29px; height: 29px; place-items: center; filter: drop-shadow(0 4px 9px rgba(79, 70, 165, 0.35)); }
+        .brand-icon { display: grid; width: 29px; height: 29px; place-items: center; filter: drop-shadow(0 4px 9px rgba(13, 148, 136, 0.35)); }
         .brand-badge {
             margin-left: 6px; padding: 2px 7px; color: var(--text-dim);
             border: 1px solid var(--border); border-radius: var(--radius-pill);
@@ -187,15 +187,31 @@
         <div class="header-inner container">
             <a href="./" class="brand" aria-label="Dictionary home">
                 <span class="brand-icon" aria-hidden="true">
-                    <svg width="22" height="22" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="48" height="48" rx="6" fill="#2563EB"/>
-                        <rect x="9" y="9" width="9" height="30" fill="white"/>
-                        <rect x="21" y="9" width="6" height="30" fill="white"/>
-                        <rect x="30" y="9" width="9" height="30" fill="white"/>
-                        <line x1="24" y1="15" x2="27" y2="15" stroke="#2563EB" stroke-width="1.5"/>
-                        <line x1="24" y1="21" x2="27" y2="21" stroke="#2563EB" stroke-width="1.5"/>
-                        <line x1="24" y1="27" x2="27" y2="27" stroke="#2563EB" stroke-width="1.5"/>
-                        <line x1="24" y1="33" x2="27" y2="33" stroke="#2563EB" stroke-width="1.5"/>
+                    <svg width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="header-bg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stop-color="#0D9488" />
+                                <stop offset="100%" stop-color="#0F766E" />
+                            </linearGradient>
+                        </defs>
+                        <rect width="48" height="48" rx="7" fill="url(#header-bg)" />
+                        <!-- Left Page -->
+                        <path d="M21 40 C13.5 37 8 37 6 38.5 V15.5 C8 14 13.5 14 21 17 V40 Z" fill="#FFFFFF" />
+                        <!-- Right Page -->
+                        <path d="M27 40 C34.5 37 40 37 42 38.5 V15.5 C40 14 34.5 14 27 17 V40 Z" fill="#FFFFFF" />
+                        <!-- Spine -->
+                        <rect x="21" y="16.5" width="6" height="23.5" rx="1.5" fill="#CCFBF1" />
+                        <line x1="24" y1="17" x2="24" y2="39.5" stroke="#0D9488" stroke-width="1.8" />
+                        <!-- Lines on pages -->
+                        <line x1="9.5" y1="21" x2="18" y2="23" stroke="#0F766E" stroke-width="1.8" stroke-linecap="round" />
+                        <line x1="9.5" y1="27" x2="18" y2="29" stroke="#0F766E" stroke-width="1.8" stroke-linecap="round" />
+                        <line x1="9.5" y1="33" x2="18" y2="35" stroke="#0F766E" stroke-width="1.8" stroke-linecap="round" />
+                        <line x1="30" y1="23" x2="38.5" y2="21" stroke="#0F766E" stroke-width="1.8" stroke-linecap="round" />
+                        <line x1="30" y1="29" x2="38.5" y2="27" stroke="#0F766E" stroke-width="1.8" stroke-linecap="round" />
+                        <line x1="30" y1="35" x2="38.5" y2="33" stroke="#0F766E" stroke-width="1.8" stroke-linecap="round" />
+                        <!-- AI Spark -->
+                        <path d="M24 2 C24 6 25.8 7.5 31.5 8.5 C25.8 9.5 24 11 24 15 C24 11 22.2 9.5 16.5 8.5 C22.2 7.5 24 6 24 2 Z" fill="#FEF08A" />
+                        <circle cx="24" cy="8.5" r="1.8" fill="#FFFFFF" />
                     </svg>
                 </span>
                 <span class="brand-text">Dictionary <span class="brand-badge">Firefox Add-on · Chrome</span></span>
