@@ -120,7 +120,7 @@ export const ToolbarPopupApp: React.FC = () => {
       className={cx(
         'app-shell workbench-shell bg-paper text-content font-sans flex flex-col select-none overflow-hidden transition-colors duration-fast',
         isFullTab
-          ? 'w-full max-w-6xl h-[calc(100dvh-2rem)] mx-auto my-4 rounded-3xl border border-border shadow-card-elevated'
+          ? 'w-full max-w-6xl h-[calc(100dvh-2rem)] mx-auto my-3 rounded-2xl border border-border shadow-card-elevated'
           : 'w-full h-full',
         isDarkMode ? 'dark' : 'light-theme light',
       )}

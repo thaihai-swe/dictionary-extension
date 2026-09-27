@@ -5,8 +5,9 @@ import {
   SentenceBreakdownIntent,
 } from '@/components/async-views';
 import PresetChips from '@/components/component.preset-chips';
+import SearchBar from '@/components/component.search-bar';
 import TokenizedContext from '@/components/component.tokenized-context';
-import { IconCheck, IconClose, IconCopy, IconSearch } from '@/components/icons';
+import { IconCheck, IconCopy } from '@/components/icons';
 import { AI_INTENTS, AiIntentStatus, useAiAssistant } from '@/composables/composable.ai-assistant';
 import { searchWord, stopAllAudio, useDictionaryQuery } from '@/composables/composable.dictionary';
 import { useSetting } from '@/composables/composable.storage';
@@ -47,6 +48,36 @@ function resolveContext(query?: string, context?: string): string {
   if (!surrounding) return '';
   if (selected && surrounding.toLowerCase() === selected.toLowerCase()) return '';
   return surrounding;
+}
+
+function highlightContext(sentence: string, targetWord?: string, queryWord?: string): React.ReactNode {
+  const term = (targetWord || queryWord || '').trim();
+  if (!sentence || !term) return sentence;
+
+  const matchTerm = sentence.toLowerCase().includes(term.toLowerCase())
+    ? term
+    : (queryWord && sentence.toLowerCase().includes(queryWord.toLowerCase()) ? queryWord.trim() : '');
+
+  if (!matchTerm) return sentence;
+
+  const escaped = matchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`(${escaped})`, 'gi');
+  const parts = sentence.split(regex);
+
+  if (parts.length <= 1) return sentence;
+
+  return parts.map((part, index) =>
+    part.toLowerCase() === matchTerm.toLowerCase() ? (
+      <mark
+        key={index}
+        className="bg-accent/20 text-accent font-semibold px-1 py-0.5 rounded border border-accent/30 not-italic"
+      >
+        {part}
+      </mark>
+    ) : (
+      part
+    ),
+  );
 }
 
 export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
@@ -207,46 +238,20 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
 
   return (
     <div className="ai-workspace p-4 space-y-4 font-sans">
-      <div className="relative flex items-center">
-        <span className="absolute left-3.5 text-content-muted pointer-events-none">
-          <IconSearch className="w-4 h-4" />
-        </span>
-        <input
-          value={queryInput}
-          onChange={(e) => setQueryInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') handleIntentSelect(activeIntent);
-          }}
-          type="text"
-          placeholder="Analyze a word or sentence…"
-          aria-label="Analyze a word or sentence"
-          className="ui-control w-full h-12 pl-11 pr-28 text-[14.5px] placeholder:text-content-muted font-sans rounded-xl shadow-xs"
-        />
-
-        {queryInput ? (
-          <button
-            type="button"
-            onClick={() => {
-              setQueryInput('');
-              stopAllAudio();
-            }}
-            title="Clear search text"
-            aria-label="Clear search text"
-            className="absolute right-24 text-content-muted hover:text-content p-1 cursor-pointer flex items-center justify-center rounded-md hover:bg-muted transition-colors"
-          >
-            <IconClose className="w-4 h-4" />
-          </button>
-        ) : null}
-
-        <button
-          type="button"
-          onClick={() => handleIntentSelect(activeIntent)}
-          disabled={!queryInput || isAiLoading}
-          className="ui-button-primary absolute right-1.5 h-9 px-3.5 rounded-lg text-[13px] font-semibold cursor-pointer shadow-sm active:scale-95 transition-all"
-        >
-          <span>{isAiLoading ? 'Analyzing…' : 'Analyze'}</span>
-        </button>
-      </div>
+      <SearchBar
+        value={queryInput}
+        onChange={setQueryInput}
+        onSubmit={() => handleIntentSelect(activeIntent)}
+        onClear={() => {
+          setQueryInput('');
+          stopAllAudio();
+        }}
+        placeholder="Analyze a word or sentence…"
+        ariaLabel="Analyze a word or sentence"
+        actionLabel="Analyze"
+        loadingLabel="Analyzing…"
+        isLoading={isAiLoading}
+      />
 
       {!isEditingContext && !contextInput.trim() ? (
         <div className="flex items-center justify-end px-0.5">
@@ -259,15 +264,26 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
           </button>
         </div>
       ) : !isEditingContext ? (
-        <button
-          type="button"
-          onClick={() => setIsEditingContext(true)}
-          className="max-w-full inline-flex items-center gap-2 h-7 px-3 rounded-lg border border-accent/25 bg-accent/10 text-accent text-[12px] font-medium cursor-pointer whitespace-nowrap hover:bg-accent/15 transition-all"
-          title="Edit context sentence"
-        >
-          <span className="font-semibold font-mono text-[11px] uppercase">Context:</span>
-          <span className="truncate max-w-[20rem]">{contextInput.trim()}</span>
-        </button>
+        <div className="w-full rounded-xl border border-accent/25 bg-accent/[0.04] p-2.5 px-3 flex items-start justify-between gap-2.5 shadow-2xs">
+          <div className="space-y-1 min-w-0 flex-1">
+            <div className="flex items-center gap-1.5">
+              <span className="font-semibold font-mono text-[10px] uppercase text-accent tracking-wider">
+                Context Sentence
+              </span>
+            </div>
+            <p className="text-[13px] text-content leading-relaxed break-words font-serif">
+              {highlightContext(contextInput.trim(), resolvedQuery, queryInput)}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsEditingContext(true)}
+            className="text-[11px] font-semibold text-accent hover:underline cursor-pointer shrink-0 mt-0.5 px-1.5 py-0.5 rounded hover:bg-accent/10 transition-colors"
+            title="Edit context sentence"
+          >
+            Edit
+          </button>
+        </div>
       ) : (
         <div className="rounded-2xl border border-border/80 bg-surface/90 p-3.5 space-y-2.5 shadow-xs">
           <div className="flex items-center justify-between gap-2">

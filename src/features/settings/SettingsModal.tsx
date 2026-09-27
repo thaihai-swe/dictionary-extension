@@ -110,9 +110,9 @@ export const SettingsModal: React.FC = () => {
 
       <div className="max-w-6xl mx-auto px-5 sm:px-8 py-8 sm:py-10 pb-28">
         <div className="settings-intro mb-8">
-          <p className="settings-eyebrow mb-2">MAKE IT YOURS / 01—04</p>
-          <h2 className="settings-intro-title">A better way to <em>understand.</em></h2>
-          <p className="text-content-secondary text-sm sm:text-base mt-2 max-w-xl leading-relaxed">Fine-tune the little details that shape every lookup, from the first highlight to the final answer.</p>
+          <p className="settings-eyebrow mb-2">PREFERENCES · 01 — 04</p>
+          <h2 className="settings-intro-title">Make it <em>yours.</em></h2>
+          <p className="text-content-secondary text-sm sm:text-base mt-2 max-w-xl leading-relaxed">Fine-tune every detail — from the first highlight to the final answer.</p>
         </div>
         <nav aria-label="Settings sections" className="md:hidden flex items-center gap-2 overflow-x-auto pb-3 mb-5">
           {TABS.map(({ id, label, icon: Icon }) => (
@@ -132,7 +132,7 @@ export const SettingsModal: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)] gap-8 lg:gap-12 items-start">
           <aside className="settings-sidebar hidden md:block space-y-6">
             <nav aria-label="Settings sections" className="settings-side-nav hidden md:block space-y-1">
-              <p className="settings-eyebrow px-3 mb-4">PREFERENCES</p>
+              <p className="settings-eyebrow px-2 mb-3">NAVIGATION</p>
               {TABS.map(({ id, label, icon: Icon }) => {
                 const isActive = activeTab === id;
                 return (
@@ -150,36 +150,38 @@ export const SettingsModal: React.FC = () => {
               })}
             </nav>
 
-            <div className="settings-backup-card p-4 space-y-3">
-              <span className="settings-eyebrow block">YOUR DATA</span>
-              <p className="text-sm font-semibold text-content leading-snug">Keep your setup close.</p>
-              <div className="space-y-1.5">
+            <div className="settings-backup-card">
+              <div className="px-3 pt-3 pb-2">
+                <span className="settings-eyebrow block mb-1">YOUR DATA</span>
+                <p className="text-xs font-semibold text-content leading-snug">Keep your setup close.</p>
+              </div>
+              <div className="px-1 pb-1">
                 <button
                   type="button"
                   onClick={exportSettings}
                   title="Download settings JSON backup"
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted/70 text-xs text-content-secondary hover:text-content font-medium transition-colors cursor-pointer flex items-center justify-between border border-transparent hover:border-border"
+                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted text-xs text-content-secondary hover:text-content font-medium transition-colors cursor-pointer flex items-center justify-between"
                 >
                   <span>Export JSON</span>
-                  <span className="text-[12px] text-content-muted font-mono">↓</span>
+                  <span className="text-[11px] text-content-muted font-mono opacity-60">↓</span>
                 </button>
                 <button
                   type="button"
                   onClick={triggerImportFile}
                   title="Restore settings from JSON file"
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted/70 text-xs text-content-secondary hover:text-content font-medium transition-colors cursor-pointer flex items-center justify-between border border-transparent hover:border-border"
+                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted text-xs text-content-secondary hover:text-content font-medium transition-colors cursor-pointer flex items-center justify-between"
                 >
                   <span>Import JSON</span>
-                  <span className="text-[12px] text-content-muted font-mono">↑</span>
+                  <span className="text-[11px] text-content-muted font-mono opacity-60">↑</span>
                 </button>
                 <button
                   type="button"
                   onClick={handleClearLookupCaches}
                   title="Remove locally cached lookup results"
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted/70 text-xs text-content-secondary hover:text-content font-medium transition-colors cursor-pointer flex items-center justify-between border border-transparent hover:border-border"
+                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted text-xs text-content-secondary hover:text-content font-medium transition-colors cursor-pointer flex items-center justify-between"
                 >
-                  <span>{cacheClearedNotice ? 'Cache cleared' : 'Clear lookup cache'}</span>
-                  <span className="text-[12px] text-content-muted font-mono">×</span>
+                  <span>{cacheClearedNotice ? 'Cache cleared ✓' : 'Clear cache'}</span>
+                  <span className="text-[11px] text-content-muted font-mono opacity-60">×</span>
                 </button>
               </div>
             </div>
@@ -187,9 +189,11 @@ export const SettingsModal: React.FC = () => {
 
           <main className="min-w-0 space-y-6 settings-content">
             <div className="settings-section-heading">
-              <p className="settings-eyebrow mb-2">SECTION {String(TABS.findIndex((tab) => tab.id === activeTab) + 1).padStart(2, '0')} / 04</p>
-              <h2 className="font-heading text-3xl sm:text-4xl font-semibold tracking-tight text-content">{activeTabInfo.label}</h2>
-              <p className="text-content-secondary text-sm mt-2">{tabDescriptions[activeTab]}</p>
+              <div className="flex items-baseline gap-3">
+                <h2 className="font-heading text-3xl sm:text-4xl font-bold tracking-tight text-content">{activeTabInfo.label}</h2>
+                <span className="settings-eyebrow">{String(TABS.findIndex((tab) => tab.id === activeTab) + 1).padStart(2, '0')} / 04</span>
+              </div>
+              <p className="text-content-secondary text-sm mt-1.5">{tabDescriptions[activeTab]}</p>
             </div>
             {activeTab === 'general' && (
               <Suspense fallback={<div className="p-8 text-xs text-content-muted">Loading settings…</div>}>

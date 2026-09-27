@@ -53,21 +53,21 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings }) =>
   }, [groupedMeanings, selectedPos]);
 
   return (
-    <div className="space-y-4 pt-0.5">
+    <div className="space-y-2 pt-0">
       {distinctPosList.length > 1 ? (
-        <div className="-mx-1 px-1 py-1.5 bg-surface/80 rounded-xl border border-border-subtle flex items-center gap-1.5 overflow-x-auto select-none">
+        <div className="flex items-center gap-1.5 overflow-x-auto select-none py-0.5">
           <button
             type="button"
             onClick={() => setSelectedPos('all')}
             className={cx(
-              'h-7 px-3 rounded-lg text-[12px] font-semibold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5',
+              'h-6 px-2.5 rounded-full text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1',
               selectedPos === 'all'
-                ? 'bg-accent text-accent-foreground shadow-xs font-bold'
-                : 'bg-muted/60 hover:bg-elevated text-content-secondary hover:text-content border border-border/60',
+                ? 'bg-accent text-accent-foreground shadow-2xs font-bold'
+                : 'bg-muted/70 hover:bg-elevated text-content-secondary hover:text-content border border-border/60',
             )}
           >
             <span>All</span>
-            <span className="font-mono text-[11px] opacity-80 font-normal">({totalDefinitions})</span>
+            <span className="font-mono text-[10px] opacity-80 font-normal">({totalDefinitions})</span>
           </button>
           {distinctPosList.map((item) => {
             const isActive = selectedPos.toLowerCase() === item.pos.toLowerCase();
@@ -77,14 +77,14 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings }) =>
                 type="button"
                 onClick={() => setSelectedPos(item.pos)}
                 className={cx(
-                  'h-7 px-3 rounded-lg text-[12px] font-semibold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5',
+                  'h-6 px-2.5 rounded-full text-[11px] font-semibold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap flex items-center gap-1',
                   isActive
-                    ? 'bg-accent text-accent-foreground shadow-xs font-bold'
-                    : 'bg-muted/60 hover:bg-elevated text-content-secondary hover:text-content border border-border/60',
+                    ? 'bg-accent text-accent-foreground shadow-2xs font-bold'
+                    : 'bg-muted/70 hover:bg-elevated text-content-secondary hover:text-content border border-border/60',
                 )}
               >
                 <span>{item.pos}</span>
-                <span className="font-mono text-[11px] opacity-80 font-normal">({item.count})</span>
+                <span className="font-mono text-[10px] opacity-80 font-normal">({item.count})</span>
               </button>
             );
           })}
@@ -94,12 +94,12 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings }) =>
       {filteredMeanings.map((meaning, mIdx) => (
         <div
           key={meaning.partOfSpeech || mIdx}
-          className="meaning-card space-y-3 rounded-2xl border border-border/80 bg-surface p-4 shadow-xs"
+          className="meaning-card space-y-2 rounded-xl border border-border/70 bg-surface p-3 sm:p-3.5 shadow-2xs"
         >
           <div className="flex items-center justify-between">
             <span
               className={cx(
-                'inline-flex items-center px-2.5 py-0.5 rounded-md font-bold text-[11px] uppercase tracking-wider font-mono',
+                'inline-flex items-center px-2 py-0.5 rounded font-bold text-[10px] uppercase tracking-wider font-mono',
                 getPosBadgeClass(meaning.partOfSpeech),
               )}
             >
@@ -107,24 +107,24 @@ export const SenseMatrixCard: React.FC<SenseMatrixCardProps> = ({ meanings }) =>
             </span>
           </div>
 
-          <ol className="space-y-3.5 text-content">
+          <ol className="space-y-2.5 text-content">
             {meaning.definitions.map((def, dIdx) => {
               const listenKey = `sense-${mIdx}-${dIdx}`;
               const isPlaying = playingKey === listenKey;
               return (
-                <li key={dIdx} className="space-y-2">
-                  <div className="flex items-start gap-2.5">
-                    <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-muted/80 text-accent text-[11px] font-bold font-mono shrink-0 select-none mt-0.5 border border-border-subtle">
+                <li key={dIdx} className="space-y-1.5">
+                  <div className="flex items-start gap-2">
+                    <span className="inline-flex items-center justify-center w-4 h-4 rounded bg-muted/80 text-accent text-[10px] font-bold font-mono shrink-0 select-none mt-0.5 border border-border-subtle">
                       {dIdx + 1}
                     </span>
-                    <span className="font-serif text-reading text-content tracking-[0.002em] leading-relaxed">
+                    <span className="text-[13.5px] sm:text-[14px] text-content tracking-[0.002em] leading-relaxed">
                       {def.definition}
                     </span>
                   </div>
 
                   {def.example ? (
                     <ExampleSentence
-                      className="ml-7"
+                      className="ml-6"
                       english={def.example}
                       translation={def.exampleTranslation}
                       targetLang={targetLang}

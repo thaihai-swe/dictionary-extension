@@ -60,12 +60,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
       aria-label="Navigation modes"
       onKeyDown={handleKeyDown}
     >
-      <div
-        className={cx(
-          'workbench-tab-list text-[12px] p-1 bg-surface-muted/80 rounded-xl border border-border-subtle/80 backdrop-blur-md grid gap-1 shadow-xs',
-          tabs.length === 3 ? 'grid-cols-3' : tabs.length === 2 ? 'grid-cols-2' : 'grid-cols-1',
-        )}
-      >
+      <div className="workbench-tab-list text-[12px]">
         {tabs.map((tab) => {
           const isActive = currentActive === tab.id;
           const Icon = tab.icon;
@@ -78,10 +73,10 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onChang
               tabIndex={isActive ? 0 : -1}
               onClick={() => selectTab(tab.id)}
               className={cx(
-                'workbench-tab flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg cursor-pointer whitespace-nowrap select-none transition-all duration-150',
+                'workbench-tab flex items-center justify-center gap-1.5 py-1.5 px-3 cursor-pointer whitespace-nowrap select-none',
                 isActive
-                  ? 'is-active bg-surface text-content font-semibold shadow-xs border border-border/40'
-                  : 'text-content-muted hover:text-content hover:bg-surface/50 font-medium',
+                  ? 'is-active font-semibold'
+                  : 'text-content-muted font-medium',
               )}
             >
               <Icon

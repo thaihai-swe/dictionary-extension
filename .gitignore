@@ -3,8 +3,8 @@
 .zcode/
 node_modules
 .wxt/
-
-
+.agents/
+output/
 .qwen/
 # Logs
 logs

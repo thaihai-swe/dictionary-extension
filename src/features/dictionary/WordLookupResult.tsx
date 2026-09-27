@@ -32,24 +32,35 @@ interface WordLookupResultProps {
   contextSentence?: string;
 }
 
-const TranslationBanner = React.memo(({ translation }: { translation: TranslationResult }) => (
-  <section className="p-3.5 rounded-2xl border border-accent/25 bg-gradient-to-r from-accent/[0.08] via-accent/[0.04] to-transparent flex items-baseline justify-between gap-3 shadow-xs">
-    <div className="space-y-1 min-w-0 flex-1">
-      <div className="flex items-center gap-1.5">
-        <IconGlobe className="w-3.5 h-3.5 text-accent" />
-        <span className="text-[11px] font-bold text-accent uppercase tracking-wider font-mono">
-          Translation
-        </span>
-      </div>
-      <p className="font-serif text-reading text-content font-semibold break-words">
-        {translation.translatedText}
-      </p>
-    </div>
-    <span className="text-[11px] text-content-muted flex-shrink-0 font-mono px-2 py-0.5 rounded-md bg-surface border border-border/60 shadow-2xs">
-      {translation.sourceBadges?.map((badge) => badge.label).join(' · ') || 'Google'}
-    </span>
-  </section>
-));
+function highlightContext(sentence: string, targetWord?: string, queryWord?: string): React.ReactNode {
+  const term = (targetWord || queryWord || '').trim();
+  if (!sentence || !term) return sentence;
+
+  const matchTerm = sentence.toLowerCase().includes(term.toLowerCase())
+    ? term
+    : (queryWord && sentence.toLowerCase().includes(queryWord.toLowerCase()) ? queryWord.trim() : '');
+
+  if (!matchTerm) return sentence;
+
+  const escaped = matchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`(${escaped})`, 'gi');
+  const parts = sentence.split(regex);
+
+  if (parts.length <= 1) return sentence;
+
+  return parts.map((part, index) =>
+    part.toLowerCase() === matchTerm.toLowerCase() ? (
+      <mark
+        key={index}
+        className="bg-accent/20 text-accent font-semibold px-1 py-0.5 rounded border border-accent/30 not-italic"
+      >
+        {part}
+      </mark>
+    ) : (
+      part
+    ),
+  );
+}
 
 export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord, contextSentence }) => {
   const { result, isEnriching } = useDictionaryResult();
@@ -173,147 +184,158 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
     pageContext && pageContext.toLowerCase() !== displayHeadword.toLowerCase(),
   );
   return (
-    <div className="dictionary-result space-y-3.5">
-      {/* Headword Hero Section */}
-      <div className="word-hero p-5 rounded-2xl space-y-3.5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="space-y-1 min-w-0">
-            <h2 className="text-2xl sm:text-3xl font-bold text-content font-heading tracking-tight leading-tight min-w-0 break-words">
-              {displayHeadword}
-            </h2>
-            {isEnriching ? (
-              <span
-                className="inline-flex items-center gap-1.5 text-[12px] font-bold font-mono uppercase tracking-wider text-accent bg-accent-subtle px-2 py-0.5 rounded-full border border-accent/25"
-                aria-live="polite"
+    <div className="dictionary-result space-y-2">
+      {/* Headword Hero Section with Integrated Context & Translation */}
+      <div className="word-hero rounded-xl border border-border/70 bg-surface shadow-2xs overflow-hidden">
+        <div className="p-3 sm:p-3.5 space-y-2">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-0.5 min-w-0">
+              <h2 className="text-xl sm:text-2xl font-bold text-content font-heading tracking-tight leading-snug min-w-0 break-words">
+                {displayHeadword}
+              </h2>
+              {isEnriching ? (
+                <span
+                  className="inline-flex items-center gap-1.5 text-[10px] font-bold font-mono uppercase tracking-wider text-accent bg-accent-subtle px-1.5 py-0.5 rounded-full border border-accent/25"
+                  aria-live="polite"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" aria-hidden="true" />
+                  Enriching Lexical Data…
+                </span>
+              ) : null}
+            </div>
+
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={copyAsMarkdown}
+                title="Copy definition as Markdown flashcard"
+                aria-label="Copy definition as Markdown flashcard"
+                className={cx(
+                  'h-6.5 px-2 rounded-md border text-[11.5px] font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs active:scale-95 select-none',
+                  hasCopied
+                    ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-bold'
+                    : 'bg-muted/60 hover:bg-elevated border-border/80 text-content-secondary hover:text-content',
+                )}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" aria-hidden="true" />
-                Enriching Lexical Data…
-              </span>
+                {hasCopied ? (
+                  <>
+                    <IconCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                    <span>Copied</span>
+                  </>
+                ) : (
+                  <>
+                    <IconCopy className="w-3 h-3 text-content-muted" />
+                    <span className="hidden sm:inline">Copy MD</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Phonetics & Voice Audio Chips */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1.5 border-t border-border/50">
+            {phoneticsList.map((item, index) => {
+              const listenKey = `phonetic-${index}-${item.region || item.language || 'audio'}`;
+              const ipa = phoneticText(item);
+              const lang = item.language || (item.region === 'uk' ? 'en-GB' : 'en-US');
+              const isPlaying = playingKey === listenKey;
+
+              return (
+                <button
+                  key={listenKey}
+                  type="button"
+                  onClick={() =>
+                    playPronunciation({
+                      text: displayHeadword,
+                      audioUrl: item.audio,
+                      language: lang,
+                      key: listenKey,
+                    })
+                  }
+                  className={cx(
+                    'h-6.5 pl-1.5 pr-2 py-0.5 rounded-md border font-medium transition-all duration-150 flex items-center gap-1.5 cursor-pointer shadow-2xs group active:scale-95',
+                    isPlaying
+                      ? 'bg-accent text-accent-foreground border-accent font-bold audio-playing-indicator'
+                      : 'bg-muted hover:bg-accent/10 hover:border-accent/40 text-content-secondary hover:text-accent border-border',
+                  )}
+                  aria-pressed={isPlaying}
+                  title={`Listen pronunciation (${phoneticLabel(item)})`}
+                >
+                  <span className={cx(
+                    'text-[9px] font-extrabold uppercase px-1 py-0.5 rounded font-mono transition-colors leading-none',
+                    isPlaying
+                      ? 'bg-paper/20 text-accent-foreground'
+                      : 'bg-surface text-content-muted border border-border/60 group-hover:text-accent',
+                  )}>
+                    {phoneticLabel(item)}
+                  </span>
+                  {isPlaying ? (
+                    <span className="soundwave-bars text-accent-foreground">
+                      <span className="soundwave-bar" />
+                      <span className="soundwave-bar" />
+                      <span className="soundwave-bar" />
+                      <span className="soundwave-bar" />
+                    </span>
+                  ) : (
+                    <IconSpeaker className="w-3 h-3 text-accent shrink-0 group-hover:scale-110 transition-transform" />
+                  )}
+                  <span className={cx(
+                    'font-mono text-[12px] leading-none tracking-wide font-medium',
+                    isPlaying ? 'text-accent-foreground' : 'text-content',
+                  )}>
+                    {ipa ? `/${ipa.replace(/^\/+|\/+$/g, '')}/` : 'Audio'}
+                  </span>
+                </button>
+              );
+            })}
+
+            {/* Speech Practice Voice Button */}
+            {supportsSpeechPractice ? (
+              <button
+                type="button"
+                onClick={() => startSpeechPractice(displayHeadword, 'en-US')}
+                className={cx(
+                  'h-6.5 px-2 rounded-md border text-[11px] font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95',
+                  isPracticing
+                    ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/40 animate-pulse font-bold'
+                    : 'bg-muted/40 hover:bg-elevated text-content-secondary hover:text-content border-border/80 hover:border-amber-500/40',
+                )}
+                aria-pressed={isPracticing}
+                title="Practice speaking and get a speech similarity score"
+              >
+                <IconMic className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                <span>{isPracticing ? 'Listening…' : 'Practice Pronunciation'}</span>
+              </button>
             ) : null}
           </div>
+        </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              type="button"
-              onClick={copyAsMarkdown}
-              title="Copy definition as Markdown flashcard"
-              aria-label="Copy definition as Markdown flashcard"
-              className={cx(
-                'h-8 px-2.5 rounded-xl border text-[13.5px] font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs active:scale-95 select-none',
-                hasCopied
-                  ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-bold'
-                  : 'bg-muted/60 hover:bg-elevated border-border/80 text-content-secondary hover:text-content',
-              )}
-            >
-              {hasCopied ? (
-                <>
-                  <IconCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>Copied</span>
-                </>
-              ) : (
-                <>
-                  <IconCopy className="w-3.5 h-3.5 text-content-muted" />
-                  <span className="hidden sm:inline">Copy MD</span>
-                </>
-              )}
-            </button>
+        {/* Integrated Context Sentence Row */}
+        {showContextBanner ? (
+          <div className="px-3.5 py-1.5 border-t border-border/50 bg-muted/20 flex items-start gap-2">
+            <IconQuote className="w-3.5 h-3.5 text-accent opacity-75 shrink-0 mt-0.5" />
+            <p className="font-serif text-[12.5px] sm:text-[13px] text-content-secondary leading-snug flex-1 break-words">
+              {highlightContext(pageContext, displayHeadword, query)}
+            </p>
           </div>
-        </div>
+        ) : null}
 
-        {/* Phonetics & Voice Audio Chips */}
-        <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-border">
-          {phoneticsList.map((item, index) => {
-            const listenKey = `phonetic-${index}-${item.region || item.language || 'audio'}`;
-            const ipa = phoneticText(item);
-            const lang = item.language || (item.region === 'uk' ? 'en-GB' : 'en-US');
-            const isPlaying = playingKey === listenKey;
-
-            return (
-              <button
-                key={listenKey}
-                type="button"
-                onClick={() =>
-                  playPronunciation({
-                    text: displayHeadword,
-                    audioUrl: item.audio,
-                    language: lang,
-                    key: listenKey,
-                  })
-                }
-                className={cx(
-                  'h-8 pl-2 pr-3 py-1 rounded-xl border font-medium transition-all duration-150 flex items-center gap-2 cursor-pointer shadow-2xs group active:scale-95',
-                  isPlaying
-                    ? 'bg-accent text-accent-foreground border-accent font-bold audio-playing-indicator'
-                    : 'bg-muted hover:bg-accent/10 hover:border-accent/40 text-content-secondary hover:text-accent border-border',
-                )}
-                aria-pressed={isPlaying}
-                title={`Listen pronunciation (${phoneticLabel(item)})`}
-              >
-                <span className={cx(
-                  'text-[10.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-md font-mono transition-colors',
-                  isPlaying
-                    ? 'bg-paper/20 text-accent-foreground'
-                    : 'bg-surface text-content-muted border border-border/60 group-hover:text-accent',
-                )}>
-                  {phoneticLabel(item)}
-                </span>
-                {isPlaying ? (
-                  <span className="soundwave-bars text-accent-foreground">
-                    <span className="soundwave-bar" />
-                    <span className="soundwave-bar" />
-                    <span className="soundwave-bar" />
-                    <span className="soundwave-bar" />
-                  </span>
-                ) : (
-                  <IconSpeaker className="w-3.5 h-3.5 text-accent shrink-0 group-hover:scale-110 transition-transform" />
-                )}
-                <span className={cx(
-                  'font-mono text-[14.5px] leading-none tracking-wide font-medium',
-                  isPlaying ? 'text-accent-foreground' : 'text-content',
-                )}>
-                  {ipa ? `/${ipa.replace(/^\/+|\/+$/g, '')}/` : 'Audio'}
-                </span>
-              </button>
-            );
-          })}
-
-          {/* Speech Practice Voice Button */}
-          {supportsSpeechPractice ? (
-            <button
-              type="button"
-              onClick={() => startSpeechPractice(displayHeadword, 'en-US')}
-              className={cx(
-                'h-8 px-3 rounded-xl border text-[12.5px] font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95',
-                isPracticing
-                  ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/40 animate-pulse font-bold'
-                  : 'bg-muted/40 hover:bg-elevated text-content-secondary hover:text-content border-border/80 hover:border-amber-500/40',
-              )}
-              aria-pressed={isPracticing}
-              title="Practice speaking and get a speech similarity score"
-            >
-              <IconMic className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-              <span>{isPracticing ? 'Listening…' : 'Practice Pronunciation'}</span>
-            </button>
-          ) : null}
-        </div>
+        {/* Integrated Translation Row */}
+        {result.translation?.translatedText ? (
+          <div className="px-3.5 py-2 border-t border-accent/20 bg-accent/[0.03] flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <IconGlobe className="w-3.5 h-3.5 text-accent shrink-0" />
+              <span className="text-[10px] font-bold text-accent uppercase font-mono tracking-wider">Translation:</span>
+              <span className="text-[13.5px] sm:text-[14px] text-content font-semibold truncate">
+                {result.translation.translatedText}
+              </span>
+            </div>
+            <span className="text-[10px] text-content-muted flex-shrink-0 font-mono px-1.5 py-0.5 rounded bg-surface border border-border/60 shadow-2xs">
+              {result.translation.sourceBadges?.map((badge) => badge.label).join(' · ') || 'Google'}
+            </span>
+          </div>
+        ) : null}
       </div>
-
-      {/* Page Selection Context Banner */}
-      {showContextBanner ? (
-        <section className="p-3.5 rounded-2xl border border-border bg-surface shadow-xs space-y-1.5">
-          <div className="flex items-center gap-1.5 text-content-muted">
-            <IconQuote className="w-3.5 h-3.5 text-accent opacity-75" />
-          </div>
-          <p className="font-serif text-reading text-content pl-5 border-l-2 border-accent/40">
-            {pageContext}
-          </p>
-        </section>
-      ) : null}
-
-      {/* Bilingual Translation Banner */}
-      {result.translation?.translatedText ? (
-        <TranslationBanner translation={result.translation} />
-      ) : null}
 
       {/* Speech Practice Evaluation Feedback Banner */}
       {practiceResult ? (

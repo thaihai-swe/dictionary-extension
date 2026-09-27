@@ -34,21 +34,21 @@ function LexicalDisclosure({ label, count, defaultOpen, children }: LexicalDiscl
   return (
     <details
       open={defaultOpen}
-      className="lexical-disclosure rounded-2xl border border-border/80 bg-surface shadow-xs overflow-hidden group transition-all"
+      className="lexical-disclosure rounded-xl border border-border/70 bg-surface shadow-2xs overflow-hidden group transition-all"
     >
-      <summary className="px-4 py-3 text-[14px] font-bold text-content-secondary uppercase tracking-wider flex items-center justify-between gap-2 cursor-pointer select-none hover:bg-muted/40 transition-colors">
+      <summary className="px-3.5 py-2 text-[12.5px] font-bold text-content-secondary uppercase tracking-wider flex items-center justify-between gap-2 cursor-pointer select-none hover:bg-muted/40 transition-colors">
         <span className="flex items-center gap-2 min-w-0">
-          <Icon className="w-4 h-4 text-accent shrink-0" />
+          <Icon className="w-3.5 h-3.5 text-accent shrink-0" />
           <span className="truncate">{label}</span>
           {typeof count === 'number' ? (
-            <span className="text-[11px] font-mono text-content-muted normal-case px-1.5 py-0.5 rounded-full bg-muted border border-border-subtle">
+            <span className="text-[10px] font-mono text-content-muted normal-case px-1.5 py-0.5 rounded-full bg-muted border border-border-subtle">
               {count}
             </span>
           ) : null}
         </span>
-        <IconChevronDown className="w-4 h-4 text-content-muted group-hover:text-content transition-transform duration-200 shrink-0" />
+        <IconChevronDown className="w-3.5 h-3.5 text-content-muted group-hover:text-content transition-transform duration-200 shrink-0" />
       </summary>
-      <div className="dictionary-detail-content px-4 pb-4 space-y-3.5 border-t border-border/60 pt-3.5">
+      <div className="dictionary-detail-content px-3.5 pb-3 space-y-2.5 border-t border-border/60 pt-2.5">
         {children}
       </div>
     </details>

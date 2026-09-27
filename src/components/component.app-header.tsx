@@ -25,14 +25,21 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     <header className="workbench-header select-none">
       {/* Brand */}
       <div className="workbench-brand flex items-center gap-2">
-        <div className="workbench-brand-mark w-7 h-7 rounded-lg flex items-center justify-center shadow-xs" aria-hidden="true">
-          <IconBook className="w-3.5 h-3.5" style={{ color: 'var(--color-on-primary)' }} />
+        <div className="workbench-brand-mark" aria-hidden="true">
+          <IconBook className="w-3 h-3" style={{ color: 'var(--color-on-primary)' }} />
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="workbench-brand-name font-heading font-extrabold text-[15px] tracking-tight">
+          <span className="workbench-brand-name font-heading">
             Dictionary
           </span>
-          <span className="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-extrabold tracking-wider uppercase bg-accent-subtle text-accent border border-accent/25 leading-none">
+          <span
+            className="px-1 py-0.5 rounded text-[9px] font-mono font-black tracking-widest uppercase leading-none"
+            style={{
+              background: 'var(--color-primary-light)',
+              color: 'var(--color-primary)',
+              border: '1px solid var(--hairline-accent)',
+            }}
+          >
             AI
           </span>
         </div>
@@ -64,7 +71,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <button
           type="button"
           onClick={onToggleShortcuts}
-          className={`btn-control-icon${showShortcuts ? ' !bg-accent-subtle !text-accent !border-accent/40 shadow-glow-subtle' : ''}`}
+          className={`btn-control-icon${showShortcuts ? ' !bg-accent-subtle !text-accent !border-accent/40' : ''}`}
           title="Keyboard Shortcuts (? or Shift+Q)"
           aria-label="Keyboard Shortcuts"
           aria-pressed={showShortcuts}
