@@ -42,6 +42,7 @@ export function useWorkbenchPreferences(options?: {
     targetLang,
     setTargetLang,
     toggleTheme,
+    textSize,
     textSizeStyle: getTextSizeStyle(textSize),
   };
 }

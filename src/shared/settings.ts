@@ -216,8 +216,12 @@ export async function loadFullSettings(): Promise<AppSettings> {
     return normalizeSettings({ ...DEFAULT_SETTINGS, ...DEFAULT_AI_PROMPTS });
   }
   const [syncData, localData] = await Promise.all([
-    chrome.storage.sync.get([...SYNC_SETTING_KEYS, ...SECRET_SETTING_KEYS]),
-    chrome.storage.local.get([...LOCAL_SETTING_KEYS, 'hasAiApiKey']),
+    chrome.storage.sync?.get
+      ? chrome.storage.sync.get([...SYNC_SETTING_KEYS, ...SECRET_SETTING_KEYS]).catch(() => ({} as Record<string, unknown>))
+      : Promise.resolve({} as Record<string, unknown>),
+    chrome.storage.local?.get
+      ? chrome.storage.local.get([...LOCAL_SETTING_KEYS, ...PUBLIC_SETTING_KEYS, 'hasAiApiKey']).catch(() => ({} as Record<string, unknown>))
+      : Promise.resolve({} as Record<string, unknown>),
   ]);
   const merged = mergeStoredSettings(syncData || {}, localData || {});
   const recoveredSecrets: Record<string, unknown> = {};
@@ -229,23 +233,27 @@ export async function loadFullSettings(): Promise<AppSettings> {
       recoveredSecrets[key] = value;
     }
   }
-  if (Object.keys(recoveredSecrets).length) {
-    await chrome.storage.local.set(recoveredSecrets);
+  if (Object.keys(recoveredSecrets).length && chrome.storage.local?.set) {
+    await chrome.storage.local.set(recoveredSecrets).catch(() => undefined);
   }
-  if (straySyncSecrets.length) {
-    await chrome.storage.sync.remove(straySyncSecrets);
+  if (straySyncSecrets.length && chrome.storage.sync?.remove) {
+    await chrome.storage.sync.remove(straySyncSecrets).catch(() => undefined);
   }
   const legacyDictionaryKeys = ['dictionaryApiKey', 'wordnikApiKey', 'wordsApiKey'];
-  await chrome.storage.local.remove(legacyDictionaryKeys).catch(() => {});
-  const latestLocal = await chrome.storage.local.get(['aiApiKey', 'hasAiApiKey']);
+  if (chrome.storage.local?.remove) {
+    await chrome.storage.local.remove(legacyDictionaryKeys).catch(() => {});
+  }
+  const latestLocal = chrome.storage.local?.get
+    ? await chrome.storage.local.get(['aiApiKey', 'hasAiApiKey']).catch(() => ({} as Record<string, unknown>))
+    : ({} as Record<string, unknown>);
   const hasAiApiKey = Boolean(String((latestLocal.aiApiKey ?? merged.aiApiKey) ?? '').trim());
   merged.aiApiKey = latestLocal.aiApiKey ?? merged.aiApiKey;
   merged.hasAiApiKey = hasAiApiKey;
   if (Boolean(syncData?.hasAiApiKey) !== hasAiApiKey || Boolean(latestLocal?.hasAiApiKey) !== hasAiApiKey) {
-    await Promise.all([
-      chrome.storage.sync.set({ hasAiApiKey }),
-      chrome.storage.local.set({ hasAiApiKey }),
-    ]);
+    const writes: Promise<unknown>[] = [];
+    if (chrome.storage.sync?.set) writes.push(chrome.storage.sync.set({ hasAiApiKey }).catch(() => undefined));
+    if (chrome.storage.local?.set) writes.push(chrome.storage.local.set({ hasAiApiKey }).catch(() => undefined));
+    await Promise.all(writes);
   }
   return normalizeSettings({
     ...DEFAULT_AI_PROMPTS,
@@ -257,11 +265,16 @@ export async function loadPublicSettings(): Promise<AppSettings> {
   if (typeof chrome === 'undefined' || !chrome.storage) {
     return normalizeSettings(stripSecretSettings(DEFAULT_SETTINGS));
   }
-  const [syncData, localFlags] = await Promise.all([
-    chrome.storage.sync.get(PUBLIC_SETTING_KEYS as unknown as string[]),
-    chrome.storage.local.get(['hasAiApiKey', 'aiRewritePromptTemplate']),
+  const [syncData, localData] = await Promise.all([
+    chrome.storage.sync?.get
+      ? chrome.storage.sync.get(PUBLIC_SETTING_KEYS as unknown as string[]).catch(() => ({} as Record<string, unknown>))
+      : Promise.resolve({} as Record<string, unknown>),
+    chrome.storage.local?.get
+      ? chrome.storage.local.get([...(PUBLIC_SETTING_KEYS as unknown as string[]), 'hasAiApiKey', 'aiRewritePromptTemplate']).catch(() => ({} as Record<string, unknown>))
+      : Promise.resolve({} as Record<string, unknown>),
   ]);
-  return normalizeSettings(mergePublicSettings(syncData || {}, localFlags || {}));
+  const mergedPublic = { ...(localData || {}), ...(syncData || {}) };
+  return normalizeSettings(mergePublicSettings(mergedPublic, localData || {}));
 }
 
 export async function saveSettingsPartial(partial: Partial<AppSettings>): Promise<void> {
@@ -270,8 +283,12 @@ export async function saveSettingsPartial(partial: Partial<AppSettings>): Promis
   const localData: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(partial)) {
     if (!(key in DEFAULT_SETTINGS)) continue;
-    if (LOCAL_ONLY_KEYS.has(key)) localData[key] = value;
-    else syncData[key] = value;
+    if (LOCAL_ONLY_KEYS.has(key)) {
+      localData[key] = value;
+    } else {
+      syncData[key] = value;
+      localData[key] = value;
+    }
   }
   if (Object.prototype.hasOwnProperty.call(localData, 'aiApiKey')) {
     const hasAiApiKey = Boolean(String(localData.aiApiKey ?? '').trim());
@@ -281,7 +298,11 @@ export async function saveSettingsPartial(partial: Partial<AppSettings>): Promis
     delete syncData.hasAiApiKey;
   }
   const writes: Promise<unknown>[] = [];
-  if (Object.keys(syncData).length) writes.push(chrome.storage.sync.set(syncData));
-  if (Object.keys(localData).length) writes.push(chrome.storage.local.set(localData));
+  if (Object.keys(syncData).length && chrome.storage.sync?.set) {
+    writes.push(chrome.storage.sync.set(syncData).catch(() => undefined));
+  }
+  if (Object.keys(localData).length && chrome.storage.local?.set) {
+    writes.push(chrome.storage.local.set(localData).catch(() => undefined));
+  }
   if (writes.length) await Promise.all(writes);
 }

@@ -22,6 +22,7 @@ export const ToolbarPopupApp: React.FC = () => {
     targetLang,
     setTargetLang,
     toggleTheme,
+    textSize,
     textSizeStyle,
   } = useWorkbenchPreferences({ syncDocumentTheme: true });
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -125,6 +126,7 @@ export const ToolbarPopupApp: React.FC = () => {
         isDarkMode ? 'dark' : 'light-theme light',
       )}
       data-theme={isDarkMode ? 'dark' : 'light'}
+      data-text-size={textSize || 'comfortable'}
       style={textSizeStyle}
       onKeyDown={handleKeydown}
       tabIndex={-1}

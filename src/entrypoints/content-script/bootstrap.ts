@@ -164,16 +164,20 @@ function startBootstrap() {
   function applyTheme() {
     if (!bootUi) return;
     const dark = isDarkMode();
+    const textSize = settings.textSize || 'comfortable';
     const { host, triggerBtn, popupLayer, overlayMount } = bootUi;
     triggerBtn.classList.toggle('dark', dark);
     triggerBtn.classList.toggle('light', !dark);
     host.setAttribute('data-theme', dark ? 'dark' : 'light');
+    host.setAttribute('data-text-size', textSize);
     host.classList.toggle('dark', dark);
     host.classList.toggle('light', !dark);
     popupLayer.setAttribute('data-theme', dark ? 'dark' : 'light');
+    popupLayer.setAttribute('data-text-size', textSize);
     popupLayer.classList.toggle('dark', dark);
     popupLayer.classList.toggle('light', !dark);
     overlayMount.setAttribute('data-theme', dark ? 'dark' : 'light');
+    overlayMount.setAttribute('data-text-size', textSize);
     overlayMount.classList.toggle('dark', dark);
     overlayMount.classList.toggle('light', !dark);
   }
@@ -584,7 +588,7 @@ function startBootstrap() {
   });
 
   chrome.storage?.onChanged?.addListener((changes, area) => {
-    if (area !== 'sync') return;
+    if (area !== 'sync' && area !== 'local') return;
     for (const [key, change] of Object.entries(changes)) {
       if (key in settings) (settings as Record<string, unknown>)[key] = change.newValue;
     }

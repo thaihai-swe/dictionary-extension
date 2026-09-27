@@ -53,6 +53,7 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
     targetLang: currentLang,
     setTargetLang: setCurrentLang,
     toggleTheme,
+    textSize,
     textSizeStyle,
   } = useWorkbenchPreferences({ targetLang });
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -62,20 +63,22 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
   );
   const overlayRef = useRef<HTMLDivElement | null>(null);
 
-
   useEffect(() => {
     if (!overlayRef.current) return;
+    const currentSize = textSize || 'comfortable';
     const layer = overlayRef.current.closest('.dictionary-popup-layer') as HTMLElement | null;
     if (layer) {
       layer.classList.toggle('dark', isDarkMode);
       layer.classList.toggle('light', !isDarkMode);
       layer.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+      layer.setAttribute('data-text-size', currentSize);
     }
     const mount = overlayRef.current.parentElement as HTMLElement | null;
     if (mount) {
       mount.classList.toggle('dark', isDarkMode);
       mount.classList.toggle('light', !isDarkMode);
       mount.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+      mount.setAttribute('data-text-size', currentSize);
     }
     const rootNode = overlayRef.current.getRootNode() as ShadowRoot | null;
     const hostEl = rootNode?.host as HTMLElement | null;
@@ -83,8 +86,9 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
       hostEl.classList.toggle('dark', isDarkMode);
       hostEl.classList.toggle('light', !isDarkMode);
       hostEl.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+      hostEl.setAttribute('data-text-size', currentSize);
     }
-  }, [isDarkMode]);
+  }, [isDarkMode, textSize]);
 
   function syncTextFromSelection(text?: string, context?: string) {
     if (!text?.trim()) return;
@@ -222,11 +226,12 @@ export const InPageOverlay: React.FC<InPageOverlayProps> = ({
       aria-label="Dictionary lookup"
       tabIndex={-1}
       className={cx(
-        'app-shell workbench-shell border border-border/80 rounded-3xl shadow-card-elevated overflow-hidden flex flex-col select-none text-content text-[16px] font-sans relative inpage-popup-card w-full h-full transition-colors outline-none',
+        'app-shell workbench-shell border border-border/80 rounded-3xl shadow-card-elevated overflow-hidden flex flex-col select-none text-content font-sans relative inpage-popup-card w-full h-full transition-colors outline-none',
         isDarkMode ? 'dark' : 'light-theme light',
         isMaximized ? 'max-w-5xl max-h-[90vh]' : '',
       )}
       data-theme={isDarkMode ? 'dark' : 'light'}
+      data-text-size={textSize || 'comfortable'}
       style={textSizeStyle}
       onClick={(e) => e.stopPropagation()}
       onKeyDown={handleOverlayKeyDown}
