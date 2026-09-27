@@ -1,7 +1,7 @@
 import { languageBadge } from '@/shared/ai-example-blocks';
 import { cx } from '@/ui/cx';
 import React from 'react';
-import { IconSpeaker } from './icons';
+import AudioButton from './component.audio-button';
 
 interface ExampleSentenceProps {
   english: string;
@@ -34,31 +34,13 @@ export const ExampleSentence: React.FC<ExampleSentenceProps> = ({
         <p className="flex-1 text-[13px] sm:text-[13.5px] text-content min-w-0 tracking-[0.002em] leading-relaxed">
           {english}
         </p>
-        <button
-          type="button"
+        <AudioButton
+          text={english}
+          variant="button"
+          isPlaying={isPlaying}
           onClick={onListen}
           title="Listen to English pronunciation"
-          aria-label="Listen to English pronunciation"
-          className={cx(
-            'h-6 px-2 rounded-md border text-[11px] font-semibold flex-shrink-0 cursor-pointer transition-all flex items-center gap-1 shadow-2xs active:scale-95',
-            isPlaying
-              ? 'bg-accent text-accent-foreground border-accent font-bold audio-playing-indicator'
-              : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border hover:border-accent/40',
-          )}
-          aria-pressed={isPlaying}
-        >
-          {isPlaying ? (
-            <span className="soundwave-bars text-accent-foreground">
-              <span className="soundwave-bar" />
-              <span className="soundwave-bar" />
-              <span className="soundwave-bar" />
-              <span className="soundwave-bar" />
-            </span>
-          ) : (
-            <IconSpeaker className="w-3 h-3 text-accent" />
-          )}
-          <span>{isPlaying ? 'Playing' : 'Listen'}</span>
-        </button>
+        />
       </div>
 
       {translation ? (

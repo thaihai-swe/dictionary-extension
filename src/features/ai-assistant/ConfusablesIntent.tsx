@@ -1,8 +1,8 @@
 import React from 'react';
 import { AiResult } from '@/types';
 import MarkdownRenderer from '@/components/component.markdown-renderer';
-import { useDictionaryAudio } from '@/composables/composable.dictionary';
-import { IconScale, IconSpeaker } from '@/components/icons';
+import AudioButton from '@/components/component.audio-button';
+import { IconScale } from '@/components/icons';
 
 interface ConfusablesIntentProps {
   result: AiResult;
@@ -10,13 +10,7 @@ interface ConfusablesIntentProps {
 }
 
 export const ConfusablesIntent: React.FC<ConfusablesIntentProps> = ({ result, targetLang }) => {
-  const { playPronunciation } = useDictionaryAudio();
   const comparison = result.comparison;
-
-  function speak(text: string, key: string) {
-    if (!text) return;
-    playPronunciation({ text, language: 'en-US', key });
-  }
 
   return (
     <div className="space-y-4">
@@ -81,25 +75,21 @@ export const ConfusablesIntent: React.FC<ConfusablesIntentProps> = ({ result, ta
                   <div className="space-y-1.5">
                     <div className="flex items-start justify-between gap-2 pl-2.5 py-1 border-l-2 border-accent bg-accent-subtle rounded-r">
                       <p className="flex-1 text-content font-medium">"{pair.sentenceA}"</p>
-                      <button
-                        type="button"
-                        onClick={() => speak(pair.sentenceA, keyA)}
+                      <AudioButton
+                        variant="icon"
+                        text={pair.sentenceA}
+                        audioKey={keyA}
                         title="Listen to first sentence"
-                        className="h-6 w-6 text-content-muted hover:text-accent cursor-pointer flex items-center justify-center rounded hover:bg-muted"
-                      >
-                        <IconSpeaker className="w-3.5 h-3.5" />
-                      </button>
+                      />
                     </div>
                     <div className="flex items-start justify-between gap-2 pl-2.5 py-1 border-l-2 border-border bg-muted rounded-r">
                       <p className="flex-1 text-content font-medium">"{pair.sentenceB}"</p>
-                      <button
-                        type="button"
-                        onClick={() => speak(pair.sentenceB, keyB)}
+                      <AudioButton
+                        variant="icon"
+                        text={pair.sentenceB}
+                        audioKey={keyB}
                         title="Listen to second sentence"
-                        className="h-6 w-6 text-content-muted hover:text-accent cursor-pointer flex items-center justify-center rounded hover:bg-muted"
-                      >
-                        <IconSpeaker className="w-3.5 h-3.5" />
-                      </button>
+                      />
                     </div>
                   </div>
                   {pair.explanation ? (

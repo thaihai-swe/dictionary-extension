@@ -1,14 +1,11 @@
-import {
-  CollocationsCard,
-  LearnerMistakesCard,
-  UsageNotesCard,
-  WordFamilyCard,
-  WordFormationCard,
-} from '@/components/async-views';
 import ExampleSentence from '@/components/component.example-sentence';
 import MarkdownRenderer from '@/components/component.markdown-renderer';
 import RelatedWords from '@/components/component.related-words';
-import { IconCheck, IconCopy, IconGlobe, IconMic, IconQuote, IconSpeaker } from '@/components/icons';
+import AudioButton from '@/components/component.audio-button';
+import CopyButton from '@/components/component.copy-button';
+import ContextSentence from '@/components/component.context-sentence';
+import LexicalProfileSection from '@/components/component.lexical-profile';
+import { IconGlobe, IconMic } from '@/components/icons';
 import {
   playPronunciation,
   startSpeechPractice,
@@ -18,10 +15,9 @@ import {
   useDictionaryResult,
 } from '@/composables/composable.dictionary';
 import { useSetting } from '@/composables/composable.storage';
-import { showToast } from '@/composables/composable.toast';
 import { Phonetic, TranslationResult } from '@/types';
 import { cx } from '@/ui/cx';
-import React, { Suspense, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import LexicalDisclosure from './LexicalDisclosure';
 import SenseMatrixCard from './SenseMatrixCard';
 import SourcesDisclosure from './SourcesDisclosure';
@@ -32,36 +28,6 @@ interface WordLookupResultProps {
   contextSentence?: string;
 }
 
-function highlightContext(sentence: string, targetWord?: string, queryWord?: string): React.ReactNode {
-  const term = (targetWord || queryWord || '').trim();
-  if (!sentence || !term) return sentence;
-
-  const matchTerm = sentence.toLowerCase().includes(term.toLowerCase())
-    ? term
-    : (queryWord && sentence.toLowerCase().includes(queryWord.toLowerCase()) ? queryWord.trim() : '');
-
-  if (!matchTerm) return sentence;
-
-  const escaped = matchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const regex = new RegExp(`(${escaped})`, 'gi');
-  const parts = sentence.split(regex);
-
-  if (parts.length <= 1) return sentence;
-
-  return parts.map((part, index) =>
-    part.toLowerCase() === matchTerm.toLowerCase() ? (
-      <mark
-        key={index}
-        className="bg-accent/20 text-accent font-semibold px-1 py-0.5 rounded border border-accent/30 not-italic"
-      >
-        {part}
-      </mark>
-    ) : (
-      part
-    ),
-  );
-}
-
 export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord, contextSentence }) => {
   const { result, isEnriching } = useDictionaryResult();
   const query = useDictionaryQuery();
@@ -69,7 +35,6 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
   const { practiceResult, isPracticing, supportsSpeechPractice } = useDictionaryPractice();
   const targetLang = useSetting('translateTargetLanguage');
   const enableLexicalProfile = useSetting('enableLexicalProfile');
-  const [hasCopied, setHasCopied] = React.useState(false);
 
   const displayHeadword = useMemo(() => {
     const entry = result;
@@ -102,24 +67,6 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
     if (item.region === 'us' || item.language?.toLowerCase().includes('us')) return '🇺🇸 US';
     return item.region?.toUpperCase() || 'Audio';
   }
-
-  const usageWarnings = result?.lexicalProfile?.usageWarnings || [];
-  const formationText = useMemo(() => {
-    const formation = result?.lexicalProfile?.wordFormation;
-    if (!formation) return '';
-    if (typeof formation === 'string') return formation;
-    return formation.explanation || '';
-  }, [result]);
-
-  const formationPrefixes = useMemo(() => {
-    const formation = result?.lexicalProfile?.wordFormation;
-    return typeof formation === 'object' ? formation?.prefixes || [] : [];
-  }, [result]);
-
-  const formationSuffixes = useMemo(() => {
-    const formation = result?.lexicalProfile?.wordFormation;
-    return typeof formation === 'object' ? formation?.suffixes || [] : [];
-  }, [result]);
 
   const standardMeanings = useMemo(
     () => result?.meanings?.filter((m) => (m.partOfSpeech || '').toLowerCase() !== 'slang') || [],
@@ -165,11 +112,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
       md += `*Translation:* ${result.translation.translatedText || result.translation}\n`;
     }
 
-    void navigator.clipboard.writeText(md.trim()).then(() => {
-      setHasCopied(true);
-      setTimeout(() => setHasCopied(false), 1800);
-      showToast('Copied definition to clipboard');
-    });
+    void navigator.clipboard.writeText(md.trim());
   }
 
   const { examples: filteredExamples, synonyms: filteredSynonyms, antonyms: filteredAntonyms } = useMemo(
@@ -185,7 +128,16 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
   );
   return (
     <div className="dictionary-result space-y-2">
-      {/* Headword Hero Section with Integrated Context & Translation */}
+      {/* Context Sentence Card (matches AI tab format, without edit controls) */}
+      {showContextBanner ? (
+        <ContextSentence
+          sentence={pageContext}
+          targetWord={displayHeadword}
+          query={query}
+        />
+      ) : null}
+
+      {/* Headword Hero Section with Translation */}
       <div className="word-hero rounded-xl border border-border/70 bg-surface shadow-2xs overflow-hidden">
         <div className="p-3 sm:p-3.5 space-y-2">
           <div className="flex items-start justify-between gap-3">
@@ -205,30 +157,14 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
             </div>
 
             <div className="flex items-center gap-1.5 shrink-0">
-              <button
-                type="button"
-                onClick={copyAsMarkdown}
+              <CopyButton
+                onCopy={copyAsMarkdown}
+                label="Copy MD"
+                copiedLabel="Copied"
+                toastMessage="Copied definition to clipboard"
                 title="Copy definition as Markdown flashcard"
-                aria-label="Copy definition as Markdown flashcard"
-                className={cx(
-                  'h-6.5 px-2 rounded-md border text-[11.5px] font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs active:scale-95 select-none',
-                  hasCopied
-                    ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-bold'
-                    : 'bg-muted/60 hover:bg-elevated border-border/80 text-content-secondary hover:text-content',
-                )}
-              >
-                {hasCopied ? (
-                  <>
-                    <IconCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                    <span>Copied</span>
-                  </>
-                ) : (
-                  <>
-                    <IconCopy className="w-3 h-3 text-content-muted" />
-                    <span className="hidden sm:inline">Copy MD</span>
-                  </>
-                )}
-              </button>
+                className="h-6.5 text-[11.5px]"
+              />
             </div>
           </div>
 
@@ -238,54 +174,20 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
               const listenKey = `phonetic-${index}-${item.region || item.language || 'audio'}`;
               const ipa = phoneticText(item);
               const lang = item.language || (item.region === 'uk' ? 'en-GB' : 'en-US');
-              const isPlaying = playingKey === listenKey;
 
               return (
-                <button
+                <AudioButton
                   key={listenKey}
-                  type="button"
-                  onClick={() =>
-                    playPronunciation({
-                      text: displayHeadword,
-                      audioUrl: item.audio,
-                      language: lang,
-                      key: listenKey,
-                    })
-                  }
-                  className={cx(
-                    'h-6.5 pl-1.5 pr-2 py-0.5 rounded-md border font-medium transition-all duration-150 flex items-center gap-1.5 cursor-pointer shadow-2xs group active:scale-95',
-                    isPlaying
-                      ? 'bg-accent text-accent-foreground border-accent font-bold audio-playing-indicator'
-                      : 'bg-muted hover:bg-accent/10 hover:border-accent/40 text-content-secondary hover:text-accent border-border',
-                  )}
-                  aria-pressed={isPlaying}
+                  variant="chip"
+                  text={displayHeadword}
+                  audioUrl={item.audio}
+                  language={lang}
+                  audioKey={listenKey}
+                  badge={phoneticLabel(item)}
+                  ipa={ipa}
+                  label="Audio"
                   title={`Listen pronunciation (${phoneticLabel(item)})`}
-                >
-                  <span className={cx(
-                    'text-[9px] font-extrabold uppercase px-1 py-0.5 rounded font-mono transition-colors leading-none',
-                    isPlaying
-                      ? 'bg-paper/20 text-accent-foreground'
-                      : 'bg-surface text-content-muted border border-border/60 group-hover:text-accent',
-                  )}>
-                    {phoneticLabel(item)}
-                  </span>
-                  {isPlaying ? (
-                    <span className="soundwave-bars text-accent-foreground">
-                      <span className="soundwave-bar" />
-                      <span className="soundwave-bar" />
-                      <span className="soundwave-bar" />
-                      <span className="soundwave-bar" />
-                    </span>
-                  ) : (
-                    <IconSpeaker className="w-3 h-3 text-accent shrink-0 group-hover:scale-110 transition-transform" />
-                  )}
-                  <span className={cx(
-                    'font-mono text-[12px] leading-none tracking-wide font-medium',
-                    isPlaying ? 'text-accent-foreground' : 'text-content',
-                  )}>
-                    {ipa ? `/${ipa.replace(/^\/+|\/+$/g, '')}/` : 'Audio'}
-                  </span>
-                </button>
+                />
               );
             })}
 
@@ -309,16 +211,6 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
             ) : null}
           </div>
         </div>
-
-        {/* Integrated Context Sentence Row */}
-        {showContextBanner ? (
-          <div className="px-3.5 py-1.5 border-t border-border/50 bg-muted/20 flex items-start gap-2">
-            <IconQuote className="w-3.5 h-3.5 text-accent opacity-75 shrink-0 mt-0.5" />
-            <p className="font-serif text-[12.5px] sm:text-[13px] text-content-secondary leading-snug flex-1 break-words">
-              {highlightContext(pageContext, displayHeadword, query)}
-            </p>
-          </div>
-        ) : null}
 
         {/* Integrated Translation Row */}
         {result.translation?.translatedText ? (
@@ -469,60 +361,13 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
         </LexicalDisclosure>
       ) : null}
 
-      {enableLexicalProfile !== false && result.lexicalProfile?.wordFamily ? (
-        <LexicalDisclosure label="Word family">
-          <Suspense fallback={null}>
-            <WordFamilyCard
-              word={displayHeadword}
-              family={result.lexicalProfile.wordFamily}
-              onSelectWord={handleSearch}
-            />
-          </Suspense>
-        </LexicalDisclosure>
-      ) : null}
-
-      {enableLexicalProfile !== false && result.lexicalProfile?.collocations ? (
-        <LexicalDisclosure label="Collocations">
-          <Suspense fallback={null}>
-            <CollocationsCard
-              word={displayHeadword}
-              collocations={result.lexicalProfile.collocations}
-              onSelectWord={handleSearch}
-            />
-          </Suspense>
-        </LexicalDisclosure>
-      ) : null}
-
-      {enableLexicalProfile !== false && (formationText || formationPrefixes.length || formationSuffixes.length) ? (
-        <LexicalDisclosure label="Word formation">
-          <Suspense fallback={null}>
-            <WordFormationCard
-              formation={formationText}
-              prefixes={formationPrefixes}
-              suffixes={formationSuffixes}
-            />
-          </Suspense>
-        </LexicalDisclosure>
-      ) : null}
-
-      {enableLexicalProfile !== false && (result.lexicalProfile?.usageNotes || usageWarnings.length || result.lexicalProfile?.confusablePairs) ? (
-        <LexicalDisclosure label="Usage and nuance">
-          <Suspense fallback={null}>
-            <UsageNotesCard
-              notes={result.lexicalProfile?.usageNotes}
-              warnings={usageWarnings}
-              pairs={result.lexicalProfile?.confusablePairs}
-            />
-          </Suspense>
-        </LexicalDisclosure>
-      ) : null}
-
-      {enableLexicalProfile !== false && result.lexicalProfile?.learnerMistakes?.length ? (
-        <LexicalDisclosure label="Learner mistakes" count={result.lexicalProfile.learnerMistakes.length}>
-          <Suspense fallback={null}>
-            <LearnerMistakesCard mistakes={result.lexicalProfile.learnerMistakes} />
-          </Suspense>
-        </LexicalDisclosure>
+      {enableLexicalProfile !== false && result.lexicalProfile ? (
+        <LexicalProfileSection
+          profile={result.lexicalProfile}
+          query={displayHeadword}
+          collapsible
+          onSelectWord={handleSearch}
+        />
       ) : null}
 
       <SourcesDisclosure sources={result.sources || []} />

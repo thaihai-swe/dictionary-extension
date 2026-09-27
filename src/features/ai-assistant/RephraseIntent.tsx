@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { AiResult } from '@/types';
 import MarkdownRenderer from '@/components/component.markdown-renderer';
-import { useDictionaryAudio } from '@/composables/composable.dictionary';
-import { IconCheck, IconCopy, IconEdit, IconSpeaker } from '@/components/icons';
+import AudioButton from '@/components/component.audio-button';
+import CopyButton from '@/components/component.copy-button';
+import { IconEdit } from '@/components/icons';
 import { cx } from '@/ui/cx';
 
 interface RephraseIntentProps {
@@ -24,22 +25,7 @@ function getStyleBadgeClass(style: string): string {
 }
 
 export const RephraseIntent: React.FC<RephraseIntentProps> = ({ result, targetLang }) => {
-  const { playPronunciation } = useDictionaryAudio();
-  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const styles = result.rephraseStyles;
-
-  function speak(text: string, key: string) {
-    if (!text) return;
-    playPronunciation({ text, language: 'en-US', key });
-  }
-
-  function copyText(text: string, index: number) {
-    if (!text) return;
-    navigator.clipboard.writeText(text).then(() => {
-      setCopiedIndex(index);
-      setTimeout(() => setCopiedIndex(null), 1800);
-    });
-  }
 
   return (
     <div className="space-y-4">
@@ -56,7 +42,6 @@ export const RephraseIntent: React.FC<RephraseIntentProps> = ({ result, targetLa
           <div className="space-y-2.5">
             {styles.map((item, idx) => {
               const speakKey = `rephrase-${idx}`;
-              const isCopied = copiedIndex === idx;
               return (
                 <article
                   key={`${item.style}-${idx}`}
@@ -73,26 +58,17 @@ export const RephraseIntent: React.FC<RephraseIntentProps> = ({ result, targetLa
                     </span>
 
                     <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => speak(item.text, speakKey)}
+                      <AudioButton
+                        variant="icon"
+                        text={item.text}
+                        audioKey={speakKey}
                         title="Read aloud"
-                        className="h-6 w-6 text-content-muted hover:text-accent cursor-pointer flex items-center justify-center rounded hover:bg-muted"
-                      >
-                        <IconSpeaker className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => copyText(item.text, idx)}
+                      />
+                      <CopyButton
+                        variant="icon"
+                        text={item.text}
                         title="Copy rewritten sentence"
-                        className="h-6 w-6 text-content-muted hover:text-content cursor-pointer flex items-center justify-center rounded hover:bg-muted"
-                      >
-                        {isCopied ? (
-                          <IconCheck className="w-3.5 h-3.5 text-emerald-500" />
-                        ) : (
-                          <IconCopy className="w-3.5 h-3.5" />
-                        )}
-                      </button>
+                      />
                     </div>
                   </div>
 

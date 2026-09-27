@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { SentenceStructureItem } from '@/types';
-import { useDictionaryAudio } from '@/composables/composable.dictionary';
-import { IconCheck, IconCopy, IconPuzzle, IconSpeaker } from '@/components/icons';
+import AudioButton from '@/components/component.audio-button';
+import CopyButton from '@/components/component.copy-button';
+import { IconPuzzle } from '@/components/icons';
 
 interface SentenceBreakdownCardProps {
   structure?: SentenceStructureItem[];
@@ -12,22 +13,6 @@ export const SentenceBreakdownCard: React.FC<SentenceBreakdownCardProps> = ({
   structure,
   translation,
 }) => {
-  const { playPronunciation } = useDictionaryAudio();
-  const [copied, setCopied] = useState(false);
-
-  function speakText(text: string) {
-    if (!text) return;
-    playPronunciation({ text, language: 'en-US', key: `clause-${text.slice(0, 10)}` });
-  }
-
-  function copyTranslation(text: string) {
-    if (!text) return;
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }
-
   if (!structure?.length && !translation) return null;
 
   return (
@@ -49,14 +34,13 @@ export const SentenceBreakdownCard: React.FC<SentenceBreakdownCardProps> = ({
             <div className="flex-1 min-w-[200px] space-y-0.5">
               <div className="text-content text-[15px] leading-relaxed flex items-center justify-between gap-2">
                 <span className="font-medium text-content">{item.text}</span>
-                <button
-                  type="button"
-                  onClick={() => speakText(item.text)}
+                <AudioButton
+                  variant="icon"
+                  text={item.text}
+                  audioKey={`clause-${item.text.slice(0, 10)}`}
                   title="Read clause aloud"
-                  className="opacity-0 group-hover:opacity-100 h-7 w-7 text-content-muted hover:text-accent transition-opacity cursor-pointer rounded-md hover:bg-muted flex items-center justify-center"
-                >
-                  <IconSpeaker className="w-3.5 h-3.5" />
-                </button>
+                  className="opacity-0 group-hover:opacity-100 h-7 w-7"
+                />
               </div>
               {item.explanation ? (
                 <p className="text-[13px] text-content-secondary leading-normal">
@@ -78,33 +62,22 @@ export const SentenceBreakdownCard: React.FC<SentenceBreakdownCardProps> = ({
               Context Translation:
             </span>
             <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => speakText(translation)}
+              <AudioButton
+                variant="button"
+                text={translation}
+                audioKey={`trans-${translation.slice(0, 10)}`}
+                label="Read"
+                playingLabel="Playing"
                 title="Read translation aloud"
-                className="h-[28px] px-2.5 rounded-lg bg-muted hover:bg-elevated text-content-secondary hover:text-content text-[13px] cursor-pointer font-medium flex items-center gap-1.5 border border-border"
-              >
-                <IconSpeaker className="w-3.5 h-3.5 text-accent" />
-                <span>Read</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => copyTranslation(translation)}
+                className="h-[28px] text-[13px]"
+              />
+              <CopyButton
+                text={translation}
+                label="Copy"
+                copiedLabel="Copied"
                 title="Copy translation"
-                className="h-[28px] px-2.5 rounded-lg bg-muted hover:bg-elevated text-content-secondary hover:text-content text-[13px] cursor-pointer font-medium flex items-center gap-1.5 border border-border"
-              >
-                {copied ? (
-                  <>
-                    <IconCheck className="w-3.5 h-3.5 text-emerald-500" />
-                    <span>Copied</span>
-                  </>
-                ) : (
-                  <>
-                    <IconCopy className="w-3.5 h-3.5 text-content-secondary" />
-                    <span>Copy</span>
-                  </>
-                )}
-              </button>
+                className="h-[28px] text-[13px]"
+              />
             </div>
           </div>
           <p className="font-medium text-[16px] text-content leading-relaxed">{translation}</p>

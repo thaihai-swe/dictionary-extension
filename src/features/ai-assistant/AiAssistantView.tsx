@@ -7,7 +7,8 @@ import {
 import PresetChips from '@/components/component.preset-chips';
 import SearchBar from '@/components/component.search-bar';
 import TokenizedContext from '@/components/component.tokenized-context';
-import { IconCheck, IconCopy } from '@/components/icons';
+import ContextSentence from '@/components/component.context-sentence';
+import CopyButton from '@/components/component.copy-button';
 import { AI_INTENTS, AiIntentStatus, useAiAssistant } from '@/composables/composable.ai-assistant';
 import { searchWord, stopAllAudio, useDictionaryQuery } from '@/composables/composable.dictionary';
 import { useSetting } from '@/composables/composable.storage';
@@ -50,36 +51,6 @@ function resolveContext(query?: string, context?: string): string {
   return surrounding;
 }
 
-function highlightContext(sentence: string, targetWord?: string, queryWord?: string): React.ReactNode {
-  const term = (targetWord || queryWord || '').trim();
-  if (!sentence || !term) return sentence;
-
-  const matchTerm = sentence.toLowerCase().includes(term.toLowerCase())
-    ? term
-    : (queryWord && sentence.toLowerCase().includes(queryWord.toLowerCase()) ? queryWord.trim() : '');
-
-  if (!matchTerm) return sentence;
-
-  const escaped = matchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const regex = new RegExp(`(${escaped})`, 'gi');
-  const parts = sentence.split(regex);
-
-  if (parts.length <= 1) return sentence;
-
-  return parts.map((part, index) =>
-    part.toLowerCase() === matchTerm.toLowerCase() ? (
-      <mark
-        key={index}
-        className="bg-accent/20 text-accent font-semibold px-1 py-0.5 rounded border border-accent/30 not-italic"
-      >
-        {part}
-      </mark>
-    ) : (
-      part
-    ),
-  );
-}
-
 export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
   initialQuery,
   initialContext,
@@ -106,7 +77,6 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
 
   const [queryInput, setQueryInput] = useState('');
   const [contextInput, setContextInput] = useState('');
-  const [copied, setCopied] = useState(false);
   const [contextError, setContextError] = useState('');
   const [isEditingContext, setIsEditingContext] = useState(false);
 
@@ -208,16 +178,6 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
     onSwitchTab?.('dictionary');
   }
 
-  function copyResult(text?: string) {
-    if (!text) return;
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => {
-        setCopied(false);
-      }, 1800);
-    });
-  }
-
   function renderStatusDot(status: AiIntentStatus, isActive: boolean) {
     return (
       <span
@@ -264,26 +224,13 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
           </button>
         </div>
       ) : !isEditingContext ? (
-        <div className="w-full rounded-xl border border-accent/25 bg-accent/[0.04] p-2.5 px-3 flex items-start justify-between gap-2.5 shadow-2xs">
-          <div className="space-y-1 min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              <span className="font-semibold font-mono text-[10px] uppercase text-accent tracking-wider">
-                Context Sentence
-              </span>
-            </div>
-            <p className="text-[13px] text-content leading-relaxed break-words font-serif">
-              {highlightContext(contextInput.trim(), resolvedQuery, queryInput)}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setIsEditingContext(true)}
-            className="text-[11px] font-semibold text-accent hover:underline cursor-pointer shrink-0 mt-0.5 px-1.5 py-0.5 rounded hover:bg-accent/10 transition-colors"
-            title="Edit context sentence"
-          >
-            Edit
-          </button>
-        </div>
+        <ContextSentence
+          variant="card"
+          sentence={contextInput.trim()}
+          targetWord={resolvedQuery}
+          query={queryInput}
+          onEdit={() => setIsEditingContext(true)}
+        />
       ) : (
         <div className="rounded-2xl border border-border/80 bg-surface/90 p-3.5 space-y-2.5 shadow-xs">
           <div className="flex items-center justify-between gap-2">
@@ -369,15 +316,12 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
                 {intentTitleMap[aiResult.type as AiIntentId] || 'AI Explanation'}
               </h3>
 
-              <button
-                type="button"
-                onClick={() => copyResult(aiResult.summary)}
+              <CopyButton
+                text={aiResult.summary}
+                className="h-7 text-[12px]"
+                toastMessage="Copied response to clipboard"
                 title="Copy response"
-                className="h-7 px-2.5 rounded-lg bg-surface hover:bg-elevated text-content-secondary hover:text-content border border-border/80 text-[12px] font-medium transition-all cursor-pointer inline-flex items-center gap-1.5 active:scale-95"
-              >
-                {copied ? <IconCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <IconCopy className="w-3.5 h-3.5" />}
-                <span>{copied ? 'Copied' : 'Copy'}</span>
-              </button>
+              />
             </div>
 
             <Suspense fallback={<div className="p-3 text-[13.5px] text-content-muted">Loading analysis…</div>}>
