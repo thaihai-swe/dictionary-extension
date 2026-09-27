@@ -1,5 +1,7 @@
 import PresetChips from '@/components/component.preset-chips';
 import SearchBar from '@/components/component.search-bar';
+import ResultSkeleton from '@/components/component.result-skeleton';
+import ErrorBanner from '@/components/component.error-banner';
 import { abortActiveDictRequest, searchWord, stopAllAudio, useDictionaryQuery, useDictionaryResult } from '@/composables/composable.dictionary';
 import { useSetting } from '@/composables/composable.storage';
 import type { DemoPreset } from '@/shared/presets';
@@ -105,54 +107,19 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
       {/* Main Content Area */}
       <div className="workbench-results w-full px-3.5 pt-0 pb-2 space-y-2">
         {error ? (
-          <div role="alert" className="p-4 rounded-2xl bg-rose-500/8 border border-rose-500/25 text-[15px] text-rose-700 dark:text-rose-400 space-y-2">
-            <div className="flex items-center gap-2 font-semibold">
-              <span className="w-2 h-2 rounded-full bg-rose-500" aria-hidden="true" />
-              <span>Lookup failed</span>
-            </div>
-            <p className="text-[14.5px] text-content-secondary leading-relaxed pl-4">
-              {error}
-            </p>
-            <div className="pl-4 pt-1">
-              <button
-                type="button"
-                onClick={() => handleSearch()}
-                className="btn-accent h-7 px-3 text-[13px] font-bold cursor-pointer"
-              >
-                Try Again
-              </button>
-            </div>
-          </div>
+          <ErrorBanner
+            title="Lookup failed"
+            message={error}
+            onRetry={() => handleSearch()}
+          />
         ) : result ? (
           <div aria-busy={isLoading || undefined}>
-            <Suspense fallback={
-            <div className="p-4 space-y-3.5 rounded-2xl border border-border bg-surface shadow-card" aria-busy="true">
-                <div className="h-8 skeleton-shimmer rounded-lg w-2/5" />
-                <div className="h-5 skeleton-shimmer rounded-md w-3/5" />
-                <div className="h-20 skeleton-shimmer rounded-xl" />
-              </div>
-            }>
+            <Suspense fallback={<ResultSkeleton variant="compact" />}>
               <WordLookupResult onSelectWord={handleSearch} contextSentence={initialContext} />
             </Suspense>
           </div>
         ) : isLoading ? (
-          /* Realistic Loading Skeleton */
-          <div className="p-5 space-y-4 rounded-2xl border border-border bg-surface shadow-card" aria-busy="true" aria-live="polite">
-            <div className="flex items-center justify-between pb-3 border-b border-border">
-              <div className="h-8 skeleton-shimmer rounded-lg w-2/5"></div>
-              <div className="h-6 skeleton-shimmer rounded-full w-24"></div>
-            </div>
-            <div className="flex gap-2.5">
-              <div className="h-8 skeleton-shimmer rounded-lg w-24"></div>
-              <div className="h-8 skeleton-shimmer rounded-lg w-28"></div>
-            </div>
-            <div className="space-y-2 pt-2">
-              <div className="h-4 skeleton-shimmer rounded w-5/6"></div>
-              <div className="h-4 skeleton-shimmer rounded w-4/6"></div>
-              <div className="h-4 skeleton-shimmer rounded w-3/6"></div>
-            </div>
-            <div className="h-24 skeleton-shimmer rounded-xl mt-2"></div>
-          </div>
+          <ResultSkeleton variant="dictionary" />
         ) : !searchInput.trim() && !query.trim() ? (
           <PresetChips onSelect={handlePresetSelect} />
         ) : null}

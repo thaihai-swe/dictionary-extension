@@ -2,6 +2,7 @@ import React from 'react';
 import { SentenceStructureItem } from '@/types';
 import AudioButton from '@/components/component.audio-button';
 import CopyButton from '@/components/component.copy-button';
+import SectionHeader from '@/components/component.section-header';
 import { IconPuzzle } from '@/components/icons';
 
 interface SentenceBreakdownCardProps {
@@ -17,13 +18,11 @@ export const SentenceBreakdownCard: React.FC<SentenceBreakdownCardProps> = ({
 
   return (
     <div className="space-y-4 pt-1">
-      <div className="flex items-center justify-between pb-1 border-b border-border/40">
-        <span className="flex items-center gap-1.5 text-[13px] font-extrabold uppercase tracking-wider text-accent">
-          <IconPuzzle className="w-4 h-4 text-accent" />
-          <span>Sentence Breakdown</span>
-        </span>
-        <span className="text-[12px] text-content-muted font-mono font-medium">Clause Analysis</span>
-      </div>
+      <SectionHeader
+        icon={IconPuzzle}
+        title="Sentence Breakdown"
+        eyebrow="Clause Analysis"
+      />
 
       <div className="space-y-2">
         {structure?.map((item, index) => (

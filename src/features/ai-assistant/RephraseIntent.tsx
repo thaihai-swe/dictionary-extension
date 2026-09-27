@@ -3,6 +3,7 @@ import { AiResult } from '@/types';
 import MarkdownRenderer from '@/components/component.markdown-renderer';
 import AudioButton from '@/components/component.audio-button';
 import CopyButton from '@/components/component.copy-button';
+import SectionHeader from '@/components/component.section-header';
 import { IconEdit } from '@/components/icons';
 import { cx } from '@/ui/cx';
 
@@ -31,13 +32,11 @@ export const RephraseIntent: React.FC<RephraseIntentProps> = ({ result, targetLa
     <div className="space-y-4">
       {styles?.length ? (
         <div className="space-y-3">
-          <div className="flex items-center justify-between pb-1 border-b border-border/40">
-            <span className="flex items-center gap-1.5 text-[13px] font-extrabold uppercase tracking-wider text-accent">
-              <IconEdit className="w-3.5 h-3.5 text-accent" />
-              <span>Three Rewrite Styles</span>
-            </span>
-            <span className="text-[12px] text-content-muted font-mono">1 Click · 3 Tones</span>
-          </div>
+          <SectionHeader
+            icon={IconEdit}
+            title="Three Rewrite Styles"
+            eyebrow="1 Click · 3 Tones"
+          />
 
           <div className="space-y-2.5">
             {styles.map((item, idx) => {

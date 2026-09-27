@@ -9,6 +9,9 @@ import SearchBar from '@/components/component.search-bar';
 import TokenizedContext from '@/components/component.tokenized-context';
 import ContextSentence from '@/components/component.context-sentence';
 import CopyButton from '@/components/component.copy-button';
+import ResultSkeleton from '@/components/component.result-skeleton';
+import ErrorBanner from '@/components/component.error-banner';
+import SectionHeader from '@/components/component.section-header';
 import { AI_INTENTS, AiIntentStatus, useAiAssistant } from '@/composables/composable.ai-assistant';
 import { searchWord, stopAllAudio, useDictionaryQuery } from '@/composables/composable.dictionary';
 import { useSetting } from '@/composables/composable.storage';
@@ -197,21 +200,25 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
   }
 
   return (
-    <div className="ai-workspace p-4 space-y-4 font-sans">
-      <SearchBar
-        value={queryInput}
-        onChange={setQueryInput}
-        onSubmit={() => handleIntentSelect(activeIntent)}
-        onClear={() => {
-          setQueryInput('');
-          stopAllAudio();
-        }}
-        placeholder="Analyze a word or sentence…"
-        ariaLabel="Analyze a word or sentence"
-        actionLabel="Analyze"
-        loadingLabel="Analyzing…"
-        isLoading={isAiLoading}
-      />
+    <div className="font-sans">
+      <div className="workbench-search px-3.5 py-2 sticky top-0 z-20">
+        <SearchBar
+          value={queryInput}
+          onChange={setQueryInput}
+          onSubmit={() => handleIntentSelect(activeIntent)}
+          onClear={() => {
+            setQueryInput('');
+            stopAllAudio();
+          }}
+          placeholder="Analyze a word or sentence…"
+          ariaLabel="Analyze a word or sentence"
+          actionLabel="Analyze"
+          loadingLabel="Analyzing…"
+          isLoading={isAiLoading}
+        />
+      </div>
+
+      <div className="workbench-results w-full px-3.5 pt-0 pb-3 space-y-2.5">
 
       {!isEditingContext && !contextInput.trim() ? (
         <div className="flex items-center justify-end px-0.5">
@@ -291,38 +298,27 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
       </div>
 
       {/* Results */}
-      <div className="space-y-3 pt-1 [&_.reading-prose]:max-w-none">
+      <div className="space-y-3 pt-0.5 [&_.reading-prose]:max-w-none">
         {isAiLoading ? (
-          <div className="p-4 rounded-2xl border border-border/80 bg-surface/90 shadow-xs space-y-3.5" aria-busy="true" aria-live="polite">
-            <div className="flex items-center justify-between pb-1.5 border-b border-border/60">
-              <div className="h-3.5 skeleton-shimmer rounded w-1/3"></div>
-              <div className="h-3 skeleton-shimmer rounded w-16"></div>
-            </div>
-            <div className="space-y-2">
-              <div className="h-3.5 skeleton-shimmer rounded w-11/12"></div>
-              <div className="h-3.5 skeleton-shimmer rounded w-full"></div>
-              <div className="h-3.5 skeleton-shimmer rounded w-4/5"></div>
-            </div>
-            <div className="h-16 skeleton-shimmer rounded-lg mt-2"></div>
-          </div>
+          <ResultSkeleton variant="ai" />
         ) : aiError ? (
-          <div role="alert" className="p-4 rounded-2xl bg-rose-500/8 border border-rose-500/25 text-[13.5px] text-rose-700 dark:text-rose-400 shadow-xs">
-            {aiError}
-          </div>
+          <ErrorBanner
+            message={aiError}
+            onRetry={() => runCurrentIntent()}
+          />
         ) : aiResult ? (
           <div className="space-y-3">
-            <div className="flex items-center justify-between pb-1.5 border-b border-border/80">
-              <h3 className="text-[13px] font-bold text-content uppercase tracking-wider font-mono">
-                {intentTitleMap[aiResult.type as AiIntentId] || 'AI Explanation'}
-              </h3>
-
-              <CopyButton
-                text={aiResult.summary}
-                className="h-7 text-[12px]"
-                toastMessage="Copied response to clipboard"
-                title="Copy response"
-              />
-            </div>
+            <SectionHeader
+              title={intentTitleMap[aiResult.type as AiIntentId] || 'AI Explanation'}
+              action={
+                <CopyButton
+                  text={aiResult.summary}
+                  className="h-7 text-[12px]"
+                  toastMessage="Copied response to clipboard"
+                  title="Copy response"
+                />
+              }
+            />
 
             <Suspense fallback={<div className="p-3 text-[13.5px] text-content-muted">Loading analysis…</div>}>
               {aiResult.type === 'sentence_breakdown' ? (
@@ -345,6 +341,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({
         ) : null}
       </div>
     </div>
+  </div>
   );
 };
 

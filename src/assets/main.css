@@ -967,7 +967,7 @@ input[type="checkbox"], input[type="radio"], input[type="range"] {
 /* ── RESPONSIVE CONTAINER QUERIES ── */
 @container workbench (min-width: 760px) {
   .discovery-examples { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .ai-workspace, .rewrite-workspace { padding: 1.5rem; }
+  .rewrite-workspace { padding: 1.5rem; }
 }
 @container workbench (max-width: 519px) {
   .workbench-tab-list .workbench-tab { font-size: 0.72rem; }

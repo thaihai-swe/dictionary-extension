@@ -15,7 +15,7 @@ import {
   useDictionaryResult,
 } from '@/composables/composable.dictionary';
 import { useSetting } from '@/composables/composable.storage';
-import { Phonetic, TranslationResult } from '@/types';
+import { Phonetic } from '@/types';
 import { cx } from '@/ui/cx';
 import React, { useMemo } from 'react';
 import LexicalDisclosure from './LexicalDisclosure';
