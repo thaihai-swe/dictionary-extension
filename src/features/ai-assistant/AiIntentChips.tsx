@@ -53,9 +53,9 @@ export const AiIntentChips: React.FC<AiIntentChipsProps> = ({
           onMouseEnter={() => onHoverIntent?.(item.id)}
           aria-pressed={item.isActive}
           className={cx(
-            'inline-flex items-center gap-1.5 h-8 px-3 rounded-xl border text-[12.5px] font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap focus-visible:ring-2 focus-visible:ring-accent active:scale-95',
+            'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg border text-[12px] font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap focus-visible:ring-2 focus-visible:ring-accent active:scale-95 shadow-2xs',
             item.isActive
-              ? 'chip-active font-semibold shadow-xs'
+              ? 'chip-active font-semibold ring-1 ring-accent/30'
               : 'bg-surface hover:bg-elevated text-content-secondary hover:text-content border-border/80',
           )}
         >

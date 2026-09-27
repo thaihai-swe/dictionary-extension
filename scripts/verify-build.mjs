@@ -80,4 +80,13 @@ if (!chrome.web_accessible_resources?.some((entry) => entry.resources?.includes(
   fail('overlay dependency chunks are not web-accessible');
 }
 
+for (const browser of ['chrome', 'firefox']) {
+  for (const size of [16, 32, 48, 128]) {
+    const iconPath = join(outputs[browser], `icons/icon-${size}.png`);
+    if (!existsSync(iconPath)) {
+      fail(`${browser} missing icon asset: icons/icon-${size}.png`);
+    }
+  }
+}
+
 console.log('Build verification passed for Chrome MV3 and Firefox MV3.');

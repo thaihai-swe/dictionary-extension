@@ -160,14 +160,14 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             placeholder="Paste a sentence, email draft, or short paragraph. Selecting one word on a page seeds the full sentence when available."
-            className="ui-control w-full rounded-2xl p-3.5 text-[14.5px] placeholder:text-content-muted resize-y min-h-[112px] shadow-xs"
-            rows={4}
+            className="ui-control w-full rounded-xl p-3 text-[13.5px] placeholder:text-content-muted resize-y min-h-[96px] shadow-2xs"
+            rows={3}
           />
         </div>
 
         {/* Preset Style Buttons */}
         <div className="space-y-2">
-          <span className="text-[11.5px] uppercase font-bold tracking-wider text-content-muted font-mono block">
+          <span className="text-[11px] uppercase font-bold tracking-wider text-content-muted font-mono block">
             Select Desired Tone &amp; Style:
           </span>
           <div className="grid grid-cols-2 gap-2">
@@ -179,14 +179,14 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
                   type="button"
                   onClick={() => setActiveStyle(st.id)}
                   className={cx(
-                    'p-3 rounded-xl border text-left cursor-pointer transition-all shadow-xs focus-visible:ring-2 focus-visible:ring-accent active:scale-95',
+                    'p-2.5 rounded-lg border text-left cursor-pointer transition-all shadow-2xs focus-visible:ring-2 focus-visible:ring-accent active:scale-95',
                     isSelected
                       ? 'chip-active ring-1 ring-accent/30 font-bold scale-[1.01]'
                       : 'bg-surface hover:bg-elevated text-content-secondary border-border/80',
                   )}
                 >
-                  <div className="text-[13px] text-content font-bold">{st.label}</div>
-                  <div className="text-[11.5px] text-content-muted leading-tight mt-0.5">{st.desc}</div>
+                  <div className="text-[12.5px] text-content font-bold">{st.label}</div>
+                  <div className="text-[11px] text-content-muted leading-tight mt-0.5">{st.desc}</div>
                 </button>
               );
             })}
@@ -195,12 +195,12 @@ export const ContextualRewriter: React.FC<ContextualRewriterProps> = ({
             type="button"
             onClick={() => handleRewrite(activeStyle)}
             disabled={!inputText.trim() || isRewriting}
-            className="ui-button-primary w-full h-11 rounded-xl text-[14px] font-bold disabled:pointer-events-none cursor-pointer shadow-sm flex items-center justify-center gap-2 active:scale-98 transition-all"
+            className="ui-button-primary w-full h-9.5 rounded-lg text-[13px] font-bold disabled:pointer-events-none cursor-pointer shadow-2xs flex items-center justify-center gap-2 active:scale-98 transition-all"
           >
             {isRewriting ? (
-              <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
             ) : (
-              <IconSparkles className="w-4 h-4" />
+              <IconSparkles className="w-3.5 h-3.5" />
             )}
             <span>{isRewriting ? 'Rewriting…' : 'Rewrite Text'}</span>
           </button>

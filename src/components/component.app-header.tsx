@@ -2,7 +2,7 @@ import React from 'react';
 import { isAudioPlayingRef, stopAllAudio } from '../composables/composable.dictionary';
 import { openExtensionSettings } from '../shared/runtime-client';
 import { useSignal } from '../ui/signal';
-import { IconBook, IconClose, IconKeyboard, IconMaximize, IconMinimize, IconMoon, IconSettings, IconSun } from './icons';
+import { IconBookSpark, IconClose, IconKeyboard, IconMaximize, IconMinimize, IconMoon, IconSettings, IconSun } from './icons';
 
 interface AppHeaderProps {
   showShortcuts: boolean;
@@ -25,15 +25,15 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     <header className="workbench-header select-none">
       {/* Brand */}
       <div className="workbench-brand flex items-center gap-2">
-        <div className="workbench-brand-mark" aria-hidden="true">
-          <IconBook className="w-3 h-3" style={{ color: 'var(--color-on-primary)' }} />
+        <div className="workbench-brand-mark shadow-2xs" aria-hidden="true">
+          <IconBookSpark className="w-3.5 h-3.5" style={{ color: 'var(--color-on-primary)' }} />
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="workbench-brand-name font-heading">
+          <span className="workbench-brand-name font-heading tracking-tight font-bold">
             Dictionary
           </span>
           <span
-            className="px-1 py-0.5 rounded text-[9px] font-mono font-black tracking-widest uppercase leading-none"
+            className="px-1.5 py-0.5 rounded-full text-[9px] font-mono font-black tracking-widest uppercase leading-none"
             style={{
               background: 'var(--color-primary-light)',
               color: 'var(--color-primary)',

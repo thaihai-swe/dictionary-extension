@@ -3,6 +3,7 @@ import type { AppSettings } from '@/types';
 import { cx } from '@/ui/cx';
 import {
   IconBook,
+  IconBookSpark,
   IconCheck,
   IconSearch,
   IconSparkles,
@@ -87,7 +88,7 @@ export const SettingsModal: React.FC = () => {
       <header className="settings-topbar sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 h-[4.5rem] flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="settings-brand-mark shrink-0" aria-hidden="true"><IconBook className="w-5 h-5" /></div>
+            <div className="settings-brand-mark shrink-0 shadow-sm" aria-hidden="true"><IconBookSpark className="w-5 h-5" style={{ color: 'var(--color-on-primary)' }} /></div>
             <div className="min-w-0">
               <p className="settings-eyebrow">DICTIONARY ASSISTANT</p>
               <h1 className="font-heading font-bold text-[17px] text-content tracking-tight leading-tight">Settings</h1>

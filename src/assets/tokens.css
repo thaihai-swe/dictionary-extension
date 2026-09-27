@@ -1,8 +1,7 @@
-/* Design Tokens - Auto-generated */
-/* Do not edit directly - modify tokens.json instead */
-
-/* === PRIMITIVES === */
+/* Design Tokens — Modern Slate & Emerald Precision Design System */
+/* Layer 1: Primitive Tokens (Raw Scales) */
 :root {
+  /* Slate & Obsidian Neutrals */
   --primitive-color-slate-50: #F8FAFC;
   --primitive-color-slate-100: #F1F5F9;
   --primitive-color-slate-200: #E2E8F0;
@@ -14,10 +13,16 @@
   --primitive-color-slate-800: #1E293B;
   --primitive-color-slate-900: #0F172A;
   --primitive-color-slate-950: #020617;
-  --primitive-color-obsidian-600: #1C2F3C;
-  --primitive-color-obsidian-700: #14222B;
-  --primitive-color-obsidian-800: #0D171E;
-  --primitive-color-obsidian-900: #070D12;
+
+  /* Deep Obsidian Dark Mode Surfaces */
+  --primitive-color-obsidian-950: #070D14;
+  --primitive-color-obsidian-900: #0B1420;
+  --primitive-color-obsidian-850: #0F1B2B;
+  --primitive-color-obsidian-800: #142234;
+  --primitive-color-obsidian-700: #1C2E44;
+  --primitive-color-obsidian-600: #263C56;
+
+  /* Emerald & Teal Precision Accents */
   --primitive-color-teal-50: #F0FDFA;
   --primitive-color-teal-100: #CCFBF1;
   --primitive-color-teal-200: #99F6E4;
@@ -28,6 +33,10 @@
   --primitive-color-teal-700: #0F766E;
   --primitive-color-teal-800: #115E59;
   --primitive-color-teal-900: #134E4A;
+  --primitive-color-emerald-400: #34D399;
+  --primitive-color-emerald-500: #10B981;
+
+  /* Functional Status */
   --primitive-color-amber-400: #FBBF24;
   --primitive-color-amber-500: #F59E0B;
   --primitive-color-amber-600: #D97706;
@@ -36,103 +45,130 @@
   --primitive-color-rose-600: #E11D48;
   --primitive-color-white: #FFFFFF;
   --primitive-color-black: #000000;
+
+  /* Spacing Scale (Compact & Ergonomic) */
   --primitive-spacing-0: 0;
+  --primitive-spacing-0-5: 0.125rem;
   --primitive-spacing-1: 0.25rem;
+  --primitive-spacing-1-5: 0.375rem;
   --primitive-spacing-2: 0.5rem;
+  --primitive-spacing-2-5: 0.625rem;
   --primitive-spacing-3: 0.75rem;
+  --primitive-spacing-3-5: 0.875rem;
   --primitive-spacing-4: 1rem;
   --primitive-spacing-5: 1.25rem;
   --primitive-spacing-6: 1.5rem;
   --primitive-spacing-8: 2rem;
-  --primitive-spacing-0-5: 0.125rem;
-  --primitive-spacing-1-5: 0.375rem;
-  --primitive-spacing-2-5: 0.625rem;
+
+  /* Typography Scale */
+  --primitive-fontSize-2xs: 0.6875rem;
   --primitive-fontSize-xs: 0.75rem;
-  --primitive-fontSize-sm: 0.875rem;
-  --primitive-fontSize-base: 1rem;
-  --primitive-fontSize-lg: 1.125rem;
+  --primitive-fontSize-sm: 0.84375rem;
+  --primitive-fontSize-base: 0.9375rem;
+  --primitive-fontSize-lg: 1.0625rem;
   --primitive-fontSize-xl: 1.25rem;
   --primitive-fontSize-2xl: 1.5rem;
+
+  /* Radii */
   --primitive-radius-none: 0;
-  --primitive-radius-sm: 0.25rem;
-  --primitive-radius-md: 0.375rem;
-  --primitive-radius-lg: 0.5rem;
-  --primitive-radius-xl: 0.75rem;
-  --primitive-radius-2xl: 1rem;
+  --primitive-radius-xs: 0.25rem;
+  --primitive-radius-sm: 0.375rem;
+  --primitive-radius-md: 0.5rem;
+  --primitive-radius-lg: 0.75rem;
+  --primitive-radius-xl: 1rem;
   --primitive-radius-full: 9999px;
+
+  /* Shadows */
   --primitive-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --primitive-shadow-sm: 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --primitive-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
-  --primitive-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  --primitive-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+  --primitive-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --primitive-shadow-md: 0 4px 10px -2px rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --primitive-shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.16), 0 4px 8px -2px rgba(0, 0, 0, 0.08);
+  --primitive-shadow-xl: 0 20px 32px -8px rgba(0, 0, 0, 0.24);
+
+  /* Animation */
+  --primitive-duration-instant: 75ms;
   --primitive-duration-fast: 150ms;
   --primitive-duration-normal: 200ms;
   --primitive-duration-slow: 300ms;
+  --primitive-ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* === SEMANTIC === */
+/* Layer 2: Semantic Tokens (Light & Dark Mappings) */
 :root {
-  --color-background: #F8FAFC;
-  --color-foreground: #0F172A;
-  --color-primary: #0D9488;
-  --color-primary-hover: #0F766E;
+  --color-background: var(--primitive-color-slate-50);
+  --color-foreground: var(--primitive-color-slate-900);
+  --color-primary: var(--primitive-color-teal-600);
+  --color-primary-hover: var(--primitive-color-teal-700);
   --color-primary-foreground: #FFFFFF;
-  --color-secondary: #14B8A6;
+  --color-secondary: var(--primitive-color-teal-500);
   --color-secondary-foreground: #FFFFFF;
-  --color-muted: #F1F5F9;
-  --color-muted-foreground: #64748B;
+  --color-muted: var(--primitive-color-slate-100);
+  --color-muted-foreground: var(--primitive-color-slate-500);
   --color-card: #FFFFFF;
-  --color-card-foreground: #0F172A;
-  --color-border: #E2E8F0;
-  --color-ring: #0D9488;
-  --color-accent: #0D9488;
+  --color-card-foreground: var(--primitive-color-slate-900);
+  --color-border: var(--primitive-color-slate-200);
+  --color-border-subtle: var(--primitive-color-slate-100);
+  --color-ring: var(--primitive-color-teal-600);
+  --color-accent: var(--primitive-color-teal-600);
   --color-accent-foreground: #FFFFFF;
-  --color-destructive: #F43F5E;
+  --color-destructive: var(--primitive-color-rose-500);
   --color-destructive-foreground: #FFFFFF;
-  --color-warning: #F59E0B;
-  --spacing-component: 0.75rem;
-  --spacing-section: 1.25rem;
-  --dark-color-background: #070D12;
-  --dark-color-foreground: #F0FDFA;
-  --dark-color-primary: #2DD4BF;
-  --dark-color-primary-hover: #5EEAD4;
-  --dark-color-primary-foreground: #070D12;
-  --dark-color-secondary: #14B8A6;
+  --color-warning: var(--primitive-color-amber-500);
+
+  /* Spacing */
+  --spacing-component: var(--primitive-spacing-2);
+  --spacing-section: var(--primitive-spacing-4);
+
+  /* Dark Defaults */
+  --dark-color-background: var(--primitive-color-obsidian-950);
+  --dark-color-foreground: var(--primitive-color-slate-50);
+  --dark-color-primary: var(--primitive-color-teal-400);
+  --dark-color-primary-hover: var(--primitive-color-teal-300);
+  --dark-color-primary-foreground: var(--primitive-color-obsidian-950);
+  --dark-color-secondary: var(--primitive-color-teal-500);
   --dark-color-secondary-foreground: #FFFFFF;
-  --dark-color-muted: #14222B;
-  --dark-color-muted-foreground: #94A3B8;
-  --dark-color-card: #0D171E;
-  --dark-color-card-foreground: #F0FDFA;
-  --dark-color-border: #1C2F3C;
-  --dark-color-ring: #2DD4BF;
-  --dark-color-accent: #2DD4BF;
-  --dark-color-accent-foreground: #070D12;
+  --dark-color-muted: var(--primitive-color-obsidian-900);
+  --dark-color-muted-foreground: var(--primitive-color-slate-400);
+  --dark-color-card: var(--primitive-color-obsidian-900);
+  --dark-color-card-foreground: var(--primitive-color-slate-50);
+  --dark-color-border: rgba(255, 255, 255, 0.08);
+  --dark-color-border-subtle: rgba(255, 255, 255, 0.04);
+  --dark-color-ring: var(--primitive-color-teal-400);
+  --dark-color-accent: var(--primitive-color-teal-400);
+  --dark-color-accent-foreground: var(--primitive-color-obsidian-950);
 }
 
-/* === COMPONENTS === */
+/* Layer 3: Component-Specific Tokens */
 :root {
-  --button-primary-bg: #0D9488;
-  --button-primary-fg: #FFFFFF;
-  --button-primary-hover-bg: #0F766E;
-  --button-primary-radius: 0.5rem;
-  --button-primary-padding-x: 0.75rem;
-  --button-primary-padding-y: 0.375rem;
-  --button-control-icon-size: 1.75rem;
-  --button-control-icon-radius: 0.375rem;
-  --button-control-icon-border: #E2E8F0;
-  --input-bg: #FFFFFF;
-  --input-border: #E2E8F0;
-  --input-focus-ring: #0D9488;
-  --input-radius: 0.5rem;
-  --input-padding-x: 0.75rem;
-  --input-padding-y: 0.5rem;
-  --card-bg: #FFFFFF;
-  --card-border: #E2E8F0;
-  --card-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --card-radius: 0.75rem;
-  --card-padding: 1rem;
+  --control-height-compact: 2.125rem;
+  --control-height-normal: 2.375rem;
+
+  --button-primary-bg: var(--color-primary);
+  --button-primary-fg: var(--color-primary-foreground);
+  --button-primary-hover-bg: var(--color-primary-hover);
+  --button-primary-radius: var(--primitive-radius-md);
+  --button-primary-padding-x: var(--primitive-spacing-3);
+  --button-primary-padding-y: var(--primitive-spacing-1-5);
+
+  --button-control-icon-size: 1.875rem;
+  --button-control-icon-radius: var(--primitive-radius-sm);
+  --button-control-icon-border: var(--color-border);
+
+  --input-bg: var(--color-muted);
+  --input-border: var(--color-border);
+  --input-focus-ring: var(--color-ring);
+  --input-radius: var(--primitive-radius-md);
+  --input-padding-x: var(--primitive-spacing-3);
+  --input-padding-y: var(--primitive-spacing-2);
+
+  --card-bg: var(--color-card);
+  --card-border: var(--color-border);
+  --card-shadow: var(--primitive-shadow-sm);
+  --card-radius: var(--primitive-radius-lg);
+  --card-padding: var(--primitive-spacing-3);
+
   --tab-height: 2rem;
-  --tab-radius: 0.5rem;
-  --tab-active-bg: #FFFFFF;
-  --tab-active-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --tab-radius: var(--primitive-radius-md);
+  --tab-active-bg: var(--color-card);
+  --tab-active-shadow: var(--primitive-shadow-xs);
 }

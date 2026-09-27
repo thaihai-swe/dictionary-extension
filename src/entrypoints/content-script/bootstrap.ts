@@ -109,19 +109,31 @@ function startBootstrap() {
     triggerBtn.title = 'Look up selection in Dictionary';
     triggerBtn.className = 'dictionary-trigger-icon-btn dark';
     triggerBtn.style.display = 'none';
-    const searchIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    searchIcon.setAttribute('width', '18');
-    searchIcon.setAttribute('height', '18');
-    searchIcon.setAttribute('viewBox', '0 0 20 20');
-    searchIcon.setAttribute('fill', 'currentColor');
-    searchIcon.setAttribute('aria-hidden', 'true');
-    const searchPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    searchPath.setAttribute(
-      'd',
-      'M9 3.5a5.5 5.5 0 1 0 3.5 9.7l3.15 3.15a1 1 0 0 0 1.4-1.4l-3.15-3.15A5.5 5.5 0 0 0 9 3.5Zm-3.5 5.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z',
-    );
-    searchIcon.appendChild(searchPath);
-    triggerBtn.appendChild(searchIcon);
+    const brandIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    brandIcon.setAttribute('width', '18');
+    brandIcon.setAttribute('height', '18');
+    brandIcon.setAttribute('viewBox', '0 0 24 24');
+    brandIcon.setAttribute('fill', 'none');
+    brandIcon.setAttribute('stroke', 'currentColor');
+    brandIcon.setAttribute('stroke-width', '2');
+    brandIcon.setAttribute('stroke-linecap', 'round');
+    brandIcon.setAttribute('stroke-linejoin', 'round');
+    brandIcon.setAttribute('aria-hidden', 'true');
+    const bookPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    bookPath.setAttribute('d', 'M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z');
+    const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    line1.setAttribute('d', 'M6 6h10');
+    const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    line2.setAttribute('d', 'M6 10h7');
+    const sparkPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    sparkPath.setAttribute('d', 'm17 7 1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2Z');
+    sparkPath.setAttribute('fill', 'currentColor');
+    sparkPath.setAttribute('stroke', 'none');
+    brandIcon.appendChild(bookPath);
+    brandIcon.appendChild(line1);
+    brandIcon.appendChild(line2);
+    brandIcon.appendChild(sparkPath);
+    triggerBtn.appendChild(brandIcon);
     shadow.appendChild(triggerBtn);
 
     const backdrop = document.createElement('div');

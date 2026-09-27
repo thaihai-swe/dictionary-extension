@@ -11,6 +11,15 @@ export const IconBookmark: React.FC<IconProps> = ({ className = 'w-4 h-4', ...pr
   </svg>
 );
 
+export const IconBookSpark: React.FC<IconProps> = ({ className = 'w-4 h-4', ...props }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true" {...props}>
+    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+    <path d="M6 6h10" />
+    <path d="M6 10h7" />
+    <path d="m17 7 1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2Z" fill="currentColor" stroke="none" />
+  </svg>
+);
+
 export const IconBook: React.FC<IconProps> = ({ className = 'w-4 h-4', ...props }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true" {...props}>
     <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
