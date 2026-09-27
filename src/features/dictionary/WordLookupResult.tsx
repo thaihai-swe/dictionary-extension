@@ -1,10 +1,12 @@
-import ExampleSentence from '@/components/component.example-sentence';
-import MarkdownRenderer from '@/components/component.markdown-renderer';
+import {
+  AudioButton,
+  ContextSentence,
+  CopyButton,
+  ExampleSentence,
+  LexicalProfileSection,
+  MarkdownRenderer,
+} from '@/components';
 import RelatedWords from '@/components/component.related-words';
-import AudioButton from '@/components/component.audio-button';
-import CopyButton from '@/components/component.copy-button';
-import ContextSentence from '@/components/component.context-sentence';
-import LexicalProfileSection from '@/components/component.lexical-profile';
 import { IconGlobe, IconMic } from '@/components/icons';
 import {
   playPronunciation,
@@ -15,6 +17,7 @@ import {
   useDictionaryResult,
 } from '@/composables/composable.dictionary';
 import { useSetting } from '@/composables/composable.storage';
+import { cleanSentenceText } from '@/shared/query-resolution';
 import { Phonetic } from '@/types';
 import { cx } from '@/ui/cx';
 import React, { useMemo } from 'react';
@@ -122,7 +125,7 @@ export const WordLookupResult: React.FC<WordLookupResultProps> = ({ onSelectWord
 
   if (!result) return null;
 
-  const pageContext = String(contextSentence || '').replace(/\s+/g, ' ').trim();
+  const pageContext = cleanSentenceText(contextSentence);
   const showContextBanner = Boolean(
     pageContext && pageContext.toLowerCase() !== displayHeadword.toLowerCase(),
   );

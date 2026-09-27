@@ -39,7 +39,7 @@
         "url": "https://github.com/thaihai-swe"
       },
       "url": "https://thaihai-swe.github.io/dictionary-extension/",
-      "downloadUrl": "https://github.com/thaihai-swe/dictionary-extension/archive/refs/heads/main.zip"
+      "downloadUrl": "https://addons.mozilla.org/en-US/firefox/addon/dictionary-ai-learning-assist/"
     }
     </script>
     <link rel="stylesheet" href="styles.css">
@@ -63,7 +63,7 @@
                         <line x1="24" y1="33" x2="27" y2="33" stroke="#2563EB" stroke-width="1.5" />
                     </svg>
                 </span>
-                <span class="brand-text">Dictionary <span class="brand-badge">Free · Chrome</span></span>
+                <span class="brand-text">Dictionary <span class="brand-badge">Firefox Add-on · Chrome</span></span>
             </a>
 
             <nav class="site-nav" id="site-nav" aria-label="Primary">
@@ -78,7 +78,7 @@
             </nav>
 
             <div class="header-actions">
-                <a href="#install" class="btn btn-primary btn-sm">Install free</a>
+                <a href="https://addons.mozilla.org/en-US/firefox/addon/dictionary-ai-learning-assist/" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">Get for Firefox</a>
                 <button type="button" class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="site-nav"
                     aria-label="Open menu">
                     <span class="nav-toggle-bar"></span>
@@ -105,16 +105,18 @@
                         you ask focused AI questions or rewrite a draft without opening another tab.
                     </p>
                     <div class="hero-ctas">
-                        <a href="#install" class="btn btn-primary">
-                            <span>Install from GitHub</span>
+                        <a href="https://addons.mozilla.org/en-US/firefox/addon/dictionary-ai-learning-assist/" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+                            <span>Get for Firefox</span>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
                                 <polyline points="12 5 19 12 12 19"></polyline>
                             </svg>
                         </a>
-                        <a href="#interactive-preview" class="btn btn-secondary">Explore the demo</a>
+                        <a href="#install" class="btn btn-secondary">Chrome &amp; Local Setup</a>
+                        <a href="#interactive-preview" class="btn btn-secondary">Try Demo</a>
                     </div>
+                    <p style="margin-top: 10px; font-size: 0.85rem; color: var(--text-dim);">Available now on Mozilla Firefox Add-ons · Chrome Web Store release coming soon</p>
                     <div class="hero-proof" aria-label="Key highlights">
                         <div class="proof-item"><span class="proof-mark">01</span><span>Select text · stay in the
                                 article</span></div>
@@ -499,17 +501,46 @@
         <section class="section section-dark" id="install">
             <div class="container">
                 <div class="section-header">
-                    <p class="section-kicker">Free and open source</p>
-                    <h2 class="section-title">Install it locally in Chrome or Firefox.</h2>
-                    <p class="section-lead">There is no account, subscription, or store listing yet. Clone the source,
-                        build the browser package, and load the folder using your browser’s developer workflow.</p>
+                    <p class="section-kicker">Install &amp; Browser Support</p>
+                    <h2 class="section-title">Install for Firefox or Chrome.</h2>
+                    <p class="section-lead">Dictionary is officially published on Firefox Add-ons. The Chrome Web Store version is pending review — in the meantime, you can install for Chrome via developer mode or load unpacked builds.</p>
                 </div>
+
+                <div class="install-card-featured" style="margin-bottom: 24px; padding: 22px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; box-shadow: var(--shadow-soft);">
+                    <div style="min-width: 240px; flex: 1;">
+                        <span style="display: inline-block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-primary); margin-bottom: 4px;">Official Release</span>
+                        <h3 style="margin: 0; color: var(--text); font-size: 1.15rem; font-weight: 700;">Mozilla Firefox Add-ons</h3>
+                        <p style="margin: 4px 0 0; color: var(--text-muted); font-size: 0.88rem;">Install with one click from Mozilla's official add-ons directory. Receive automatic background updates.</p>
+                    </div>
+                    <a href="https://addons.mozilla.org/en-US/firefox/addon/dictionary-ai-learning-assist/" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="white-space: nowrap;">
+                        <span>Add to Firefox</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </a>
+                </div>
+
                 <ol class="install-steps">
                     <li class="install-step">
                         <span class="install-num">1</span>
                         <div>
-                            <h3>Get the source</h3>
-                            <p>Clone the repository or download the ZIP, then install and build:</p>
+                            <h3>Firefox (Recommended)</h3>
+                            <p>Get the official extension directly from the <a href="https://addons.mozilla.org/en-US/firefox/addon/dictionary-ai-learning-assist/" target="_blank" rel="noopener noreferrer" style="color: var(--color-primary); font-weight: 600; text-decoration: underline;">Mozilla Add-ons Store page</a> with one-click installation and automatic updates.</p>
+                        </div>
+                    </li>
+                    <li class="install-step">
+                        <span class="install-num">2</span>
+                        <div>
+                            <h3>Chrome (Developer Mode / Unpacked)</h3>
+                            <p>While the Chrome Web Store listing is under review, you can load it directly: clone or download the repository, run <code>npm install &amp;&amp; npm run build</code>, then in <code>chrome://extensions</code> turn on <strong>Developer mode</strong> and click <strong>Load unpacked</strong> on <code>.output/chrome-mv3</code>.</p>
+                        </div>
+                    </li>
+                    <li class="install-step">
+                        <span class="install-num">3</span>
+                        <div>
+                            <h3>Build from source</h3>
+                            <p>Clone the repository, install dependencies, and build both browser targets:</p>
                             <div class="install-code-wrapper">
                                 <pre class="install-code"><code id="install-commands">git clone https://github.com/thaihai-swe/dictionary-extension.git
 cd dictionary-extension
@@ -530,22 +561,6 @@ npm install &amp;&amp; npm run build</code></pre>
                         </div>
                     </li>
                     <li class="install-step">
-                        <span class="install-num">2</span>
-                        <div>
-                            <h3>Chrome</h3>
-                            <p>Open <code>chrome://extensions</code>, turn on <strong>Developer mode</strong>, click
-                                <strong>Load unpacked</strong>, and select the built <code>.output/chrome-mv3</code> folder.</p>
-                        </div>
-                    </li>
-                    <li class="install-step">
-                        <span class="install-num">3</span>
-                        <div>
-                            <h3>Firefox</h3>
-                            <p>Open <code>about:debugging#/runtime/this-firefox</code>, click <strong>Load Temporary Add-on…</strong>,
-                                and select <code>.output/firefox-mv3/manifest.json</code>.</p>
-                        </div>
-                    </li>
-                    <li class="install-step">
                         <span class="install-num">4</span>
                         <div>
                             <h3>Try it on any webpage</h3>
@@ -556,12 +571,14 @@ npm install &amp;&amp; npm run build</code></pre>
                     </li>
                 </ol>
                 <div class="install-actions">
-                    <a class="btn btn-primary" href="https://github.com/thaihai-swe/dictionary-extension/tree/main"
+                    <a class="btn btn-primary" href="https://addons.mozilla.org/en-US/firefox/addon/dictionary-ai-learning-assist/"
+                        target="_blank" rel="noopener noreferrer">Get Firefox Add-on</a>
+                    <a class="btn btn-secondary" href="https://github.com/thaihai-swe/dictionary-extension/tree/main"
                         target="_blank" rel="noopener noreferrer">View source on GitHub</a>
                 </div>
-                    <p class="install-note">Dictionary lookup, translation, and pronunciation do not require an account or
-                        AI key. AI features can use Google Gemini or an OpenAI-compatible local or hosted endpoint when
-                        configured in Settings.</p>
+                <p class="install-note">Dictionary lookup, translation, and pronunciation do not require an account or
+                    AI key. AI features can use Google Gemini or an OpenAI-compatible local or hosted endpoint when
+                    configured in Settings.</p>
             </div>
         </section>
 
@@ -666,10 +683,7 @@ npm install &amp;&amp; npm run build</code></pre>
                     </details>
                     <details class="faq-item">
                         <summary>Is there a Chrome Web Store or Firefox Add-ons listing?</summary>
-                        <p>Not yet. Install from GitHub: clone the repository, run
-                            <code>npm install &amp;&amp; npm run build</code>. In Chrome, enable Developer mode and
-                            <strong>Load unpacked</strong> on the built <code>.output/chrome-mv3</code> folder. Firefox users can load
-                            <code>.output/firefox-mv3/manifest.json</code> from <code>about:debugging</code>.</p>
+                        <p>Yes. Dictionary is officially available on the <a href="https://addons.mozilla.org/en-US/firefox/addon/dictionary-ai-learning-assist/" target="_blank" rel="noopener noreferrer" style="color: var(--color-primary); font-weight: 600; text-decoration: underline;">Mozilla Firefox Add-ons Store</a>. The Chrome Web Store submission is currently in review. Until Chrome Web Store approval, Chrome users can load the unpacked extension in Developer mode from the built <code>.output/chrome-mv3</code> folder.</p>
                     </details>
                 </div>
             </div>
@@ -681,10 +695,11 @@ npm install &amp;&amp; npm run build</code></pre>
                     <div class="cta-content">
                         <span class="cta-kicker">Open source · no subscription</span>
                         <h2 class="cta-title">Keep reading. Look up only what you need.</h2>
-                        <p class="cta-lead">Build the extension locally, choose your providers and target language, and
+                        <p class="cta-lead">Build the extension locally or install directly from Firefox Add-ons, choose your providers and target language, and
                             bring the next difficult sentence into the same reading workflow.</p>
                         <div class="cta-buttons">
-                            <a href="#install" class="btn btn-primary">Install free</a>
+                            <a href="https://addons.mozilla.org/en-US/firefox/addon/dictionary-ai-learning-assist/" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Add to Firefox</a>
+                            <a href="#install" class="btn btn-secondary">Chrome setup</a>
                             <a href="https://github.com/thaihai-swe/dictionary-extension/tree/main"
                                 class="btn btn-secondary" target="_blank" rel="noopener noreferrer">View source on
                                 GitHub</a>

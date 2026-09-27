@@ -1,11 +1,14 @@
-import PresetChips from '@/components/component.preset-chips';
-import SearchBar from '@/components/component.search-bar';
-import ResultSkeleton from '@/components/component.result-skeleton';
-import ErrorBanner from '@/components/component.error-banner';
-import { abortActiveDictRequest, searchWord, stopAllAudio, useDictionaryQuery, useDictionaryResult } from '@/composables/composable.dictionary';
+import { ErrorBanner, PresetChips, ResultSkeleton, SearchBar } from '@/components';
+import {
+  abortActiveDictRequest,
+  searchWord,
+  stopAllAudio,
+  useDictionaryQuery,
+  useDictionaryResult,
+} from '@/composables/composable.dictionary';
 import { useSetting } from '@/composables/composable.storage';
 import type { DemoPreset } from '@/shared/presets';
-import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
 
 const WordLookupResult = lazy(() => import('./WordLookupResult'));
 
@@ -33,33 +36,42 @@ export const WordLookupView: React.FC<WordLookupViewProps> = ({
   const [searchInput, setSearchInput] = useState('');
   const searchInputElement = useRef<HTMLInputElement | null>(null);
 
-  function getActiveProvider(): string {
+  const getActiveProvider = useCallback((): string => {
     return provider || configuredProvider || 'wiktionary';
-  }
+  }, [provider, configuredProvider]);
 
-  function getActiveLang(): string {
+  const getActiveLang = useCallback((): string => {
     return targetLang || configuredTargetLang || 'Vietnamese';
-  }
+  }, [targetLang, configuredTargetLang]);
 
-  function runLookup(wordToSearch: string, attachedRequestId?: string) {
-    const cleanTarget = wordToSearch.trim();
-    if (!cleanTarget) return;
-    setSearchInput(cleanTarget);
-    searchWord(cleanTarget, getActiveProvider(), getActiveLang(), initialContext, attachedRequestId);
-  }
+  const runLookup = useCallback(
+    (wordToSearch: string, attachedRequestId?: string) => {
+      const cleanTarget = wordToSearch.trim();
+      if (!cleanTarget) return;
+      setSearchInput(cleanTarget);
+      searchWord(cleanTarget, getActiveProvider(), getActiveLang(), initialContext, attachedRequestId);
+    },
+    [getActiveLang, getActiveProvider, initialContext],
+  );
 
-  function handleSearch(wordToSearch?: string) {
-    runLookup(wordToSearch || searchInput);
-  }
+  const handleSearch = useCallback(
+    (wordToSearch?: string) => {
+      runLookup(wordToSearch || searchInput);
+    },
+    [runLookup, searchInput],
+  );
 
-  function handlePresetSelect(preset: DemoPreset) {
-    runLookup(preset.query);
-  }
+  const handlePresetSelect = useCallback(
+    (preset: DemoPreset) => {
+      runLookup(preset.query);
+    },
+    [runLookup],
+  );
 
-  function clearSearch() {
+  const clearSearch = useCallback(() => {
     setSearchInput('');
     searchInputElement.current?.focus();
-  }
+  }, []);
 
   useEffect(() => {
     function handleEsc(event: KeyboardEvent) {

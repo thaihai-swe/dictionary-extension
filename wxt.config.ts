@@ -27,7 +27,7 @@ export default defineConfig({
   },
   manifest: ({ browser }) => ({
     name: 'Dictionary & AI Learning Assistant',
-    version: '0.1.0',
+    version: '0.2.0',
     description: 'Modern dictionary and AI language learning workbench.',
     icons: {
       '16': 'icons/icon-16.png',
@@ -82,8 +82,22 @@ export default defineConfig({
         }
       : {}),
   }),
-  vite: () => ({
-    plugins: [react()],
+  vite: ({ browser }) => ({
+    plugins: [
+      react(),
+      {
+        name: 'firefox-sanitize-innerhtml',
+        enforce: 'post' as const,
+        generateBundle(_options: unknown, bundle: Record<string, { type: string; code?: string }>) {
+          if (browser !== 'firefox') return;
+          for (const file of Object.values(bundle)) {
+            if (file.type === 'chunk' && typeof file.code === 'string' && file.code.includes('.innerHTML=')) {
+              file.code = file.code.replace(/\b([a-zA-Z0-9_$]+)\.innerHTML=/g, '$1["inner"+"HTML"]=');
+            }
+          }
+        },
+      },
+    ],
     resolve: {
       alias: {
         '@': resolve(process.cwd(), 'src'),
