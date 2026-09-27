@@ -1,6 +1,7 @@
 import { extractSelectionContext } from '../../shared/page-context';
 import { isExtensionContextInvalidated } from '../../shared/messages';
 import { cancelDictionaryLookup, createRequestId, startDictionaryLookup } from '../../shared/dictionary-lookup-client';
+import { saveSettingsPartial } from '../../shared/settings';
 import { BOOT_DEFAULTS, loadBootSettings, normalizeHostnames, type BootSettings } from './boot-settings';
 import { calculateDraggedPopupPosition, calculatePopupPosition, calculateTriggerPosition } from './popup-geometry';
 import { TRIGGER_CSS } from './trigger-style';
@@ -473,7 +474,7 @@ function startBootstrap() {
     if (isResizing && customWidth && customHeight) {
       settings.popupWidth = customWidth;
       settings.popupHeight = customHeight;
-      void chrome.storage?.sync?.set({ popupWidth: customWidth, popupHeight: customHeight });
+      void saveSettingsPartial({ popupWidth: customWidth, popupHeight: customHeight });
     }
     isResizing = false;
     if (bootUi) bootUi.popupLayer.style.willChange = 'auto';

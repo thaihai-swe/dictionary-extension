@@ -12,6 +12,7 @@ import {
 } from '../shared/settings';
 import { hasConfiguredAiApiKey, shouldPersistSecretValue } from '../shared/settings-export';
 import { settingsRepository } from '../infrastructure/storage/settings-repository';
+import { isExtensionPage } from '../shared/ext';
 
 export {
   DEFAULT_SETTINGS,
@@ -79,14 +80,65 @@ const STORAGE_KEYS = {
   ACTIVE_INTENT: 'dict_last_intent',
 };
 
+function canUseLocalStorage(): boolean {
+  try {
+    if (typeof localStorage === 'undefined') return false;
+    if (typeof chrome !== 'undefined' && chrome.runtime?.id) {
+      return isExtensionPage();
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function normalizeSettingsArrayFields(settings: AppSettings): AppSettings {
+  if (!Array.isArray(settings.pausedHostnames)) {
+    if (typeof settings.pausedHostnames === 'string' && (settings.pausedHostnames as string).trim()) {
+      settings.pausedHostnames = (settings.pausedHostnames as string)
+        .split('\n')
+        .map(s => s.trim().toLowerCase())
+        .filter(Boolean);
+    } else {
+      settings.pausedHostnames = [];
+    }
+  }
+  return settings;
+}
+
+function assignSettingValue<K extends keyof AppSettings>(settings: AppSettings, key: K, value: unknown): void {
+  settings[key] = value as AppSettings[K];
+}
+
+function getInitialSettings(): AppSettings {
+  const current: AppSettings = { ...DEFAULT_SETTINGS };
+  if (canUseLocalStorage()) {
+    try {
+      for (const key of Object.keys(DEFAULT_SETTINGS) as (keyof AppSettings)[]) {
+        if (SECRET_KEYS.has(key)) continue;
+        const val = localStorage.getItem(`dict_setting_${key}`);
+        if (val !== null) {
+          try {
+            assignSettingValue(current, key, JSON.parse(val));
+          } catch {
+            assignSettingValue(current, key, val);
+          }
+        }
+      }
+    } catch {
+      // Storage access might fail in restricted environments
+    }
+  }
+  return normalizeSettingsArrayFields(normalizeSettings(current));
+}
+
 export function readSessionKey(key: string): string | null {
   try {
-    if (typeof sessionStorage !== 'undefined') {
-      const v = sessionStorage.getItem(key);
-      if (v) return v;
-    }
-    if (typeof localStorage !== 'undefined') {
-      return localStorage.getItem(key);
+    if (canUseLocalStorage()) {
+      if (typeof sessionStorage !== 'undefined') {
+        const v = sessionStorage.getItem(key);
+        if (v) return v;
+      }
     }
     return null;
   } catch {
@@ -96,20 +148,20 @@ export function readSessionKey(key: string): string | null {
 
 export function writeSessionKey(key: string, value: string): void {
   try {
-    if (typeof sessionStorage !== 'undefined') {
-      sessionStorage.setItem(key, value);
-    }
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(key, value);
+    if (canUseLocalStorage()) {
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem(key, value);
+      }
     }
   } catch (e) {
     console.warn('Storage write failed:', e);
   }
 }
 
-const settingsRef = signal<AppSettings>({ ...DEFAULT_SETTINGS });
+const initialSettings = getInitialSettings();
+const settingsRef = signal<AppSettings>(initialSettings);
 const settingsHydratedRef = signal<boolean>(false);
-const activeTabRef = signal<TabId>((readSessionKey(STORAGE_KEYS.ACTIVE_TAB) as TabId) || 'dictionary');
+const activeTabRef = signal<TabId>((readSessionKey(STORAGE_KEYS.ACTIVE_TAB) as TabId) || initialSettings.defaultTab || 'dictionary');
 const activeIntentRef = signal<AiIntentId>((readSessionKey(STORAGE_KEYS.ACTIVE_INTENT) as AiIntentId) || 'default');
 
 activeTabRef.subscribe(() => {
@@ -136,24 +188,6 @@ export function whenSettingsReady(): Promise<void> {
   return settingsHydratedRef.value ? Promise.resolve() : settingsReady;
 }
 
-function normalizeSettingsArrayFields(settings: AppSettings): AppSettings {
-  if (!Array.isArray(settings.pausedHostnames)) {
-    if (typeof settings.pausedHostnames === 'string' && (settings.pausedHostnames as string).trim()) {
-      settings.pausedHostnames = (settings.pausedHostnames as string)
-        .split('\n')
-        .map(s => s.trim().toLowerCase())
-        .filter(Boolean);
-    } else {
-      settings.pausedHostnames = [];
-    }
-  }
-  return settings;
-}
-
-function assignSettingValue<K extends keyof AppSettings>(settings: AppSettings, key: K, value: unknown): void {
-  settings[key] = value as AppSettings[K];
-}
-
 export function canAccessSecretSettings(): boolean {
   try {
     if (typeof window === 'undefined') return false;
@@ -174,22 +208,7 @@ async function loadSettingsFromStorage(): Promise<AppSettings> {
     console.warn('Chrome storage read failed:', e);
   }
 
-  const current: AppSettings = { ...DEFAULT_SETTINGS };
-  if (typeof localStorage !== 'undefined') {
-    for (const key of Object.keys(DEFAULT_SETTINGS) as (keyof AppSettings)[]) {
-      if (SECRET_KEYS.has(key)) continue;
-      const val = localStorage.getItem(`dict_setting_${key}`);
-      if (val !== null) {
-        try {
-          assignSettingValue(current, key, JSON.parse(val));
-        } catch {
-          assignSettingValue(current, key, val);
-        }
-      }
-    }
-  }
-
-  return normalizeSettingsArrayFields(normalizeSettings(current));
+  return getInitialSettings();
 }
 
 export async function saveSettingsToStorage(partial: Partial<AppSettings>): Promise<void> {
@@ -217,10 +236,14 @@ export async function saveSettingsToStorage(partial: Partial<AppSettings>): Prom
   normalizeSettingsArrayFields(nextSettings);
   settingsRef.value = nextSettings;
 
-  for (const [key, val] of Object.entries(writable)) {
-    if (SECRET_KEYS.has(key)) continue;
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(`dict_setting_${key}`, typeof val === 'object' ? JSON.stringify(val) : String(val));
+  if (canUseLocalStorage()) {
+    for (const [key, val] of Object.entries(writable)) {
+      if (SECRET_KEYS.has(key)) continue;
+      try {
+        localStorage.setItem(`dict_setting_${key}`, typeof val === 'object' ? JSON.stringify(val) : String(val));
+      } catch {
+        // Storage write might fail in restricted environments
+      }
     }
   }
 
@@ -244,11 +267,33 @@ export async function saveSettingsToStorage(partial: Partial<AppSettings>): Prom
 export function initStorage() {
   if (initialized) return;
   initialized = true;
+  if (canUseLocalStorage()) {
+    try {
+      localStorage.removeItem(STORAGE_KEYS.ACTIVE_TAB);
+      localStorage.removeItem(STORAGE_KEYS.ACTIVE_INTENT);
+    } catch {
+      // ignore
+    }
+  }
   const loadEpoch = settingsWriteEpoch;
   loadSettingsFromStorage()
     .then((s) => {
       if (settingsWriteEpoch !== loadEpoch) return;
       settingsRef.value = s;
+      if (!readSessionKey(STORAGE_KEYS.ACTIVE_TAB) && s.defaultTab) {
+        activeTabRef.value = s.defaultTab;
+      }
+      if (canUseLocalStorage()) {
+        for (const key of Object.keys(DEFAULT_SETTINGS) as (keyof AppSettings)[]) {
+          if (SECRET_KEYS.has(key)) continue;
+          const val = s[key];
+          try {
+            localStorage.setItem(`dict_setting_${key}`, typeof val === 'object' ? JSON.stringify(val) : String(val));
+          } catch {
+            // Storage write might fail in restricted environments
+          }
+        }
+      }
       if (s.persistLookupCache === false) clearLookupCaches();
     })
     .catch((error) => {
@@ -279,6 +324,29 @@ export function initStorage() {
       }
       normalizeSettingsArrayFields(nextSettings);
       settingsRef.value = nextSettings;
+      if ('defaultTab' in changes && !readSessionKey(STORAGE_KEYS.ACTIVE_TAB)) {
+        const nextDefaultTab = nextSettings.defaultTab;
+        if (nextDefaultTab) {
+          activeTabRef.value = nextDefaultTab;
+        }
+      }
+      if (canUseLocalStorage()) {
+        for (const [key, change] of Object.entries(changes)) {
+          if (SECRET_KEYS.has(key)) continue;
+          if (key in DEFAULT_SETTINGS) {
+            try {
+              const val = change.newValue;
+              if (val === undefined) {
+                localStorage.removeItem(`dict_setting_${key}`);
+              } else {
+                localStorage.setItem(`dict_setting_${key}`, typeof val === 'object' ? JSON.stringify(val) : String(val));
+              }
+            } catch {
+              // ignore
+            }
+          }
+        }
+      }
       if (shouldInvalidateLookupCache(Object.keys(changes))) {
         clearLookupCaches();
       }

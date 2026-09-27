@@ -27,7 +27,7 @@ export default defineConfig({
   },
   manifest: ({ browser }) => ({
     name: 'Dictionary & AI Learning Assistant',
-    version: '0.2.0',
+    version: '0.3.0',
     description: 'Modern dictionary and AI language learning workbench.',
     icons: {
       '16': 'icons/icon-16.png',

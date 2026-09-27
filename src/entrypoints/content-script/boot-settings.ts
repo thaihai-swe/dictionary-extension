@@ -33,9 +33,11 @@ export function normalizeBootSettings(stored: Record<string, unknown>): BootSett
   const mode = stored.selectionTriggerMode;
   const modifier = stored.postSelectionModifier;
   const dock = stored.dockPosition;
+  const theme = String(stored.theme || '').trim().toLowerCase();
+  const textSize = String(stored.textSize || '').trim().toLowerCase();
   return {
-    theme: String(stored.theme || BOOT_DEFAULTS.theme),
-    textSize: String(stored.textSize || BOOT_DEFAULTS.textSize),
+    theme: theme === 'light' || theme === 'system' ? theme : BOOT_DEFAULTS.theme,
+    textSize: textSize === 'small' || textSize === 'large' || textSize === 'comfortable' ? textSize : BOOT_DEFAULTS.textSize,
     dockPosition: dock === 'left' || dock === 'right' ? dock : 'none',
     selectionTriggerMode: mode === 'off' || mode === 'direct' || mode === 'icon' ? mode : BOOT_DEFAULTS.selectionTriggerMode,
     postSelectionModifier: modifier === 'alt' || modifier === 'ctrl' || modifier === 'shift' ? modifier : BOOT_DEFAULTS.postSelectionModifier,

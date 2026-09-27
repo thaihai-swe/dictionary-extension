@@ -1,7 +1,7 @@
 import React from 'react';
 import { AppSettings } from '@/types';
 import { cx } from '@/ui/cx';
-import { IconBook, IconSearch, IconSparkles } from '@/components/icons';
+import { IconBook, IconEdit, IconSearch, IconSparkles } from '@/components/icons';
 
 interface TabGeneralProps {
   localSettings: AppSettings;
@@ -122,7 +122,7 @@ export const TabGeneral: React.FC<TabGeneralProps> = ({
             <label className="font-bold text-content-secondary block text-[13px] uppercase tracking-wider">
               Default Start Tab
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 min-[340px]:grid-cols-3 gap-2">
               <label
                 className={cx(
                   'p-2 rounded-xl border cursor-pointer transition-all text-center font-bold flex items-center justify-center gap-1.5 shadow-2xs text-xs',
@@ -161,6 +161,26 @@ export const TabGeneral: React.FC<TabGeneralProps> = ({
                 />
                 <IconSparkles className="w-3.5 h-3.5" />
                 <span>AI Assistant</span>
+              </label>
+
+              <label
+                className={cx(
+                  'p-2 rounded-xl border cursor-pointer transition-all text-center font-bold flex items-center justify-center gap-1.5 shadow-2xs text-xs',
+                  localSettings.defaultTab === 'rewriter'
+                    ? 'chip-active font-extrabold'
+                    : 'bg-muted/40 border-border text-content-secondary hover:border-accent/40',
+                )}
+              >
+                <input
+                  type="radio"
+                  name="defaultTab"
+                  value="rewriter"
+                  checked={localSettings.defaultTab === 'rewriter'}
+                  onChange={() => onChange({ defaultTab: 'rewriter' })}
+                  className="hidden"
+                />
+                <IconEdit className="w-3.5 h-3.5" />
+                <span>Rewriter</span>
               </label>
             </div>
             <p className="text-[13px] text-content-muted">Which tab opens first when popup appears.</p>

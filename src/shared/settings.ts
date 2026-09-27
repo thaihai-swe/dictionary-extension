@@ -128,6 +128,9 @@ export function normalizeSettings(input?: Partial<AppSettings> | Record<string, 
     .replace(/\/+$/, '') || DEFAULT_SETTINGS.libreTranslateBaseUrl;
   merged.pronunciationVoiceURI = String(merged.pronunciationVoiceURI || '').trim();
 
+  const theme = String(merged.theme || '').trim().toLowerCase();
+  merged.theme = theme === 'light' || theme === 'system' ? theme : 'dark';
+
   const mode = String(merged.selectionTriggerMode || '').trim().toLowerCase();
   merged.selectionTriggerMode = mode === 'off' || mode === 'direct' || mode === 'icon'
     ? mode
@@ -167,6 +170,19 @@ export function normalizeSettings(input?: Partial<AppSettings> | Record<string, 
   merged.dictionaryProvider = DICTIONARY_PROVIDERS.has(provider)
     ? (provider as AppSettings['dictionaryProvider'])
     : DEFAULT_SETTINGS.dictionaryProvider;
+
+  const defaultTab = String(merged.defaultTab || '').trim().toLowerCase();
+  merged.defaultTab = defaultTab === 'ai_assistant' || defaultTab === 'rewriter' || defaultTab === 'dictionary'
+    ? (defaultTab as AppSettings['defaultTab'])
+    : DEFAULT_SETTINGS.defaultTab;
+
+  const translateProv = String(merged.translateProvider || '').trim().toLowerCase();
+  merged.translateProvider = translateProv === 'libretranslate' || translateProv === 'mymemory' || translateProv === 'google'
+    ? (translateProv as AppSettings['translateProvider'])
+    : DEFAULT_SETTINGS.translateProvider;
+
+  merged.translateTargetLanguage = String(merged.translateTargetLanguage || '').trim() || DEFAULT_SETTINGS.translateTargetLanguage;
+  merged.customLanguages = String(merged.customLanguages || '').trim();
 
   for (const key of Object.keys(DEFAULT_AI_PROMPTS) as Array<keyof typeof DEFAULT_AI_PROMPTS>) {
     if (!String(merged[key] || '').trim()) merged[key] = DEFAULT_AI_PROMPTS[key];

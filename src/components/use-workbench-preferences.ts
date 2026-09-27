@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useSetting } from '@/composables/composable.storage';
+import { saveSettingsToStorage, useSetting } from '@/composables/composable.storage';
 import { useAppTheme } from '@/ui/theme';
 import { getTextSizeStyle } from '@/ui/text-size';
-import type { AppTheme } from '@/types';
+import type { AppTheme, DictionaryProviderId } from '@/types';
 
 export function useWorkbenchPreferences(options?: {
   targetLang?: string;
@@ -13,13 +13,16 @@ export function useWorkbenchPreferences(options?: {
   const settingsProvider = useSetting('dictionaryProvider');
   const settingsTargetLang = useSetting('translateTargetLanguage');
   const [theme, setTheme] = useState<AppTheme>(settingsTheme);
-  const [provider, setProvider] = useState(settingsProvider || 'wiktionary');
-  const [targetLang, setTargetLang] = useState(
+  const [provider, setProvider] = useState<string>(settingsProvider || 'wiktionary');
+  const [targetLang, setTargetLang] = useState<string>(
     options?.targetLang || settingsTargetLang || 'Vietnamese',
   );
   const { isDarkMode, toggleTheme } = useAppTheme(theme, {
     syncDocument: options?.syncDocumentTheme,
     onThemeChange: setTheme,
+    saveSettings: (partial) => {
+      void saveSettingsToStorage(partial);
+    },
   });
 
   useEffect(() => {
@@ -35,12 +38,26 @@ export function useWorkbenchPreferences(options?: {
     setTheme(settingsTheme);
   }, [settingsTheme]);
 
+  const handleSetProvider = (nextProvider: string) => {
+    setProvider(nextProvider);
+    if (nextProvider) {
+      void saveSettingsToStorage({ dictionaryProvider: nextProvider as DictionaryProviderId });
+    }
+  };
+
+  const handleSetTargetLang = (nextLang: string) => {
+    setTargetLang(nextLang);
+    if (nextLang) {
+      void saveSettingsToStorage({ translateTargetLanguage: nextLang });
+    }
+  };
+
   return {
     isDarkMode,
     provider,
-    setProvider,
+    setProvider: handleSetProvider,
     targetLang,
-    setTargetLang,
+    setTargetLang: handleSetTargetLang,
     toggleTheme,
     textSize,
     textSizeStyle: getTextSizeStyle(textSize),
